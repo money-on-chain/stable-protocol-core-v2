@@ -14,6 +14,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
  * asset aware contracts to implement the main mint/redeem operations.
  */
 abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
+    // ------- Events -------
+    event TCMinted(address indexed sender_, address indexed recipient_, uint256 qAC_, uint256 qTC_);
     // ------- Custom Errors -------
     error LowCoverage(uint256 getCglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 _qACsent, uint256 _qACNedeed_);
@@ -73,17 +75,20 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         address recipient_
     ) internal {
         // calculate how many qAC are nedeed to mint TC and the qAC fee
-        (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTC(qTC_, qACmax_);
+        (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTC(qTC_);
+        uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
+        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACtotalNedeed, qACmax_);
         // add qTC and qAC to the Bucket
         _depositTC(qTC_, qACNedeedtoMint);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTC_);
         // calculate how many qAC should be returned to the sender
-        uint256 qACchg = qACmax_ - qACNedeedtoMint - qACfee;
+        uint256 qACchg = qACmax_ - qACtotalNedeed;
         // transfer qAC to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
+        emit TCMinted(sender_, recipient_, qTC_, qACtotalNedeed);
     }
 
     // ------- Public Functions -------
@@ -91,15 +96,10 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token
      * @param qTC_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACNedeedtoMint amount of Collateral Asset nedeed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function calcQACforMintTC(uint256 qTC_, uint256 qACmax_)
-        public
-        view
-        returns (uint256 qACNedeedtoMint, uint256 qACfee)
-    {
+    function calcQACforMintTC(uint256 qTC_) public view returns (uint256 qACNedeedtoMint, uint256 qACfee) {
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
         // check coverage is above the protected threshold
@@ -111,8 +111,6 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNedeedtoMint * tcMintFee) / PRECISION;
 
-        uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
-        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACtotalNedeed, qACmax_);
         return (qACNedeedtoMint, qACfee);
     }
 }
