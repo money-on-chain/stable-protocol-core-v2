@@ -8,6 +8,7 @@ import "../../core/MocCore.sol";
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
 contract MocCACoinbase is MocCore {
+    // ------- Initializer -------
     /**
      * @notice contract initializer
      * @param tcTokenAddress_ Collateral Token contract address
@@ -28,6 +29,8 @@ contract MocCACoinbase is MocCore {
         _MocCore_init(tcTokenAddress_, mocFeeFlowAddress_, ctarg_, protThrld_, tcMintFee_, tcRedeemFee_);
     }
 
+    // ------- Internal Functions -------
+
     /**
      * @notice transfer Collateral Asset
      * @param to_ address who receives the Collateral Asset
@@ -39,5 +42,24 @@ contract MocCACoinbase is MocCore {
             (bool success, ) = to_.call{ value: amount_ }("");
             if (!success) revert TransferFail();
         }
+    }
+
+    // ------- External Functions -------
+
+    /**
+     * @notice caller sends Collateral Asset and receives Collateral Token
+     * @param qTC_ amount of Collateral Token to mint
+     */
+    function mintTC(uint256 qTC_) external payable {
+        _mintTCto(qTC_, msg.value, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient address receives Collateral Token
+     * @param qTC_ amount of Collateral Token to mint
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function mintTCTo(uint256 qTC_, address recipient_) external payable {
+        _mintTCto(qTC_, msg.value, msg.sender, recipient_);
     }
 }

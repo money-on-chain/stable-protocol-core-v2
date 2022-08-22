@@ -8,9 +8,11 @@ import "../../core/MocCore.sol";
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
 contract MocCARC20 is MocCore {
+    // ------- Storage -------
     // Collateral Asset token
     MocRC20 private acToken;
 
+    // ------- Initializer -------
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
@@ -36,6 +38,8 @@ contract MocCARC20 is MocCore {
         _MocCore_init(tcTokenAddress_, mocFeeFlowAddress_, ctarg_, protThrld_, tcMintFee_, tcRedeemFee_);
     }
 
+    // ------- Internal Functions -------
+
     /**
      * @notice transfer Collateral Asset
      * @param to_ address who receives the Collateral Asset
@@ -46,5 +50,36 @@ contract MocCARC20 is MocCore {
             bool success = acToken.transfer(to_, amount_);
             if (!success) revert TransferFail();
         }
+    }
+
+    // ------- External Functions -------
+
+    /**
+     * @notice caller sends Collateral Asset and receives Collateral Token
+        Requires prior sender approval of Collateral Asset to this contract 
+     * @param qTC_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     */
+    function mintTC(uint256 qTC_, uint256 qACmax_) external {
+        bool success = acToken.transferFrom(msg.sender, address(this), qTC_);
+        if (!success) revert TransferFail();
+        _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient address receives Collateral Token
+        Requires prior sender approval of Collateral Asset to this contract 
+     * @param qTC_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function mintTCTo(
+        uint256 qTC_,
+        uint256 qACmax_,
+        address recipient_
+    ) external {
+        bool success = acToken.transferFrom(msg.sender, address(this), qACmax_);
+        if (!success) revert TransferFail();
+        _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
     }
 }
