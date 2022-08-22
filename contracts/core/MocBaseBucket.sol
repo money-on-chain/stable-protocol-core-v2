@@ -96,18 +96,20 @@ abstract contract MocBaseBucket is MocHelper {
 
     /**
      * @notice get Collateral Token price
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return pTCac [PREC]
      */
     function getPTCac(uint256 lckAC_) public view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
+        // [PREC] = [N] + [N] * [PREC] - [PREC]
         pTCac = (nACcb + nACioucb) * PRECISION - lckAC_;
+        // [PREC] = [PREC] / [N]
         pTCac /= nTCcb;
     }
 
     /**
      * @notice get bucket global coverage
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return cglob [PREC]
      */
     function getCglb(uint256 lckAC_) public view returns (uint256 cglob) {

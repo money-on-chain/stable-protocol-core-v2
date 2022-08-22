@@ -13,10 +13,10 @@ contract MocCACoinbase is MocCore {
      * @notice contract initializer
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
-     * @param ctarg_ global target coverage of the model
-     * @param protThrld_ protected state threshold
-     * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens
-     * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens
+     * @param ctarg_ global target coverage of the model [PREC]
+     * @param protThrld_ protected state threshold [PREC]
+     * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+     * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function initialize(
         address tcTokenAddress_,
