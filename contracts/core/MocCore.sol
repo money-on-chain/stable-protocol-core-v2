@@ -15,7 +15,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
  */
 abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     // ------- Events -------
-    event TCMinted(address indexed sender_, address indexed recipient_, uint256 qAC_, uint256 qTC_);
+    event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     // ------- Custom Errors -------
     error LowCoverage(uint256 getCglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 _qACsent, uint256 _qACNedeed_);
