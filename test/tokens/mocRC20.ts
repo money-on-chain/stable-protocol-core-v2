@@ -28,7 +28,7 @@ describe("Feature: MocRC20 Role Access restrictions", () => {
       it("THEN it fails with the corresponding error", async () => {
         await token.revokeRole(BURNER_ROLE, otherUser);
         await token.grantRole(MINTER_ROLE, otherUser);
-        await expect(token.connect(otherSigner)["burn(address,uint256)"](otherUser, 10)).to.be.revertedWith(
+        await expect(token.connect(otherSigner).burn(otherUser, 10)).to.be.revertedWith(
           "MocRC20: must have burner role to burn",
         );
       });

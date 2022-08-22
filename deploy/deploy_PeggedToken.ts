@@ -6,16 +6,16 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
 
-  const deployResult = await deploy("PegToken", {
+  const deployResult = await deploy("PeggedToken", {
     contract: "MocRC20",
     from: deployer,
     gasLimit: 4000000,
-    args: ["PegToken", "PegToken"],
+    args: ["PeggedToken", "PeggedToken"],
   });
-  console.log(`MocRC20, as PegToken, deployed at ${deployResult.address}`);
+  console.log(`MocRC20, as PeggedToken, deployed at ${deployResult.address}`);
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 
-deployFunc.id = "deployed_PegToken"; // id required to prevent reexecution
-deployFunc.tags = ["PegToken"];
+deployFunc.id = "deployed_PeggedToken"; // id required to prevent reexecution
+deployFunc.tags = ["PeggedToken"];
