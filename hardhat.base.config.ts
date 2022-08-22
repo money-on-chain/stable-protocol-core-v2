@@ -1,14 +1,9 @@
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-solhint";
-import "@nomiclabs/hardhat-waffle";
+import "@nomicfoundation/hardhat-chai-matchers";
 import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
-// This is done to have the new matchers from waffle,
-// because despite the note in https://hardhat.org/guides/waffle-testing.html?#adapting-the-tests
-// the changeEtherBalance is not added because its a newer version
-import chai from "chai";
 import { config as dotenvConfig } from "dotenv";
-import { solidity } from "ethereum-waffle";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "hardhat-docgen";
@@ -21,8 +16,6 @@ import { NetworkUserConfig } from "hardhat/types";
 import { resolve } from "path";
 import "solidity-coverage";
 import "hardhat-storage-layout";
-
-chai.use(solidity);
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
@@ -90,7 +83,7 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.14",
+    version: "0.8.16",
     settings: {
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
