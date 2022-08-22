@@ -7,6 +7,7 @@
   "author": "MOC Investments Corp. 2020",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "^4.7.3",
     "hardhat": "2.10.2",
     "hardhat-deploy": "0.11.12",
     "hardhat-storage-layout": "0.1.6",
