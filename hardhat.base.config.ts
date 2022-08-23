@@ -63,6 +63,9 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: 0,
     otherUser: 1,
+    alice: 2,
+    bob: 3,
+    mocFeeFlow: 10,
   },
   networks: {
     hardhat: {

@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
 import "../tokens/MocRC20.sol";
@@ -16,9 +15,17 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
+    event PeggedTokenAdded(
+        address indexed tpTokenAddress_,
+        address priceProviderAddress_,
+        uint256 tpR_,
+        uint256 tpBmin_,
+        uint256 tpMintFee_,
+        uint256 tpRedeemFee_
+    );
     // ------- Custom Errors -------
     error LowCoverage(uint256 getCglb_, uint256 protThrld_);
-    error InsufficientQacSent(uint256 _qACsent, uint256 _qACNedeed_);
+    error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
 
     // ------- Initializer -------
     /**
@@ -92,6 +99,43 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     }
 
     // ------- Public Functions -------
+
+    /**
+     * @notice add a Pegged Token to the protocol
+     * TODO: this function should be called only through governance system
+     * @param tpTokenAddress_ Pegged Token contract address to add
+     * @param priceProviderAddress_ Pegged Token price provider contract address
+     * @param tpR_ Pegged Token reserve factor [PREC]
+     * @param tpBmin_ Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
+     * @param tpMintFee_ fee pct sent to Fee Flow for mint [PREC]
+     * @param tpRedeemFee_ fee pct sent to Fee Flow for redeem [PREC]
+     */
+    function addPeggedToken(
+        address tpTokenAddress_,
+        address priceProviderAddress_,
+        uint256 tpR_,
+        uint256 tpBmin_,
+        uint256 tpMintFee_,
+        uint256 tpRedeemFee_
+    ) public {
+        if (tpTokenAddress_ == address(0)) revert InvalidAddress();
+        if (priceProviderAddress_ == address(0)) revert InvalidAddress();
+        if (tpMintFee_ > PRECISION) revert InvalidValue();
+        if (tpRedeemFee_ > PRECISION) revert InvalidValue();
+        // set Pegged Token address
+        tpToken.push(IMocRC20(tpTokenAddress_));
+        // set peg container item
+        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, priceProvider: IPriceProvider(priceProviderAddress_) }));
+        // set reserve factor
+        tpR.push(tpR_);
+        // set minimum amount of blocks
+        tpBmin.push(tpBmin_);
+        // set mint fee pct
+        tpMintFee.push(tpMintFee_);
+        // set redeem fee pct
+        tpRedeemFee.push(tpRedeemFee_);
+        emit PeggedTokenAdded(tpTokenAddress_, priceProviderAddress_, tpR_, tpBmin_, tpMintFee_, tpRedeemFee_);
+    }
 
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token

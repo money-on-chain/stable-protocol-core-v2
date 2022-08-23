@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
 import "../utils/MocHelper.sol";
@@ -15,6 +14,16 @@ abstract contract MocBaseBucket is MocHelper {
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFail();
+
+    // ------- Structs -------
+    struct PegContainerItem {
+        // total supply of Pegged Token
+        uint256 nTP;
+        // amount of Pegged Token used by a Token X
+        uint256 nTPXV;
+        // PegToken PriceFeed address
+        IPriceProvider priceProvider;
+    }
 
     // ------- Storage -------
 
@@ -36,10 +45,8 @@ abstract contract MocBaseBucket is MocHelper {
 
     // Pegged Token
     IMocRC20[] internal tpToken;
-    // total supply of Pegged Token
-    uint256[] internal nTP;
-    // amount of Pegged Token used by a Token X
-    uint256[] internal nTPXV;
+    // peg container
+    PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
     // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
@@ -48,8 +55,6 @@ abstract contract MocBaseBucket is MocHelper {
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow for redeem Pegged Tokens
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // PegToken PriceFeed address
-    IPriceProvider[] internal tpPriceProvider;
 
     // global target coverage of the model
     uint256 internal ctarg;
@@ -86,11 +91,10 @@ abstract contract MocBaseBucket is MocHelper {
      * @return lckAC [PREC]
      */
     function getLckAC() public view returns (uint256 lckAC) {
-        uint256[] memory nTPArray = nTP;
-        IPriceProvider[] memory tpPriceProviderArray = tpPriceProvider;
-        for (uint8 i = 0; i < nTPArray.length; i = unchecked_inc(i)) {
+        uint256 pegAmount = pegContainer.length;
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [PREC] = [N] * [PREC]
-            lckAC += nTPArray[i] * _getPTPac(tpPriceProviderArray[i]);
+            lckAC += pegContainer[i].nTP * _getPTPac(pegContainer[i].priceProvider);
         }
     }
 
