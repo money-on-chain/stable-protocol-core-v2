@@ -20,3 +20,9 @@ export async function deployPriceProvider(price: BigNumber): Promise<MoCPricePro
 }
 
 export type Balance = BigNumber;
+
+export const CUSTOM_ERRORS = {
+  INVALID_ADDRESS: "InvalidAddress",
+  INVALID_VALUE: "InvalidValue",
+  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
+};

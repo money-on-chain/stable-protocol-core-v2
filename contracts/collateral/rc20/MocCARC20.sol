@@ -15,7 +15,7 @@ contract MocCARC20 is MocCore {
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
-     * @param acTokenAddress_ Collateral Asset token contract address
+     * @param acTokenAddress_ Collateral Asset Token contract address
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
@@ -72,7 +72,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      */
-    function mintTCTo(
+    function mintTCto(
         uint256 qTC_,
         uint256 qACmax_,
         address recipient_

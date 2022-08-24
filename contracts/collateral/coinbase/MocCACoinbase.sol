@@ -58,7 +58,7 @@ contract MocCACoinbase is MocCore {
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
      */
-    function mintTCTo(uint256 qTC_, address recipient_) external payable {
+    function mintTCto(uint256 qTC_, address recipient_) external payable {
         _mintTCto(qTC_, msg.value, msg.sender, recipient_);
     }
 }

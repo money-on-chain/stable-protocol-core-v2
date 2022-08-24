@@ -14,6 +14,18 @@ const mintTC =
     return mocCore.connect(signer).mintTC(qTC, qACmax);
   };
 
+const mintTCto =
+  (mocCore, collateralAsset) =>
+  async (from, to, qTC, qACmax = qTC * 10, applyPresicion = true) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPresicion) {
+      qTC = pEth(qTC);
+      qACmax = pEth(qACmax);
+    }
+    await collateralAsset.connect(signer).approve(mocCore.address, qACmax);
+    return mocCore.connect(signer).mintTCto(qTC, qACmax, to);
+  };
+
 const acBalanceOf = collateralAsset => account => {
   return collateralAsset.balanceOf(account);
 };
@@ -25,6 +37,7 @@ const tcBalanceOf = mocCollateralToken => async account => {
 export const mocFunctionsRC20 = async (mocContracts, collateralAsset) => {
   return {
     mintTC: mintTC(mocContracts.mocCore, collateralAsset),
+    mintTCto: mintTCto(mocContracts.mocCore, collateralAsset),
     acBalanceOf: acBalanceOf(collateralAsset),
     tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
   };
