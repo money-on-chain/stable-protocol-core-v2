@@ -75,12 +75,13 @@ abstract contract MocBaseBucket is MocHelper {
 
     /**
      * @notice get Pegged Token price
-     * @param priceProvider_ oracle address who provide Pegged Token price
+     * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function _getPTPac(IPriceProvider priceProvider_) internal view returns (uint256) {
-        (bytes32 price, bool has) = priceProvider_.peek();
-        if (!has) revert InvalidPriceProvider(address(priceProvider_));
+    function _getPTPac(uint8 i_) internal view returns (uint256) {
+        IPriceProvider priceProvider = pegContainer[i_].priceProvider;
+        (bytes32 price, bool has) = priceProvider.peek();
+        if (!has) revert InvalidPriceProvider(address(priceProvider));
         return uint256(price);
     }
 
@@ -94,7 +95,7 @@ abstract contract MocBaseBucket is MocHelper {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [PREC] = [N] * [PREC]
-            lckAC += pegContainer[i].nTP * _getPTPac(pegContainer[i].priceProvider);
+            lckAC += pegContainer[i].nTP * _getPTPac(i);
         }
     }
 

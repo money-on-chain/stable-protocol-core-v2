@@ -24,7 +24,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 tpRedeemFee_
     );
     // ------- Custom Errors -------
-    error LowCoverage(uint256 getCglb_, uint256 protThrld_);
+    error LowCoverage(uint256 cglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
 
     // ------- Initializer -------
@@ -48,6 +48,8 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     ) internal onlyInitializing {
         if (tcTokenAddress_ == address(0)) revert InvalidAddress();
         if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
+        if (ctarg_ < PRECISION) revert InvalidValue();
+        if (protThrld_ < PRECISION) revert InvalidValue();
         if (tcMintFee_ > PRECISION) revert InvalidValue();
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();
         tcToken = IMocRC20(tcTokenAddress_);
@@ -144,6 +146,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
     function calcQACforMintTC(uint256 qTC_) public view returns (uint256 qACNedeedtoMint, uint256 qACfee) {
+        if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
         // check coverage is above the protected threshold
