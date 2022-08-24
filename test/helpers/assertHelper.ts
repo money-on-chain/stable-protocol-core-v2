@@ -5,7 +5,8 @@ import { BigNumber } from "ethers";
 export function assertPrec(
   expected: string | number | BigNumber,
   actual: string | number | BigNumber,
-  tolerance = 100,
+  message?: string,
+  tolerance = 0,
 ) {
   if (!BigNumber.isBigNumber(expected)) {
     expected = pEth(expected);
@@ -13,5 +14,5 @@ export function assertPrec(
   if (!BigNumber.isBigNumber(actual)) {
     actual = pEth(actual);
   }
-  expect(expected).to.be.closeTo(actual, tolerance);
+  expect(expected, message).to.be.closeTo(actual, tolerance);
 }

@@ -18,3 +18,15 @@ export const tpParams = {
   mintFee: PCT_BASE.mul(5).div(100), // 5%
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
 };
+
+export const mocAddresses = {
+  mainnet: {
+    mocFeeFlowAddress: "",
+  },
+  rsktestnet: {
+    mocFeeFlowAddress: "",
+  },
+  hardhat: {
+    mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
+  },
+};

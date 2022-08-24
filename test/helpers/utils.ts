@@ -4,7 +4,7 @@ import { MoCPriceProviderMock, MocRC20 } from "../../typechain";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
-  if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false }).replace(",", ".");
+  if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false });
   else ethStr = eth;
   return ethers.utils.parseEther(ethStr);
 }
@@ -18,3 +18,5 @@ export async function deployPriceProvider(price: BigNumber): Promise<MoCPricePro
   const factory = await ethers.getContractFactory("MoCPriceProviderMock");
   return factory.deploy(price);
 }
+
+export type Balance = BigNumber;

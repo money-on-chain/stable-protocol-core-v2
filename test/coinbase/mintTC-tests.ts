@@ -1,7 +1,7 @@
 import { fixtureDeployedMocCoinbase } from "./fixture";
 import { MocCACoinbase, MocRC20 } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
-import { mintTCSharedBehaviour } from "../shared-behaviours/mintTCSharedBehaviour";
+import { mintTCBehavior } from "../shared-behaviours/mintTC.behavior";
 
 describe("Feature: MocCoinbase mint CT", function () {
   let mocCore: MocCACoinbase;
@@ -14,6 +14,6 @@ describe("Feature: MocCoinbase mint CT", function () {
       this.mocFunctions = await mocFunctionsCoinbase({ mocCore, mocCollateralToken });
       this.mocContracts = { mocCore, mocCollateralToken };
     });
-    mintTCSharedBehaviour();
+    mintTCBehavior();
   });
 });
