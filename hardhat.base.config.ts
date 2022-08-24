@@ -65,7 +65,6 @@ const config: HardhatUserConfig = {
     otherUser: 1,
     alice: 2,
     bob: 3,
-    mocFeeFlow: 10,
   },
   networks: {
     hardhat: {

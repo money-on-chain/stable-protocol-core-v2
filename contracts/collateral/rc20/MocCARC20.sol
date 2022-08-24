@@ -60,7 +60,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      */
     function mintTC(uint256 qTC_, uint256 qACmax_) external {
-        bool success = acToken.transferFrom(msg.sender, address(this), qTC_);
+        bool success = acToken.transferFrom(msg.sender, address(this), qACmax_);
         if (!success) revert TransferFail();
         _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
     }
