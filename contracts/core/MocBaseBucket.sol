@@ -13,7 +13,6 @@ import "../interfaces/IPriceProvider.sol";
 abstract contract MocBaseBucket is MocHelper {
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
-    error TransferFail();
 
     // ------- Structs -------
     struct PegContainerItem {

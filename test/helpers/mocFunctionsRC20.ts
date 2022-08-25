@@ -26,6 +26,10 @@ const mintTCto =
     return mocCore.connect(signer).mintTCto(qTC, qACmax, to);
   };
 
+const assetBalanceOf = collateralAsset => account => {
+  return collateralAsset.balanceOf(account);
+};
+
 const acBalanceOf = collateralAsset => account => {
   return collateralAsset.balanceOf(account);
 };
@@ -38,6 +42,7 @@ export const mocFunctionsRC20 = async (mocContracts, collateralAsset) => {
   return {
     mintTC: mintTC(mocContracts.mocCore, collateralAsset),
     mintTCto: mintTCto(mocContracts.mocCore, collateralAsset),
+    assetBalanceOf: assetBalanceOf(collateralAsset),
     acBalanceOf: acBalanceOf(collateralAsset),
     tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
   };

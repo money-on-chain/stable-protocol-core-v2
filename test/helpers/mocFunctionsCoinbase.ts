@@ -24,6 +24,10 @@ const mintTCto =
     return mocCore.connect(signer).mintTCto(qTC, to, { value: qACmax });
   };
 
+const assetBalanceOf = () => account => {
+  return ethers.provider.getBalance(account);
+};
+
 const acBalanceOf = () => account => {
   return ethers.provider.getBalance(account);
 };
@@ -36,6 +40,7 @@ export const mocFunctionsCoinbase = async mocContracts => {
   return {
     mintTC: mintTC(mocContracts.mocCore),
     mintTCto: mintTCto(mocContracts.mocCore),
+    assetBalanceOf: assetBalanceOf(),
     acBalanceOf: acBalanceOf(),
     tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
   };

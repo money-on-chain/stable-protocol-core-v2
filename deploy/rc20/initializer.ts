@@ -12,11 +12,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20");
-  if (!deployedMocContract) throw new Error("No Moc deployed.");
+  if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
   const MocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
-  if (!deployedTCContract) throw new Error("No CollateralToken deployed.");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
   //TODO: for live deployments we need to receive the Collateral Asset address

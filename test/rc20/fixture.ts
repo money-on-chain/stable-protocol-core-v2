@@ -24,15 +24,15 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
     ({ alice } = await getNamedAccounts());
 
     const deployedMocContract = await deployments.getOrNull("MocCARC20");
-    if (!deployedMocContract) throw new Error("No Moc deployed.");
+    if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
     const mocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
-    if (!deployedTCContract) throw new Error("No CollateralToken deployed.");
+    if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
     const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
     const deployedERC20MockContract = await deployments.getOrNull("CollateralAssetCARC20");
-    if (!deployedERC20MockContract) throw new Error("No CollateralAsset deployed.");
+    if (!deployedERC20MockContract) throw new Error("No CollateralAssetCARC20 deployed.");
     const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(deployedERC20MockContract.address, signer);
     await collateralAsset.mint(alice, pEth(100000));
 

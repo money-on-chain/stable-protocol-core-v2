@@ -5,15 +5,15 @@ const deployFunc: DeployFunction = async ({ deployments, getNamedAccounts, netwo
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
 
-  const deployResult = await deploy("MocCACoinbase", {
+  const deployResult = await deploy("MocCAWrapper", {
     from: deployer,
     gasLimit: GAS_LIMIT_PATCH,
   });
-  console.log(`MocCACoinbase deployed at ${deployResult.address}`);
+  console.log(`MocCAWrapper deployed at ${deployResult.address}`);
 
   return network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 
-deployFunc.id = "deployed_MocCACoinbase"; // id required to prevent reexecution
-deployFunc.tags = ["MocCACoinbase"];
+deployFunc.id = "deployed_MocCAWrapper"; // id required to prevent reexecution
+deployFunc.tags = ["MocCAWrapper"];

@@ -9,7 +9,7 @@ const deployFunc: DeployFunction = async ({ deployments, getNamedAccounts, netwo
     from: deployer,
     gasLimit: GAS_LIMIT_PATCH,
   });
-  console.log(`Moc deployed at ${deployResult.address}`);
+  console.log(`MocCARBag deployed at ${deployResult.address}`);
 
   return network.live; // prevents re execution on live networks
 };

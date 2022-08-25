@@ -11,11 +11,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCACoinbase");
-  if (!deployedMocContract) throw new Error("No Moc deployed.");
+  if (!deployedMocContract) throw new Error("No MocCACoinbase deployed.");
   const MocCore: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
-  if (!deployedTCContract) throw new Error("No CollateralToken deployed.");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
   // initializations
