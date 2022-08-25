@@ -36,7 +36,7 @@ const mintTCBehavior = function () {
         );
       });
     });
-    describe("WHEN alice sends 10 Asset to mint 100 TC to the zero address", function () {
+    describe("WHEN alice sends 100 Asset to mint 100 TC to the zero address", function () {
       it("THEN tx reverts because recipient is the zero address", async function () {
         await expect(mocFunctions.mintTCto(alice, ZERO_ADDRESS, 100)).to.be.revertedWith(ERRORS.MINT_TO_ZERO_ADDRESS);
       });

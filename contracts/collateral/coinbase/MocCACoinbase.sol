@@ -54,7 +54,7 @@ contract MocCACoinbase is MocCore {
     }
 
     /**
-     * @notice caller sends Collateral Asset and recipient address receives Collateral Token
+     * @notice caller sends Collateral Asset and recipient receives Collateral Token
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
      */

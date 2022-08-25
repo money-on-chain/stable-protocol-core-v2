@@ -66,7 +66,7 @@ contract MocCARC20 is MocCore {
     }
 
     /**
-     * @notice caller sends Collateral Asset and recipient address receives Collateral Token
+     * @notice caller sends Collateral Asset and recipient receives Collateral Token
         Requires prior sender approval of Collateral Asset to this contract 
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent

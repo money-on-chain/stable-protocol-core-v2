@@ -99,9 +99,9 @@ contract MocCAWrapper is MocHelper, Initializable {
     }
 
     /**
-     * @notice given an amount of wrapped tokens calculate the equivalent in assets
+     * @notice wraps Asset to an amount of wrapped token
      * @param assetAddress_ Asset contract address
-     * @param wcaTokenAmount_ amount of wrapped tokens to wrap
+     * @param wcaTokenAmount_ amount of wrapped tokens wanted
      * @param recipient_ address who receives the wrapped token
      * @return assetNedeed amount of Asset needed to wrap [N]
      */
@@ -111,7 +111,6 @@ contract MocCAWrapper is MocHelper, Initializable {
         address recipient_
     ) internal validAsset(assetAddress_) returns (uint256 assetNedeed) {
         if (wcaTokenAmount_ == 0) revert InvalidValue();
-        if (recipient_ == address(0)) revert InvalidAddress();
 
         assetNedeed = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
         wcaToken.mint(recipient_, wcaTokenAmount_);
@@ -119,7 +118,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     }
 
     /**
-     * @notice caller sends Asset and recipient address receives Collateral Token
+     * @notice caller sends Asset and recipient receives Collateral Token
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to mint
@@ -166,7 +165,7 @@ contract MocCAWrapper is MocHelper, Initializable {
             Asset memory asset = assetsArray[i];
             // get asset balance
             uint256 assetBalance = asset.asset.balanceOf(address(this));
-            // multiply by actual price and add to the accumulated total currency
+            // multiply by actual asset price and add to the accumulated total currency
             // [PREC] = [N] * [PREC]
             totalCurrency += assetBalance * _getAssetPrice(asset.priceProvider);
         }
@@ -206,7 +205,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     }
 
     /**
-     * @notice caller sends Asset and recipient address receives Collateral Token
+     * @notice caller sends Asset and recipient receives Collateral Token
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to mint
