@@ -3,7 +3,7 @@ import { ERC20Mock, MocCARC20, MocRC20 } from "../../typechain";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 
-describe("Feature: MocCARC20 mint CT", function () {
+describe("Feature: MocCARC20 mint TC", function () {
   let mocCore: MocCARC20;
   let mocCollateralToken: MocRC20;
   let collateralAsset: ERC20Mock;

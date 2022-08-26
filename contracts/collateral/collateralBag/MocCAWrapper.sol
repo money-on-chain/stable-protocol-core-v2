@@ -2,7 +2,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../../utils/MocHelper.sol";
-import "./MocCARBag.sol";
+import "../rc20/MocCARC20.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
@@ -27,7 +27,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     // Wrapped Collateral Asset token
     MocRC20 private wcaToken;
     // Moc Core protocol
-    MocCARBag private mocCore;
+    MocCARC20 private mocCore;
     // array of valid assets in the bag
     Asset[] private assetsArray;
     // asset -> priceProvider, and is used to check if an asset is valid
@@ -48,7 +48,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     function initialize(address mocCoreAddress_, address wcaTokenAddress_) external initializer {
         if (mocCoreAddress_ == address(0)) revert InvalidAddress();
         if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
-        mocCore = MocCARBag(mocCoreAddress_);
+        mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = MocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
         wcaToken.approve(mocCoreAddress_, UINT256_MAX);

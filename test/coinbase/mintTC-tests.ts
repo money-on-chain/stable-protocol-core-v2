@@ -3,7 +3,7 @@ import { MocCACoinbase, MocRC20 } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 
-describe("Feature: MocCoinbase mint CT", function () {
+describe("Feature: MocCoinbase mint TC", function () {
   let mocCore: MocCACoinbase;
   let mocCollateralToken: MocRC20;
 

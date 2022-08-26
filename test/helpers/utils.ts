@@ -31,4 +31,11 @@ export const ERRORS = {
   INVALID_VALUE: "InvalidValue",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
+  CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
+};
+
+export const CONSTANTS = {
+  ZERO_ADDRESS: ethers.constants.AddressZero,
+  PRECISION: BigNumber.from((1e18).toString()),
+  ONE: BigNumber.from((1e18).toString()),
 };

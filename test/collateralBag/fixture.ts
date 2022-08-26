@@ -1,8 +1,8 @@
 import { deployments, getNamedAccounts } from "hardhat";
 import {
   ERC20Mock,
-  MocCARBag,
-  MocCARBag__factory,
+  MocCARC20,
+  MocCARC20__factory,
   MocCAWrapper,
   MocCAWrapper__factory,
   MocRC20,
@@ -13,7 +13,7 @@ import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
 import { tpParams } from "../../deploy-config/config";
 
 export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise<{
-  mocCore: MocCARBag;
+  mocCore: MocCARC20;
   mocWrapper: MocCAWrapper;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
@@ -28,7 +28,7 @@ export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise
 
     const deployedMocContract = await deployments.getOrNull("MocCARBag");
     if (!deployedMocContract) throw new Error("No MocCARBag deployed.");
-    const mocCore: MocCARBag = MocCARBag__factory.connect(deployedMocContract.address, signer);
+    const mocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
     const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapper");
     if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");

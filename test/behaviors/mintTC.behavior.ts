@@ -1,8 +1,8 @@
-import { ethers, getNamedAccounts } from "hardhat";
+import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -12,7 +12,6 @@ const mintTCBehavior = function () {
   let alice: Address;
   let bob: Address;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
-  const ZERO_ADDRESS = ethers.constants.AddressZero;
 
   describe("Feature: mint Collateral Token", function () {
     beforeEach(async function () {
@@ -38,15 +37,17 @@ const mintTCBehavior = function () {
     });
     describe("WHEN alice sends 100 Asset to mint 100 TC to the zero address", function () {
       it("THEN tx reverts because recipient is the zero address", async function () {
-        await expect(mocFunctions.mintTCto(alice, ZERO_ADDRESS, 100)).to.be.revertedWith(ERRORS.MINT_TO_ZERO_ADDRESS);
+        await expect(mocFunctions.mintTCto(alice, CONSTANTS.ZERO_ADDRESS, 100)).to.be.revertedWith(
+          ERRORS.MINT_TO_ZERO_ADDRESS,
+        );
       });
     });
-    describe("WHEN alice sends 100 Asset to mint 100 TC", function () {
+    describe("WHEN alice sends 105(exactly amount) Asset to mint 100 TC", function () {
       let tx: ContractTransaction;
       let alicePrevACBalance: Balance;
       beforeEach(async function () {
         alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-        tx = await mocFunctions.mintTC(alice, 100);
+        tx = await mocFunctions.mintTC(alice, 100, 105);
       });
       it("THEN alice receives 100 TC", async function () {
         assertPrec(100, await mocFunctions.tcBalanceOf(alice));
@@ -71,7 +72,7 @@ const mintTCBehavior = function () {
           .to.emit(mocContracts.mocCore, "TCMinted")
           .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
       });
-      describe("AND alice sends again 100 Asset to mint 100 TC", function () {
+      describe("AND alice sends 1000(exceeded amount) Asset to mint 100 TC", function () {
         let alicePrevACBalance: Balance;
         let alicePrevTCBalance: Balance;
         let mocPrevACBalance: Balance;
