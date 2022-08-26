@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ERC20Mock, MoCPriceProviderMock, MocRC20 } from "../../typechain";
+import { ERC20Mock, PriceProviderMock, MocRC20 } from "../../typechain";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -14,8 +14,8 @@ export async function deployPeggedToken(): Promise<MocRC20> {
   return factory.deploy("PeggedToken", "PeggedToken");
 }
 
-export async function deployPriceProvider(price: BigNumber): Promise<MoCPriceProviderMock> {
-  const factory = await ethers.getContractFactory("MoCPriceProviderMock");
+export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
+  const factory = await ethers.getContractFactory("PriceProviderMock");
   return factory.deploy(price);
 }
 
@@ -32,6 +32,8 @@ export const ERRORS = {
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
+  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
+  TRANSFER_FAIL: "TransferFail",
 };
 
 export const CONSTANTS = {

@@ -18,7 +18,7 @@ describe("Feature: MocCARBag initialization", function () {
       ({ mocCore, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeploy());
     });
     describe("WHEN initialize mocCore again", async () => {
-      it("THEN tx fail because contract is already initialized", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
         await expect(
           mocCore.initialize(
             wcaToken.address,
@@ -33,7 +33,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN initialize mocWrapper again", async () => {
-      it("THEN tx fail because contract is already initialized", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
         await expect(mocWrapper.initialize(mocCore.address, wcaToken.address)).to.be.revertedWith(
           ERRORS.CONTRACT_INITIALIZED,
         );
@@ -48,7 +48,7 @@ describe("Feature: MocCARBag initialization", function () {
       newMocCore = await factory.deploy();
     });
     describe("WHEN it is initialized with invalid Collateral Asset address", () => {
-      it("THEN tx fail because address is the zero address", async () => {
+      it("THEN tx fails because address is the zero address", async () => {
         await expect(
           newMocCore.initialize(
             CONSTANTS.ZERO_ADDRESS,
@@ -63,7 +63,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid Collateral Token address", () => {
-      it("THEN tx fail because address is the zero address", async () => {
+      it("THEN tx fails because address is the zero address", async () => {
         await expect(
           newMocCore.initialize(
             wcaToken.address,
@@ -78,7 +78,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid Moc Fee Flow address", () => {
-      it("THEN tx fail because address is the zero address", async () => {
+      it("THEN tx fails because address is the zero address", async () => {
         await expect(
           newMocCore.initialize(
             wcaToken.address,
@@ -93,7 +93,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid ctarg value", () => {
-      it("THEN tx fail because ctarg is below ONE", async () => {
+      it("THEN tx fails because ctarg is below ONE", async () => {
         await expect(
           newMocCore.initialize(
             wcaToken.address,
@@ -108,7 +108,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid protThrld value", () => {
-      it("THEN tx fail because protThrld is below ONE", async () => {
+      it("THEN tx fails because protThrld is below ONE", async () => {
         await expect(
           newMocCore.initialize(
             wcaToken.address,
@@ -123,7 +123,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid TCmintFee value", () => {
-      it("THEN tx fail because TCmintFee is above ONE", async () => {
+      it("THEN tx fails because TCmintFee is above ONE", async () => {
         await expect(
           newMocCore.initialize(
             wcaToken.address,
@@ -138,7 +138,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid TCredeemFee value", () => {
-      it("THEN tx fail because TCredeemFee is above ONE", async () => {
+      it("THEN tx fails because TCredeemFee is above ONE", async () => {
         await expect(
           newMocCore.initialize(
             wcaToken.address,
@@ -161,7 +161,7 @@ describe("Feature: MocCARBag initialization", function () {
       newMocWrapper = await factory.deploy();
     });
     describe("WHEN it is initialized with invalid Moc Core address", () => {
-      it("THEN tx fail because address is the zero address", async () => {
+      it("THEN tx fails because address is the zero address", async () => {
         await expect(newMocWrapper.initialize(CONSTANTS.ZERO_ADDRESS, wcaToken.address)).to.be.revertedWithCustomError(
           newMocWrapper,
           ERRORS.INVALID_ADDRESS,
@@ -169,7 +169,7 @@ describe("Feature: MocCARBag initialization", function () {
       });
     });
     describe("WHEN it is initialized with invalid Wrapped Collateral Asset address", () => {
-      it("THEN tx fail because address is the zero address", async () => {
+      it("THEN tx fails because address is the zero address", async () => {
         await expect(newMocWrapper.initialize(mocCore.address, CONSTANTS.ZERO_ADDRESS)).to.be.revertedWithCustomError(
           newMocWrapper,
           ERRORS.INVALID_ADDRESS,

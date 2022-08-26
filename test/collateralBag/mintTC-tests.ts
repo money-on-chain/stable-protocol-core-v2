@@ -2,6 +2,8 @@ import { fixtureDeployedMocCARBag } from "./fixture";
 import { ERC20Mock, MocCARC20, MocCAWrapper, MocRC20 } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
+import { deployAsset, ERRORS } from "../helpers/utils";
+import { expect } from "chai";
 
 describe("Feature: MocCARBag mint TC", function () {
   let mocCore: MocCARC20;
@@ -18,5 +20,18 @@ describe("Feature: MocCARBag mint TC", function () {
       this.mocContracts = { mocCore, mocWrapper, mocCollateralToken };
     });
     mintTCBehavior();
+
+    describe("WHEN mintTC using an asset not whitelisted", () => {
+      let assetNotWhitelisted: ERC20Mock;
+      beforeEach(async () => {
+        assetNotWhitelisted = await deployAsset();
+      });
+      it("THEN tx fails because asset is invalid", async () => {
+        await expect(mocWrapper.mintTC(assetNotWhitelisted.address, 10, 10)).to.be.revertedWithCustomError(
+          mocWrapper,
+          ERRORS.INVALID_ADDRESS,
+        );
+      });
+    });
   });
 });

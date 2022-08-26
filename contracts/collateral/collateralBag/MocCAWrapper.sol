@@ -11,7 +11,7 @@ import "../rc20/MocCARC20.sol";
  */
 contract MocCAWrapper is MocHelper, Initializable {
     // ------- Custom Errors -------
-    error AssetAlreadyWhitelisted();
+    error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
     // ------- Structs -------
@@ -180,7 +180,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     function addAsset(address assetAddress_, address priceProviderAddress_) external {
         if (assetAddress_ == address(0)) revert InvalidAddress();
         if (priceProviderAddress_ == address(0)) revert InvalidAddress();
-        if (address(priceProviderMap[assetAddress_]) != address(0)) revert AssetAlreadyWhitelisted();
+        if (address(priceProviderMap[assetAddress_]) != address(0)) revert AssetAlreadyAdded();
 
         assetsArray.push(Asset({ asset: IERC20(assetAddress_), priceProvider: IPriceProvider(priceProviderAddress_) }));
         priceProviderMap[assetAddress_] = IPriceProvider(priceProviderAddress_);

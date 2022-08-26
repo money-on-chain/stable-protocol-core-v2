@@ -2,7 +2,7 @@ pragma solidity ^0.8.16;
 
 import "../interfaces/IPriceProvider.sol";
 
-contract MoCPriceProviderMock is IPriceProvider {
+contract PriceProviderMock is IPriceProvider {
     bytes32 public mocPrice;
     bool public has;
 
