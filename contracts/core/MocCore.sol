@@ -2,17 +2,14 @@ pragma solidity ^0.8.16;
 
 import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
-import "./MocBaseBucket.sol";
 import "./MocEma.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title MocCore
  * @notice MocCore nucleats all the basic MoC functionality and toolset. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
-abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
+abstract contract MocCore is MocEma {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event PeggedTokenAdded(
@@ -31,6 +28,8 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
@@ -38,7 +37,9 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
-    function _MocCore_init(
+    function __MocCore_init(
+        address governor_,
+        address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         uint256 ctarg_,
@@ -46,18 +47,16 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) internal onlyInitializing {
-        if (tcTokenAddress_ == address(0)) revert InvalidAddress();
-        if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
-        if (ctarg_ < PRECISION) revert InvalidValue();
-        if (protThrld_ < PRECISION) revert InvalidValue();
-        if (tcMintFee_ > PRECISION) revert InvalidValue();
-        if (tcRedeemFee_ > PRECISION) revert InvalidValue();
-        tcToken = IMocRC20(tcTokenAddress_);
-        mocFeeFlowAddress = mocFeeFlowAddress_;
-        ctarg = ctarg_;
-        protThrld = protThrld_;
-        tcMintFee = tcMintFee_;
-        tcRedeemFee = tcRedeemFee_;
+        __MocUpgradable_init(stopper_, governor_);
+        __MocBaseBucket_init_unchained(
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            ctarg_,
+            protThrld_,
+            tcMintFee_,
+            tcRedeemFee_
+        );
+        __MocEma_init_unchained();
     }
 
     // ------- Internal Functions -------
@@ -160,4 +159,11 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
 
         return (qACNedeedtoMint, qACfee);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

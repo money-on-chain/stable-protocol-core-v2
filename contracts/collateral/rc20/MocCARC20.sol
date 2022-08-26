@@ -34,7 +34,17 @@ contract MocCARC20 is MocCore {
     ) external initializer {
         if (acTokenAddress_ == address(0)) revert InvalidAddress();
         acToken = MocRC20(acTokenAddress_);
-        _MocCore_init(tcTokenAddress_, mocFeeFlowAddress_, ctarg_, protThrld_, tcMintFee_, tcRedeemFee_);
+        //TODO:Include gobernor and stopper
+        __MocCore_init(
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            ctarg_,
+            protThrld_,
+            tcMintFee_,
+            tcRedeemFee_
+        );
     }
 
     // ------- Internal Functions -------

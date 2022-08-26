@@ -4,13 +4,14 @@ import "../utils/MocHelper.sol";
 import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
 import "../interfaces/IPriceProvider.sol";
+import "../governance/MocUpgradable.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
  * @notice MocBaseBucket holds Bucket Zero state, both for the Callateral Bag and PegggedTokens Items.
  * @dev Abstracts all rw opeartions on the main bucket and expose all calculations relative to its state.
  */
-abstract contract MocBaseBucket is MocHelper {
+abstract contract MocBaseBucket is MocUpgradable, MocHelper {
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();
@@ -60,6 +61,38 @@ abstract contract MocBaseBucket is MocHelper {
     uint256 internal ctarg;
     // Moc Fee Flow contract address
     address internal mocFeeFlowAddress;
+
+    // ------- Initializer -------
+    /**
+     * @notice contract initializer
+     * @param tcTokenAddress_ Collateral Token contract address
+     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
+     * @param ctarg_ global target coverage of the model [PREC]
+     * @param protThrld_ protected state threshold [PREC]
+     * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+     * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     */
+    function __MocBaseBucket_init_unchained(
+        address tcTokenAddress_,
+        address mocFeeFlowAddress_,
+        uint256 ctarg_,
+        uint256 protThrld_,
+        uint256 tcMintFee_,
+        uint256 tcRedeemFee_
+    ) internal onlyInitializing {
+        if (tcTokenAddress_ == address(0)) revert InvalidAddress();
+        if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
+        if (ctarg_ < PRECISION) revert InvalidValue();
+        if (protThrld_ < PRECISION) revert InvalidValue();
+        if (tcMintFee_ > PRECISION) revert InvalidValue();
+        if (tcRedeemFee_ > PRECISION) revert InvalidValue();
+        tcToken = IMocRC20(tcTokenAddress_);
+        mocFeeFlowAddress = mocFeeFlowAddress_;
+        ctarg = ctarg_;
+        protThrld = protThrld_;
+        tcMintFee = tcMintFee_;
+        tcRedeemFee = tcRedeemFee_;
+    }
 
     // ------- Internal Functions -------
 
@@ -124,4 +157,11 @@ abstract contract MocBaseBucket is MocHelper {
         // [PREC] = [PREC] * [PREC] / [PREC]
         cglob = (cglob * PRECISION) / lckAC_;
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

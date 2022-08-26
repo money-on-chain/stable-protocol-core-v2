@@ -26,7 +26,17 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) external initializer {
-        _MocCore_init(tcTokenAddress_, mocFeeFlowAddress_, ctarg_, protThrld_, tcMintFee_, tcRedeemFee_);
+        //TODO: Include gobernor and stopper
+        __MocCore_init(
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            ctarg_,
+            protThrld_,
+            tcMintFee_,
+            tcRedeemFee_
+        );
     }
 
     // ------- Internal Functions -------
