@@ -51,7 +51,7 @@ contract MocCAWrapper is MocHelper, Initializable {
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = MocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
-        wcaToken.approve(mocCoreAddress_, UINT256_MAX);
+        SafeERC20.safeApprove(wcaToken, mocCoreAddress_, UINT256_MAX);
     }
 
     // ------- Internal Functions -------
@@ -110,8 +110,6 @@ contract MocCAWrapper is MocHelper, Initializable {
         uint256 wcaTokenAmount_,
         address recipient_
     ) internal validAsset(assetAddress_) returns (uint256 assetNedeed) {
-        if (wcaTokenAmount_ == 0) revert InvalidValue();
-
         assetNedeed = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
         wcaToken.mint(recipient_, wcaTokenAmount_);
         return assetNedeed;
@@ -142,8 +140,7 @@ contract MocCAWrapper is MocHelper, Initializable {
         if (assetNedeed > qACmax_) revert InsufficientQacSent(qACmax_, assetNedeed);
 
         // transfer asset from sender to this contract
-        bool success = IERC20(assetAddress_).transferFrom(sender_, address(this), assetNedeed);
-        if (!success) revert TransferFail();
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), assetNedeed);
 
         // mint TC to the recipient
         mocCore.mintTCto(qTC_, qAC, recipient_);

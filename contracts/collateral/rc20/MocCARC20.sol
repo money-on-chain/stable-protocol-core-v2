@@ -46,8 +46,7 @@ contract MocCARC20 is MocCore {
      */
     function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
-            bool success = acToken.transfer(to_, amount_);
-            if (!success) revert TransferFail();
+            SafeERC20.safeTransfer(acToken, to_, amount_);
         }
     }
 
@@ -60,8 +59,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      */
     function mintTC(uint256 qTC_, uint256 qACmax_) external {
-        bool success = acToken.transferFrom(msg.sender, address(this), qACmax_);
-        if (!success) revert TransferFail();
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
     }
 
@@ -77,8 +75,7 @@ contract MocCARC20 is MocCore {
         uint256 qACmax_,
         address recipient_
     ) external {
-        bool success = acToken.transferFrom(msg.sender, address(this), qACmax_);
-        if (!success) revert TransferFail();
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
     }
 }
