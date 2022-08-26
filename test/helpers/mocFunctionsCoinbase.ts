@@ -10,7 +10,7 @@ const mintTC =
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    return mocCore.connect(signer).mintTC(qTC, { value: qACmax });
+    return mocCore.connect(signer).mintTC(qTC, { value: qACmax, gasPrice: 0 });
   };
 
 const mintTCto =
@@ -21,7 +21,7 @@ const mintTCto =
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    return mocCore.connect(signer).mintTCto(qTC, to, { value: qACmax });
+    return mocCore.connect(signer).mintTCto(qTC, to, { value: qACmax, gasPrice: 0 });
   };
 
 const assetBalanceOf = () => account => {
