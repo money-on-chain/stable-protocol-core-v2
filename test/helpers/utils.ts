@@ -1,6 +1,7 @@
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ERC20Mock, PriceProviderMock, MocRC20 } from "../../typechain";
+import { Address } from "hardhat-deploy/types";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -20,8 +21,14 @@ export async function deployPriceProvider(price: BigNumber): Promise<PriceProvid
 }
 
 export async function deployAsset(): Promise<ERC20Mock> {
+  let alice: Address;
+  let bob: Address;
+  ({ alice, bob } = await getNamedAccounts());
   const factory = await ethers.getContractFactory("ERC20Mock");
-  return factory.deploy();
+  const asset = await factory.deploy();
+  await asset.mint(alice, pEth(100000));
+  await asset.mint(bob, pEth(100000));
+  return asset;
 }
 
 export type Balance = BigNumber;

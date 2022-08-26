@@ -21,7 +21,7 @@ const mintTCBehavior = function () {
     });
     describe("WHEN alice sends 0 Asset to mint TC", function () {
       it("THEN tx reverts because the amount of AC is invalid", async function () {
-        await expect(mocFunctions.mintTC(alice, 0)).to.be.revertedWithCustomError(
+        await expect(mocFunctions.mintTC({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
           mocContracts.mocCore,
           ERRORS.INVALID_VALUE,
         );
@@ -29,7 +29,7 @@ const mintTCBehavior = function () {
     });
     describe("WHEN alice sends 10 Asset to mint 100 TC", function () {
       it("THEN tx reverts because the amount of AC is insufficient", async function () {
-        await expect(mocFunctions.mintTC(alice, 100, 10)).to.be.revertedWithCustomError(
+        await expect(mocFunctions.mintTC({ from: alice, qTC: 100, qACmax: 10 })).to.be.revertedWithCustomError(
           mocContracts.mocCore,
           ERRORS.INSUFFICIENT_QAC_SENT,
         );
@@ -37,7 +37,7 @@ const mintTCBehavior = function () {
     });
     describe("WHEN alice sends 100 Asset to mint 100 TC to the zero address", function () {
       it("THEN tx reverts because recipient is the zero address", async function () {
-        await expect(mocFunctions.mintTCto(alice, CONSTANTS.ZERO_ADDRESS, 100)).to.be.revertedWith(
+        await expect(mocFunctions.mintTCto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 100 })).to.be.revertedWith(
           ERRORS.MINT_TO_ZERO_ADDRESS,
         );
       });
@@ -47,7 +47,7 @@ const mintTCBehavior = function () {
       let alicePrevACBalance: Balance;
       beforeEach(async function () {
         alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-        tx = await mocFunctions.mintTC(alice, 100, 105);
+        tx = await mocFunctions.mintTC({ from: alice, qTC: 100, qACmax: 105 });
       });
       it("THEN alice receives 100 TC", async function () {
         assertPrec(100, await mocFunctions.tcBalanceOf(alice));
@@ -82,7 +82,7 @@ const mintTCBehavior = function () {
           alicePrevTCBalance = await mocFunctions.tcBalanceOf(alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocCore.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
-          await mocFunctions.mintTC(alice, 100);
+          await mocFunctions.mintTC({ from: alice, qTC: 100 });
         });
         it("THEN alice receives 100 TC", async function () {
           const aliceActualTCBalance = await mocFunctions.tcBalanceOf(alice);
@@ -111,7 +111,7 @@ const mintTCBehavior = function () {
       let alicePrevACBalance: Balance;
       beforeEach(async function () {
         alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-        tx = await mocFunctions.mintTCto(alice, bob, 100);
+        tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 100 });
       });
       it("THEN bob receives 100 TC", async function () {
         assertPrec(100, await mocFunctions.tcBalanceOf(bob));

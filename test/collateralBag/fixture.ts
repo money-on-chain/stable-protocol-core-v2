@@ -1,4 +1,4 @@
-import { deployments, getNamedAccounts } from "hardhat";
+import { deployments } from "hardhat";
 import {
   ERC20Mock,
   MocCARC20,
@@ -23,8 +23,6 @@ export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise
   return deployments.createFixture(async ({ ethers }) => {
     await deployments.fixture();
     const signer = ethers.provider.getSigner();
-    let alice: string;
-    ({ alice } = await getNamedAccounts());
 
     const deployedMocContract = await deployments.getOrNull("MocCARBag");
     if (!deployedMocContract) throw new Error("No MocCARBag deployed.");
@@ -63,7 +61,6 @@ export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise
     const asset = await deployAsset();
     const assetPriceProvider = await deployPriceProvider(pEth(1));
     await mocWrapper.addAsset(asset.address, assetPriceProvider.address);
-    await asset.mint(alice, pEth(100000));
 
     return {
       mocCore,

@@ -4,7 +4,7 @@ import { pEth } from "./utils";
 
 const mintTC =
   (mocCore, collateralAsset) =>
-  async (from, qTC, qACmax = qTC * 10, applyPresicion = true) => {
+  async ({ from, qTC, qACmax = qTC * 10, applyPresicion = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPresicion) {
       qTC = pEth(qTC);
@@ -16,7 +16,7 @@ const mintTC =
 
 const mintTCto =
   (mocCore, collateralAsset) =>
-  async (from, to, qTC, qACmax = qTC * 10, applyPresicion = true) => {
+  async ({ from, to, qTC, qACmax = qTC * 10, applyPresicion = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPresicion) {
       qTC = pEth(qTC);
