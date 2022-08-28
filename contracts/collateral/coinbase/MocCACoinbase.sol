@@ -1,12 +1,13 @@
 pragma solidity ^0.8.16;
 
 import "../../core/MocCore.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title MocCACoinbase: Moc Collateral Asset Coinbase
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
-contract MocCACoinbase is MocCore {
+contract MocCACoinbase is MocCore, ReentrancyGuard {
     // ------- Initializer -------
     /**
      * @notice contract initializer
@@ -35,7 +36,7 @@ contract MocCACoinbase is MocCore {
      * @param to_ address who receives the Collateral Asset
      * @param amount_ amount of Collateral Asset to transfer
      */
-    function acTransfer(address to_, uint256 amount_) internal override {
+    function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
         if (amount_ > 0) {
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = to_.call{ value: amount_ }("");

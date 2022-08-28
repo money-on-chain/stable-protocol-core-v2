@@ -41,6 +41,7 @@ export const ERRORS = {
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
   TRANSFER_FAIL: "TransferFail",
+  REENTRACYGUARD: "ReentrancyGuard: reentrant call",
 };
 
 export const CONSTANTS = {
