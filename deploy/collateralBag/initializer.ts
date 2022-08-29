@@ -17,9 +17,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const network = hre.network.name as keyof typeof mocAddresses;
   const signer = ethers.provider.getSigner();
 
-  const deployedMocContract = await deployments.getOrNull("MocCARBag");
-  if (!deployedMocContract) throw new Error("No MocCARBag deployed.");
-  const MocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const deployedMocContract = await deployments.getOrNull("MocCABag");
+  if (!deployedMocContract) throw new Error("No MocCABag deployed.");
+  const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
@@ -35,7 +35,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // initializations
   await waitForTxConfirmation(
-    MocCore.initialize(
+    mocImpl.initialize(
       WCAToken.address,
       CollateralToken.address,
       mocAddresses[network].mocFeeFlowAddress,
@@ -48,12 +48,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   await waitForTxConfirmation(
-    MocCAWrapper.initialize(MocCore.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
+    MocCAWrapper.initialize(mocImpl.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
   );
 
   // set minter and burner roles
-  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, MocCore.address, { gasLimit: GAS_LIMIT_PATCH }));
-  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, MocCore.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
 
   // set minter and burner roles
   await waitForTxConfirmation(WCAToken.grantRole(MINTER_ROLE, MocCAWrapper.address, { gasLimit: GAS_LIMIT_PATCH }));
@@ -65,4 +65,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARBag"; // id required to prevent reexecution
 deployFunc.tags = ["InitializerCARBag"];
-deployFunc.dependencies = ["MocCARBag", "CollateralTokenCARBag", "MocCAWrapperContract", "WrappedCollateralAsset"];
+deployFunc.dependencies = ["MocCABag", "CollateralTokenCARBag", "MocCAWrapperContract", "WrappedCollateralAsset"];

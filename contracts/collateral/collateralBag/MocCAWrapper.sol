@@ -29,7 +29,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     // Moc Core protocol
     MocCARC20 private mocCore;
     // array of valid assets in the bag
-    Asset[] private assetsArray;
+    Asset[] private assets;
     // asset -> priceProvider, and is used to check if an asset is valid
     mapping(address => IPriceProvider) internal priceProviderMap;
 
@@ -99,23 +99,6 @@ contract MocCAWrapper is MocHelper, Initializable {
     }
 
     /**
-     * @notice wraps Asset to an amount of wrapped token
-     * @param assetAddress_ Asset contract address
-     * @param wcaTokenAmount_ amount of wrapped tokens wanted
-     * @param recipient_ address who receives the wrapped token
-     * @return assetNedeed amount of Asset needed to wrap [N]
-     */
-    function _wrapTo(
-        address assetAddress_,
-        uint256 wcaTokenAmount_,
-        address recipient_
-    ) internal validAsset(assetAddress_) returns (uint256 assetNedeed) {
-        assetNedeed = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
-        wcaToken.mint(recipient_, wcaTokenAmount_);
-        return assetNedeed;
-    }
-
-    /**
      * @notice caller sends Asset and recipient receives Collateral Token
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
@@ -130,12 +113,13 @@ contract MocCAWrapper is MocHelper, Initializable {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal {
+    ) internal validAsset(assetAddress_) {
         // ask to Moc Core how many qAC(Wrapper Collateral Asset) are nedeed to mint qTC
         (uint256 qACtoMint, uint256 qACfee) = mocCore.calcQACforMintTC(qTC_);
         uint256 qAC = qACtoMint + qACfee;
-        // wrap those amount of qAC using the asset sent
-        uint256 assetNedeed = _wrapTo(assetAddress_, qAC, address(this));
+        // calculates the equivalent value in the given asset
+        uint256 assetNedeed = _convertTokenToAsset(assetAddress_, qAC);
+        wcaToken.mint(address(this), qAC);
 
         if (assetNedeed > qACmax_) revert InsufficientQacSent(qACmax_, assetNedeed);
 
@@ -155,11 +139,11 @@ contract MocCAWrapper is MocHelper, Initializable {
     function getTokenPrice() public view returns (uint256 tokenPrice) {
         uint256 tokenTotalSupply = wcaToken.totalSupply();
         if (tokenTotalSupply == 0) return ONE;
-        uint256 assetsLength = assetsArray.length;
+        uint256 assetsLength = assets.length;
         uint256 totalCurrency;
         // loop through all assets to calculate the total amount of currency held
         for (uint256 i = 0; i < assetsLength; i++) {
-            Asset memory asset = assetsArray[i];
+            Asset memory asset = assets[i];
             // get asset balance
             uint256 assetBalance = asset.asset.balanceOf(address(this));
             // multiply by actual asset price and add to the accumulated total currency
@@ -182,7 +166,7 @@ contract MocCAWrapper is MocHelper, Initializable {
         if (priceProviderAddress_ == address(0)) revert InvalidAddress();
         if (address(priceProviderMap[assetAddress_]) != address(0)) revert AssetAlreadyAdded();
 
-        assetsArray.push(Asset({ asset: IERC20(assetAddress_), priceProvider: IPriceProvider(priceProviderAddress_) }));
+        assets.push(Asset({ asset: IERC20(assetAddress_), priceProvider: IPriceProvider(priceProviderAddress_) }));
         priceProviderMap[assetAddress_] = IPriceProvider(priceProviderAddress_);
     }
 

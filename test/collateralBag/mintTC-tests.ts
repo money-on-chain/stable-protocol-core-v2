@@ -1,15 +1,15 @@
-import { fixtureDeployedMocCARBag } from "./fixture";
+import { fixtureDeployedMocCABag } from "./fixture";
 import { ERC20Mock, MocCARC20, MocCAWrapper, MocRC20, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
-import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth } from "../helpers/utils";
+import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
 
-describe("Feature: MocCARBag mint TC", function () {
-  let mocCore: MocCARC20;
+describe("Feature: MocCABag mint TC", function () {
+  let mocImpl: MocCARC20;
   let mocWrapper: MocCAWrapper;
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
@@ -17,16 +17,24 @@ describe("Feature: MocCARBag mint TC", function () {
   let mocFunctions: any;
   let alice: Address;
 
-  describe("GIVEN a MocCARBag implementation deployed", function () {
+  describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
       ({ alice } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocCARBag(0);
-      ({ mocCore, mocWrapper, mocCollateralToken, wcaToken, asset } = await fixtureDeploy());
-      mocFunctions = await mocFunctionsCARBag({ mocCore, mocCollateralToken, mocWrapper, wcaToken }, asset);
+      const fixtureDeploy = fixtureDeployedMocCABag(0);
+      ({ mocImpl, mocWrapper, mocCollateralToken, wcaToken, asset } = await fixtureDeploy());
+      mocFunctions = await mocFunctionsCARBag({ mocImpl, mocCollateralToken, mocWrapper, wcaToken }, asset);
       this.mocFunctions = mocFunctions;
-      this.mocContracts = { mocCore, mocWrapper, mocCollateralToken };
+      this.mocContracts = { mocImpl, mocWrapper, mocCollateralToken };
     });
     mintTCBehavior();
+
+    describe("WHEN a user sends almost max uint256 amount of Asset to mint TC", function () {
+      it("THEN tx reverts with panic code 0x11 overflow", async function () {
+        const qACmax = CONSTANTS.MAX_BALANCE.mul(10);
+        await asset.approve(mocWrapper.address, qACmax);
+        await expect(mocWrapper.mintTC(asset.address, CONSTANTS.MAX_BALANCE, qACmax)).to.be.revertedWithPanic("0x11");
+      });
+    });
 
     describe("WHEN mint TC using an asset not whitelisted", () => {
       let assetNotWhitelisted: ERC20Mock;

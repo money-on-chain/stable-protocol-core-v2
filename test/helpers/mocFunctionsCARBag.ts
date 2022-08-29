@@ -31,6 +31,7 @@ const balanceOf =
   (account, asset = assetDefault) =>
     asset.balanceOf(account);
 
+// add an asset to the MocCABag whitelist with its respective price provider
 const addAsset = mocWrapper => async (asset, priceProvider) => {
   return mocWrapper.addAsset(asset.address, priceProvider.address);
 };

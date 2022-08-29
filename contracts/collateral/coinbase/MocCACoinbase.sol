@@ -40,7 +40,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
         if (amount_ > 0) {
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = to_.call{ value: amount_ }("");
-            if (!success) revert TransferFail();
+            if (!success) revert TransferFailed();
         }
     }
 

@@ -12,7 +12,7 @@ import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
 import { tpParams } from "../../deploy-config/config";
 
 export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
-  mocCore: MocCARC20;
+  mocImpl: MocCARC20;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
   collateralAsset: ERC20Mock;
@@ -25,7 +25,7 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
 
     const deployedMocContract = await deployments.getOrNull("MocCARC20");
     if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
-    const mocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+    const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
     if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
@@ -43,7 +43,7 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
       await peggedToken.grantRole(BURNER_ROLE, deployedMocContract.address);
 
       const priceProvider = await deployPriceProvider(pEth(1));
-      await mocCore.addPeggedToken(
+      await mocImpl.addPeggedToken(
         peggedToken.address,
         priceProvider.address,
         tpParams.r,
@@ -55,7 +55,7 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
     }
 
     return {
-      mocCore,
+      mocImpl,
       mocCollateralToken,
       mocPeggedTokens,
       collateralAsset,

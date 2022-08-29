@@ -1,7 +1,7 @@
 pragma solidity 0.8.16;
 import "hardhat/console.sol";
 
-contract ReentrancyAttacker {
+contract ReentrancyAttackerMock {
     address internal dest;
     bytes internal data;
     bool internal entered;

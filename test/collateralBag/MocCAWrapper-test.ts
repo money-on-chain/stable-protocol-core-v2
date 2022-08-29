@@ -1,4 +1,4 @@
-import { fixtureDeployedMocCARBag } from "./fixture";
+import { fixtureDeployedMocCABag } from "./fixture";
 import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
 import { deployAsset, deployPriceProvider, pEth, CONSTANTS, ERRORS } from "../helpers/utils";
 import { expect } from "chai";
@@ -10,8 +10,8 @@ describe("Feature: MocCAWrapper", function () {
   let priceProvider00: PriceProviderMock;
 
   describe("GIVEN a MocCAWrapper implementation deployed", function () {
-    beforeEach(async function () {
-      const fixtureDeploy = fixtureDeployedMocCARBag(0);
+    before(async function () {
+      const fixtureDeploy = fixtureDeployedMocCABag(0);
       ({ mocWrapper, asset } = await fixtureDeploy());
       asset00 = await deployAsset();
       priceProvider00 = await deployPriceProvider(pEth(1));

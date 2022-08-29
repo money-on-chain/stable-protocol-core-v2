@@ -12,8 +12,8 @@ import { pEth, deployPeggedToken, deployPriceProvider, deployAsset } from "../he
 import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
 import { tpParams } from "../../deploy-config/config";
 
-export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise<{
-  mocCore: MocCARC20;
+export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<{
+  mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
@@ -24,9 +24,9 @@ export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise
     await deployments.fixture();
     const signer = ethers.provider.getSigner();
 
-    const deployedMocContract = await deployments.getOrNull("MocCARBag");
-    if (!deployedMocContract) throw new Error("No MocCARBag deployed.");
-    const mocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+    const deployedMocContract = await deployments.getOrNull("MocCABag");
+    if (!deployedMocContract) throw new Error("No MocCABag deployed.");
+    const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
     const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapper");
     if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
@@ -47,7 +47,7 @@ export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise
       await peggedToken.grantRole(BURNER_ROLE, deployedMocContract.address);
 
       const priceProvider = await deployPriceProvider(pEth(1));
-      await mocCore.addPeggedToken(
+      await mocImpl.addPeggedToken(
         peggedToken.address,
         priceProvider.address,
         tpParams.r,
@@ -63,7 +63,7 @@ export function fixtureDeployedMocCARBag(amountPegTokens: number): () => Promise
     await mocWrapper.addAsset(asset.address, assetPriceProvider.address);
 
     return {
-      mocCore,
+      mocImpl,
       mocWrapper,
       mocCollateralToken,
       mocPeggedTokens,

@@ -12,7 +12,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocContract = await deployments.getOrNull("MocCACoinbase");
   if (!deployedMocContract) throw new Error("No MocCACoinbase deployed.");
-  const MocCore: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContract.address, signer);
+  const mocImpl: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
@@ -20,7 +20,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // initializations
   await waitForTxConfirmation(
-    MocCore.initialize(
+    mocImpl.initialize(
       CollateralToken.address,
       mocAddresses[network].mocFeeFlowAddress,
       coreParams.ctarg,
@@ -32,8 +32,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   // set minter and burner roles
-  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, MocCore.address, { gasLimit: GAS_LIMIT_PATCH }));
-  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, MocCore.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
 
   return hre.network.live; // prevents re execution on live networks
 };

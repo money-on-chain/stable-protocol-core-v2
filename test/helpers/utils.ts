@@ -40,12 +40,14 @@ export const ERRORS = {
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
-  TRANSFER_FAIL: "TransferFail",
+  TRANSFER_FAIL: "TransferFailed",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
 };
 
 export const CONSTANTS = {
   ZERO_ADDRESS: ethers.constants.AddressZero,
+  MAX_UINT256: ethers.constants.MaxUint256,
+  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
   PRECISION: BigNumber.from((1e18).toString()),
   ONE: BigNumber.from((1e18).toString()),
 };

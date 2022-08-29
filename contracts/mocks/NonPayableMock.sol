@@ -1,6 +1,6 @@
 pragma solidity 0.8.16;
 
-contract NonPayable {
+contract NonPayableMock {
     function forward(address dest_, bytes calldata data_) external payable {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = dest_.call{ value: msg.value }(data_);

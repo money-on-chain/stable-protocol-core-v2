@@ -74,7 +74,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @notice mint Collateral Token in exchange for Collateral Asset
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @param sender_ address who sends the Collateral Asset
+     * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Collateral Token
      */
     function _mintTCto(

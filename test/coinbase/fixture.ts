@@ -5,7 +5,7 @@ import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
 import { tpParams } from "../../deploy-config/config";
 
 export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promise<{
-  mocCore: MocCACoinbase;
+  mocImpl: MocCACoinbase;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
 }> {
@@ -15,7 +15,7 @@ export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promi
 
     const deployedMocContract = await deployments.getOrNull("MocCACoinbase");
     if (!deployedMocContract) throw new Error("No MocCACoinbase deployed.");
-    const mocCore: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContract.address, signer);
+    const mocImpl: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContract.address, signer);
 
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
     if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
@@ -28,7 +28,7 @@ export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promi
       await peggedToken.grantRole(BURNER_ROLE, deployedMocContract.address);
 
       const priceProvider = await deployPriceProvider(pEth(1));
-      await mocCore.addPeggedToken(
+      await mocImpl.addPeggedToken(
         peggedToken.address,
         priceProvider.address,
         tpParams.r,
@@ -40,7 +40,7 @@ export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promi
     }
 
     return {
-      mocCore,
+      mocImpl,
       mocCollateralToken,
       mocPeggedTokens,
     };

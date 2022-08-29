@@ -13,7 +13,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20");
   if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
-  const MocCore: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
@@ -34,7 +34,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // initializations
   await waitForTxConfirmation(
-    MocCore.initialize(
+    mocImpl.initialize(
       collateralAssetToken,
       CollateralToken.address,
       mocAddresses[network].mocFeeFlowAddress,
@@ -47,8 +47,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   // set minter and burner roles
-  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, MocCore.address, { gasLimit: GAS_LIMIT_PATCH }));
-  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, MocCore.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
 
   return hre.network.live; // prevents re execution on live networks
 };
