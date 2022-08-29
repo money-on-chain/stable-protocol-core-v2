@@ -230,7 +230,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         if (cglb < ctargemaTP) revert LowCoverage(cglb, ctargemaTP);
 
         uint256 ctargemaCA = getCtargemaCA();
-        uint256 tpAvailableToMint = getTPAvailableToMint(ctargemaCA, pTPac, lckAC);
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA, pTPac, lckAC);
 
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);

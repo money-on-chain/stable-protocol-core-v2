@@ -106,7 +106,7 @@ abstract contract MocBaseBucket is MocHelper {
      * @param pTPac_ Pegged Token price [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      */
-    function getTPAvailableToMint(
+    function _getTPAvailableToMint(
         uint256 ctargemaCA_,
         uint256 pTPac_,
         uint256 lckAC_

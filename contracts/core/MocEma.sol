@@ -77,7 +77,8 @@ abstract contract MocEma is MocBaseBucket {
         uint256 term2 = (PRECISION * currentTPema.sf) / pTPac;
         // [PREC] = [PREC] + [PREC]
         uint256 newEma = term1 + term2;
+        // save new ema value to storage
         tpEma[i_].ema = newEma;
-        emit TPemaUpdated(i_, tpEma[i_].ema, newEma);
+        emit TPemaUpdated(i_, currentTPema.ema, newEma);
     }
 }
