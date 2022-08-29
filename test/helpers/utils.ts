@@ -1,7 +1,9 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ERC20Mock, PriceProviderMock, MocRC20 } from "../../typechain";
+import { ERC20Mock, PriceProviderMock, MocRC20, MocCore } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
+import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
+import { tpParams } from "../../deploy-config/config";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -13,6 +15,29 @@ export function pEth(eth: string | number): BigNumber {
 export async function deployPeggedToken(): Promise<MocRC20> {
   const factory = await ethers.getContractFactory("MocRC20");
   return factory.deploy("PeggedToken", "PeggedToken");
+}
+
+export async function deployAndAddPeggedTokens(mocImpl: MocCore, amountPegTokens: number): Promise<MocRC20[]> {
+  const mocPeggedTokens: Array<MocRC20> = [];
+  for (let i = 1; i <= amountPegTokens; i++) {
+    const peggedToken = await deployPeggedToken();
+    await peggedToken.grantRole(MINTER_ROLE, mocImpl.address);
+    await peggedToken.grantRole(BURNER_ROLE, mocImpl.address);
+
+    const priceProvider = await deployPriceProvider(pEth(1));
+    await mocImpl.addPeggedToken(
+      peggedToken.address,
+      priceProvider.address,
+      tpParams.r,
+      tpParams.bmin,
+      tpParams.mintFee,
+      tpParams.redeemFee,
+      tpParams.initialEma,
+      tpParams.smoothingFactor,
+    );
+    mocPeggedTokens.push(peggedToken);
+  }
+  return mocPeggedTokens;
 }
 
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {

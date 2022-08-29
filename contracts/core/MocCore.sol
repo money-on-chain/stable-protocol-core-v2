@@ -15,17 +15,21 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
+    event TPMinted(address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
         address indexed tpTokenAddress_,
         address priceProviderAddress_,
         uint256 tpR_,
         uint256 tpBmin_,
         uint256 tpMintFee_,
-        uint256 tpRedeemFee_
+        uint256 tpRedeemFee_,
+        uint256 tpEma_,
+        uint256 tpEmaSf_
     );
     // ------- Custom Errors -------
     error LowCoverage(uint256 cglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
+    error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
 
     // ------- Initializer -------
     /**
@@ -100,6 +104,38 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNedeed);
     }
 
+    /**
+     * @notice mint Pegged Token in exchange for Collateral Asset
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
+     * @param recipient_ address who receives the Pegged Token
+     */
+    function _mintTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address sender_,
+        address recipient_
+    ) internal {
+        // calculate how many qAC are nedeed to mint TP and the qAC fee
+        (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTP(i_, qTP_);
+        uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
+        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACtotalNedeed, qACmax_);
+        // add qTP and qAC to the Bucket
+        _depositTP(i_, qTP_, qACNedeedtoMint);
+        // mint qTP to the recipient
+        tpToken[i_].mint(recipient_, qTP_);
+        // calculate how many qAC should be returned to the sender
+        uint256 qACchg = qACmax_ - qACtotalNedeed;
+        // transfer qAC to the sender
+        acTransfer(sender_, qACchg);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        emit TPMinted(sender_, recipient_, qTP_, qACtotalNedeed);
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -111,6 +147,8 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @param tpBmin_ Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
      * @param tpMintFee_ fee pct sent to Fee Flow for mint [PREC]
      * @param tpRedeemFee_ fee pct sent to Fee Flow for redeem [PREC]
+     * @param tpEma_ initial Pegged Token exponential moving average [PREC]
+     * @param tpEmaSf_ Pegged Token smoothing factor [PREC]
      */
     function addPeggedToken(
         address tpTokenAddress_,
@@ -118,12 +156,15 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 tpR_,
         uint256 tpBmin_,
         uint256 tpMintFee_,
-        uint256 tpRedeemFee_
+        uint256 tpRedeemFee_,
+        uint256 tpEma_,
+        uint256 tpEmaSf_
     ) public {
         if (tpTokenAddress_ == address(0)) revert InvalidAddress();
         if (priceProviderAddress_ == address(0)) revert InvalidAddress();
         if (tpMintFee_ > PRECISION) revert InvalidValue();
         if (tpRedeemFee_ > PRECISION) revert InvalidValue();
+        if (tpEmaSf_ >= ONE) revert InvalidValue();
         // set Pegged Token address
         tpToken.push(IMocRC20(tpTokenAddress_));
         // set peg container item
@@ -136,7 +177,18 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         tpMintFee.push(tpMintFee_);
         // set redeem fee pct
         tpRedeemFee.push(tpRedeemFee_);
-        emit PeggedTokenAdded(tpTokenAddress_, priceProviderAddress_, tpR_, tpBmin_, tpMintFee_, tpRedeemFee_);
+        // set EMA initial value and smoothing factor
+        tpEma.push(EmaItem({ ema: tpEma_, sf: tpEmaSf_ }));
+        emit PeggedTokenAdded(
+            tpTokenAddress_,
+            priceProviderAddress_,
+            tpR_,
+            tpBmin_,
+            tpMintFee_,
+            tpRedeemFee_,
+            tpEma_,
+            tpEmaSf_
+        );
     }
 
     /**
@@ -149,7 +201,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
-        // check coverage is above the protected threshold
+        // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
         // calculate how many qAC are nedeed to mint TC
         // [N] = [N] * [PREC] / [PREC]
@@ -158,6 +210,37 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNedeedtoMint * tcMintFee) / PRECISION;
 
+        return (qACNedeedtoMint, qACfee);
+    }
+
+    /**
+     * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
+     * @param qTP_ amount of Pegged Token to mint
+     * @return qACNedeedtoMint amount of Collateral Asset nedeed to mint [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     */
+    function calcQACforMintTP(uint8 i_, uint256 qTP_) public view returns (uint256, uint256) {
+        if (qTP_ == 0) revert InvalidValue();
+        uint256 lckAC = getLckAC();
+        uint256 cglb = getCglb(lckAC);
+        uint256 pTPac = _getPTPac(i_);
+        uint256 ctargemaTP = getCtargemaTP(i_, pTPac);
+
+        // check if coverage is above the target coverage adjusted by the moving average
+        if (cglb < ctargemaTP) revert LowCoverage(cglb, ctargemaTP);
+
+        uint256 ctargemaCA = getCtargemaCA();
+        uint256 tpAvailableToMint = getTPAvailableToMint(ctargemaCA, pTPac, lckAC);
+
+        // check if there are enough TP available to mint
+        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
+
+        // calculate how many qAC are nedeed to mint TP
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACNedeedtoMint = (qTP_ * pTPac) / PRECISION;
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACfee = (qACNedeedtoMint * tpMintFee[i_]) / PRECISION;
         return (qACNedeedtoMint, qACfee);
     }
 }
