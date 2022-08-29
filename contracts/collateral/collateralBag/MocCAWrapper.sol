@@ -77,7 +77,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     }
 
     /**
-     * @notice given an amount of wrapped tokens calculate the equivalent in assets
+     * @notice given an amount of wrapped tokens, calculates the equivalent value in the given asset
      * @param assetAddress_ Asset contract address
      * @param wcaTokenAmount_ amount of wrapped tokens
      * @return assetAmount amount of Asset needed to wrap or unwrap the desired amount of wcaToken [N]

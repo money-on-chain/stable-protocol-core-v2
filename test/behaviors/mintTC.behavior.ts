@@ -63,7 +63,7 @@ const mintTCBehavior = function () {
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertPrec(100 * 1.05, diff);
       });
-      it("THEN a TCMinted event is emmited", async function () {
+      it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
         // receiver: alice
         // qTC: 100 TC
@@ -127,7 +127,7 @@ const mintTCBehavior = function () {
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertPrec(100 * 1.05, diff);
       });
-      it("THEN a TCMinted event is emmited", async function () {
+      it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
         // receiver: bob
         // qTC: 100 TC

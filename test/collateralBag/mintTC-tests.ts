@@ -60,10 +60,10 @@ describe("Feature: MocCARBag mint TC", function () {
             await mocFunctions.mintTC({ from: alice, qTC: 100, asset: newAsset });
           });
           it("THEN alice spent 116.66 new asset instead of 105", async () => {
-            //asset spent = 105 currency nedeed / 0.9 asset used price
+            //asset spent = 105 currency needed / 0.9 asset used price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetPrevBalance.sub(aliceNewAssetActualBalance);
-            assertPrec(pEth("116.666666666666666666"), diff);
+            assertPrec("116.666666666666666666", diff);
           });
         });
       });
@@ -80,10 +80,10 @@ describe("Feature: MocCARBag mint TC", function () {
             await mocFunctions.mintTC({ from: alice, qTC: 100, asset: newAsset });
           });
           it("THEN alice spent 95.45 new asset instead of 105", async () => {
-            //asset spent = 105 currency nedeed / 1.1 asset used price
+            //asset spent = 105 currency needed / 1.1 asset used price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetPrevBalance.sub(aliceNewAssetActualBalance);
-            assertPrec(pEth("95.454545454545454545"), diff);
+            assertPrec("95.454545454545454545", diff);
           });
         });
       });

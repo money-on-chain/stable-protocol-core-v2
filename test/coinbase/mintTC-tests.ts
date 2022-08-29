@@ -19,7 +19,7 @@ describe("Feature: MocCoinbase mint TC", function () {
     });
     mintTCBehavior();
 
-    describe("WHEN a non payable contract 1 mintTC with excedeed amount of rbtc", () => {
+    describe("WHEN a non payable contract tries to mintTC with exceeded amount of coinbase", () => {
       let nonPayable: NonPayable;
       beforeEach(async () => {
         const factory = await ethers.getContractFactory("NonPayable");

@@ -4,9 +4,9 @@ import { pEth } from "./utils";
 
 const mintTC =
   mocCore =>
-  async ({ from, qTC, qACmax = qTC * 10, applyPresicion = true }) => {
+  async ({ from, qTC, qACmax = qTC * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
-    if (applyPresicion) {
+    if (applyPrecision) {
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
@@ -15,33 +15,25 @@ const mintTC =
 
 const mintTCto =
   mocCore =>
-  async ({ from, to, qTC, qACmax = qTC * 10, applyPresicion = true }) => {
+  async ({ from, to, qTC, qACmax = qTC * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
-    if (applyPresicion) {
+    if (applyPrecision) {
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
     return mocCore.connect(signer).mintTCto(qTC, to, { value: qACmax, gasPrice: 0 });
   };
 
-const assetBalanceOf = () => account => {
-  return ethers.provider.getBalance(account);
-};
+const ethersGetBalance = () => account => ethers.provider.getBalance(account);
 
-const acBalanceOf = () => account => {
-  return ethers.provider.getBalance(account);
-};
-
-const tcBalanceOf = mocCollateralToken => async account => {
-  return mocCollateralToken.balanceOf(account);
-};
+const tcBalanceOf = mocCollateralToken => async account => mocCollateralToken.balanceOf(account);
 
 export const mocFunctionsCoinbase = async mocContracts => {
   return {
     mintTC: mintTC(mocContracts.mocCore),
     mintTCto: mintTCto(mocContracts.mocCore),
-    assetBalanceOf: assetBalanceOf(),
-    acBalanceOf: acBalanceOf(),
+    assetBalanceOf: ethersGetBalance(),
+    acBalanceOf: ethersGetBalance(),
     tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
   };
 };

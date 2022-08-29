@@ -4,9 +4,9 @@ import { pEth } from "./utils";
 
 const mintTC =
   (mocCore, collateralAsset) =>
-  async ({ from, qTC, qACmax = qTC * 10, applyPresicion = true }) => {
+  async ({ from, qTC, qACmax = qTC * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
-    if (applyPresicion) {
+    if (applyPrecision) {
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
@@ -16,9 +16,9 @@ const mintTC =
 
 const mintTCto =
   (mocCore, collateralAsset) =>
-  async ({ from, to, qTC, qACmax = qTC * 10, applyPresicion = true }) => {
+  async ({ from, to, qTC, qACmax = qTC * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
-    if (applyPresicion) {
+    if (applyPrecision) {
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
@@ -26,24 +26,12 @@ const mintTCto =
     return mocCore.connect(signer).mintTCto(qTC, qACmax, to);
   };
 
-const assetBalanceOf = collateralAsset => account => {
-  return collateralAsset.balanceOf(account);
-};
+const balanceOf = asset => account => asset.balanceOf(account);
 
-const acBalanceOf = collateralAsset => account => {
-  return collateralAsset.balanceOf(account);
-};
-
-const tcBalanceOf = mocCollateralToken => async account => {
-  return mocCollateralToken.balanceOf(account);
-};
-
-export const mocFunctionsRC20 = async (mocContracts, collateralAsset) => {
-  return {
-    mintTC: mintTC(mocContracts.mocCore, collateralAsset),
-    mintTCto: mintTCto(mocContracts.mocCore, collateralAsset),
-    assetBalanceOf: assetBalanceOf(collateralAsset),
-    acBalanceOf: acBalanceOf(collateralAsset),
-    tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
-  };
-};
+export const mocFunctionsRC20 = async (mocContracts, collateralAsset) => ({
+  mintTC: mintTC(mocContracts.mocCore, collateralAsset),
+  mintTCto: mintTCto(mocContracts.mocCore, collateralAsset),
+  assetBalanceOf: balanceOf(collateralAsset),
+  acBalanceOf: balanceOf(collateralAsset),
+  tcBalanceOf: balanceOf(mocContracts.mocCollateralToken),
+});

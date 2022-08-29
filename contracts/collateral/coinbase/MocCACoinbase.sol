@@ -47,7 +47,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
     // ------- External Functions -------
 
     /**
-     * @notice caller sends Collateral Asset and receives Collateral Token
+     * @notice caller sends coinbase as Collateral Asset and receives Collateral Token
+     * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
      */
     function mintTC(uint256 qTC_) external payable {
@@ -55,7 +56,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
     }
 
     /**
-     * @notice caller sends Collateral Asset and recipient receives Collateral Token
+     * @notice caller sends coinbase as Collateral Asset and recipient receives Collateral Token
+     * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
      */
