@@ -90,7 +90,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         // calculate how many qAC are nedeed to mint TC and the qAC fee
         (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTC(qTC_);
         uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
-        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACtotalNedeed, qACmax_);
+        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNedeed);
         // add qTC and qAC to the Bucket
         _depositTC(qTC_, qACNedeedtoMint);
         // mint qTC to the recipient
@@ -122,7 +122,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         // calculate how many qAC are nedeed to mint TP and the qAC fee
         (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTP(i_, qTP_);
         uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
-        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACtotalNedeed, qACmax_);
+        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNedeed);
         // add qTP and qAC to the Bucket
         _depositTP(i_, qTP_, qACNedeedtoMint);
         // mint qTP to the recipient

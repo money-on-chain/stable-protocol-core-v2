@@ -93,7 +93,7 @@ abstract contract MocBaseBucket is MocHelper {
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function _getPTPac(uint8 i_) internal view returns (uint256) {
+    function _getPTPac(uint8 i_) internal view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (bytes32 price, bool has) = priceProvider.peek();
         if (!has) revert InvalidPriceProvider(address(priceProvider));
@@ -113,7 +113,7 @@ abstract contract MocBaseBucket is MocHelper {
     ) internal view returns (uint256 tpAvailableToMint) {
         // [PREC] = (N + N) * [PREC] - ([PREC] * [PREC] / [PREC])
         uint256 num = (nACcb + nACioucb) * PRECISION - ((ctargemaCA_ * lckAC_) / PRECISION);
-        // [PREC] = [PREC] * [PREC] / [PREC]
+        // [PREC] = [PREC] * ([PREC] - [PREC]) / [PREC]
         uint256 den = (pTPac_ * (ctargemaCA_ - ONE)) / PRECISION;
         // [N] = [PREC] / [PREC]
         tpAvailableToMint = num / den;

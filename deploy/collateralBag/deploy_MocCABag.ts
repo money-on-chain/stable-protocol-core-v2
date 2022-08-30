@@ -6,7 +6,6 @@ const deployFunc: DeployFunction = async ({ deployments, getNamedAccounts, netwo
   const { deploy } = deployments;
 
   const deployResult = await deploy("MocCABag", {
-    contract: "MocCARC20",
     from: deployer,
     gasLimit: GAS_LIMIT_PATCH,
   });

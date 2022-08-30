@@ -9,12 +9,11 @@ import "../../core/MocCore.sol";
 contract MocCARC20 is MocCore {
     // ------- Storage -------
     // Collateral Asset token
-    MocRC20 private acToken;
+    MocRC20 internal acToken;
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @dev this function must be execute by the AC implementation at initialization
      * @param acTokenAddress_ Collateral Asset Token contract address
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
@@ -77,5 +76,39 @@ contract MocCARC20 is MocCore {
     ) external {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and receives Pegged Token
+        Requires prior sender approval of Collateral Asset to this contract 
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     */
+    function mintTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_
+    ) external {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Pegged Token
+        Requires prior sender approval of Collateral Asset to this contract 
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function mintTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    ) external {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }
 }

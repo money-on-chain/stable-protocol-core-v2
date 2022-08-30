@@ -130,6 +130,39 @@ contract MocCAWrapper is MocHelper, Initializable {
         mocCore.mintTCto(qTC_, qAC, recipient_);
     }
 
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param sender_ address who sends the Asset
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function _mintTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        // ask to Moc Core how many qAC(Wrapper Collateral Asset) are nedeed to mint qTP
+        (uint256 qACtoMint, uint256 qACfee) = mocCore.calcQACforMintTP(i_, qTP_);
+        uint256 qAC = qACtoMint + qACfee;
+        // calculates the equivalent value in the given asset
+        uint256 assetNedeed = _convertTokenToAsset(assetAddress_, qAC);
+        wcaToken.mint(address(this), qAC);
+
+        if (assetNedeed > qACmax_) revert InsufficientQacSent(qACmax_, assetNedeed);
+
+        // transfer asset from sender to this contract
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), assetNedeed);
+        // mint TP to the recipient
+        mocCore.mintTPto(i_, qTP_, qAC, recipient_);
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -200,5 +233,41 @@ contract MocCAWrapper is MocHelper, Initializable {
         address recipient_
     ) external {
         _mintTCto(assetAddress_, qTC_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Asset and receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Asset that can be spent
+     */
+    function mintTP(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_
+    ) external {
+        _mintTPto(assetAddress_, i_, qTP_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function mintTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    ) external {
+        _mintTPto(assetAddress_, i_, qTP_, qACmax_, msg.sender, recipient_);
     }
 }

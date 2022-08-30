@@ -106,7 +106,7 @@ const mintTCBehavior = function () {
         });
       });
     });
-    describe("WHEN alice sends 100 Asset to mint 100 TC to bob", function () {
+    describe("WHEN alice sends 105 Asset to mint 100 TC to bob", function () {
       let tx: ContractTransaction;
       let alicePrevACBalance: Balance;
       beforeEach(async function () {

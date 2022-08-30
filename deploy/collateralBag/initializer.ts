@@ -4,8 +4,8 @@ import { ethers } from "hardhat";
 import {
   MocRC20,
   MocRC20__factory,
-  MocCARC20,
-  MocCARC20__factory,
+  MocCABag,
+  MocCABag__factory,
   MocCAWrapper,
   MocCAWrapper__factory,
 } from "../../typechain";
@@ -19,7 +19,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocContract = await deployments.getOrNull("MocCABag");
   if (!deployedMocContract) throw new Error("No MocCABag deployed.");
-  const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const mocImpl: MocCABag = MocCABag__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
@@ -35,7 +35,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // initializations
   await waitForTxConfirmation(
-    mocImpl.initialize(
+    mocImpl["initialize(address,address,address,address,uint256,uint256,uint256,uint256)"](
+      MocCAWrapper.address,
       WCAToken.address,
       CollateralToken.address,
       mocAddresses[network].mocFeeFlowAddress,

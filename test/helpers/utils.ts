@@ -62,6 +62,7 @@ export const ERRORS = {
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
+  INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
