@@ -1,6 +1,5 @@
 pragma solidity ^0.8.16;
 
-import "hardhat/console.sol";
 import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
 import "./MocBaseBucket.sol";

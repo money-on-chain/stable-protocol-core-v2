@@ -4,17 +4,17 @@ import "../../interfaces/IChangeContract.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
-  @title UpgraderUUPSTemplate
+  @title UpgraderUUPSChangerTemplate
   @notice This contract is a ChangeContract intended to be used when
-  upgrading any contract upgradeable through the zos-lib upgradeability
+  upgrading a MOC UUPS contract, through the Moc upgradeability
   system. This doesn't initialize the upgraded contract, that should be done extending
   this one or taking it as a guide
  */
-abstract contract UpgraderUUPSTemplate is IChangeContract {
+abstract contract UpgraderUUPSChangerTemplate is IChangeContract {
     UUPSUpgradeable public proxy;
     address public newImplementation;
 
-    /**
+    /** 
     @notice Constructor
     @param proxy_ Address of the proxy to be upgraded
     @param newImplementation_ Address of the contract the proxy will delegate to

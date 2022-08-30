@@ -47,7 +47,7 @@ abstract contract MocCore is MocEma {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) internal onlyInitializing {
-        __MocUpgradable_init(stopper_, governor_);
+        __MocUpgradable_init(governor_, stopper_);
         __MocBaseBucket_init_unchained(
             tcTokenAddress_,
             mocFeeFlowAddress_,

@@ -19,6 +19,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function initialize(
+        address governor_,
+        address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         uint256 ctarg_,
@@ -26,10 +28,9 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) external initializer {
-        //TODO: Include gobernor and stopper
         __MocCore_init(
-            tcTokenAddress_,
-            mocFeeFlowAddress_,
+            governor_,
+            stopper_,
             tcTokenAddress_,
             mocFeeFlowAddress_,
             ctarg_,

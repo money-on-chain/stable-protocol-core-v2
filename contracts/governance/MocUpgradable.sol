@@ -2,6 +2,8 @@ pragma solidity ^0.8.16;
 
 import "../governance/Stoppable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+// Import to allow compilation and deploy of ERC1967Proxy
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 abstract contract MocUpgradable is UUPSUpgradeable, Stoppable {
     // ------- Initializer -------

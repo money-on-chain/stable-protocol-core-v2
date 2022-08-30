@@ -21,12 +21,18 @@ export const tpParams = {
 
 export const mocAddresses = {
   mainnet: {
+    governor: "",
+    stopper: "",
     mocFeeFlowAddress: "",
   },
   rsktestnet: {
+    governor: "",
+    stopper: "",
     mocFeeFlowAddress: "",
   },
   hardhat: {
+    governor: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
+    stopper: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
     mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
   },
 };
