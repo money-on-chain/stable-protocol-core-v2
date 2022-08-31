@@ -13,6 +13,8 @@ describe("Feature: MocCABag mint TC", function () {
   let mocWrapper: MocCAWrapper;
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
+  let mocPeggedTokens: MocRC20[];
+  let priceProviders: PriceProviderMock[];
   let asset: ERC20Mock;
   let mocFunctions: any;
   let alice: Address;
@@ -20,9 +22,13 @@ describe("Feature: MocCABag mint TC", function () {
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
       ({ alice } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocCABag(0);
-      ({ mocImpl, mocWrapper, mocCollateralToken, wcaToken, asset } = await fixtureDeploy());
-      mocFunctions = await mocFunctionsCARBag({ mocImpl, mocCollateralToken, mocWrapper, wcaToken }, asset);
+      const fixtureDeploy = fixtureDeployedMocCABag(1);
+      ({ mocImpl, mocWrapper, mocCollateralToken, wcaToken, asset, mocPeggedTokens, priceProviders } =
+        await fixtureDeploy());
+      mocFunctions = await mocFunctionsCARBag(
+        { mocImpl, mocCollateralToken, mocWrapper, wcaToken, mocPeggedTokens, priceProviders },
+        asset,
+      );
       this.mocFunctions = mocFunctions;
       this.mocContracts = { mocImpl, mocWrapper, mocCollateralToken };
     });
@@ -58,7 +64,7 @@ describe("Feature: MocCABag mint TC", function () {
       describe("WHEN add a new asset with price 0.9", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
-          newPriceProvider = await deployPriceProvider(pEth("0.9"));
+          newPriceProvider = await deployPriceProvider(pEth(0.9));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
         describe("AND mint 100 TC with new asset", () => {
@@ -78,7 +84,7 @@ describe("Feature: MocCABag mint TC", function () {
       describe("WHEN add a new asset with price 1.1", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
-          newPriceProvider = await deployPriceProvider(pEth("1.1"));
+          newPriceProvider = await deployPriceProvider(pEth(1.1));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
         describe("AND mint 100 TC with new asset", () => {

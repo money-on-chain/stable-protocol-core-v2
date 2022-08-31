@@ -203,6 +203,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
+
         // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
         // calculate how many qAC are needed to mint TC
@@ -229,13 +230,13 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 ctargemaTP = getCtargemaTP(i_, pTPac);
 
         // check if coverage is above the target coverage adjusted by the moving average
-        if (cglb < ctargemaTP) revert LowCoverage(cglb, ctargemaTP);
+        if (cglb <= ctargemaTP) revert LowCoverage(cglb, ctargemaTP);
 
         uint256 ctargemaCA = getCtargemaCA();
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA, pTPac, lckAC);
 
         // check if there are enough TP available to mint
-        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
+        if (tpAvailableToMint <= qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]

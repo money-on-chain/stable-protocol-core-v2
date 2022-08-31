@@ -76,10 +76,16 @@ contract MocCAWrapper is MocHelper, Initializable {
         return uint256(price);
     }
 
+    /**
+     * @notice given an amount of Asset, calculates the equivalent value in wrapped tokens
+     * @param assetAddress_ Asset contract address
+     * @param assetAmount_ amount of Asset to wrap
+     * @return wcaTokenAmount amount of wcaToken [N]
+     */
     function _convertAssetToToken(address assetAddress_, uint256 assetAmount_)
         internal
         view
-        returns (uint256 tokenToMint)
+        returns (uint256 wcaTokenAmount)
     {
         // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
         // [PREC]

@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCoinbase } from "./fixture";
-import { MocCACoinbase, MocRC20, NonPayableMock, ReentrancyAttackerMock } from "../../typechain";
+import { MocCACoinbase, MocRC20, NonPayableMock, PriceProviderMock, ReentrancyAttackerMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { ethers, getNamedAccounts } from "hardhat";
@@ -11,6 +11,7 @@ describe("Feature: MocCoinbase mint TP", function () {
   let mocImpl: MocCACoinbase;
   let mocCollateralToken: MocRC20;
   let mocPeggedTokens: MocRC20[];
+  let priceProviders: PriceProviderMock[];
   let mocFunctions: any;
   let deployer: Address;
 
@@ -18,8 +19,8 @@ describe("Feature: MocCoinbase mint TP", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(5);
-      ({ mocImpl, mocCollateralToken, mocPeggedTokens } = await fixtureDeploy());
-      mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens });
+      ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
+      mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
       this.mocFunctions = mocFunctions;
       this.mocContracts = { mocImpl, mocCollateralToken };
     });

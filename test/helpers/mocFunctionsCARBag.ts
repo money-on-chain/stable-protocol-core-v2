@@ -61,6 +61,7 @@ const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].
 const addAsset = mocWrapper => async (asset, priceProvider) => {
   return mocWrapper.addAsset(asset.address, priceProvider.address);
 };
+const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
 
 export const mocFunctionsCARBag = async (mocContracts, assetDefault) => {
   return {
@@ -73,5 +74,6 @@ export const mocFunctionsCARBag = async (mocContracts, assetDefault) => {
     tcBalanceOf: balanceOf(mocContracts.mocCollateralToken),
     tpBalanceOf: tpBalanceOf(mocContracts.mocPeggedTokens),
     addAsset: addAsset(mocContracts.mocWrapper),
+    pokePrice: pokePrice(mocContracts.priceProviders),
   };
 };

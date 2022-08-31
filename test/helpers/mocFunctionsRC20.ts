@@ -52,6 +52,7 @@ const mintTPto =
 
 const balanceOf = asset => account => asset.balanceOf(account);
 const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].balanceOf(account);
+const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
 
 export const mocFunctionsRC20 = async (mocContracts, collateralAsset) => ({
   mintTC: mintTC(mocContracts.mocImpl, collateralAsset),
@@ -62,4 +63,5 @@ export const mocFunctionsRC20 = async (mocContracts, collateralAsset) => ({
   acBalanceOf: balanceOf(collateralAsset),
   tcBalanceOf: balanceOf(mocContracts.mocCollateralToken),
   tpBalanceOf: tpBalanceOf(mocContracts.mocPeggedTokens),
+  pokePrice: pokePrice(mocContracts.priceProviders),
 });

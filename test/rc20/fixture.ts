@@ -6,6 +6,7 @@ import {
   MocCARC20__factory,
   MocRC20,
   MocRC20__factory,
+  PriceProviderMock,
 } from "../../typechain";
 import { pEth, deployAndAddPeggedTokens } from "../helpers/utils";
 
@@ -13,6 +14,7 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
   mocImpl: MocCARC20;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
+  priceProviders: PriceProviderMock[];
   collateralAsset: ERC20Mock;
 }> {
   return deployments.createFixture(async ({ ethers }) => {
@@ -34,12 +36,13 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
     const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(deployedERC20MockContract.address, signer);
     await collateralAsset.mint(alice, pEth(100000));
 
-    const mocPeggedTokens = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
+    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
 
     return {
       mocImpl,
       mocCollateralToken,
       mocPeggedTokens,
+      priceProviders,
       collateralAsset,
     };
   });

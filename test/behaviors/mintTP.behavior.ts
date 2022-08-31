@@ -202,6 +202,94 @@ const mintTPBehavior = function () {
             .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
         });
       });
+      describe("AND 100 TP minted", function () {
+        beforeEach(async function () {
+          await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
+        });
+        describe("AND Pegged Token price raise to 7.75", function () {
+          /*  
+            nAC = 3100    
+            nTP = 100
+            lckAC = 775
+            => coverage = 4 
+        */
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(0, 7.75);
+          });
+          describe("WHEN Alice tries to mint 1 TP", function () {
+            it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
+              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 1 })).to.be.revertedWithCustomError(
+                mocContracts.mocImpl,
+                ERRORS.LOW_COVERAGE,
+              );
+            });
+          });
+        });
+        describe("AND Pegged Token price raise to 2, so there are 383.33 TP available to mint", function () {
+          /*  
+            nAC = 3100    
+            nTP = 100
+            lckAC = 200
+            ctarg = 4
+            => TP available to mint = 383.33
+        */
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(0, 2);
+          });
+          describe("WHEN Alice tries to mint 383.34 TP", function () {
+            it("THEN tx reverts because there is not enough TP to mint", async function () {
+              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 383.34 })).to.be.revertedWithCustomError(
+                mocContracts.mocImpl,
+                ERRORS.INSUFFICIENT_TP_TO_MINT,
+              );
+            });
+          });
+          describe("WHEN Alice to mints 383.33 TP", function () {
+            let alicePrevTPBalance: Balance;
+            beforeEach(async function () {
+              alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);
+              await mocFunctions.mintTP({ i: 0, from: alice, qTP: 383.33 });
+            });
+            it("THEN alice receives 383.33 TP", async function () {
+              const aliceActualTPBalance = await mocFunctions.tpBalanceOf(0, alice);
+              const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
+              assertPrec(383.33, diff);
+            });
+          });
+        });
+        describe("AND Pegged Token price falls to 0.5, so there are 771.428 TP available to mint", function () {
+          /*  
+            nAC = 3100    
+            nTP = 100
+            lckAC = 50
+            ctarg = 8
+            => TP available to mint = 771.428
+        */
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(0, 0.5);
+          });
+          describe("WHEN Alice tries to mint 771.429 TP", function () {
+            it("THEN tx reverts because there is not enough TP to mint", async function () {
+              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 771.429 })).to.be.revertedWithCustomError(
+                mocContracts.mocImpl,
+                ERRORS.INSUFFICIENT_TP_TO_MINT,
+              );
+            });
+          });
+          describe("WHEN Alice to mints 771.428 TP", function () {
+            let alicePrevTPBalance: Balance;
+            beforeEach(async function () {
+              alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);
+              await mocFunctions.mintTP({ i: 0, from: alice, qTP: 771.428 });
+            });
+            it("THEN alice receives 771.428 TP", async function () {
+              const aliceActualTPBalance = await mocFunctions.tpBalanceOf(0, alice);
+              const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
+              assertPrec(771.428, diff);
+            });
+          });
+        });
+      });
     });
   });
 };

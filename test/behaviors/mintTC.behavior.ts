@@ -9,6 +9,7 @@ import { expect } from "chai";
 const mintTCBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
+  let deployer: Address;
   let alice: Address;
   let bob: Address;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
@@ -17,7 +18,7 @@ const mintTCBehavior = function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
-      ({ alice, bob } = await getNamedAccounts());
+      ({ deployer, alice, bob } = await getNamedAccounts());
     });
     describe("WHEN alice sends 0 Asset to mint TC", function () {
       it("THEN tx reverts because the amount of AC is invalid", async function () {
@@ -135,6 +136,31 @@ const mintTCBehavior = function () {
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
           .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
+      });
+    });
+    describe("GIVEN 300 TC and 100 TP minted", function () {
+      beforeEach(async function () {
+        await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+        await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
+      });
+      describe("AND Pegged Token price raise to 15.5", function () {
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(0, 15.5);
+        });
+        describe("WHEN Alice tries to mint 100 TC", function () {
+          /*  
+            nAC = 3100    
+            nTP = 100
+            lckAC = 1550
+            => coverage = 2 
+        */
+          it("THEN tx reverts because coverage is below the protected threshold", async function () {
+            await expect(mocFunctions.mintTC({ from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.LOW_COVERAGE,
+            );
+          });
+        });
       });
     });
   });

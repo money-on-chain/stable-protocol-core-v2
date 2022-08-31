@@ -7,7 +7,7 @@ import { tpParams } from "../../deploy-config/config";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
-  if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false });
+  if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false }).replace(",", ".");
   else ethStr = eth;
   return ethers.utils.parseEther(ethStr);
 }
@@ -17,8 +17,12 @@ export async function deployPeggedToken(): Promise<MocRC20> {
   return factory.deploy("PeggedToken", "PeggedToken");
 }
 
-export async function deployAndAddPeggedTokens(mocImpl: MocCore, amountPegTokens: number): Promise<MocRC20[]> {
+export async function deployAndAddPeggedTokens(
+  mocImpl: MocCore,
+  amountPegTokens: number,
+): Promise<{ mocPeggedTokens: MocRC20[]; priceProviders: PriceProviderMock[] }> {
   const mocPeggedTokens: Array<MocRC20> = [];
+  const priceProviders: Array<PriceProviderMock> = [];
   for (let i = 1; i <= amountPegTokens; i++) {
     const peggedToken = await deployPeggedToken();
     await peggedToken.grantRole(MINTER_ROLE, mocImpl.address);
@@ -36,8 +40,9 @@ export async function deployAndAddPeggedTokens(mocImpl: MocCore, amountPegTokens
       tpParams.smoothingFactor,
     );
     mocPeggedTokens.push(peggedToken);
+    priceProviders.push(priceProvider);
   }
-  return mocPeggedTokens;
+  return { mocPeggedTokens, priceProviders };
 }
 
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
@@ -68,6 +73,7 @@ export const ERRORS = {
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
   TRANSFER_FAIL: "TransferFailed",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
+  LOW_COVERAGE: "LowCoverage",
 };
 
 export const CONSTANTS = {

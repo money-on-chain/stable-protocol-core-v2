@@ -50,6 +50,7 @@ const ethersGetBalance = () => account => ethers.provider.getBalance(account);
 
 const tcBalanceOf = mocCollateralToken => async account => mocCollateralToken.balanceOf(account);
 const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].balanceOf(account);
+const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
 
 export const mocFunctionsCoinbase = async mocContracts => {
   return {
@@ -61,5 +62,6 @@ export const mocFunctionsCoinbase = async mocContracts => {
     acBalanceOf: ethersGetBalance(),
     tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
     tpBalanceOf: tpBalanceOf(mocContracts.mocPeggedTokens),
+    pokePrice: pokePrice(mocContracts.priceProviders),
   };
 };

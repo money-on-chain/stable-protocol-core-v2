@@ -7,6 +7,7 @@ import {
   MocCAWrapper__factory,
   MocRC20,
   MocRC20__factory,
+  PriceProviderMock,
 } from "../../typechain";
 import { pEth, deployAndAddPeggedTokens, deployPriceProvider, deployAsset } from "../helpers/utils";
 
@@ -15,6 +16,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
   mocWrapper: MocCAWrapper;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
+  priceProviders: PriceProviderMock[];
   wcaToken: MocRC20;
   asset: ERC20Mock;
 }> {
@@ -38,7 +40,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
     if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
     const wcaToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-    const mocPeggedTokens = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
+    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
 
     const asset = await deployAsset();
     const assetPriceProvider = await deployPriceProvider(pEth(1));
@@ -49,6 +51,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
       mocWrapper,
       mocCollateralToken,
       mocPeggedTokens,
+      priceProviders,
       wcaToken,
       asset,
     };
