@@ -1,7 +1,7 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { MocRC20 } from "../../typechain";
-import { MINTER_ROLE, BURNER_ROLE } from "../helpers/utils";
+import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Feature: MocRC20 Role Access restrictions", () => {

@@ -63,6 +63,8 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: 0,
     otherUser: 1,
+    alice: 2,
+    bob: 3,
   },
   networks: {
     hardhat: {
@@ -70,6 +72,8 @@ const config: HardhatUserConfig = {
         mnemonic,
       },
       chainId: chainIds.hardhat,
+      gasPrice: 0,
+      initialBaseFeePerGas: 0,
     },
     goerli: createTestnetConfig("goerli"),
     kovan: createTestnetConfig("kovan"),
