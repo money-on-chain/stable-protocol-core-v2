@@ -51,8 +51,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
      */
-    function mintTC(uint256 qTC_) external payable {
-        _mintTCto(qTC_, msg.value, msg.sender, msg.sender);
+    function mintTC(uint256 qTC_) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTCto(qTC_, msg.value, msg.sender, msg.sender);
     }
 
     /**
@@ -61,8 +61,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
      */
-    function mintTCto(uint256 qTC_, address recipient_) external payable {
-        _mintTCto(qTC_, msg.value, msg.sender, recipient_);
+    function mintTCto(uint256 qTC_, address recipient_) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTCto(qTC_, msg.value, msg.sender, recipient_);
     }
 
     /**
@@ -71,8 +71,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @param i_ Pegged Token index to mint
      * @param qTP_ amount of Collateral Token to mint
      */
-    function mintTP(uint8 i_, uint256 qTP_) external payable {
-        _mintTPto(i_, qTP_, msg.value, msg.sender, msg.sender);
+    function mintTP(uint8 i_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTPto(i_, qTP_, msg.value, msg.sender, msg.sender);
     }
 
     /**
@@ -86,7 +86,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
         uint8 i_,
         uint256 qTP_,
         address recipient_
-    ) external payable {
-        _mintTPto(i_, qTP_, msg.value, msg.sender, recipient_);
+    ) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTPto(i_, qTP_, msg.value, msg.sender, recipient_);
     }
 }

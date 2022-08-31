@@ -13,7 +13,7 @@ contract MocCAWrapper is MocHelper, Initializable {
     // ------- Custom Errors -------
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
-    error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
+    error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     // ------- Structs -------
     struct Asset {
         // asset token
@@ -76,6 +76,22 @@ contract MocCAWrapper is MocHelper, Initializable {
         return uint256(price);
     }
 
+    function _convertAssetToToken(address assetAddress_, uint256 assetAmount_)
+        internal
+        view
+        returns (uint256 tokenToMint)
+    {
+        // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
+        // [PREC]
+        uint256 wcaTokenPrice = getTokenPrice();
+        // calculate how much currency will increment the pool
+        // [PREC] = [N] * [PREC]
+        uint256 currencyToAdd = assetAmount_ * _getAssetPrice(priceProviderMap[assetAddress_]);
+        // divide by wrapped token price to get the equivalent amount of tokens
+        // [N] = [PREC] / [PREC]
+        return currencyToAdd / wcaTokenPrice;
+    }
+
     /**
      * @notice given an amount of wrapped tokens, calculates the equivalent value in the given asset
      * @param assetAddress_ Asset contract address
@@ -92,10 +108,10 @@ contract MocCAWrapper is MocHelper, Initializable {
         uint256 wcaTokenPrice = getTokenPrice();
         // multply by wcaTokenAmount_ to get how many currency we need
         // [PREC] = [PREC] * [N]
-        uint256 currencyNedeed = wcaTokenPrice * wcaTokenAmount_;
+        uint256 currencyNeeded = wcaTokenPrice * wcaTokenAmount_;
         // divide currencyNedded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
-        return currencyNedeed / _getAssetPrice(priceProviderMap[assetAddress_]);
+        return currencyNeeded / _getAssetPrice(priceProviderMap[assetAddress_]);
     }
 
     /**
@@ -114,20 +130,22 @@ contract MocCAWrapper is MocHelper, Initializable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        // ask to Moc Core how many qAC(Wrapper Collateral Asset) are nedeed to mint qTC
-        (uint256 qACtoMint, uint256 qACfee) = mocCore.calcQACforMintTC(qTC_);
-        uint256 qAC = qACtoMint + qACfee;
-        // calculates the equivalent value in the given asset
-        uint256 assetNedeed = _convertTokenToAsset(assetAddress_, qAC);
-        wcaToken.mint(address(this), qAC);
-
-        if (assetNedeed > qACmax_) revert InsufficientQacSent(qACmax_, assetNedeed);
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qACmax_);
+        wcaToken.mint(address(this), tokenToMint);
 
         // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), assetNedeed);
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qACmax_);
 
         // mint TC to the recipient
-        mocCore.mintTCto(qTC_, qAC, recipient_);
+        uint256 tokenUsed = mocCore.mintTCto(qTC_, tokenToMint, recipient_);
+        uint256 tokenUnused = tokenToMint - tokenUsed;
+
+        // calculates the equivalent value in the given asset
+        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
+        wcaToken.burn(address(this), tokenUnused);
+
+        // transfer back to sender the unused asset
+        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
     }
 
     /**
@@ -148,19 +166,22 @@ contract MocCAWrapper is MocHelper, Initializable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        // ask to Moc Core how many qAC(Wrapper Collateral Asset) are nedeed to mint qTP
-        (uint256 qACtoMint, uint256 qACfee) = mocCore.calcQACforMintTP(i_, qTP_);
-        uint256 qAC = qACtoMint + qACfee;
-        // calculates the equivalent value in the given asset
-        uint256 assetNedeed = _convertTokenToAsset(assetAddress_, qAC);
-        wcaToken.mint(address(this), qAC);
-
-        if (assetNedeed > qACmax_) revert InsufficientQacSent(qACmax_, assetNedeed);
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qACmax_);
+        wcaToken.mint(address(this), tokenToMint);
 
         // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), assetNedeed);
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qACmax_);
+
         // mint TP to the recipient
-        mocCore.mintTPto(i_, qTP_, qAC, recipient_);
+        uint256 tokenUsed = mocCore.mintTPto(i_, qTP_, tokenToMint, recipient_);
+        uint256 tokenUnused = tokenToMint - tokenUsed;
+
+        // calculates the equivalent value in the given asset
+        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
+        wcaToken.burn(address(this), tokenUnused);
+
+        // transfer back to sender the unused asset
+        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
     }
 
     // ------- Public Functions -------

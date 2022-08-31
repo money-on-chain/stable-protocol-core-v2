@@ -28,7 +28,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     );
     // ------- Custom Errors -------
     error LowCoverage(uint256 cglb_, uint256 protThrld_);
-    error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
+    error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
 
     // ------- Initializer -------
@@ -86,22 +86,23 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal {
-        // calculate how many qAC are nedeed to mint TC and the qAC fee
-        (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTC(qTC_);
-        uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
-        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNedeed);
+    ) internal returns (uint256 qACtotalNeeded) {
+        // calculate how many qAC are needed to mint TC and the qAC fee
+        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_);
+        qACtotalNeeded = qACNeededtoMint + qACfee;
+        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // add qTC and qAC to the Bucket
-        _depositTC(qTC_, qACNedeedtoMint);
+        _depositTC(qTC_, qACNeededtoMint);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTC_);
         // calculate how many qAC should be returned to the sender
-        uint256 qACchg = qACmax_ - qACtotalNedeed;
+        uint256 qACchg = qACmax_ - qACtotalNeeded;
         // transfer qAC to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TCMinted(sender_, recipient_, qTC_, qACtotalNedeed);
+        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded);
+        return qACtotalNeeded;
     }
 
     /**
@@ -118,22 +119,23 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal {
-        // calculate how many qAC are nedeed to mint TP and the qAC fee
-        (uint256 qACNedeedtoMint, uint256 qACfee) = calcQACforMintTP(i_, qTP_);
-        uint256 qACtotalNedeed = qACNedeedtoMint + qACfee;
-        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNedeed);
+    ) internal returns (uint256 qACtotalNeeded) {
+        // calculate how many qAC are needed to mint TP and the qAC fee
+        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_);
+        qACtotalNeeded = qACNeededtoMint + qACfee;
+        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // add qTP and qAC to the Bucket
-        _depositTP(i_, qTP_, qACNedeedtoMint);
+        _depositTP(i_, qTP_, qACNeededtoMint);
         // mint qTP to the recipient
         tpToken[i_].mint(recipient_, qTP_);
         // calculate how many qAC should be returned to the sender
-        uint256 qACchg = qACmax_ - qACtotalNedeed;
+        uint256 qACchg = qACmax_ - qACtotalNeeded;
         // transfer qAC to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TPMinted(sender_, recipient_, qTP_, qACtotalNedeed);
+        emit TPMinted(sender_, recipient_, qTP_, qACtotalNeeded);
+        return qACtotalNeeded;
     }
 
     // ------- Public Functions -------
@@ -194,32 +196,32 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token
      * @param qTC_ amount of Collateral Token to mint
-     * @return qACNedeedtoMint amount of Collateral Asset nedeed to mint [N]
+     * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function calcQACforMintTC(uint256 qTC_) public view returns (uint256 qACNedeedtoMint, uint256 qACfee) {
+    function _calcQACforMintTC(uint256 qTC_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
         // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
-        // calculate how many qAC are nedeed to mint TC
+        // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
-        qACNedeedtoMint = (qTC_ * getPTCac(lckAC)) / PRECISION;
+        qACNeededtoMint = (qTC_ * getPTCac(lckAC)) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        qACfee = (qACNedeedtoMint * tcMintFee) / PRECISION;
+        qACfee = (qACNeededtoMint * tcMintFee) / PRECISION;
 
-        return (qACNedeedtoMint, qACfee);
+        return (qACNeededtoMint, qACfee);
     }
 
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
      * @param qTP_ amount of Pegged Token to mint
-     * @return qACNedeedtoMint amount of Collateral Asset nedeed to mint [N]
+     * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function calcQACforMintTP(uint8 i_, uint256 qTP_) public view returns (uint256, uint256) {
+    function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal view returns (uint256, uint256) {
         if (qTP_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
@@ -235,12 +237,12 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
-        // calculate how many qAC are nedeed to mint TP
+        // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACNedeedtoMint = (qTP_ * pTPac) / PRECISION;
+        uint256 qACNeededtoMint = (qTP_ * pTPac) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACfee = (qACNedeedtoMint * tpMintFee[i_]) / PRECISION;
-        return (qACNedeedtoMint, qACfee);
+        uint256 qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
+        return (qACNeededtoMint, qACfee);
     }
 }

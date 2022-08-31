@@ -1,9 +1,12 @@
 import { fixtureDeployedMocCABag } from "./fixture";
-import { ERC20Mock, MocCARC20, MocCAWrapper, MocRC20 } from "../../typechain";
+import { ERC20Mock, MocCARC20, MocCAWrapper, MocRC20, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
-import { deployAsset, ERRORS } from "../helpers/utils";
+import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth } from "../helpers/utils";
 import { expect } from "chai";
+import { Address } from "hardhat-deploy/types";
+import { getNamedAccounts } from "hardhat";
+import { assertPrec } from "../helpers/assertHelper";
 
 describe("Feature: MocCABag mint TP", function () {
   let mocImpl: MocCARC20;
@@ -13,9 +16,12 @@ describe("Feature: MocCABag mint TP", function () {
   let mocPeggedTokens: MocRC20[];
   let asset: ERC20Mock;
   let mocFunctions: any;
+  let deployer: Address;
+  let alice: Address;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
+      ({ deployer, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCABag(5);
       ({ mocImpl, mocWrapper, mocCollateralToken, mocPeggedTokens, wcaToken, asset } = await fixtureDeploy());
       mocFunctions = await mocFunctionsCARBag(
@@ -40,7 +46,7 @@ describe("Feature: MocCABag mint TP", function () {
       });
     });
 
-    /* describe("GIVEN 100 TP minted with asset at 1:1 price", () => {
+    describe("GIVEN 100 TP minted with asset at 1:1 price", () => {
       let newAsset: ERC20Mock;
       let newPriceProvider: PriceProviderMock;
       beforeEach(async () => {
@@ -64,7 +70,7 @@ describe("Feature: MocCABag mint TP", function () {
             //asset spent = 105 currency needed / 0.9 asset used price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetPrevBalance.sub(aliceNewAssetActualBalance);
-            assertPrec("116.666666666666666666", diff);
+            assertPrec("116.666666666666666667", diff);
           });
         });
       });
@@ -84,10 +90,10 @@ describe("Feature: MocCABag mint TP", function () {
             //asset spent = 105 currency needed / 1.1 asset used price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetPrevBalance.sub(aliceNewAssetActualBalance);
-            assertPrec("95.454545454545454545", diff);
+            assertPrec("95.454545454545454546", diff);
           });
         });
       });
-    });*/
+    });
   });
 });

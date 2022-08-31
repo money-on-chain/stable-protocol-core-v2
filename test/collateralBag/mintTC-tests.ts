@@ -71,7 +71,7 @@ describe("Feature: MocCABag mint TC", function () {
             //asset spent = 105 currency needed / 0.9 asset used price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetPrevBalance.sub(aliceNewAssetActualBalance);
-            assertPrec("116.666666666666666666", diff);
+            assertPrec("116.666666666666666667", diff);
           });
         });
       });
@@ -91,7 +91,7 @@ describe("Feature: MocCABag mint TC", function () {
             //asset spent = 105 currency needed / 1.1 asset used price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetPrevBalance.sub(aliceNewAssetActualBalance);
-            assertPrec("95.454545454545454545", diff);
+            assertPrec("95.454545454545454546", diff);
           });
         });
       });

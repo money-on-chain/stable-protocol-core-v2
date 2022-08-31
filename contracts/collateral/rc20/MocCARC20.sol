@@ -57,9 +57,9 @@ contract MocCARC20 is MocCore {
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      */
-    function mintTC(uint256 qTC_, uint256 qACmax_) external {
+    function mintTC(uint256 qTC_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
+        return _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
     }
 
     /**
@@ -73,9 +73,9 @@ contract MocCARC20 is MocCore {
         uint256 qTC_,
         uint256 qACmax_,
         address recipient_
-    ) external {
+    ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
+        return _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
     }
 
     /**
@@ -89,9 +89,9 @@ contract MocCARC20 is MocCore {
         uint8 i_,
         uint256 qTP_,
         uint256 qACmax_
-    ) external {
+    ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
+        return _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
     }
 
     /**
@@ -107,8 +107,8 @@ contract MocCARC20 is MocCore {
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
-    ) external {
+    ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
+        return _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }
 }
