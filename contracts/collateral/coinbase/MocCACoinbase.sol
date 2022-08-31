@@ -11,6 +11,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
     // ------- Initializer -------
     /**
      * @notice contract initializer
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
@@ -19,7 +21,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function initialize(
-        address governor_,
+        IGovernor governor_,
         address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,

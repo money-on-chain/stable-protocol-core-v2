@@ -15,6 +15,8 @@ contract MocCARC20 is MocCore {
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param acTokenAddress_ Collateral Asset Token contract address
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
@@ -24,6 +26,8 @@ contract MocCARC20 is MocCore {
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function initialize(
+        IGovernor governor_,
+        address stopper_,
         address acTokenAddress_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
@@ -34,10 +38,9 @@ contract MocCARC20 is MocCore {
     ) external initializer {
         if (acTokenAddress_ == address(0)) revert InvalidAddress();
         acToken = MocRC20(acTokenAddress_);
-        //TODO:Include gobernor and stopper
         __MocCore_init(
-            tcTokenAddress_,
-            mocFeeFlowAddress_,
+            governor_,
+            stopper_,
             tcTokenAddress_,
             mocFeeFlowAddress_,
             ctarg_,

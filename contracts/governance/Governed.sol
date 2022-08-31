@@ -1,6 +1,7 @@
 pragma solidity 0.8.16;
 
 import "../interfaces/IGovernor.sol";
+import "../utils/MocHelper.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -10,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
   The only purpose of this contract is to define some useful modifiers and functions to be used on the
   governance aspect of the child contract
   */
-abstract contract Governed is Initializable {
+abstract contract Governed is Initializable, MocHelper {
     /**
     @notice The address of the contract which governs this one
    */
@@ -34,11 +35,12 @@ abstract contract Governed is Initializable {
     It is necessary because of the upgradeability of the contracts
     @param governor_ Governor address
    */
-    function __Governed_init(address governor_) internal onlyInitializing {
+    function __Governed_init(IGovernor governor_) internal onlyInitializing {
         __Governed_init_unchained(governor_);
     }
 
-    function __Governed_init_unchained(address governor_) internal onlyInitializing {
+    function __Governed_init_unchained(IGovernor governor_) internal onlyInitializing {
+        if (address(governor_) == address(0)) revert InvalidAddress();
         governor = IGovernor(governor_);
     }
 
@@ -47,6 +49,7 @@ abstract contract Governed is Initializable {
     @param newGovernor_ New governor address
    */
     function changeIGovernor(IGovernor newGovernor_) public onlyAuthorizedChanger {
+        if (address(newGovernor_) == address(0)) revert InvalidAddress();
         governor = newGovernor_;
     }
 

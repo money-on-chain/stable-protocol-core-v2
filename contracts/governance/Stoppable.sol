@@ -62,7 +62,8 @@ contract Stoppable is Governed {
     @param stopper_ The address that is authorized to stop this contract
     @param stoppable_ Define if the contract starts being unstoppable or not
    */
-    function __Stoppable_init_unchained(address stopper_, bool stoppable_) public onlyInitializing {
+    function __Stoppable_init_unchained(address stopper_, bool stoppable_) internal onlyInitializing {
+        if (stopper_ == address(0)) revert InvalidAddress();
         stoppable = stoppable_;
         stopper = stopper_;
     }
@@ -115,6 +116,7 @@ contract Stoppable is Governed {
     @dev Should be called through governance
    */
     function setStopper(address newStopper) public onlyAuthorizedChanger {
+        if (newStopper == address(0)) revert InvalidAddress();
         stopper = newStopper;
     }
 

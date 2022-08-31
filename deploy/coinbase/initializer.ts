@@ -45,6 +45,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 };
 export default deployFunc;
 
-deployFunc.id = "Initialized_Coinbase"; // id required to prevent reexecution
+deployFunc.id = "Initialized_Coinbase"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCoinbase"];
 deployFunc.dependencies = ["MocCACoinbase", "CollateralTokenCoinbase"];

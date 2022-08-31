@@ -1,6 +1,5 @@
 pragma solidity ^0.8.16;
 
-import "../utils/MocHelper.sol";
 import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
 import "../interfaces/IPriceProvider.sol";
@@ -11,7 +10,7 @@ import "../governance/MocUpgradable.sol";
  * @notice MocBaseBucket holds Bucket Zero state, both for the Callateral Bag and PegggedTokens Items.
  * @dev Abstracts all rw opeartions on the main bucket and expose all calculations relative to its state.
  */
-abstract contract MocBaseBucket is MocUpgradable, MocHelper {
+abstract contract MocBaseBucket is MocUpgradable {
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();

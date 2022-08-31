@@ -16,5 +16,5 @@ const deployFunc: DeployFunction = async ({ deployments, getNamedAccounts, netwo
 };
 export default deployFunc;
 
-deployFunc.id = "deployed_MocCABag"; // id required to prevent reexecution
+deployFunc.id = "deployed_MocCABag"; // id required to prevent re-execution
 deployFunc.tags = ["MocCABag"];

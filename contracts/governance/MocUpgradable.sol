@@ -12,7 +12,7 @@ abstract contract MocUpgradable is UUPSUpgradeable, Stoppable {
      * @param stopper_ The address that is authorized to stop this contract
      * @param governor_ The address that will define when a change contract is authorized
      */
-    function __MocUpgradable_init(address governor_, address stopper_) internal onlyInitializing {
+    function __MocUpgradable_init(IGovernor governor_, address stopper_) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Governed_init(governor_);
         __Stoppable_init_unchained(stopper_, true);

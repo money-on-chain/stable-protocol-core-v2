@@ -15,5 +15,5 @@ const deployFunc: DeployFunction = async ({ deployments, getNamedAccounts, netwo
 };
 export default deployFunc;
 
-deployFunc.id = "deployed_MocCARC20"; // id required to prevent reexecution
+deployFunc.id = "deployed_MocCARC20"; // id required to prevent re-execution
 deployFunc.tags = ["MocCARC20"];

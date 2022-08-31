@@ -38,7 +38,7 @@ abstract contract MocCore is MocEma {
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function __MocCore_init(
-        address governor_,
+        IGovernor governor_,
         address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
