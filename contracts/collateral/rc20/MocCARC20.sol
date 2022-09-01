@@ -104,7 +104,7 @@ contract MocCARC20 is MocCore {
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of qAC used to mint qTC
+     * @return qACtotalNeeded amount of qAC used to mint qTP
      */
     function mintTPto(
         uint8 i_,

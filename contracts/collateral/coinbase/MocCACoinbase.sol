@@ -84,7 +84,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @param i_ Pegged Token index to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of qAC used to mint qTC
+     * @return qACtotalNeeded amount of qAC used to mint qTP
      */
     function mintTPto(
         uint8 i_,
