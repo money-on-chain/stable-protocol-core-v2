@@ -80,6 +80,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Collateral Token
+     * @return qACtotalNeeded amount of qAC used to mint qTC
      */
     function _mintTCto(
         uint256 qTC_,
@@ -112,6 +113,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Pegged Token
+     * @return qACtotalNeeded amount of qAC used to mint qTC
      */
     function _mintTPto(
         uint8 i_,
