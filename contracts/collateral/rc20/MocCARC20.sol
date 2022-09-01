@@ -11,6 +11,11 @@ contract MocCARC20 is MocCore {
     // Collateral Asset token
     MocRC20 private acToken;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
@@ -91,4 +96,11 @@ contract MocCARC20 is MocCore {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

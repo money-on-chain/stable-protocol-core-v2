@@ -1,0 +1,702 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xdd6432141C8342682782C9944D951e467Fcd58C8",
+      "txHash": "0x6592ea6c0444b3ee86742650de0ab1d490b10d97ba31b178527fcc816e7a0be9",
+      "kind": "uups"
+    },
+    {
+      "address": "0x64f9722c6a94bb251950AC415596291302351aE1",
+      "txHash": "0x88a74059b6a5a6f4cbc20306deab6b48928d785b93fe3f3702c928b2c9e60f03",
+      "kind": "uups"
+    },
+    {
+      "address": "0xb4f3649DD8a91b43098F7af47002abBaaE0C2E42",
+      "txHash": "0xd4c4b5a492946e7e714c5212514efa38c81132abd7b94007549dae2bedb585d1",
+      "kind": "uups"
+    },
+    {
+      "address": "0x919Cb2EbF455a08a3A6B6B23e6bF7d8fd933f4dc",
+      "txHash": "0x76d797d36275c5f52f9680439c02c8517ee6760078b3991e2074b4403bf1d717",
+      "kind": "uups"
+    },
+    {
+      "address": "0xD89B0Ec35A47C5ab772002d0Ec274ee4ad4450eF",
+      "txHash": "0x65935694916a979e5c752f47fd19dba340c0fd6ea20ccc4ab46cce6900785fdb",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "daa9b2b533f7ade5d1a9a52f61cac29443fb333761318d90a48ca9be395f2b69": {
+      "address": "0xDC2C65c4eeeA2652a3671543bF553b6a943723B5",
+      "txHash": "0x6afcaf576b3c497257878c0d4d655f906cb5a4547789fd8da282321686b717f0",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "governor",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IGovernor)6166",
+            "contract": "Governed",
+            "src": "contracts/governance/Governed.sol:18"
+          },
+          {
+            "label": "upgradeGap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "Governed",
+            "src": "contracts/governance/Governed.sol:65"
+          },
+          {
+            "label": "stoppable",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_bool",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:17"
+          },
+          {
+            "label": "_paused",
+            "offset": 1,
+            "slot": "152",
+            "type": "t_bool",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:18"
+          },
+          {
+            "label": "stopper",
+            "offset": 2,
+            "slot": "152",
+            "type": "t_address",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:19"
+          },
+          {
+            "label": "upgradeGap",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:125"
+          },
+          {
+            "label": "nACcb",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:31"
+          },
+          {
+            "label": "nACioucb",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:33"
+          },
+          {
+            "label": "protThrld",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:35"
+          },
+          {
+            "label": "tcToken",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_contract(IMocRC20)6189",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:38"
+          },
+          {
+            "label": "nTCcb",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:40"
+          },
+          {
+            "label": "tcMintFee",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:42"
+          },
+          {
+            "label": "tcRedeemFee",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:44"
+          },
+          {
+            "label": "tpToken",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_array(t_contract(IMocRC20)6189)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:47"
+          },
+          {
+            "label": "pegContainer",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_array(t_struct(PegContainerItem)5063_storage)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:49"
+          },
+          {
+            "label": "tpR",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:51"
+          },
+          {
+            "label": "tpBmin",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:53"
+          },
+          {
+            "label": "tpMintFee",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:55"
+          },
+          {
+            "label": "tpRedeemFee",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:57"
+          },
+          {
+            "label": "ctarg",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:60"
+          },
+          {
+            "label": "mocFeeFlowAddress",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_address",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:62"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:165"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocEma",
+            "src": "contracts/core/MocEma.sol:27"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "318",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocCore",
+            "src": "contracts/core/MocCore.sol:168"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "368",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "369",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "418",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocCACoinbase",
+            "src": "contracts/collateral/coinbase/MocCACoinbase.sol:91"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_contract(IMocRC20)6189)dyn_storage": {
+            "label": "contract IMocRC20[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(PegContainerItem)5063_storage)dyn_storage": {
+            "label": "struct MocBaseBucket.PegContainerItem[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IGovernor)6166": {
+            "label": "contract IGovernor",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMocRC20)6189": {
+            "label": "contract IMocRC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IPriceProvider)6201": {
+            "label": "contract IPriceProvider",
+            "numberOfBytes": "20"
+          },
+          "t_struct(PegContainerItem)5063_storage": {
+            "label": "struct MocBaseBucket.PegContainerItem",
+            "members": [
+              {
+                "label": "nTP",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "nTPXV",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "priceProvider",
+                "type": "t_contract(IPriceProvider)6201",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "2702a41dd2897b83f158ead1fc9a7c908265dfcfd21ab2be3bf258a4c9fcbaf3": {
+      "address": "0x3aE9ceC06A226096Df2923bD24b8A9E9BeaFa9A9",
+      "txHash": "0xdf18bc40d36ced9f5a2a8476d20c3adf300041e4ab8d3783dd4417c2e0831c3c",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "governor",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IGovernor)6166",
+            "contract": "Governed",
+            "src": "contracts/governance/Governed.sol:18"
+          },
+          {
+            "label": "upgradeGap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "Governed",
+            "src": "contracts/governance/Governed.sol:65"
+          },
+          {
+            "label": "stoppable",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_bool",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:17"
+          },
+          {
+            "label": "_paused",
+            "offset": 1,
+            "slot": "152",
+            "type": "t_bool",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:18"
+          },
+          {
+            "label": "stopper",
+            "offset": 2,
+            "slot": "152",
+            "type": "t_address",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:19"
+          },
+          {
+            "label": "upgradeGap",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "Stoppable",
+            "src": "contracts/governance/Stoppable.sol:125"
+          },
+          {
+            "label": "nACcb",
+            "offset": 0,
+            "slot": "203",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:31"
+          },
+          {
+            "label": "nACioucb",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:33"
+          },
+          {
+            "label": "protThrld",
+            "offset": 0,
+            "slot": "205",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:35"
+          },
+          {
+            "label": "tcToken",
+            "offset": 0,
+            "slot": "206",
+            "type": "t_contract(IMocRC20)6189",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:38"
+          },
+          {
+            "label": "nTCcb",
+            "offset": 0,
+            "slot": "207",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:40"
+          },
+          {
+            "label": "tcMintFee",
+            "offset": 0,
+            "slot": "208",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:42"
+          },
+          {
+            "label": "tcRedeemFee",
+            "offset": 0,
+            "slot": "209",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:44"
+          },
+          {
+            "label": "tpToken",
+            "offset": 0,
+            "slot": "210",
+            "type": "t_array(t_contract(IMocRC20)6189)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:47"
+          },
+          {
+            "label": "pegContainer",
+            "offset": 0,
+            "slot": "211",
+            "type": "t_array(t_struct(PegContainerItem)5063_storage)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:49"
+          },
+          {
+            "label": "tpR",
+            "offset": 0,
+            "slot": "212",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:51"
+          },
+          {
+            "label": "tpBmin",
+            "offset": 0,
+            "slot": "213",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:53"
+          },
+          {
+            "label": "tpMintFee",
+            "offset": 0,
+            "slot": "214",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:55"
+          },
+          {
+            "label": "tpRedeemFee",
+            "offset": 0,
+            "slot": "215",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:57"
+          },
+          {
+            "label": "ctarg",
+            "offset": 0,
+            "slot": "216",
+            "type": "t_uint256",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:60"
+          },
+          {
+            "label": "mocFeeFlowAddress",
+            "offset": 0,
+            "slot": "217",
+            "type": "t_address",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:62"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "218",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocBaseBucket",
+            "src": "contracts/core/MocBaseBucket.sol:165"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "268",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocEma",
+            "src": "contracts/core/MocEma.sol:27"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "318",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocCore",
+            "src": "contracts/core/MocCore.sol:168"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "368",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "369",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "418",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "MocCACoinbase",
+            "src": "contracts/collateral/coinbase/MocCACoinbase.sol:91"
+          },
+          {
+            "label": "newVariable",
+            "offset": 0,
+            "slot": "468",
+            "type": "t_uint256",
+            "contract": "MocCoinbaseMock",
+            "src": "contracts/mocks/upgradability/MocCoinbaseUpgradeMocks.sol:14"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_contract(IMocRC20)6189)dyn_storage": {
+            "label": "contract IMocRC20[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(PegContainerItem)5063_storage)dyn_storage": {
+            "label": "struct MocBaseBucket.PegContainerItem[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IGovernor)6166": {
+            "label": "contract IGovernor",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMocRC20)6189": {
+            "label": "contract IMocRC20",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IPriceProvider)6201": {
+            "label": "contract IPriceProvider",
+            "numberOfBytes": "20"
+          },
+          "t_struct(PegContainerItem)5063_storage": {
+            "label": "struct MocBaseBucket.PegContainerItem",
+            "members": [
+              {
+                "label": "nTP",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "nTPXV",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "priceProvider",
+                "type": "t_contract(IPriceProvider)6201",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

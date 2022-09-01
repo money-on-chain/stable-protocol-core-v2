@@ -23,8 +23,8 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
     let alice: string;
     ({ alice } = await getNamedAccounts());
 
-    const deployedMocContract = await deployments.getOrNull("MocCARC20");
-    if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
+    const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
+    if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
     const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");

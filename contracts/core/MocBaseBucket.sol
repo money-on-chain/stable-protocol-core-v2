@@ -149,7 +149,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return cglob [PREC]
      */
-    function getCglb(uint256 lckAC_) internal view returns (uint256 cglob) {
+    function _getCglb(uint256 lckAC_) internal view returns (uint256 cglob) {
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = ([N] + [N]) * [PREC]
         cglob = (nACcb + nACioucb) * PRECISION;

@@ -24,8 +24,8 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
     await deployments.fixture();
     const signer = ethers.provider.getSigner();
 
-    const deployedMocContract = await deployments.getOrNull("MocCABag");
-    if (!deployedMocContract) throw new Error("No MocCABag deployed.");
+    const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
+    if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
     const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
     const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapper");

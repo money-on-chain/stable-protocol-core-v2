@@ -11,8 +11,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const network = hre.network.name as keyof typeof mocAddresses;
   const signer = ethers.provider.getSigner();
 
-  const deployedMocContract = await deployments.getOrNull("MocCARC20");
-  if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
+  const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
+  if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
