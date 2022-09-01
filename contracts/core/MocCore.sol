@@ -15,6 +15,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
+    event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TPMinted(address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
         address indexed tpTokenAddress_,
@@ -29,7 +30,9 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     // ------- Custom Errors -------
     error LowCoverage(uint256 cglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
+    error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
+    error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
 
     // ------- Initializer -------
     /**
@@ -104,6 +107,36 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         acTransfer(mocFeeFlowAddress, qACfee);
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded);
         return qACtotalNeeded;
+    }
+
+    /**
+     * @notice redeem Collateral Asset in exchange for Collateral Token
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that expect to be received
+     * @param sender_ address who sends the Collateral Token
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of qAC sent to the recipient
+     */
+    function _redeemTCto(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address sender_,
+        address recipient_
+    ) internal returns (uint256 qACtoRedeem) {
+        // calculate how many total qAC are redemeed and how many correspond for fee
+        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_);
+        qACtoRedeem = qACtotalToRedeem - qACfee;
+        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        // sub qTC and qAC from the Bucket
+        _withdrawTC(qTC_, qACtotalToRedeem);
+        // burn qTC from the sender
+        tcToken.burn(sender_, qTC_);
+        // transfer qAC to the recipient
+        acTransfer(recipient_, qACtoRedeem);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem);
+        return qACtoRedeem;
     }
 
     /**
@@ -216,6 +249,35 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         qACfee = (qACNeededtoMint * tcMintFee) / PRECISION;
 
         return (qACNeededtoMint, qACfee);
+    }
+
+    /**
+     * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
+     * @param qTC_ amount of Collateral Token to redeem
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     */
+    function _calcQACforRedeemTC(uint256 qTC_) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
+        if (qTC_ == 0) revert InvalidValue();
+        uint256 lckAC = getLckAC();
+        uint256 cglb = getCglb(lckAC);
+
+        // check if coverage is above the protected threshold
+        if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
+
+        uint256 ctargemaCA = getCtargemaCA();
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA, lckAC);
+
+        // check if there are enough TC available to redeem
+        if (tcAvailableToRedeem <= qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+
+        // calculate how many qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        qACtotalToRedeem = (qTC_ * getPTCac(lckAC)) / PRECISION;
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        qACfee = (qACtotalToRedeem * tcRedeemFee) / PRECISION;
+        return (qACtotalToRedeem, qACfee);
     }
 
     /**
