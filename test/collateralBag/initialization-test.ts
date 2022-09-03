@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCABag } from "./fixture";
-import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocRC20 } from "../../typechain";
+import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocCAWrapper__factory, MocRC20 } from "../../typechain";
 import { expect } from "chai";
 import { ERRORS, CONSTANTS } from "../helpers/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
@@ -59,7 +59,7 @@ describe("Feature: MocCABag initialization", function () {
     });
     describe("WHEN initialize mocWrapper again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
-        await expect(mocWrapper.initialize(mocProxy.address, wcaToken.address)).to.be.revertedWith(
+        await expect(mocWrapper.initialize(governor, stopper, mocProxy.address, wcaToken.address)).to.be.revertedWith(
           ERRORS.CONTRACT_INITIALIZED,
         );
       });
@@ -149,23 +149,25 @@ describe("Feature: MocCABag initialization", function () {
   describe("GIVEN a new MocCABag instance", () => {
     let newMocWrapper: MocCAWrapper;
     before(async () => {
-      const factory = await ethers.getContractFactory("MocCAWrapper");
-      newMocWrapper = await factory.deploy();
+      const MocCAWrapperFactory = await ethers.getContractFactory("MocCAWrapper");
+      const MocCAWrapperImpl = await MocCAWrapperFactory.deploy();
+
+      const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+      const proxy = await mocCARC20ProxyFactory.deploy(MocCAWrapperImpl.address, "0x");
+      newMocWrapper = MocCAWrapper__factory.connect(proxy.address, ethers.provider.getSigner());
     });
     describe("WHEN it is initialized with invalid Moc Core address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocWrapper.initialize(CONSTANTS.ZERO_ADDRESS, wcaToken.address)).to.be.revertedWithCustomError(
-          newMocWrapper,
-          ERRORS.INVALID_ADDRESS,
-        );
+        await expect(
+          newMocWrapper.initialize(governor, stopper, CONSTANTS.ZERO_ADDRESS, wcaToken.address),
+        ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN it is initialized with invalid Wrapped Collateral Asset address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocWrapper.initialize(mocProxy.address, CONSTANTS.ZERO_ADDRESS)).to.be.revertedWithCustomError(
-          newMocWrapper,
-          ERRORS.INVALID_ADDRESS,
-        );
+        await expect(
+          newMocWrapper.initialize(governor, stopper, mocProxy.address, CONSTANTS.ZERO_ADDRESS),
+        ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
   });

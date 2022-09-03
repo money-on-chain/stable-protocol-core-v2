@@ -2,6 +2,9 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ERC20Mock, PriceProviderMock, MocRC20 } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
+import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
+import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
+import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -18,6 +21,13 @@ export async function deployPeggedToken(): Promise<MocRC20> {
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
   const factory = await ethers.getContractFactory("PriceProviderMock");
   return factory.deploy(price);
+}
+
+export async function deployAeropagusGovernor(deployer: Address): Promise<IGovernor> {
+  const factory = await ethers.getContractFactory(GovernorCompiled.abi, GovernorCompiled.bytecode);
+  const governor = await factory.deploy();
+  await governor.functions["initialize(address)"](deployer);
+  return IGovernor__factory.connect(governor.address, ethers.provider.getSigner());
 }
 
 export async function deployAsset(): Promise<ERC20Mock> {

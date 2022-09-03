@@ -1,9 +1,9 @@
 import { deployments, getNamedAccounts, network } from "hardhat";
 import { Contract } from "ethers";
-import { MocCACoinbase, MocCACoinbase__factory } from "../../../typechain";
-import GovernorCompiled from "../aeropagusImports/Governor.json";
-import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../../deploy-config/config";
+import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
+import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../../scripts/utils";
+import { coreParams, tcParams, mocAddresses } from "../../../../deploy-config/config";
+import { deployAeropagusGovernor } from "../../../helpers/utils";
 
 export function fixtureDeployGovernance(): () => Promise<{
   governor: Contract;
@@ -14,29 +14,24 @@ export function fixtureDeployGovernance(): () => Promise<{
     const networkName = network.name as keyof typeof mocAddresses;
     const { deployer } = await getNamedAccounts();
 
-    const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
-    if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
-
     // deploy and initialize governor
-    const [governorFactory, mocFactory, erc1967ProxyProxyFactory] = await Promise.all([
-      ethers.getContractFactory(GovernorCompiled.abi, GovernorCompiled.bytecode),
+    const [mocFactory, erc1967ProxyProxyFactory] = await Promise.all([
       ethers.getContractFactory("MocCACoinbase"),
       ethers.getContractFactory("ERC1967Proxy"),
     ]);
-
-    const governor = await governorFactory.deploy();
-    await governor.functions["initialize(address)"](deployer);
-
     const mocImpl = await mocFactory.deploy();
     const deployMocProxy = await erc1967ProxyProxyFactory.deploy(mocImpl.address, "0x");
     const mocCACoinbase = MocCACoinbase__factory.connect(deployMocProxy.address, ethers.provider.getSigner());
 
+    const governor = await deployAeropagusGovernor(deployer);
+
+    const mockAddress = deployer;
     // initializations
     await waitForTxConfirmation(
       mocCACoinbase.initialize(
         governor.address,
-        deployer, // TODO: stopper
-        deployedTCContract.address,
+        mockAddress,
+        mockAddress,
         mocAddresses[networkName].mocFeeFlowAddress,
         coreParams.ctarg,
         coreParams.protThrld,

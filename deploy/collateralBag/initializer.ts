@@ -25,7 +25,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
-  const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapper");
+  const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
   if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
   const MocCAWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
 
@@ -51,7 +51,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   await waitForTxConfirmation(
-    MocCAWrapper.initialize(mocCARC20.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
+    MocCAWrapper.initialize(governor, stopper, mocCARC20.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
   );
 
   // set minter and burner roles
@@ -72,4 +72,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARBag"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARBag"];
-deployFunc.dependencies = ["MocCABag", "CollateralTokenCARBag", "MocCAWrapperContract", "WrappedCollateralAsset"];
+deployFunc.dependencies = ["MocCABag", "CollateralTokenCARBag", "MocCAWrapper", "WrappedCollateralAsset"];

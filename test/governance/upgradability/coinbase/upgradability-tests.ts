@@ -3,12 +3,11 @@ import { ethers } from "hardhat";
 import { Contract } from "ethers";
 
 import { fixtureDeployGovernance } from "./fixture";
-import { MocCACoinbase, MocCoinbaseMock__factory } from "../../../typechain";
-import { MocCoinbaseMock } from "../../../typechain/contracts/mocks/upgradability/MocCoinbaseUpgradeMocks.sol";
+import { MocCACoinbase, MocCoinbaseMock, MocCoinbaseMock__factory } from "../../../../typechain";
 
 const fixtureDeploy = fixtureDeployGovernance();
 
-describe("Feature: MocCore Upgradeability UUPS", () => {
+describe("Feature: MocCoinbase Upgradeability UUPS", () => {
   let mocProxy: MocCACoinbase;
   let mocProxyAsCoinbaseMock: MocCoinbaseMock;
   let governor: Contract;
@@ -20,7 +19,7 @@ describe("Feature: MocCore Upgradeability UUPS", () => {
     const MocCoinbaseMockFactory = await ethers.getContractFactory("MocCoinbaseMock");
     const mocCoinbaseMockImpl = await MocCoinbaseMockFactory.deploy();
 
-    const changerFactory = await ethers.getContractFactory("MocCoinbaseUpgradeChangerMock");
+    const changerFactory = await ethers.getContractFactory("MocUpgradeChangerMock");
     changeContract = await changerFactory.deploy(mocProxy.address, mocCoinbaseMockImpl.address);
   });
 

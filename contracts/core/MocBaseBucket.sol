@@ -1,6 +1,5 @@
 pragma solidity ^0.8.16;
 
-import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
@@ -57,7 +56,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // global target coverage of the model
-    uint256 internal ctarg;
+    uint256 public ctarg;
     // Moc Fee Flow contract address
     address internal mocFeeFlowAddress;
 

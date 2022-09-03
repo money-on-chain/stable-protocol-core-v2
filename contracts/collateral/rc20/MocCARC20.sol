@@ -9,7 +9,7 @@ import "../../core/MocCore.sol";
 contract MocCARC20 is MocCore {
     // ------- Storage -------
     // Collateral Asset token
-    MocRC20 private acToken;
+    IMocRC20 private acToken;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -42,7 +42,7 @@ contract MocCARC20 is MocCore {
         uint256 tcRedeemFee_
     ) external initializer {
         if (acTokenAddress_ == address(0)) revert InvalidAddress();
-        acToken = MocRC20(acTokenAddress_);
+        acToken = IMocRC20(acTokenAddress_);
         __MocCore_init(
             governor_,
             stopper_,

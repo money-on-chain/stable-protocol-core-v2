@@ -1,7 +1,7 @@
 pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "../../utils/MocHelper.sol";
+import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
 
 /**
@@ -9,7 +9,7 @@ import "../rc20/MocCARC20.sol";
  * @notice Wrappes a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
  *  Moc Collateral Asset Bag protocol implementation
  */
-contract MocCAWrapper is MocHelper, Initializable {
+contract MocCAWrapper is MocUpgradable {
     // ------- Custom Errors -------
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
@@ -25,11 +25,11 @@ contract MocCAWrapper is MocHelper, Initializable {
     // ------- Storage -------
 
     // Wrapped Collateral Asset token
-    MocRC20 private wcaToken;
+    IMocRC20 internal wcaToken;
     // Moc Core protocol
-    MocCARC20 private mocCore;
+    MocCARC20 internal mocCore;
     // array of valid assets in the bag
-    Asset[] private assets;
+    Asset[] internal assets;
     // asset -> priceProvider, and is used to check if an asset is valid
     mapping(address => IPriceProvider) internal priceProviderMap;
 
@@ -39,17 +39,30 @@ contract MocCAWrapper is MocHelper, Initializable {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param mocCoreAddress_ Moc Core contract address
      * @param wcaTokenAddress_ Wrapped Collateral Asset Token contract address
      */
-    function initialize(address mocCoreAddress_, address wcaTokenAddress_) external initializer {
+    function initialize(
+        IGovernor governor_,
+        address stopper_,
+        address mocCoreAddress_,
+        address wcaTokenAddress_
+    ) external initializer {
         if (mocCoreAddress_ == address(0)) revert InvalidAddress();
         if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
+        __MocUpgradable_init(governor_, stopper_);
         mocCore = MocCARC20(mocCoreAddress_);
-        wcaToken = MocRC20(wcaTokenAddress_);
+        wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
         SafeERC20.safeApprove(wcaToken, mocCoreAddress_, UINT256_MAX);
     }
