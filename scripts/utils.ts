@@ -3,7 +3,7 @@ import { ContractTransaction, ContractReceipt } from "ethers";
 import { HardhatNetworkUserConfig } from "hardhat/types/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
-export const GAS_LIMIT_PATCH = 4000000;
+export const GAS_LIMIT_PATCH = 30000000;
 
 export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
 export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));

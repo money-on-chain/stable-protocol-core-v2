@@ -48,7 +48,7 @@ abstract contract Governed is Initializable, MocHelper {
     @notice Change the contract's governor. Should be called through the old governance system
     @param newGovernor_ New governor address
    */
-    function changeIGovernor(IGovernor newGovernor_) public onlyAuthorizedChanger {
+    function changeGovernor(IGovernor newGovernor_) public onlyAuthorizedChanger {
         if (address(newGovernor_) == address(0)) revert InvalidAddress();
         governor = newGovernor_;
     }

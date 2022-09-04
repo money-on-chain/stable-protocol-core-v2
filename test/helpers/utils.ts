@@ -44,14 +44,15 @@ export async function deployAsset(): Promise<ERC20Mock> {
 export type Balance = BigNumber;
 
 export const ERRORS = {
+  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
+  CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
+  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
-  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
-  CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
-  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
-  TRANSFER_FAIL: "TransferFailed",
+  NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
+  TRANSFER_FAIL: "TransferFailed",
 };
 
 export const CONSTANTS = {
