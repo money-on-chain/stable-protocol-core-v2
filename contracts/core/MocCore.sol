@@ -202,7 +202,6 @@ abstract contract MocCore is MocEma {
     function _calcQACforMintTC(uint256 qTC_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
-        // check if coverage is above the protected threshold
         uint256 cglb = _getCglb(lckAC);
         // check coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
