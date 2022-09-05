@@ -1,7 +1,5 @@
 pragma solidity ^0.8.16;
 
-import "hardhat/console.sol";
-import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
 import "./MocBaseBucket.sol";
 
@@ -28,6 +26,13 @@ abstract contract MocEma is MocBaseBucket {
     // TP EMA items
     EmaItem[] internal tpEma;
 
+    // ------- Initializer -------
+    /**
+     * @notice contract initializer
+     */
+    /* solhint-disable-next-line no-empty-blocks */
+    function __MocEma_init_unchained() internal onlyInitializing {}
+
     // ------- Public Functions -------
 
     /**
@@ -44,7 +49,7 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice get target coverage adjusted by the moving average of the value of the Collateral Asset
+     * @notice get target coverage adjusted by all Pegged Token's moving average in relation to the Collateral Asset
      * @return ctargemaCA [PREC]
      */
     function getCtargemaCA() public view returns (uint256 ctargemaCA) {
@@ -81,4 +86,11 @@ abstract contract MocEma is MocBaseBucket {
         tpEma[i_].ema = newEma;
         emit TPemaUpdated(i_, currentTPema.ema, newEma);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

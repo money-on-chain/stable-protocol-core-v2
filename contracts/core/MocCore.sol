@@ -1,22 +1,18 @@
 pragma solidity ^0.8.16;
 
-import "../tokens/MocRC20.sol";
 import "../interfaces/IMocRC20.sol";
-import "./MocBaseBucket.sol";
 import "./MocEma.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title MocCore
  * @notice MocCore nucleats all the basic MoC functionality and toolset. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
-abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
+abstract contract MocCore is MocEma {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
-    event TPMinted(address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
+    event TPMinted(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
         address indexed tpTokenAddress_,
         address priceProviderAddress_,
@@ -38,6 +34,8 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
@@ -45,7 +43,9 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
-    function _MocCore_init(
+    function __MocCore_init(
+        IGovernor governor_,
+        address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         uint256 ctarg_,
@@ -53,18 +53,16 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) internal onlyInitializing {
-        if (tcTokenAddress_ == address(0)) revert InvalidAddress();
-        if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
-        if (ctarg_ < PRECISION) revert InvalidValue();
-        if (protThrld_ < PRECISION) revert InvalidValue();
-        if (tcMintFee_ > PRECISION) revert InvalidValue();
-        if (tcRedeemFee_ > PRECISION) revert InvalidValue();
-        tcToken = IMocRC20(tcTokenAddress_);
-        mocFeeFlowAddress = mocFeeFlowAddress_;
-        ctarg = ctarg_;
-        protThrld = protThrld_;
-        tcMintFee = tcMintFee_;
-        tcRedeemFee = tcRedeemFee_;
+        __MocUpgradable_init(governor_, stopper_);
+        __MocBaseBucket_init_unchained(
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            ctarg_,
+            protThrld_,
+            tcMintFee_,
+            tcRedeemFee_
+        );
+        __MocEma_init_unchained();
     }
 
     // ------- Internal Functions -------
@@ -101,7 +99,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         tcToken.mint(recipient_, qTC_);
         // calculate how many qAC should be returned to the sender
         uint256 qACchg = qACmax_ - qACtotalNeeded;
-        // transfer qAC to the sender
+        // transfer the qAC change to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
@@ -165,11 +163,11 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         tpToken[i_].mint(recipient_, qTP_);
         // calculate how many qAC should be returned to the sender
         uint256 qACchg = qACmax_ - qACtotalNeeded;
-        // transfer qAC to the sender
+        // transfer the qAC change to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TPMinted(sender_, recipient_, qTP_, qACtotalNeeded);
+        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded);
         return qACtotalNeeded;
     }
 
@@ -237,13 +235,12 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     function _calcQACforMintTC(uint256 qTC_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
-        uint256 cglb = getCglb(lckAC);
-
-        // check if coverage is above the protected threshold
+        uint256 cglb = _getCglb(lckAC);
+        // check coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
         // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTC_ * getPTCac(lckAC)) / PRECISION;
+        qACNeededtoMint = (qTC_ * _getPTCac(lckAC)) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNeededtoMint * tcMintFee) / PRECISION;
@@ -282,14 +279,15 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
 
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
+     * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal view returns (uint256, uint256) {
+    function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
-        uint256 cglb = getCglb(lckAC);
+        uint256 cglb = _getCglb(lckAC);
         uint256 pTPac = _getPTPac(i_);
         uint256 ctargemaTP = getCtargemaTP(i_, pTPac);
 
@@ -304,10 +302,17 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACNeededtoMint = (qTP_ * pTPac) / PRECISION;
+        qACNeededtoMint = (qTP_ * pTPac) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
+        qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
         return (qACNeededtoMint, qACfee);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

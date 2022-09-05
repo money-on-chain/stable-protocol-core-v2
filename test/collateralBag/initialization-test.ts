@@ -1,40 +1,65 @@
 import { fixtureDeployedMocCABag } from "./fixture";
-import { MocCARC20, MocCAWrapper, MocRC20 } from "../../typechain";
+import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocCAWrapper__factory, MocRC20 } from "../../typechain";
 import { expect } from "chai";
 import { ERRORS, CONSTANTS } from "../helpers/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 import { ethers } from "hardhat";
+import { BigNumberish } from "ethers";
+import { Address } from "hardhat-deploy/types";
 
 describe("Feature: MocCABag initialization", function () {
-  let mocImpl: MocCARC20;
+  let mocProxy: MocCARC20;
   let mocWrapper: MocCAWrapper;
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
-  const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
-
+  const { governor, stopper, mocFeeFlowAddress } = mocAddresses["hardhat"];
+  const mocInitialize =
+    (mocCARC20: MocCARC20) =>
+    ({
+      governorAddress = governor,
+      stopperAddress = stopper,
+      wcaTokenAddress = wcaToken.address,
+      mocTCAddress = mocCollateralToken.address,
+      feeFlowAddress = mocFeeFlowAddress,
+      ctarg = coreParams.ctarg,
+      protThrld = coreParams.protThrld,
+      tcMintFee = tcParams.mintFee,
+      tcRedeemFee = tcParams.redeemFee,
+    }: {
+      governorAddress?: Address;
+      stopperAddress?: Address;
+      wcaTokenAddress?: Address;
+      mocTCAddress?: Address;
+      feeFlowAddress?: Address;
+      ctarg?: BigNumberish;
+      protThrld?: BigNumberish;
+      tcMintFee?: BigNumberish;
+      tcRedeemFee?: BigNumberish;
+    } = {}) => {
+      return mocCARC20.initialize(
+        governorAddress,
+        stopperAddress,
+        wcaTokenAddress,
+        mocTCAddress,
+        feeFlowAddress,
+        ctarg,
+        protThrld,
+        tcMintFee,
+        tcRedeemFee,
+      );
+    };
   describe("GIVEN a MocCABag implementation deployed", () => {
     before(async () => {
-      const fixtureDeploy = fixtureDeployedMocCABag(0);
-      ({ mocImpl, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeploy());
+      ({ mocImpl: mocProxy, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeployedMocCABag(0)());
     });
-    describe("WHEN initialize mocImpl again", async () => {
+    describe("WHEN initialize mocProxy again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
-        await expect(
-          mocImpl.initialize(
-            wcaToken.address,
-            mocCollateralToken.address,
-            mocFeeFlow,
-            coreParams.ctarg,
-            coreParams.protThrld,
-            tcParams.mintFee,
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+        await expect(mocInitialize(mocProxy)()).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
     describe("WHEN initialize mocWrapper again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
-        await expect(mocWrapper.initialize(mocImpl.address, wcaToken.address)).to.be.revertedWith(
+        await expect(mocWrapper.initialize(governor, stopper, mocProxy.address, wcaToken.address)).to.be.revertedWith(
           ERRORS.CONTRACT_INITIALIZED,
         );
       });
@@ -42,114 +67,81 @@ describe("Feature: MocCABag initialization", function () {
   });
 
   describe("GIVEN a new MocCABag instance", () => {
-    let newmocImpl: MocCARC20;
+    let newMocImpl: MocCARC20;
     before(async () => {
-      const factory = await ethers.getContractFactory("MocCARC20");
-      newmocImpl = await factory.deploy();
+      const mocCARC20Factory = await ethers.getContractFactory("MocCARC20");
+      const mocCARC20Impl = await mocCARC20Factory.deploy();
+
+      const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+      const proxy = await mocCARC20ProxyFactory.deploy(mocCARC20Impl.address, "0x");
+      newMocImpl = MocCARC20__factory.connect(proxy.address, ethers.provider.getSigner());
+    });
+    describe("WHEN it is initialized with invalid governor address", () => {
+      it("THEN tx fails because address is the zero address", async () => {
+        await expect(
+          mocInitialize(newMocImpl)({ governorAddress: CONSTANTS.ZERO_ADDRESS }),
+        ).to.be.revertedWithCustomError(newMocImpl, ERRORS.INVALID_ADDRESS);
+      });
+    });
+    describe("WHEN it is initialized with invalid stopper address", () => {
+      it("THEN tx fails because address is the zero address", async () => {
+        await expect(
+          mocInitialize(newMocImpl)({ stopperAddress: CONSTANTS.ZERO_ADDRESS }),
+        ).to.be.revertedWithCustomError(newMocImpl, ERRORS.INVALID_ADDRESS);
+      });
     });
     describe("WHEN it is initialized with invalid Collateral Asset address", () => {
       it("THEN tx fails because address is the zero address", async () => {
         await expect(
-          newmocImpl.initialize(
-            CONSTANTS.ZERO_ADDRESS,
-            mocCollateralToken.address,
-            mocFeeFlow,
-            coreParams.ctarg,
-            coreParams.protThrld,
-            tcParams.mintFee,
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_ADDRESS);
+          mocInitialize(newMocImpl)({ wcaTokenAddress: CONSTANTS.ZERO_ADDRESS }),
+        ).to.be.revertedWithCustomError(newMocImpl, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN it is initialized with invalid Collateral Token address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(
-          newmocImpl.initialize(
-            wcaToken.address,
-            CONSTANTS.ZERO_ADDRESS,
-            mocFeeFlow,
-            coreParams.ctarg,
-            coreParams.protThrld,
-            tcParams.mintFee,
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_ADDRESS);
+        await expect(mocInitialize(newMocImpl)({ mocTCAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
+          newMocImpl,
+          ERRORS.INVALID_ADDRESS,
+        );
       });
     });
     describe("WHEN it is initialized with invalid Moc Fee Flow address", () => {
       it("THEN tx fails because address is the zero address", async () => {
         await expect(
-          newmocImpl.initialize(
-            wcaToken.address,
-            mocCollateralToken.address,
-            CONSTANTS.ZERO_ADDRESS,
-            coreParams.ctarg,
-            coreParams.protThrld,
-            tcParams.mintFee,
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_ADDRESS);
+          mocInitialize(newMocImpl)({ feeFlowAddress: CONSTANTS.ZERO_ADDRESS }),
+        ).to.be.revertedWithCustomError(newMocImpl, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN it is initialized with invalid ctarg value", () => {
       it("THEN tx fails because ctarg is below ONE", async () => {
-        await expect(
-          newmocImpl.initialize(
-            wcaToken.address,
-            mocCollateralToken.address,
-            mocFeeFlow,
-            CONSTANTS.ONE.sub(1),
-            coreParams.protThrld,
-            tcParams.mintFee,
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_VALUE);
+        await expect(mocInitialize(newMocImpl)({ ctarg: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
+          newMocImpl,
+          ERRORS.INVALID_VALUE,
+        );
       });
     });
     describe("WHEN it is initialized with invalid protThrld value", () => {
       it("THEN tx fails because protThrld is below ONE", async () => {
-        await expect(
-          newmocImpl.initialize(
-            wcaToken.address,
-            mocCollateralToken.address,
-            mocFeeFlow,
-            coreParams.ctarg,
-            CONSTANTS.ONE.sub(1),
-            tcParams.mintFee,
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_VALUE);
+        await expect(mocInitialize(newMocImpl)({ protThrld: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
+          newMocImpl,
+          ERRORS.INVALID_VALUE,
+        );
       });
     });
     describe("WHEN it is initialized with invalid TCmintFee value", () => {
       it("THEN tx fails because TCmintFee is above ONE", async () => {
-        await expect(
-          newmocImpl.initialize(
-            wcaToken.address,
-            mocCollateralToken.address,
-            mocFeeFlow,
-            coreParams.ctarg,
-            coreParams.protThrld,
-            CONSTANTS.ONE.add(1),
-            tcParams.redeemFee,
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_VALUE);
+        await expect(mocInitialize(newMocImpl)({ tcMintFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          newMocImpl,
+          ERRORS.INVALID_VALUE,
+        );
       });
     });
     describe("WHEN it is initialized with invalid TCredeemFee value", () => {
       it("THEN tx fails because TCredeemFee is above ONE", async () => {
-        await expect(
-          newmocImpl.initialize(
-            wcaToken.address,
-            mocCollateralToken.address,
-            mocFeeFlow,
-            coreParams.ctarg,
-            coreParams.protThrld,
-            tcParams.mintFee,
-            CONSTANTS.ONE.add(1),
-          ),
-        ).to.be.revertedWithCustomError(newmocImpl, ERRORS.INVALID_VALUE);
+        await expect(mocInitialize(newMocImpl)({ tcRedeemFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          newMocImpl,
+          ERRORS.INVALID_VALUE,
+        );
       });
     });
   });
@@ -157,23 +149,25 @@ describe("Feature: MocCABag initialization", function () {
   describe("GIVEN a new MocCABag instance", () => {
     let newMocWrapper: MocCAWrapper;
     before(async () => {
-      const factory = await ethers.getContractFactory("MocCAWrapper");
-      newMocWrapper = await factory.deploy();
+      const MocCAWrapperFactory = await ethers.getContractFactory("MocCAWrapper");
+      const MocCAWrapperImpl = await MocCAWrapperFactory.deploy();
+
+      const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+      const proxy = await mocCARC20ProxyFactory.deploy(MocCAWrapperImpl.address, "0x");
+      newMocWrapper = MocCAWrapper__factory.connect(proxy.address, ethers.provider.getSigner());
     });
     describe("WHEN it is initialized with invalid Moc Core address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocWrapper.initialize(CONSTANTS.ZERO_ADDRESS, wcaToken.address)).to.be.revertedWithCustomError(
-          newMocWrapper,
-          ERRORS.INVALID_ADDRESS,
-        );
+        await expect(
+          newMocWrapper.initialize(governor, stopper, CONSTANTS.ZERO_ADDRESS, wcaToken.address),
+        ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN it is initialized with invalid Wrapped Collateral Asset address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocWrapper.initialize(mocImpl.address, CONSTANTS.ZERO_ADDRESS)).to.be.revertedWithCustomError(
-          newMocWrapper,
-          ERRORS.INVALID_ADDRESS,
-        );
+        await expect(
+          newMocWrapper.initialize(governor, stopper, mocProxy.address, CONSTANTS.ZERO_ADDRESS),
+        ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
   });

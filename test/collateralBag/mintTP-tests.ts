@@ -31,7 +31,7 @@ describe("Feature: MocCABag mint TP", function () {
         asset,
       );
       this.mocFunctions = mocFunctions;
-      this.mocContracts = { mocImpl, mocWrapper, mocCollateralToken };
+      this.mocContracts = { mocImpl, mocWrapper, mocCollateralToken, mocPeggedTokens };
     });
     mintTPBehavior();
 

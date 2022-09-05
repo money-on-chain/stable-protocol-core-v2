@@ -9,11 +9,19 @@ import "../../core/MocCore.sol";
 contract MocCARC20 is MocCore {
     // ------- Storage -------
     // Collateral Asset token
-    MocRC20 internal acToken;
+    IMocRC20 private acToken;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
+     * @dev this function must be execute by the AC implementation at initialization
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param acTokenAddress_ Collateral Asset Token contract address
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
@@ -23,6 +31,8 @@ contract MocCARC20 is MocCore {
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function initialize(
+        IGovernor governor_,
+        address stopper_,
         address acTokenAddress_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
@@ -32,8 +42,17 @@ contract MocCARC20 is MocCore {
         uint256 tcRedeemFee_
     ) external initializer {
         if (acTokenAddress_ == address(0)) revert InvalidAddress();
-        acToken = MocRC20(acTokenAddress_);
-        _MocCore_init(tcTokenAddress_, mocFeeFlowAddress_, ctarg_, protThrld_, tcMintFee_, tcRedeemFee_);
+        acToken = IMocRC20(acTokenAddress_);
+        __MocCore_init(
+            governor_,
+            stopper_,
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            ctarg_,
+            protThrld_,
+            tcMintFee_,
+            tcRedeemFee_
+        );
     }
 
     // ------- Internal Functions -------
@@ -115,4 +134,11 @@ contract MocCARC20 is MocCore {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

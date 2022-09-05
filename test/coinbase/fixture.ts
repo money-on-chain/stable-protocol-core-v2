@@ -12,7 +12,7 @@ export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promi
     await deployments.fixture();
     const signer = ethers.provider.getSigner();
 
-    const deployedMocContract = await deployments.getOrNull("MocCACoinbase");
+    const deployedMocContract = await deployments.getOrNull("MocCACoinbaseProxy");
     if (!deployedMocContract) throw new Error("No MocCACoinbase deployed.");
     const mocImpl: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContract.address, signer);
 
