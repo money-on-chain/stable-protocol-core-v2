@@ -208,7 +208,7 @@ abstract contract MocCore is MocEma {
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
         // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTC_ * getPTCac(lckAC)) / PRECISION;
+        qACNeededtoMint = (qTC_ * _getPTCac(lckAC)) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNeededtoMint * tcMintFee) / PRECISION;
@@ -226,7 +226,7 @@ abstract contract MocCore is MocEma {
     function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
-        uint256 cglb = getCglb(lckAC);
+        uint256 cglb = _getCglb(lckAC);
         uint256 pTPac = _getPTPac(i_);
         uint256 ctargemaTP = getCtargemaTP(i_, pTPac);
 
