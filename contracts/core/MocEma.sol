@@ -26,6 +26,13 @@ abstract contract MocEma is MocBaseBucket {
     // TP EMA items
     EmaItem[] internal tpEma;
 
+    // ------- Initializer -------
+    /**
+     * @notice contract initializer
+     */
+    /* solhint-disable-next-line no-empty-blocks */
+    function __MocEma_init_unchained() internal onlyInitializing {}
+
     // ------- Public Functions -------
 
     /**
@@ -79,13 +86,6 @@ abstract contract MocEma is MocBaseBucket {
         tpEma[i_].ema = newEma;
         emit TPemaUpdated(i_, currentTPema.ema, newEma);
     }
-
-    // ------- Initializer -------
-    /**
-     * @notice contract initializer
-     */
-    /* solhint-disable-next-line no-empty-blocks */
-    function __MocEma_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
