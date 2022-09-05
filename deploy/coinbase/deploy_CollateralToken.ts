@@ -18,5 +18,5 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 };
 export default deployFunc;
 
-deployFunc.id = "deployed_CollateralTokenCoinbase"; // id required to prevent reexecution
+deployFunc.id = "deployed_CollateralTokenCoinbase"; // id required to prevent re-execution
 deployFunc.tags = ["CollateralTokenCoinbase"];

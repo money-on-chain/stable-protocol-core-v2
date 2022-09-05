@@ -11,9 +11,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const network = hre.network.name as keyof typeof mocAddresses;
   const signer = ethers.provider.getSigner();
 
-  const deployedMocContract = await deployments.getOrNull("MocCARC20");
-  if (!deployedMocContract) throw new Error("No MocCARC20 deployed.");
-  const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
+  if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
+  const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
@@ -32,12 +32,15 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     collateralAssetToken = deployedERC20MockContract.address;
   }
 
+  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
   // initializations
   await waitForTxConfirmation(
-    mocImpl.initialize(
+    mocCARC20.initialize(
+      governor,
+      stopper,
       collateralAssetToken,
       CollateralToken.address,
-      mocAddresses[network].mocFeeFlowAddress,
+      mocFeeFlowAddress,
       coreParams.ctarg,
       coreParams.protThrld,
       tcParams.mintFee,
@@ -47,13 +50,16 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   // set minter and burner roles
-  await waitForTxConfirmation(CollateralToken.grantRole(MINTER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
-  await waitForTxConfirmation(CollateralToken.grantRole(BURNER_ROLE, mocImpl.address, { gasLimit: GAS_LIMIT_PATCH }));
+  await Promise.all(
+    [MINTER_ROLE, BURNER_ROLE].map(role =>
+      waitForTxConfirmation(CollateralToken.grantRole(role, mocCARC20.address, { gasLimit: GAS_LIMIT_PATCH })),
+    ),
+  );
 
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 
-deployFunc.id = "Initialized_CARC20"; // id required to prevent reexecution
+deployFunc.id = "Initialized_CARC20"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARC20"];
 deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20"];
