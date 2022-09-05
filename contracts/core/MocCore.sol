@@ -15,7 +15,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
-    event TPMinted(address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
+    event TPMinted(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
         address indexed tpTokenAddress_,
         address priceProviderAddress_,
@@ -98,7 +98,7 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         tcToken.mint(recipient_, qTC_);
         // calculate how many qAC should be returned to the sender
         uint256 qACchg = qACmax_ - qACtotalNeeded;
-        // transfer qAC to the sender
+        // transfer the qAC change to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
@@ -132,11 +132,11 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
         tpToken[i_].mint(recipient_, qTP_);
         // calculate how many qAC should be returned to the sender
         uint256 qACchg = qACmax_ - qACtotalNeeded;
-        // transfer qAC to the sender
+        // transfer the qAC change to the sender
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TPMinted(sender_, recipient_, qTP_, qACtotalNeeded);
+        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded);
         return qACtotalNeeded;
     }
 
@@ -220,11 +220,12 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
 
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
+     * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal view returns (uint256, uint256) {
+    function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = getCglb(lckAC);
@@ -242,10 +243,10 @@ abstract contract MocCore is MocBaseBucket, MocEma, Pausable, Initializable {
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACNeededtoMint = (qTP_ * pTPac) / PRECISION;
+        qACNeededtoMint = (qTP_ * pTPac) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
+        qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
         return (qACNeededtoMint, qACfee);
     }
 }

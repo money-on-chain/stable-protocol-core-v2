@@ -91,14 +91,22 @@ const mintTPBehavior = function () {
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
           assertPrec(100 * 1.05, diff);
         });
-        it("THEN a TPMinted event is emmited", async function () {
+        it("THEN a TPMinted event is emitted", async function () {
           // sender: alice || mocWrapper
           // receiver: alice
           // qTP: 100 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
+            .withArgs(0, mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
+        });
+        it("THEN a Pegged Token Transfer event is emitted", async function () {
+          // from: Zero Address
+          // to: alice
+          // amount: 100 TP
+          await expect(tx)
+            .to.emit(mocContracts.mocPeggedTokens[0], "Transfer")
+            .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(100));
         });
         describe("AND alice tries to mint 901 TP more", function () {
           /*  
@@ -192,21 +200,21 @@ const mintTPBehavior = function () {
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
           assertPrec(100 * 1.05, diff);
         });
-        it("THEN a TPMinted event is emmited", async function () {
+        it("THEN a TPMinted event is emitted", async function () {
           // sender: alice || mocWrapper
           // receiver: bob
           // qTP: 100 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
+            .withArgs(0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
         });
       });
-      describe("AND 100 TP minted", function () {
+      describe("AND 100 TP are minted", function () {
         beforeEach(async function () {
           await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
         });
-        describe("AND Pegged Token price raise to 7.75", function () {
+        describe("AND Pegged Token price raises to 7.75", function () {
           /*  
             nAC = 3100    
             nTP = 100
@@ -244,7 +252,7 @@ const mintTPBehavior = function () {
               );
             });
           });
-          describe("WHEN Alice to mints 383.33 TP", function () {
+          describe("WHEN Alice mints 383.33 TP", function () {
             let alicePrevTPBalance: Balance;
             beforeEach(async function () {
               alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);
@@ -276,7 +284,7 @@ const mintTPBehavior = function () {
               );
             });
           });
-          describe("WHEN Alice to mints 771.428 TP", function () {
+          describe("WHEN Alice mints 771.428 TP", function () {
             let alicePrevTPBalance: Balance;
             beforeEach(async function () {
               alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);

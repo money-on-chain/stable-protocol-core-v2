@@ -44,7 +44,7 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice get target coverage adjusted by the moving average of the value of the Collateral Asset
+     * @notice get target coverage adjusted by all Pegged Token's moving average in relation to the Collateral Asset
      * @return ctargemaCA [PREC]
      */
     function getCtargemaCA() public view returns (uint256 ctargemaCA) {

@@ -18,7 +18,7 @@ describe("Feature: MocCARC20 mint TP", function () {
         { mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders },
         collateralAsset,
       );
-      this.mocContracts = { mocImpl, mocCollateralToken };
+      this.mocContracts = { mocImpl, mocCollateralToken, mocPeggedTokens };
     });
     mintTPBehavior();
   });

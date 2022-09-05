@@ -64,7 +64,7 @@ const mintTCBehavior = function () {
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertPrec(100 * 1.05, diff);
       });
-      it("THEN a TCMinted event is emmited", async function () {
+      it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
         // receiver: alice
         // qTC: 100 TC
@@ -72,6 +72,14 @@ const mintTCBehavior = function () {
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
           .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
+      });
+      it("THEN a Collateral Token Transfer event is emitted", async function () {
+        // from: Zero Address
+        // to: alice
+        // amount: 100 TC
+        await expect(tx)
+          .to.emit(mocContracts.mocCollateralToken, "Transfer")
+          .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(100));
       });
       describe("AND alice sends 1000(exceeded amount) Asset to mint 100 TC", function () {
         let alicePrevACBalance: Balance;
@@ -128,7 +136,7 @@ const mintTCBehavior = function () {
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertPrec(100 * 1.05, diff);
       });
-      it("THEN a TCMinted event is emmited", async function () {
+      it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
         // receiver: bob
         // qTC: 100 TC
@@ -138,12 +146,12 @@ const mintTCBehavior = function () {
           .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
       });
     });
-    describe("GIVEN 300 TC and 100 TP minted", function () {
+    describe("GIVEN 3000 TC and 100 TP are minted", function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
         await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
       });
-      describe("AND Pegged Token price raise to 15.5", function () {
+      describe("AND Pegged Token price raises to 15.5", function () {
         beforeEach(async function () {
           await mocFunctions.pokePrice(0, 15.5);
         });

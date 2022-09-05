@@ -22,7 +22,7 @@ describe("Feature: MocCoinbase mint TP", function () {
       ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
       mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
       this.mocFunctions = mocFunctions;
-      this.mocContracts = { mocImpl, mocCollateralToken };
+      this.mocContracts = { mocImpl, mocCollateralToken, mocPeggedTokens };
     });
     mintTPBehavior();
 
