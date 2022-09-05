@@ -15,6 +15,7 @@ docs/
 bytecodes/
 corpus/
 crytic-export/
+.openzeppelin/
 
 # files
 *.env

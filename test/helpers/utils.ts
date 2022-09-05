@@ -2,6 +2,9 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ERC20Mock, PriceProviderMock, MocRC20 } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
+import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
+import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
+import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -20,6 +23,13 @@ export async function deployPriceProvider(price: BigNumber): Promise<PriceProvid
   return factory.deploy(price);
 }
 
+export async function deployAeropagusGovernor(deployer: Address): Promise<IGovernor> {
+  const factory = await ethers.getContractFactory(GovernorCompiled.abi, GovernorCompiled.bytecode);
+  const governor = await factory.deploy();
+  await governor.functions["initialize(address)"](deployer);
+  return IGovernor__factory.connect(governor.address, ethers.provider.getSigner());
+}
+
 export async function deployAsset(): Promise<ERC20Mock> {
   let alice: Address;
   let bob: Address;
@@ -34,14 +44,15 @@ export async function deployAsset(): Promise<ERC20Mock> {
 export type Balance = BigNumber;
 
 export const ERRORS = {
+  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
+  CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
+  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
-  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
-  CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
-  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
-  TRANSFER_FAIL: "TransferFailed",
+  NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
+  TRANSFER_FAIL: "TransferFailed",
 };
 
 export const CONSTANTS = {

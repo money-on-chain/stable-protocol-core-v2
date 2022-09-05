@@ -1,16 +1,23 @@
 pragma solidity ^0.8.16;
 
 import "../../core/MocCore.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title MocCACoinbase: Moc Collateral Asset Coinbase
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
-contract MocCACoinbase is MocCore, ReentrancyGuard {
+contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
+     * @param governor_ The address that will define when a change contract is authorized
+     * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
@@ -19,6 +26,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
     function initialize(
+        IGovernor governor_,
+        address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         uint256 ctarg_,
@@ -26,7 +35,16 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) external initializer {
-        _MocCore_init(tcTokenAddress_, mocFeeFlowAddress_, ctarg_, protThrld_, tcMintFee_, tcRedeemFee_);
+        __MocCore_init(
+            governor_,
+            stopper_,
+            tcTokenAddress_,
+            mocFeeFlowAddress_,
+            ctarg_,
+            protThrld_,
+            tcMintFee_,
+            tcRedeemFee_
+        );
     }
 
     // ------- Internal Functions -------
@@ -64,4 +82,11 @@ contract MocCACoinbase is MocCore, ReentrancyGuard {
     function mintTCto(uint256 qTC_, address recipient_) external payable {
         _mintTCto(qTC_, msg.value, msg.sender, recipient_);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }
