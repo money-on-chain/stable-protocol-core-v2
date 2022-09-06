@@ -36,23 +36,10 @@ abstract contract MocEma is MocBaseBucket {
     // ------- Public Functions -------
 
     /**
-     * @notice get target coverage adjusted by the moving average of the value of a Pegged Token
-     * @param i_ Pegged Token index
-     * @param pTPac_ Pegged Token price [PREC]
-     * @return ctargemaTP [PREC]
-     */
-    function getCtargemaTP(uint8 i_, uint256 pTPac_) public view returns (uint256 ctargemaTP) {
-        uint256 ema = tpEma[i_].ema;
-        if (pTPac_ >= ema) return ctarg;
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        return (ctarg * ema) / pTPac_;
-    }
-
-    /**
      * @notice get target coverage adjusted by all Pegged Token's moving average in relation to the Collateral Asset
-     * @return ctargemaCA [PREC]
+     * @return ctargema [PREC]
      */
-    function getCtargemaCA() public view returns (uint256 ctargemaCA) {
+    function getCtargema() public view returns (uint256 ctargema) {
         uint256 num;
         uint256 den;
         uint256 pegAmount = pegContainer.length;

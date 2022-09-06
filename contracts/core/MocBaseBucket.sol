@@ -175,20 +175,20 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     /**
      * @notice get amount of Pegged Token available to mint
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset
      * @param pTPac_ Pegged Token price [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return tpAvailableToMint [N]
      */
     function _getTPAvailableToMint(
-        uint256 ctargemaCA_,
+        uint256 ctargema_,
         uint256 pTPac_,
         uint256 lckAC_
     ) internal view returns (uint256 tpAvailableToMint) {
         // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_);
+        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargema_, lckAC_);
         // [PREC] = [PREC] * ([PREC] - [PREC]) / [PREC]
-        uint256 den = (pTPac_ * (ctargemaCA_ - ONE)) / PRECISION;
+        uint256 den = (pTPac_ * (ctargema_ - ONE)) / PRECISION;
         // [N] = [PREC] / [PREC]
         return lckACemaAdjusted / den;
     }
