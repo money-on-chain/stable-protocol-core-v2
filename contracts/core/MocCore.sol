@@ -257,7 +257,7 @@ abstract contract MocCore is MocEma {
     function _calcQACforRedeemTC(uint256 qTC_) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
-        uint256 cglb = getCglb(lckAC);
+        uint256 cglb = _getCglb(lckAC);
 
         // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
@@ -266,11 +266,11 @@ abstract contract MocCore is MocEma {
         uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA, lckAC);
 
         // check if there are enough TC available to redeem
-        if (tcAvailableToRedeem <= qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = (qTC_ * getPTCac(lckAC)) / PRECISION;
+        qACtotalToRedeem = (qTC_ * _getPTCac(lckAC)) / PRECISION;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACtotalToRedeem * tcRedeemFee) / PRECISION;
@@ -298,7 +298,7 @@ abstract contract MocCore is MocEma {
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA, pTPac, lckAC);
 
         // check if there are enough TP available to mint
-        if (tpAvailableToMint <= qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
+        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]

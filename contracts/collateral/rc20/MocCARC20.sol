@@ -100,6 +100,31 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that expect to be received
+     * @return qACtoRedeem amount of qAC sent to the recipient
+     */
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACtoRedeem) {
+        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that expect to be received
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of qAC sent to the recipient
+     */
+    function redeemTCto(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACtoRedeem) {
+        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
      * @notice caller sends Collateral Asset and receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract 
      * @param i_ Pegged Token index to mint

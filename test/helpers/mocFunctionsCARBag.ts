@@ -26,6 +26,30 @@ const mintTCto =
     return mocWrapper.connect(signer).mintTCto(asset.address, qTC, qACmax, to);
   };
 
+const redeemTC =
+  (mocWrapper, mocCollateralToken, assetDefault) =>
+  async ({ from, qTC, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qACmin = pEth(qACmin);
+    }
+    await mocCollateralToken.connect(signer).approve(mocWrapper.address, qTC);
+    return mocWrapper.connect(signer).redeemTC(asset.address, qTC, qACmin);
+  };
+
+const redeemTCto =
+  (mocWrapper, mocCollateralToken, assetDefault) =>
+  async ({ from, to, qTC, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qACmin = pEth(qACmin);
+    }
+    await mocCollateralToken.connect(signer).approve(mocWrapper.address, qTC);
+    return mocWrapper.connect(signer).redeemTCto(asset.address, qTC, qACmin, to);
+  };
+
 const mintTP =
   (mocWrapper, assetDefault) =>
   async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
@@ -67,6 +91,8 @@ export const mocFunctionsCARBag = async (mocContracts, assetDefault) => {
   return {
     mintTC: mintTC(mocContracts.mocWrapper, assetDefault),
     mintTCto: mintTCto(mocContracts.mocWrapper, assetDefault),
+    redeemTC: redeemTC(mocContracts.mocWrapper, mocContracts.mocCollateralToken, assetDefault),
+    redeemTCto: redeemTCto(mocContracts.mocWrapper, mocContracts.mocCollateralToken, assetDefault),
     mintTP: mintTP(mocContracts.mocWrapper, assetDefault),
     mintTPto: mintTPto(mocContracts.mocWrapper, assetDefault),
     assetBalanceOf: balanceOf(assetDefault),

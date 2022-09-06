@@ -14,6 +14,7 @@ contract MocCAWrapper is MocUpgradable {
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
+    error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     // ------- Structs -------
     struct Asset {
         // asset token
@@ -168,6 +169,37 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
+     * @notice caller sends Collateral Token and recipient receives Assets
+        Requires prior sender approval of Collateral Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Asset that expect to be received
+     * @param sender_ address who sends the Collateral Token
+     * @param recipient_ address who receives the Asset
+     */
+    function _redeemTCto(
+        address assetAddress_,
+        uint256 qTC_,
+        uint256 qACmin_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        // get Collateral Token contract address
+        IERC20 tcToken = mocCore.tcToken();
+        // transfer Collateral Token from sender to this address
+        SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
+        uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
+        // calculate the equivalent amount of Asset
+        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
+        if (assetAmount < qACmin_) revert QacBelowMinimumRequired(qACmin_, assetAmount);
+        // burn the wcaToken redeemed
+        wcaToken.burn(address(this), wcaTokenAmountRedeemed);
+        // transfer Asset to the recipient
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+    }
+
+    /**
      * @notice caller sends Asset and recipient receives Collateral Token
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
@@ -273,6 +305,38 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) external {
         _mintTCto(assetAddress_, qTC_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Asset
+        Requires prior sender approval of Collateral Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Asset that expect to be received
+     */
+    function redeemTC(
+        address assetAddress_,
+        uint256 qTC_,
+        uint256 qACmin_
+    ) external {
+        _redeemTCto(assetAddress_, qTC_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Asset
+        Requires prior sender approval of Collateral Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Asset that expect to be receivedt
+     * @param recipient_ address who receives the Asset
+     */
+    function redeemTCto(
+        address assetAddress_,
+        uint256 qTC_,
+        uint256 qACmin_,
+        address recipient_
+    ) external {
+        _redeemTCto(assetAddress_, qTC_, qACmin_, msg.sender, recipient_);
     }
 
     /**

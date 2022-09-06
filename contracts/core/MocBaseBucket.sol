@@ -34,7 +34,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal protThrld;
 
     // Collateral Token
-    IMocRC20 internal tcToken;
+    IMocRC20 public tcToken;
     // total supply of Collateral Token
     uint256 internal nTCcb;
     // fee pct sent to Fee Flow for mint Collateral Tokens
@@ -170,7 +170,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         // [PREC]
         uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_);
         // [N] = [PREC] / [PREC]
-        return lckACemaAdjusted / getPTCac(lckAC_);
+        return lckACemaAdjusted / _getPTCac(lckAC_);
     }
 
     /**
