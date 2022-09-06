@@ -262,8 +262,8 @@ abstract contract MocCore is MocEma {
         // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
 
-        uint256 ctargemaCA = getCtargemaCA();
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA, lckAC);
+        uint256 ctargema = getCtargema();
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargema, lckAC);
 
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);

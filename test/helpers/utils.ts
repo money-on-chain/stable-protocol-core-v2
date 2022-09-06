@@ -81,6 +81,7 @@ export const ERRORS = {
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
+  QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",

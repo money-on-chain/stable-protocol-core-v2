@@ -51,9 +51,9 @@ describe("Feature: MocCoinbase mint TP", function () {
         const factory = await ethers.getContractFactory("ReentrancyAttackerMock");
         reentrancyAttacker = await factory.deploy();
       });
-      it("THEN tx fails because contract cannot receive the surplus", async () => {
+      it("THEN tx fails because there is a reentrant call", async () => {
         const data = mocImpl.interface.encodeFunctionData("mintTP", [0, pEth(1)]);
-        await expect(reentrancyAttacker.forward(mocImpl.address, data, { value: pEth(100) })).to.be.revertedWith(
+        await expect(reentrancyAttacker.forward(mocImpl.address, data, true, { value: pEth(100) })).to.be.revertedWith(
           ERRORS.REENTRACYGUARD,
         );
       });

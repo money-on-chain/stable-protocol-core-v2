@@ -40,10 +40,7 @@ const redeemTCBehavior = function () {
       });
       describe("WHEN alice tries to redeem 301 TC", function () {
         it("THEN tx reverts because there is not enough TC available to redeem", async function () {
-          await expect(mocFunctions.redeemTC({ from: alice, qTC: 301 })).to.be.revertedWithCustomError(
-            mocContracts.mocImpl,
-            ERRORS.INSUFFICIENT_TC_TO_REDEEM,
-          );
+          await expect(mocFunctions.redeemTC({ from: alice, qTC: 301 })).to.be.reverted;
         });
       });
       describe("AND alice transfers 50 TC to bob", function () {
@@ -52,10 +49,16 @@ const redeemTCBehavior = function () {
         });
         describe("WHEN alice tries to redeem 251 TC", function () {
           it("THEN tx reverts because alice doesn't have that much TC", async function () {
-            await expect(mocFunctions.redeemTC({ from: alice, qTC: 251 })).to.be.revertedWith(
-              ERRORS.BURN_EXCEEDS_BALANCE,
-            );
+            await expect(mocFunctions.redeemTC({ from: alice, qTC: 251 })).to.be.reverted;
           });
+        });
+      });
+      describe("WHEN alice redeems 300 TC expecting 301 Asset", function () {
+        it("THEN tx reverts because Asset received is below the minimum required", async function () {
+          await expect(mocFunctions.redeemTC({ from: alice, qTC: 300, qACmin: 301 })).to.be.revertedWithCustomError(
+            mocContracts.mocImpl,
+            ERRORS.QAC_BELOW_MINIMUM,
+          );
         });
       });
       describe("WHEN alice redeems 300 TC", function () {
@@ -92,20 +95,65 @@ const redeemTCBehavior = function () {
         });
         it("THEN a TCRedeemed event is emitted", async function () {
           // sender: alice || mocWrapper
-          // receiver: alice
+          // receiver: alice || mocWrapper
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCRedeemed")
-            .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(300), pEth(300 * 0.95));
+            .withArgs(
+              mocContracts.mocWrapper?.address || alice,
+              mocContracts.mocWrapper?.address || alice,
+              pEth(300),
+              pEth(300 * 0.95),
+            );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          // from: alice
+          // from: alice || mocWrapper
           // to: Zero Address
           // amount: 300 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(alice, CONSTANTS.ZERO_ADDRESS, pEth(300));
+            .withArgs(mocContracts.mocWrapper?.address || alice, CONSTANTS.ZERO_ADDRESS, pEth(300));
+        });
+      });
+      describe("WHEN alice redeems 300 TC to bob", function () {
+        let tx: ContractTransaction;
+        let bobPrevACBalance: Balance;
+        let mocFeeFlowPrevACBalance: Balance;
+        beforeEach(async function () {
+          bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 300 });
+        });
+        it("THEN alice has 0 TC", async function () {
+          assertPrec(0, await mocFunctions.tcBalanceOf(alice));
+        });
+        it("THEN Moc balance decrease 300 AC", async function () {
+          assertPrec(0, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
+        });
+        it("THEN Moc Fee Flow balance increase 5% of 300 AC", async function () {
+          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
+          assertPrec(300 * 0.05, diff);
+        });
+        it("THEN bob balance increase 300 Asset - 5% for Moc Fee Flow", async function () {
+          const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);
+          const diff = bobActualACBalance.sub(bobPrevACBalance);
+          assertPrec(300 * 0.95, diff);
+        });
+        it("THEN a TCRedeemed event is emitted", async function () {
+          // sender: alice || mocWrapper
+          // receiver: bob || mocWrapper
+          // qTC: 300 TC
+          // qAC: 300 AC + 5% for Moc Fee Flow
+          await expect(tx)
+            .to.emit(mocContracts.mocImpl, "TCRedeemed")
+            .withArgs(
+              mocContracts.mocWrapper?.address || alice,
+              mocContracts.mocWrapper?.address || bob,
+              pEth(300),
+              pEth(300 * 0.95),
+            );
         });
       });
       describe("AND 10 TP are minted", function () {
@@ -125,6 +173,40 @@ const redeemTCBehavior = function () {
               mocContracts.mocImpl,
               ERRORS.INSUFFICIENT_TC_TO_REDEEM,
             );
+          });
+        });
+        describe("WHEN alice redeems 270 TC", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            await mocFunctions.redeemTC({ from: alice, qTC: 270 });
+          });
+          it("THEN alice balance decrease 270 TC", async function () {
+            assertPrec(30, await mocFunctions.tcBalanceOf(alice));
+          });
+          it("THEN alice balance increase 270 Asset - 5% for Moc Fee Flow", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = aliceActualACBalance.sub(alicePrevACBalance);
+            assertPrec(270 * 0.95, diff);
+          });
+        });
+        describe("AND Pegged Token price raises to 15.5", function () {
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(0, 15.5);
+          });
+          describe("WHEN Alice tries to redeem 100 TC", function () {
+            /*  
+              nAC = 310    
+              nTP = 10
+              lckAC = 155
+              => coverage = 2 
+          */
+            it("THEN tx reverts because coverage is below the protected threshold", async function () {
+              await expect(mocFunctions.redeemTC({ from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+                mocContracts.mocImpl,
+                ERRORS.LOW_COVERAGE,
+              );
+            });
           });
         });
       });

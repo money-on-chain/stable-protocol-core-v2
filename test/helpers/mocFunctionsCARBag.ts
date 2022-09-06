@@ -87,6 +87,16 @@ const addAsset = mocWrapper => async (asset, priceProvider) => {
 };
 const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
 
+const tcTransfer =
+  mocCollateralToken =>
+  async ({ from, to, amount, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      amount = pEth(amount);
+    }
+    return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
+  };
+
 export const mocFunctionsCARBag = async (mocContracts, assetDefault) => {
   return {
     mintTC: mintTC(mocContracts.mocWrapper, assetDefault),
@@ -98,6 +108,7 @@ export const mocFunctionsCARBag = async (mocContracts, assetDefault) => {
     assetBalanceOf: balanceOf(assetDefault),
     acBalanceOf: balanceOf(mocContracts.wcaToken),
     tcBalanceOf: balanceOf(mocContracts.mocCollateralToken),
+    tcTransfer: tcTransfer(mocContracts.mocCollateralToken),
     tpBalanceOf: tpBalanceOf(mocContracts.mocPeggedTokens),
     addAsset: addAsset(mocContracts.mocWrapper),
     pokePrice: pokePrice(mocContracts.priceProviders),
