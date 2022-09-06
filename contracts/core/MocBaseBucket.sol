@@ -44,6 +44,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // Pegged Token
     IMocRC20[] internal tpToken;
+    // Pegged Token indexes
+    mapping(address => uint8) internal peggedTokenIndex;
     // peg container
     PegContainerItem[] internal pegContainer;
     // reserve factor

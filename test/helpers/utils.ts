@@ -88,6 +88,7 @@ export const ERRORS = {
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   LOW_COVERAGE: "LowCoverage",
   TRANSFER_FAIL: "TransferFailed",
+  PEGGED_TOKEN_ALREADY_ADDED: "PeggedTokenAlreadyAdded",
 };
 
 export const CONSTANTS = {

@@ -14,6 +14,7 @@ abstract contract MocCore is MocEma {
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TPMinted(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
+        uint8 indexed i_,
         address indexed tpTokenAddress_,
         address priceProviderAddress_,
         uint256 tpR_,
@@ -24,6 +25,7 @@ abstract contract MocCore is MocEma {
         uint256 tpEmaSf_
     );
     // ------- Custom Errors -------
+    error PeggedTokenAlreadyAdded();
     error LowCoverage(uint256 cglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
@@ -200,6 +202,11 @@ abstract contract MocCore is MocEma {
         if (tpMintFee_ > PRECISION) revert InvalidValue();
         if (tpRedeemFee_ > PRECISION) revert InvalidValue();
         if (tpEmaSf_ >= ONE) revert InvalidValue();
+        // TODO: this could be replaced by a "if exists modify it"
+        if (peggedTokenIndex[tpTokenAddress_] != 0) revert PeggedTokenAlreadyAdded();
+        uint8 newTPindex = uint8(tpToken.length);
+        peggedTokenIndex[tpTokenAddress_] = newTPindex;
+
         // set Pegged Token address
         tpToken.push(IMocRC20(tpTokenAddress_));
         // set peg container item
@@ -214,7 +221,9 @@ abstract contract MocCore is MocEma {
         tpRedeemFee.push(tpRedeemFee_);
         // set EMA initial value and smoothing factor
         tpEma.push(EmaItem({ ema: tpEma_, sf: tpEmaSf_ }));
+
         emit PeggedTokenAdded(
+            newTPindex,
             tpTokenAddress_,
             priceProviderAddress_,
             tpR_,
