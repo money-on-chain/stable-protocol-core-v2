@@ -11,12 +11,68 @@ import "./MocBaseBucket.sol";
  */
 // solhint-disable-next-line no-empty-blocks
 abstract contract MocEma is MocBaseBucket {
+    // ------- Events -------
+    event TPemaUpdated(uint8 indexed i_, uint256 oldTPema_, uint256 newTPema_);
+
+    // ------- Structs -------
+    struct EmaItem {
+        // exponential moving average
+        uint256 ema;
+        // smoothing factor
+        uint256 sf;
+    }
+
+    // ------- Storage -------
+    // TP EMA items
+    EmaItem[] internal tpEma;
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
      */
     /* solhint-disable-next-line no-empty-blocks */
     function __MocEma_init_unchained() internal onlyInitializing {}
+
+    // ------- Public Functions -------
+
+    /**
+     * @notice get target coverage adjusted by all Pegged Token's moving average in relation to the Collateral Asset
+     * @return ctargema [PREC]
+     */
+    function getCtargema() public view returns (uint256 ctargema) {
+        uint256 num;
+        uint256 den;
+        uint256 pegAmount = pegContainer.length;
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            uint256 nTP = pegContainer[i].nTP;
+            // [PREC] = [N] * [PREC]
+            num += nTP * tpEma[i].ema;
+            // [PREC] = [N] * [PREC]
+            den += nTP * _getPTPac(i);
+        }
+        if (den >= num || den == 0) return ctarg;
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        return (ctarg * num) / den;
+    }
+
+    /**
+     * @notice update exponential moving average of the value of a Pegged Token
+     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
+     * @param i_ Pegged Token index
+     */
+    function updateTPema(uint8 i_) public {
+        EmaItem memory currentTPema = tpEma[i_];
+        uint256 pTPac = _getPTPac(i_);
+        // [PREC] = [PREC] * [PREC] / ([PREC] - [PREC])
+        uint256 term1 = (PRECISION * currentTPema.ema) / (ONE - currentTPema.sf);
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        uint256 term2 = (PRECISION * currentTPema.sf) / pTPac;
+        // [PREC] = [PREC] + [PREC]
+        uint256 newEma = term1 + term2;
+        // save new ema value to storage
+        tpEma[i_].ema = newEma;
+        emit TPemaUpdated(i_, currentTPema.ema, newEma);
+    }
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new

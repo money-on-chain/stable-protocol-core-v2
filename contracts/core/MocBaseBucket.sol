@@ -97,10 +97,25 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice add Collateral Token and Collateral Asset to the Bucket
      * @param qTC_ amount of Collateral Token to add
-     * @param qAC_ amount of Collateral to add
+     * @param qAC_ amount of Collateral Asset to add
      */
     function _depositTC(uint256 qTC_, uint256 qAC_) internal {
         nTCcb += qTC_;
+        nACcb += qAC_;
+    }
+
+    /**
+     * @notice add Pegged Token and Collateral Asset to the Bucket
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to add
+     * @param qAC_ amount of Collateral Asset to add
+     */
+    function _depositTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAC_
+    ) internal {
+        pegContainer[i_].nTP += qTP_;
         nACcb += qAC_;
     }
 
@@ -109,11 +124,30 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function _getPTPac(uint8 i_) internal view returns (uint256) {
+    function _getPTPac(uint8 i_) internal view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (bytes32 price, bool has) = priceProvider.peek();
         if (!has) revert InvalidPriceProvider(address(priceProvider));
         return uint256(price);
+    }
+
+    /**
+     * @notice get amount of Pegged Token available to mint
+     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset
+     * @param pTPac_ Pegged Token price [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     */
+    function _getTPAvailableToMint(
+        uint256 ctargema_,
+        uint256 pTPac_,
+        uint256 lckAC_
+    ) internal view returns (uint256 tpAvailableToMint) {
+        // [PREC] = (N + N) * [PREC] - ([PREC] * [PREC] / [PREC])
+        uint256 num = (nACcb + nACioucb) * PRECISION - ((ctargema_ * lckAC_) / PRECISION);
+        // [PREC] = [PREC] * ([PREC] - [PREC]) / [PREC]
+        uint256 den = (pTPac_ * (ctargema_ - ONE)) / PRECISION;
+        // [N] = [PREC] / [PREC]
+        tpAvailableToMint = num / den;
     }
 
     // ------- Public Functions -------
@@ -135,7 +169,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return pTCac [PREC]
      */
-    function getPTCac(uint256 lckAC_) internal view returns (uint256 pTCac) {
+    function _getPTCac(uint256 lckAC_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
         // [PREC] = [N] + [N] * [PREC] - [PREC]
         pTCac = (nACcb + nACioucb) * PRECISION - lckAC_;

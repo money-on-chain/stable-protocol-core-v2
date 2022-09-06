@@ -68,9 +68,10 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @notice caller sends coinbase as Collateral Asset and receives Collateral Token
      * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
+     * @return qACtotalNeeded amount of qAC used to mint qTC
      */
-    function mintTC(uint256 qTC_) external payable {
-        _mintTCto(qTC_, msg.value, msg.sender, msg.sender);
+    function mintTC(uint256 qTC_) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTCto(qTC_, msg.value, msg.sender, msg.sender);
     }
 
     /**
@@ -78,9 +79,37 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
+     * @return qACtotalNeeded amount of qAC used to mint qTC
      */
-    function mintTCto(uint256 qTC_, address recipient_) external payable {
-        _mintTCto(qTC_, msg.value, msg.sender, recipient_);
+    function mintTCto(uint256 qTC_, address recipient_) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTCto(qTC_, msg.value, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends coinbase as Collateral Asset and receives Pegged Token
+     * @dev any extra value, not spent on TP nor fees, will be return to sender
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @return qACtotalNeeded amount of qAC used to mint qTP
+     */
+    function mintTP(uint8 i_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTPto(i_, qTP_, msg.value, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends coinbase as Collateral Asset and recipient receives Pegged Token
+     * @dev any extra value, not spent on TP nor fees, will be return to sender
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param recipient_ address who receives the Pegged Token
+     * @return qACtotalNeeded amount of qAC used to mint qTP
+     */
+    function mintTPto(
+        uint8 i_,
+        uint256 qTP_,
+        address recipient_
+    ) external payable returns (uint256 qACtotalNeeded) {
+        return _mintTPto(i_, qTP_, msg.value, msg.sender, recipient_);
     }
 
     /**

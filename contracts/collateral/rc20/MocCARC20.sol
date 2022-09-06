@@ -75,10 +75,11 @@ contract MocCARC20 is MocCore {
         Requires prior sender approval of Collateral Asset to this contract 
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @return qACtotalNeeded amount of qAC used to mint qTC
      */
-    function mintTC(uint256 qTC_, uint256 qACmax_) external {
+    function mintTC(uint256 qTC_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
+        return _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
     }
 
     /**
@@ -87,14 +88,51 @@ contract MocCARC20 is MocCore {
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
+     * @return qACtotalNeeded amount of qAC used to mint qTC
      */
     function mintTCto(
         uint256 qTC_,
         uint256 qACmax_,
         address recipient_
-    ) external {
+    ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
+        return _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and receives Pegged Token
+        Requires prior sender approval of Collateral Asset to this contract 
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @return qACtotalNeeded amount of qAC used to mint qTP
+     */
+    function mintTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_
+    ) external returns (uint256 qACtotalNeeded) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Pegged Token
+        Requires prior sender approval of Collateral Asset to this contract 
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Pegged Token
+     * @return qACtotalNeeded amount of qAC used to mint qTP
+     */
+    function mintTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    ) external returns (uint256 qACtotalNeeded) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }
 
     /**

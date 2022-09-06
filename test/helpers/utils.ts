@@ -1,14 +1,16 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ERC20Mock, PriceProviderMock, MocRC20 } from "../../typechain";
+import { ERC20Mock, PriceProviderMock, MocRC20, MocCore } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
+import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
+import { tpParams } from "../../deploy-config/config";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
-  if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false });
+  if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false }).replace(",", ".");
   else ethStr = eth;
   return ethers.utils.parseEther(ethStr);
 }
@@ -16,6 +18,34 @@ export function pEth(eth: string | number): BigNumber {
 export async function deployPeggedToken(): Promise<MocRC20> {
   const factory = await ethers.getContractFactory("MocRC20");
   return factory.deploy("PeggedToken", "PeggedToken");
+}
+
+export async function deployAndAddPeggedTokens(
+  mocImpl: MocCore,
+  amountPegTokens: number,
+): Promise<{ mocPeggedTokens: MocRC20[]; priceProviders: PriceProviderMock[] }> {
+  const mocPeggedTokens: Array<MocRC20> = [];
+  const priceProviders: Array<PriceProviderMock> = [];
+  for (let i = 1; i <= amountPegTokens; i++) {
+    const peggedToken = await deployPeggedToken();
+    await peggedToken.grantRole(MINTER_ROLE, mocImpl.address);
+    await peggedToken.grantRole(BURNER_ROLE, mocImpl.address);
+
+    const priceProvider = await deployPriceProvider(pEth(1));
+    await mocImpl.addPeggedToken(
+      peggedToken.address,
+      priceProvider.address,
+      tpParams.r,
+      tpParams.bmin,
+      tpParams.mintFee,
+      tpParams.redeemFee,
+      tpParams.initialEma,
+      tpParams.smoothingFactor,
+    );
+    mocPeggedTokens.push(peggedToken);
+    priceProviders.push(priceProvider);
+  }
+  return { mocPeggedTokens, priceProviders };
 }
 
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
@@ -46,12 +76,14 @@ export type Balance = BigNumber;
 export const ERRORS = {
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
-  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
+  INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
+  INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
+  LOW_COVERAGE: "LowCoverage",
   TRANSFER_FAIL: "TransferFailed",
 };
 
