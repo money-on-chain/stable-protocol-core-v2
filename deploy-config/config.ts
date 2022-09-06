@@ -1,10 +1,12 @@
 import { BigNumber } from "ethers";
 
 const PCT_BASE = BigNumber.from((1e18).toString());
+const DAY_BLOCK_SPAN = 2880;
 
 export const coreParams = {
   ctarg: PCT_BASE.mul(4), // 4
   protThrld: PCT_BASE.mul(2), // 2
+  emaCalculationBlockSpan: DAY_BLOCK_SPAN,
 };
 
 export const tcParams = {
@@ -17,6 +19,8 @@ export const tpParams = {
   bmin: 0,
   mintFee: PCT_BASE.mul(5).div(100), // 5%
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
+  initialEma: PCT_BASE, // 1
+  smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
 };
 
 export const mocAddresses = {

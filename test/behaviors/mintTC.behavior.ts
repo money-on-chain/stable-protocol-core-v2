@@ -9,6 +9,7 @@ import { expect } from "chai";
 const mintTCBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
+  let deployer: Address;
   let alice: Address;
   let bob: Address;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
@@ -17,7 +18,7 @@ const mintTCBehavior = function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
-      ({ alice, bob } = await getNamedAccounts());
+      ({ deployer, alice, bob } = await getNamedAccounts());
     });
     describe("WHEN alice sends 0 Asset to mint TC", function () {
       it("THEN tx reverts because the amount of AC is invalid", async function () {
@@ -63,7 +64,7 @@ const mintTCBehavior = function () {
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertPrec(100 * 1.05, diff);
       });
-      it("THEN a TCMinted event is emmited", async function () {
+      it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
         // receiver: alice
         // qTC: 100 TC
@@ -71,6 +72,14 @@ const mintTCBehavior = function () {
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
           .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
+      });
+      it("THEN a Collateral Token Transfer event is emitted", async function () {
+        // from: Zero Address
+        // to: alice
+        // amount: 100 TC
+        await expect(tx)
+          .to.emit(mocContracts.mocCollateralToken, "Transfer")
+          .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(100));
       });
       describe("AND alice sends 1000(exceeded amount) Asset to mint 100 TC", function () {
         let alicePrevACBalance: Balance;
@@ -106,7 +115,7 @@ const mintTCBehavior = function () {
         });
       });
     });
-    describe("WHEN alice sends 100 Asset to mint 100 TC to bob", function () {
+    describe("WHEN alice sends 105 Asset to mint 100 TC to bob", function () {
       let tx: ContractTransaction;
       let alicePrevACBalance: Balance;
       beforeEach(async function () {
@@ -127,7 +136,7 @@ const mintTCBehavior = function () {
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertPrec(100 * 1.05, diff);
       });
-      it("THEN a TCMinted event is emmited", async function () {
+      it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
         // receiver: bob
         // qTC: 100 TC
@@ -135,6 +144,31 @@ const mintTCBehavior = function () {
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
           .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
+      });
+    });
+    describe("GIVEN 3000 TC and 100 TP are minted", function () {
+      beforeEach(async function () {
+        await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+        await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
+      });
+      describe("AND Pegged Token price raises to 15.5", function () {
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(0, 15.5);
+        });
+        describe("WHEN Alice tries to mint 100 TC", function () {
+          /*  
+            nAC = 3100    
+            nTP = 100
+            lckAC = 1550
+            => coverage = 2 
+        */
+          it("THEN tx reverts because coverage is below the protected threshold", async function () {
+            await expect(mocFunctions.mintTC({ from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.LOW_COVERAGE,
+            );
+          });
+        });
       });
     });
   });

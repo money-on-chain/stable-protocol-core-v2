@@ -30,6 +30,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       coreParams.protThrld,
       tcParams.mintFee,
       tcParams.redeemFee,
+      coreParams.emaCalculationBlockSpan,
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );

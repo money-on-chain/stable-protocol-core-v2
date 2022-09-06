@@ -1,9 +1,8 @@
-import { deployments, getNamedAccounts, network } from "hardhat";
+import { deployments, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 import { MocCARC20, MocCARC20__factory } from "../../../../typechain";
-import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../../../deploy-config/config";
 import { deployAeropagusGovernor } from "../../../helpers/utils";
+import { mocInitialize } from "../../../collateralBag/initializers";
 
 export function fixtureDeployGovernance(): () => Promise<{
   governor: Contract;
@@ -11,7 +10,6 @@ export function fixtureDeployGovernance(): () => Promise<{
 }> {
   return deployments.createFixture(async ({ ethers }) => {
     await deployments.fixture();
-    const networkName = network.name as keyof typeof mocAddresses;
     const { deployer } = await getNamedAccounts();
 
     // deploy and initialize governor
@@ -27,21 +25,7 @@ export function fixtureDeployGovernance(): () => Promise<{
     const governor = await deployAeropagusGovernor(deployer);
 
     const mockAddress = deployer;
-    // initializations
-    await waitForTxConfirmation(
-      mocCARC20.initialize(
-        governor.address,
-        mockAddress,
-        mockAddress,
-        mockAddress,
-        mocAddresses[networkName].mocFeeFlowAddress,
-        coreParams.ctarg,
-        coreParams.protThrld,
-        tcParams.mintFee,
-        tcParams.redeemFee,
-        { gasLimit: GAS_LIMIT_PATCH },
-      ),
-    );
+    await mocInitialize(mocCARC20, mockAddress, mockAddress)({ governorAddress: governor.address });
 
     return {
       governor,

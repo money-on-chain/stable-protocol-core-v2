@@ -230,12 +230,17 @@ abstract contract MocCore is MocEma {
         uint256 lckAC = getLckAC();
         uint256 cglb = _getCglb(lckAC);
         uint256 pTPac = _getPTPac(i_);
-        uint256 ctargema = calcCtargema();
+        uint256 ctargema = getCtargema();
 
         // check if coverage is above the target coverage adjusted by the moving average
         if (cglb <= ctargema) revert LowCoverage(cglb, ctargema);
 
+<<<<<<< HEAD
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema, pTPac, lckAC);
+=======
+        uint256 ctargemaCA = calcCtargemaCA();
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA, pTPac, lckAC);
+>>>>>>> feat: allow emas update
 
         // check if there are enough TP available to mint
         if (tpAvailableToMint <= qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);

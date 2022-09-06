@@ -13,7 +13,7 @@ contract MocCAWrapper is MocUpgradable {
     // ------- Custom Errors -------
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
-    error InsufficientQacSent(uint256 qACsent_, uint256 qACNedeed_);
+    error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     // ------- Structs -------
     struct Asset {
         // asset token
@@ -90,6 +90,28 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
+     * @notice given an amount of Asset, calculates the equivalent value in wrapped tokens
+     * @param assetAddress_ Asset contract address
+     * @param assetAmount_ amount of Asset to wrap
+     * @return wcaTokenAmount amount of wcaToken [N]
+     */
+    function _convertAssetToToken(address assetAddress_, uint256 assetAmount_)
+        internal
+        view
+        returns (uint256 wcaTokenAmount)
+    {
+        // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
+        // [PREC]
+        uint256 wcaTokenPrice = getTokenPrice();
+        // calculate how much currency will increment the pool
+        // [PREC] = [N] * [PREC]
+        uint256 currencyToAdd = assetAmount_ * _getAssetPrice(priceProviderMap[assetAddress_]);
+        // divide by wrapped token price to get the equivalent amount of tokens
+        // [N] = [PREC] / [PREC]
+        return currencyToAdd / wcaTokenPrice;
+    }
+
+    /**
      * @notice given an amount of wrapped tokens, calculates the equivalent value in the given asset
      * @param assetAddress_ Asset contract address
      * @param wcaTokenAmount_ amount of wrapped tokens
@@ -105,10 +127,10 @@ contract MocCAWrapper is MocUpgradable {
         uint256 wcaTokenPrice = getTokenPrice();
         // multply by wcaTokenAmount_ to get how many currency we need
         // [PREC] = [PREC] * [N]
-        uint256 currencyNedeed = wcaTokenPrice * wcaTokenAmount_;
+        uint256 currencyNeeded = wcaTokenPrice * wcaTokenAmount_;
         // divide currencyNedded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
-        return currencyNedeed / _getAssetPrice(priceProviderMap[assetAddress_]);
+        return currencyNeeded / _getAssetPrice(priceProviderMap[assetAddress_]);
     }
 
     /**
@@ -127,20 +149,58 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        // ask to Moc Core how many qAC(Wrapper Collateral Asset) are nedeed to mint qTC
-        (uint256 qACtoMint, uint256 qACfee) = mocCore.calcQACforMintTC(qTC_);
-        uint256 qAC = qACtoMint + qACfee;
-        // calculates the equivalent value in the given asset
-        uint256 assetNedeed = _convertTokenToAsset(assetAddress_, qAC);
-        wcaToken.mint(address(this), qAC);
-
-        if (assetNedeed > qACmax_) revert InsufficientQacSent(qACmax_, assetNedeed);
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qACmax_);
+        wcaToken.mint(address(this), tokenToMint);
 
         // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), assetNedeed);
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qACmax_);
 
         // mint TC to the recipient
-        mocCore.mintTCto(qTC_, qAC, recipient_);
+        uint256 tokenUsed = mocCore.mintTCto(qTC_, tokenToMint, recipient_);
+        uint256 tokenUnused = tokenToMint - tokenUsed;
+
+        // calculates the equivalent value in the given asset
+        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
+        wcaToken.burn(address(this), tokenUnused);
+
+        // transfer back to sender the unused asset
+        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param sender_ address who sends the Asset
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function _mintTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qACmax_);
+        wcaToken.mint(address(this), tokenToMint);
+
+        // transfer asset from sender to this contract
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qACmax_);
+
+        // mint TP to the recipient
+        uint256 tokenUsed = mocCore.mintTPto(i_, qTP_, tokenToMint, recipient_);
+        uint256 tokenUnused = tokenToMint - tokenUsed;
+
+        // calculates the equivalent value in the given asset
+        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
+        wcaToken.burn(address(this), tokenUnused);
+
+        // transfer back to sender the unused asset
+        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
     }
 
     // ------- Public Functions -------
@@ -216,6 +276,42 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
+     * @notice caller sends Asset and receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Asset that can be spent
+     */
+    function mintTP(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_
+    ) external {
+        _mintTPto(assetAddress_, i_, qTP_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token
+     */
+    function mintTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    ) external {
+        _mintTPto(assetAddress_, i_, qTP_, qACmax_, msg.sender, recipient_);
+    }
+
+    /*
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps

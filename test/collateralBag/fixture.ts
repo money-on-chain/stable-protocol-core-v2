@@ -7,16 +7,16 @@ import {
   MocCAWrapper__factory,
   MocRC20,
   MocRC20__factory,
+  PriceProviderMock,
 } from "../../typechain";
-import { pEth, deployPeggedToken, deployPriceProvider, deployAsset } from "../helpers/utils";
-import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
-import { tpParams } from "../../deploy-config/config";
+import { pEth, deployAndAddPeggedTokens, deployPriceProvider, deployAsset } from "../helpers/utils";
 
 export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<{
   mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
+  priceProviders: PriceProviderMock[];
   wcaToken: MocRC20;
   asset: ERC20Mock;
 }> {
@@ -40,23 +40,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
     if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
     const wcaToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-    const mocPeggedTokens: Array<MocRC20> = [];
-    for (let i = 1; i <= amountPegTokens; i++) {
-      const peggedToken = await deployPeggedToken();
-      await peggedToken.grantRole(MINTER_ROLE, deployedMocContract.address);
-      await peggedToken.grantRole(BURNER_ROLE, deployedMocContract.address);
-
-      const priceProvider = await deployPriceProvider(pEth(1));
-      await mocImpl.addPeggedToken(
-        peggedToken.address,
-        priceProvider.address,
-        tpParams.r,
-        tpParams.bmin,
-        tpParams.mintFee,
-        tpParams.redeemFee,
-      );
-      mocPeggedTokens.push(peggedToken);
-    }
+    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
 
     const asset = await deployAsset();
     const assetPriceProvider = await deployPriceProvider(pEth(1));
@@ -67,6 +51,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
       mocWrapper,
       mocCollateralToken,
       mocPeggedTokens,
+      priceProviders,
       wcaToken,
       asset,
     };
