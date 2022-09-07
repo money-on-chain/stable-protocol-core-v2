@@ -9,6 +9,7 @@ import "./MocBaseBucket.sol";
  * Exponential Moving Average for each of the pegged Tokens.
  * @dev More information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
  */
+// solhint-disable-next-line no-empty-blocks
 abstract contract MocEma is MocBaseBucket {
     // ------- Events -------
     event TPemaUpdated(uint8 indexed i_, uint256 oldTPema_, uint256 newTPema_);
@@ -24,31 +25,52 @@ abstract contract MocEma is MocBaseBucket {
     // ------- Storage -------
     // TP EMA items, indexes are in sync with PeggedTokens across Moc solution
     EmaItem[] public tpEma;
-    // next Ema Calculation Block number
-    uint256 public nextEmaCalculation;
+    // last Ema Calculation Block number
+    uint256 public lastEmaCalculation;
     // amount of blocks to wait for next ema calculation
     uint256 public emaCalculationBlockSpan;
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
+     * @param emaCalculationBlockSpan_ amount of blocks to wait between Peeged ema calculation
      */
+    /* solhint-disable-next-line no-empty-blocks */
     function __MocEma_init_unchained(uint256 emaCalculationBlockSpan_) internal onlyInitializing {
         if (emaCalculationBlockSpan_ == 0) revert InvalidValue();
-        nextEmaCalculation = block.number + emaCalculationBlockSpan_;
+        lastEmaCalculation = block.number;
         emaCalculationBlockSpan = emaCalculationBlockSpan_;
     }
 
     // ------- Public Functions -------
 
     /**
-     * @notice calculates target coverage adjusted by all Pegged Token's to Collateral Asset rate moving average
+<<<<<<< HEAD
+     * @notice get target coverage adjusted by all Pegged Token's moving average in relation to the Collateral Asset
      * @return ctargema [PREC]
      */
-    function calcCtargema() public returns (uint256 ctargema) {
+    function getCtargema() public view returns (uint256 ctargema) {
+=======
+     * @notice get target coverage adjusted by the moving average of the value of a Pegged Token
+     * @param i_ Pegged Token index
+     * @param pTPac_ Pegged Token price [PREC]
+     * @return ctargemaTP [PREC]
+     */
+    function getCtargemaTP(uint8 i_, uint256 pTPac_) public view returns (uint256 ctargemaTP) {
+        uint256 ema = tpEma[i_].ema;
+        if (pTPac_ >= ema) return ctarg;
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        return (ctarg * ema) / pTPac_;
+    }
+
+    /**
+     * @notice calculates target coverage adjusted by all Pegged Token's to Collateral Asset rate moving average
+     * @return ctargemaCA [PREC]
+     */
+    function calcCtargemaCA() public returns (uint256 ctargemaCA) {
         // Make sure EMAs are up to date for all the pegs
         updateEmas();
+>>>>>>> feat: allow emas update
         uint256 num;
         uint256 den;
         uint256 pegAmount = pegContainer.length;
@@ -61,7 +83,7 @@ abstract contract MocEma is MocBaseBucket {
         }
         if (den >= num || den == 0) return ctarg;
         // [PREC] = [PREC] * [PREC] / [PREC]
-        ctargema = (ctarg * num) / den;
+        return (ctarg * num) / den;
     }
 
     /**
@@ -69,7 +91,7 @@ abstract contract MocEma is MocBaseBucket {
      */
     function shouldCalculateEma() public view returns (bool) {
         unchecked {
-            return block.number >= nextEmaCalculation;
+            return block.number >= lastEmaCalculation + emaCalculationBlockSpan;
         }
     }
 
@@ -83,7 +105,7 @@ abstract contract MocEma is MocBaseBucket {
             for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
                 updateTPema(i);
             }
-            nextEmaCalculation = block.number + emaCalculationBlockSpan;
+            lastEmaCalculation = block.number;
         }
     }
 
@@ -92,7 +114,7 @@ abstract contract MocEma is MocBaseBucket {
      * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
      * @param i_ Pegged Token index
      */
-    function updateTPema(uint8 i_) internal {
+    function updateTPema(uint8 i_) private {
         EmaItem memory currentTPema = tpEma[i_];
         uint256 pTPac = _getPTPac(i_);
         // [PREC] = [PREC] * [PREC] / ([PREC] - [PREC])

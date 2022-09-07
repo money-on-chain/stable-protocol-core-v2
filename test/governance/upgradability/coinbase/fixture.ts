@@ -37,6 +37,7 @@ export function fixtureDeployGovernance(): () => Promise<{
         coreParams.protThrld,
         tcParams.mintFee,
         tcParams.redeemFee,
+        coreParams.emaCalculationBlockSpan,
         { gasLimit: GAS_LIMIT_PATCH },
       ),
     );

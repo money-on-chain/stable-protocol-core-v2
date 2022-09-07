@@ -23,6 +23,7 @@ describe("Feature: Check MocRC20 storage layout compatibility using openzeppelin
         coreParams.protThrld,
         tcParams.mintFee,
         tcParams.redeemFee,
+        coreParams.emaCalculationBlockSpan,
       ];
       mocProxy = await upgrades.deployProxy(mocProxyFactory, initParams, {
         // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455

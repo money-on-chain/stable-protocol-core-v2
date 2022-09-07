@@ -22,6 +22,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
         coreParams.protThrld,
         tcParams.mintFee,
         tcParams.redeemFee,
+        coreParams.emaCalculationBlockSpan,
       ];
       mocProxy = await upgrades.deployProxy(mocProxyFactory, initParams, {
         kind: "uups",
