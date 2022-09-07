@@ -24,7 +24,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     * @param emaCalculationBlockSpan_ amount of blocks to wait between Peeged ema calculation
+     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
      */
     function initialize(
         IGovernor governor_,

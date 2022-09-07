@@ -9,7 +9,6 @@ import "./MocBaseBucket.sol";
  * Exponential Moving Average for each of the pegged Tokens.
  * @dev More information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
  */
-// solhint-disable-next-line no-empty-blocks
 abstract contract MocEma is MocBaseBucket {
     // ------- Events -------
     event TPemaUpdated(uint8 indexed i_, uint256 oldTPema_, uint256 newTPema_);
@@ -25,20 +24,19 @@ abstract contract MocEma is MocBaseBucket {
     // ------- Storage -------
     // TP EMA items, indexes are in sync with PeggedTokens across Moc solution
     EmaItem[] public tpEma;
-    // last Ema Calculation Block number
-    uint256 public lastEmaCalculation;
+    // next Ema Calculation Block number
+    uint256 public nextEmaCalculation;
     // amount of blocks to wait for next ema calculation
     uint256 public emaCalculationBlockSpan;
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param emaCalculationBlockSpan_ amount of blocks to wait between Peeged ema calculation
+     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
      */
-    /* solhint-disable-next-line no-empty-blocks */
     function __MocEma_init_unchained(uint256 emaCalculationBlockSpan_) internal onlyInitializing {
         if (emaCalculationBlockSpan_ == 0) revert InvalidValue();
-        lastEmaCalculation = block.number;
+        nextEmaCalculation = block.number + emaCalculationBlockSpan_;
         emaCalculationBlockSpan = emaCalculationBlockSpan_;
     }
 
@@ -71,7 +69,7 @@ abstract contract MocEma is MocBaseBucket {
      */
     function shouldCalculateEma() public view returns (bool) {
         unchecked {
-            return block.number >= lastEmaCalculation + emaCalculationBlockSpan;
+            return block.number >= nextEmaCalculation;
         }
     }
 
@@ -85,7 +83,7 @@ abstract contract MocEma is MocBaseBucket {
             for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
                 updateTPema(i);
             }
-            lastEmaCalculation = block.number;
+            nextEmaCalculation = block.number + emaCalculationBlockSpan;
         }
     }
 

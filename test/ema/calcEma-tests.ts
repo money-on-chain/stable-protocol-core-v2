@@ -6,6 +6,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { mineNBlocks, pEth } from "../helpers/utils";
 import { coreParams } from "../../deploy-config/config";
+import { ContractTransaction } from "ethers";
 
 describe("Feature: Ema Calculation", function () {
   let mocImpl: MocCACoinbase;
@@ -33,35 +34,36 @@ describe("Feature: Ema Calculation", function () {
         expect(prevValue).to.be.equal(posValue);
       });
     });
-    describe("AND pegged prices has changed, AND emaCalculationBlockSpan blocks has passed", function () {
-      describe("WHEN updateEma is invoked", function () {
-        it("THEN new Ema values are assigned", async function () {
-          await mineNBlocks(coreParams.emaCalculationBlockSpan);
-          expect(await mocImpl.shouldCalculateEma()).to.be.true;
-          const prevValues = await Promise.all(priceProviders.map((_, i) => mocImpl.tpEma(i)));
-          await Promise.all(priceProviders.map(pp => pp.poke(pEth(2))));
-          const tx = await mocImpl.updateEmas();
+    describe("WHEN pegged prices has changed, AND emaCalculationBlockSpan blocks has passed", function () {
+      let prevValues: { ema: any }[];
+      let assertUpdatedEmas: (tx: ContractTransaction) => void;
+      beforeEach(async function () {
+        await mineNBlocks(coreParams.emaCalculationBlockSpan);
+        prevValues = await Promise.all(priceProviders.map((_, i) => mocImpl.tpEma(i)));
+        await Promise.all(priceProviders.map(pp => pp.poke(pEth(2))));
+        assertUpdatedEmas = async tx => {
           for (let i = 0; i < peggedAmount; i++) {
             const posValue = await mocImpl.tpEma(i);
             expect(prevValues[i].ema).not.to.be.equal(posValue.ema);
             await expect(tx).to.emit(mocImpl, "TPemaUpdated").withArgs(i, prevValues[i].ema, posValue.ema);
           }
           expect(await mocImpl.shouldCalculateEma()).to.be.false;
+        };
+      });
+      it("THEN shouldCalculateEma returns true", async function () {
+        expect(await mocImpl.shouldCalculateEma()).to.be.true;
+      });
+      describe("WHEN updateEma is invoked", function () {
+        it("THEN new Ema values are assigned", async function () {
+          const tx = await mocImpl.updateEmas();
+          await assertUpdatedEmas(tx);
         });
       });
       describe("WHEN mintTP is invoked", function () {
         it("THEN new Ema values are assigned as it's triggered by the operation", async function () {
-          await mineNBlocks(coreParams.emaCalculationBlockSpan);
-          expect(await mocImpl.shouldCalculateEma()).to.be.true;
-          const prevValues = await Promise.all(priceProviders.map((_, i) => mocImpl.tpEma(i)));
-          await Promise.all(priceProviders.map(pp => pp.poke(pEth(2))));
           await this.mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 15 });
           const tx = await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 1 });
-          for (let i = 0; i < peggedAmount; i++) {
-            const posValue = await mocImpl.tpEma(i);
-            expect(prevValues[i].ema).not.to.be.equal(posValue.ema);
-            await expect(tx).to.emit(mocImpl, "TPemaUpdated").withArgs(i, prevValues[i].ema, posValue.ema);
-          }
+          await assertUpdatedEmas(tx);
         });
       });
     });

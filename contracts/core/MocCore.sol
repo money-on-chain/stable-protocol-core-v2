@@ -39,7 +39,7 @@ abstract contract MocCore is MocEma {
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     * @param emaCalculationBlockSpan_ amount of blocks to wait between Peeged ema calculation
+     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
      */
     function __MocCore_init(
         IGovernor governor_,
@@ -144,7 +144,7 @@ abstract contract MocCore is MocEma {
 
     /**
      * @notice add a Pegged Token to the protocol
-     * @dev Note that the ema value, should consider `lastEmaCalculation`
+     * @dev Note that the ema value, should consider `nextEmaCalculation`
      * TODO: this function should be called only through governance system
      * @param tpTokenAddress_ Pegged Token contract address to add
      * @param priceProviderAddress_ Pegged Token price provider contract address
