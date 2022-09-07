@@ -24,6 +24,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
      */
     function initialize(
         IGovernor governor_,
@@ -33,7 +34,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 tcMintFee_,
-        uint256 tcRedeemFee_
+        uint256 tcRedeemFee_,
+        uint256 emaCalculationBlockSpan_
     ) external initializer {
         __MocCore_init(
             governor_,
@@ -43,7 +45,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             ctarg_,
             protThrld_,
             tcMintFee_,
-            tcRedeemFee_
+            tcRedeemFee_,
+            emaCalculationBlockSpan_
         );
     }
 

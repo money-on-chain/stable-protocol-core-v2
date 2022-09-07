@@ -1,4 +1,4 @@
-import { ethers, getNamedAccounts } from "hardhat";
+import { ethers, getNamedAccounts, network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ERC20Mock, PriceProviderMock, MocRC20, MocCore } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
@@ -98,3 +98,7 @@ export const CONSTANTS = {
   PRECISION: BigNumber.from((1e18).toString()),
   ONE: BigNumber.from((1e18).toString()),
 };
+
+export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {
+  return network.provider.send("hardhat_mine", ["0x" + blocks.toString(16), "0x" + secondsPerBlock.toString(16)]);
+}
