@@ -85,7 +85,7 @@ abstract contract MocCore is MocEma {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Collateral Token
-     * @return qACtotalNeeded amount of qAC used to mint qTC
+     * @return qACtotalNeeded amount of AC used to mint qTC
      */
     function _mintTCto(
         uint256 qTC_,
@@ -114,10 +114,10 @@ abstract contract MocCore is MocEma {
     /**
      * @notice redeem Collateral Asset in exchange for Collateral Token
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that expect to be received
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Collateral Asset
-     * @return qACtoRedeem amount of qAC sent to the recipient
+     * @return qACtoRedeem amount of AC sent to 'recipient_'
      */
     function _redeemTCto(
         uint256 qTC_,
@@ -148,7 +148,7 @@ abstract contract MocCore is MocEma {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of qAC used to mint qTP
+     * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function _mintTPto(
         uint8 i_,
@@ -266,7 +266,7 @@ abstract contract MocCore is MocEma {
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function _calcQACforRedeemTC(uint256 qTC_) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
+    function _calcQACforRedeemTC(uint256 qTC_) internal returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = getLckAC();
         uint256 cglb = _getCglb(lckAC);
@@ -274,7 +274,7 @@ abstract contract MocCore is MocEma {
         // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
 
-        uint256 ctargema = getCtargema();
+        uint256 ctargema = calcCtargema();
         uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargema, lckAC);
 
         // check if there are enough TC available to redeem

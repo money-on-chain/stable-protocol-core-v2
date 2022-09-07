@@ -139,22 +139,22 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param sender_ address who sends the Asset
      * @param recipient_ address who receives the Collateral Token
      */
     function _mintTCto(
         address assetAddress_,
         uint256 qTC_,
-        uint256 qACmax_,
+        uint256 qAssetMax_,
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qACmax_);
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qAssetMax_);
         wcaToken.mint(address(this), tokenToMint);
 
         // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qACmax_);
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAssetMax_);
 
         // mint TC to the recipient
         uint256 tokenUsed = mocCore.mintTCto(qTC_, tokenToMint, recipient_);
@@ -173,14 +173,14 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Asset that expect to be received
+     * @param qAssetMin_ minimum amount of Asset that expect to be received
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Asset
      */
     function _redeemTCto(
         address assetAddress_,
         uint256 qTC_,
-        uint256 qACmin_,
+        uint256 qAssetMin_,
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
@@ -189,10 +189,12 @@ contract MocCAWrapper is MocUpgradable {
         // transfer Collateral Token from sender to this address
         SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
         // calculate the equivalent amount of Asset
         uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
-        if (assetAmount < qACmin_) revert QacBelowMinimumRequired(qACmin_, assetAmount);
+        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
         // burn the wcaToken redeemed
         wcaToken.burn(address(this), wcaTokenAmountRedeemed);
         // transfer Asset to the recipient
@@ -205,7 +207,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param sender_ address who sends the Asset
      * @param recipient_ address who receives the Collateral Token
      */
@@ -213,15 +215,15 @@ contract MocCAWrapper is MocUpgradable {
         address assetAddress_,
         uint8 i_,
         uint256 qTP_,
-        uint256 qACmax_,
+        uint256 qAssetMax_,
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qACmax_);
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qAssetMax_);
         wcaToken.mint(address(this), tokenToMint);
 
         // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qACmax_);
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAssetMax_);
 
         // mint TP to the recipient
         uint256 tokenUsed = mocCore.mintTPto(i_, qTP_, tokenToMint, recipient_);
@@ -280,14 +282,14 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTC(
         address assetAddress_,
         uint256 qTC_,
-        uint256 qACmax_
+        uint256 qAssetMax_
     ) external {
-        _mintTCto(assetAddress_, qTC_, qACmax_, msg.sender, msg.sender);
+        _mintTCto(assetAddress_, qTC_, qAssetMax_, msg.sender, msg.sender);
     }
 
     /**
@@ -295,16 +297,16 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      */
     function mintTCto(
         address assetAddress_,
         uint256 qTC_,
-        uint256 qACmax_,
+        uint256 qAssetMax_,
         address recipient_
     ) external {
-        _mintTCto(assetAddress_, qTC_, qACmax_, msg.sender, recipient_);
+        _mintTCto(assetAddress_, qTC_, qAssetMax_, msg.sender, recipient_);
     }
 
     /**
@@ -312,14 +314,14 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Asset that expect to be received
+     * @param qAssetMin_ minimum amount of Asset that sender expects receive
      */
     function redeemTC(
         address assetAddress_,
         uint256 qTC_,
-        uint256 qACmin_
+        uint256 qAssetMin_
     ) external {
-        _redeemTCto(assetAddress_, qTC_, qACmin_, msg.sender, msg.sender);
+        _redeemTCto(assetAddress_, qTC_, qAssetMin_, msg.sender, msg.sender);
     }
 
     /**
@@ -327,16 +329,16 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Asset that expect to be receivedt
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Asset
      */
     function redeemTCto(
         address assetAddress_,
         uint256 qTC_,
-        uint256 qACmin_,
+        uint256 qAssetMin_,
         address recipient_
     ) external {
-        _redeemTCto(assetAddress_, qTC_, qACmin_, msg.sender, recipient_);
+        _redeemTCto(assetAddress_, qTC_, qAssetMin_, msg.sender, recipient_);
     }
 
     /**
@@ -345,15 +347,15 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTP(
         address assetAddress_,
         uint8 i_,
         uint256 qTP_,
-        uint256 qACmax_
+        uint256 qAssetMax_
     ) external {
-        _mintTPto(assetAddress_, i_, qTP_, qACmax_, msg.sender, msg.sender);
+        _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
     }
 
     /**
@@ -362,17 +364,17 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Asset that can be spent
+     * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      */
     function mintTPto(
         address assetAddress_,
         uint8 i_,
         uint256 qTP_,
-        uint256 qACmax_,
+        uint256 qAssetMax_,
         address recipient_
     ) external {
-        _mintTPto(assetAddress_, i_, qTP_, qACmax_, msg.sender, recipient_);
+        _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
     }
 
     /*

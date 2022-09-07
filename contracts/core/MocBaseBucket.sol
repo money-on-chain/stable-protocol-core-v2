@@ -107,7 +107,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice sub Collateral Token and Collateral Asset to the Bucket
+     * @notice subtract Collateral Token and Collateral Asset from the Bucket
      * @param qTC_ amount of Collateral Token to sub
      * @param qAC_ amount of Collateral Asset to sub
      */
@@ -145,32 +145,28 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     /**
      * @notice get amount of Collateral Asset locked by Pegged Token adjusted by EMA
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return lckACemaAdjusted [PREC]
      */
-    function _getLckACemaAdjusted(uint256 ctargemaCA_, uint256 lckAC_)
-        internal
-        view
-        returns (uint256 lckACemaAdjusted)
-    {
+    function _getLckACemaAdjusted(uint256 ctargema_, uint256 lckAC_) internal view returns (uint256 lckACemaAdjusted) {
         // [PREC] = ([N] + [N]) * [PREC] - [PREC] * [PREC] / [PREC]
-        return (nACcb + nACioucb) * PRECISION - (ctargemaCA_ * lckAC_) / PRECISION;
+        return (nACcb + nACioucb) * PRECISION - (ctargema_ * lckAC_) / PRECISION;
     }
 
     /**
      * @notice get amount of Collateral Token available to redeem
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return tcAvailableToRedeem [N]
      */
-    function _getTCAvailableToRedeem(uint256 ctargemaCA_, uint256 lckAC_)
+    function _getTCAvailableToRedeem(uint256 ctargema_, uint256 lckAC_)
         internal
         view
         returns (uint256 tcAvailableToRedeem)
     {
         // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_);
+        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargema_, lckAC_);
         // [N] = [PREC] / [PREC]
         return lckACemaAdjusted / _getPTCac(lckAC_);
     }
