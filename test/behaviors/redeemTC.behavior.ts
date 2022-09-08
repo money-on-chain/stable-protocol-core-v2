@@ -190,9 +190,9 @@ const redeemTCBehavior = function () {
             assertPrec(270 * 0.95, diff);
           });
         });
-        describe("AND Pegged Token price raises to 15.5", function () {
+        describe("AND Collateral Asset relation with Pegged Token price falls to 1/15.5", function () {
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, 15.5);
+            await mocFunctions.pokePrice(0, "0.064516129032258064");
           });
           describe("WHEN Alice tries to redeem 100 TC", function () {
             /*  

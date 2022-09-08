@@ -214,7 +214,7 @@ const mintTPBehavior = function () {
         beforeEach(async function () {
           await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
         });
-        describe("AND Pegged Token price raises to 7.75", function () {
+        describe("AND Collateral Asset relation with Pegged Token price falls to 1/7.75", function () {
           /*  
             nAC = 3100    
             nTP = 100
@@ -222,7 +222,7 @@ const mintTPBehavior = function () {
             => coverage = 4 
         */
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, 7.75);
+            await mocFunctions.pokePrice(0, "0.129032258064516129");
           });
           describe("WHEN Alice tries to mint 1 TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
@@ -233,7 +233,7 @@ const mintTPBehavior = function () {
             });
           });
         });
-        describe("AND Pegged Token price raise to 2, so there are 383.33 TP available to mint", function () {
+        describe("AND Collateral Asset relation with Pegged Token price falls to 1/2, so there are 383.33 TP available to mint", function () {
           /*  
             nAC = 3100    
             nTP = 100
@@ -242,7 +242,7 @@ const mintTPBehavior = function () {
             => TP available to mint = 383.33
         */
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, 2);
+            await mocFunctions.pokePrice(0, 0.5);
           });
           describe("WHEN Alice tries to mint 383.34 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
@@ -265,7 +265,7 @@ const mintTPBehavior = function () {
             });
           });
         });
-        describe("AND Pegged Token price falls to 0.5, so there are 771.428 TP available to mint", function () {
+        describe("AND Collateral Asset relation with Pegged Token price raises to 2, so there are 771.428 TP available to mint", function () {
           /*  
             nAC = 3100    
             nTP = 100
@@ -274,7 +274,7 @@ const mintTPBehavior = function () {
             => TP available to mint = 771.428
         */
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, 0.5);
+            await mocFunctions.pokePrice(0, 2);
           });
           describe("WHEN Alice tries to mint 771.429 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
