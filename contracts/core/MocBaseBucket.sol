@@ -108,8 +108,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     /**
      * @notice subtract Collateral Token and Collateral Asset from the Bucket
-     * @param qTC_ amount of Collateral Token to sub
-     * @param qAC_ amount of Collateral Asset to sub
+     * @param qTC_ amount of Collateral Token to subtract
+     * @param qAC_ amount of Collateral Asset to subtract
      */
     function _withdrawTC(uint256 qTC_, uint256 qAC_) internal {
         nTCcb -= qTC_;
@@ -129,6 +129,21 @@ abstract contract MocBaseBucket is MocUpgradable {
     ) internal {
         pegContainer[i_].nTP += qTP_;
         nACcb += qAC_;
+    }
+
+    /**
+     * @notice subtract Pegged Token and Collateral Asset from the Bucket
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to subtract
+     * @param qAC_ amount of Collateral Asset to subtract
+     */
+    function _withdrawTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAC_
+    ) internal {
+        pegContainer[i_].nTP -= qTP_;
+        nACcb -= qAC_;
     }
 
     /**
@@ -191,13 +206,33 @@ abstract contract MocBaseBucket is MocUpgradable {
         return lckACemaAdjusted / den;
     }
 
-    // ------- Public Functions -------
+    /**
+     * @notice get amount of Pegged Token available to redeem
+     * @param i_ Pegged Token index
+     * @return tpAvailableToRedeem [N]
+     */
+    function _getTPAvailableToRedeem(uint8 i_) internal view returns (uint256 tpAvailableToRedeem) {
+        // [N] = [N] - [N]
+        return pegContainer[i_].nTP - pegContainer[i_].nTPXV;
+    }
+
+    function _getArb(uint8 i_) internal view returns (uint256 arb) {
+        uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
+        // [PREC] = [N] * [PREC] / [N]
+        return (tpAvailableToRedeem * PRECISION) / pegContainer[i_].nTP;
+    }
+
+    function _getArf(uint8 i_, uint256 qTP_) internal view returns (uint256 arf) {
+        uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
+        // [PREC] = [N] * [PREC] / [N]
+        return ((tpAvailableToRedeem - qTP_) * PRECISION) / (pegContainer[i_].nTP - qTP_);
+    }
 
     /**
      * @notice get amount of Collateral Asset locked by Pegged Token
      * @return lckAC [PREC]
      */
-    function getLckAC() public view returns (uint256 lckAC) {
+    function _getLckAC() internal view returns (uint256 lckAC) {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [PREC] = [N] * [PREC]

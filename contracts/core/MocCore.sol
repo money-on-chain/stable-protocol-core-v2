@@ -2,13 +2,14 @@ pragma solidity ^0.8.16;
 
 import "../interfaces/IMocRC20.sol";
 import "./MocEma.sol";
+import "./MocInterestRate.sol";
 
 /**
  * @title MocCore
  * @notice MocCore nucleats all the basic MoC functionality and toolset. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
-abstract contract MocCore is MocEma {
+abstract contract MocCore is MocEma, MocInterestRate {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
@@ -31,6 +32,7 @@ abstract contract MocCore is MocEma {
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
+    error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
 
     // ------- Initializer -------
     /**
@@ -246,7 +248,7 @@ abstract contract MocCore is MocEma {
      */
     function _calcQACforMintTC(uint256 qTC_) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 lckAC = getLckAC();
+        uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
         // check coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
@@ -268,7 +270,7 @@ abstract contract MocCore is MocEma {
      */
     function _calcQACforRedeemTC(uint256 qTC_) internal returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 lckAC = getLckAC();
+        uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
 
         // check if coverage is above the protected threshold
@@ -298,7 +300,7 @@ abstract contract MocCore is MocEma {
      */
     function _calcQACforMintTP(uint8 i_, uint256 qTP_) internal returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
-        uint256 lckAC = getLckAC();
+        uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
         uint256 pTPac = _getPTPac(i_);
         uint256 ctargema = calcCtargema();
@@ -318,6 +320,49 @@ abstract contract MocCore is MocEma {
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
         return (qACNeededtoMint, qACfee);
+    }
+
+    /**
+     * @notice calculate how many Collateral Asset are needed to redeem an amount of Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
+     */
+    function _calcQACforRedeemTP(uint8 i_, uint256 qTP_)
+        internal
+        view
+        returns (
+            uint256 qACtotalToRedeem,
+            uint256 qACfee,
+            uint256 qACinterest
+        )
+    {
+        if (qTP_ == 0) revert InvalidValue();
+        uint256 lckAC = _getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+        uint256 pTPac = _getPTPac(i_);
+
+        // check if coverage is above the protected threshold
+        if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
+
+        uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
+        // check if there are enough TC available to redeem
+        if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
+
+        uint256 interestRate = _calcTPinterestRate(i_, qTP_);
+
+        // calculate how many qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        qACtotalToRedeem = (qTP_ * pTPac) / PRECISION;
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        qACfee = (qACtotalToRedeem * tpRedeemFee[i_]) / PRECISION;
+        // calculate how many qAC to transfer to interest collector
+        // [N] = [N] * [PREC] / [PREC]
+        qACinterest = (qACtotalToRedeem * interestRate) / PRECISION;
+        return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
     /**
