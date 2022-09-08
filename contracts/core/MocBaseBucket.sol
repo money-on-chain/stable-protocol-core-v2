@@ -13,6 +13,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();
+    error ContractLiquidated();
+    error LowCoverage(uint256 cglb_, uint256 covThrld_);
 
     // ------- Structs -------
     struct PegContainerItem {
@@ -30,17 +32,11 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     uint256 internal nACioucb;
-    // protected state threshold
-    uint256 internal protThrld;
 
     // Collateral Token
     IMocRC20 public tcToken;
     // total supply of Collateral Token
     uint256 internal nTCcb;
-    // fee pct sent to Fee Flow for mint Collateral Tokens
-    uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Collateral Tokens
-    uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Pegged Token
     IMocRC20[] internal tpToken;
@@ -52,15 +48,40 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpR;
     // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
     uint256[] internal tpBmin;
-    // fee pct sent to Fee Flow for mint Pegged Tokens
+
+    // ------- Storage Fees -------
+
+    // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+    uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+    uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+
+    // fee pct sent to Fee Flow for mint Pegged Tokens [PREC]
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Pegged Tokens
+    // fee pct sent to Fee Flow for redeem Pegged Tokens [PREC]
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
-    // global target coverage of the model
-    uint256 public ctarg;
     // Moc Fee Flow contract address
     address internal mocFeeFlowAddress;
+
+    // ------- Storage Coverage Tracking -------
+
+    // global target coverage of the model [PREC]
+    uint256 public ctarg;
+    // coverage protected state threshold [PREC]
+    uint256 internal protThrld;
+    // coverage liquidation threshold [PREC]
+    uint256 internal liqThrld;
+    // liquidation enabled
+    bool internal liqEnabled;
+    // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
+    bool internal liquidated;
+
+    // ------- Modifiers -------
+    modifier notLiquidated() {
+        if (liquidated) revert ContractLiquidated();
+        _;
+    }
 
     // ------- Initializer -------
     /**
@@ -92,6 +113,10 @@ abstract contract MocBaseBucket is MocUpgradable {
         protThrld = protThrld_;
         tcMintFee = tcMintFee_;
         tcRedeemFee = tcRedeemFee_;
+        // TODO
+        liquidated = false;
+        liqEnabled = true;
+        liqThrld = ONE;
     }
 
     // ------- Internal Functions -------
@@ -227,6 +252,37 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = (([N] + [N]) * [PREC]) / [N]
         return ((nACcb + nACioucb) * PRECISION) / lckAC_;
+    }
+
+    /**
+     * @dev If liquidation is enabled, verifies if forced liquidation is
+     * reached checking if globalCoverage <= liquidation
+     * @return true if liquidation state is reached, false otherwise
+     */
+    function isLiquidationReached(uint256 cglob_) public view returns (bool) {
+        return liqEnabled && cglob_ <= liqThrld;
+    }
+
+    // TODO
+    function evalLiquidation(uint256 cglob_) public returns (bool wasLiquidated) {
+        if (isLiquidationReached(cglob_)) {
+            liquidated = true;
+            return true;
+        }
+        return false;
+    }
+
+    //TODO
+    function _evalCoverage(uint256 cThrld_) internal returns (bool abort, uint256 lckAC) {
+        lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+
+        if (evalLiquidation(cglb)) {
+            return (true, 0);
+        }
+
+        // check if coverage is above the given threshold
+        if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
     }
 
     /**

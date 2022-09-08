@@ -26,6 +26,7 @@ abstract contract MocCore is MocEma {
     );
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
+    error LowCoverage(uint256 cglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
@@ -321,17 +322,28 @@ abstract contract MocCore is MocEma {
         uint256 lckAC_
     ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
-
+<<<<<<< HEAD
+        uint256 lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
         uint256 pACtp = _getPACtp(i_);
+        uint256 ctargema = calcCtargema();
 
-        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema_, pACtp, lckAC_);
+        // check if coverage is above the target coverage adjusted by the moving average
+        if (cglb <= ctargema) revert LowCoverage(cglb, ctargema);
+
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema, pACtp, lckAC);
+=======
+
+        uint256 pTPac = _getPTPac(i_);
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema_, pTPac, lckAC_);
+>>>>>>> feat: init liquidation structure
 
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTP_ * pACtp) / PRECISION;
+        qACNeededtoMint = (qTP_ * PRECISION) / pACtp;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
