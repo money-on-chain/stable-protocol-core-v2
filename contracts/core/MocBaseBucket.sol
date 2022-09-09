@@ -50,8 +50,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
-    // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
-    uint256[] internal tpBmin;
     // fee pct sent to Fee Flow for mint Pegged Tokens
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow for redeem Pegged Tokens
@@ -216,12 +214,23 @@ abstract contract MocBaseBucket is MocUpgradable {
         return pegContainer[i_].nTP - pegContainer[i_].nTPXV;
     }
 
+    /**
+     * @notice get initial abundance of Pegged Token
+     * @param i_ Pegged Token index
+     * @return arb [PREC]
+     */
     function _getArb(uint8 i_) internal view returns (uint256 arb) {
         uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
         // [PREC] = [N] * [PREC] / [N]
         return (tpAvailableToRedeem * PRECISION) / pegContainer[i_].nTP;
     }
 
+    /**
+     * @notice get final abundance of Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to calculate the final abundance
+     * @return arf [PREC]
+     */
     function _getArf(uint8 i_, uint256 qTP_) internal view returns (uint256 arf) {
         uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
         // [PREC] = [N] * [PREC] / [N]

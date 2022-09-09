@@ -23,7 +23,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tpMintFee_,
         uint256 tpRedeemFee_,
         uint256 tpEma_,
-        uint256 tpEmaSf_
+        uint256 tpEmaSf_,
+        uint256 tpTils_,
+        uint256 tpTiMin_,
+        uint256 tpTiMax_,
+        uint256 tpAbeq_,
+        uint256 tpFacMin_,
+        uint256 tpFacMax_
     );
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
@@ -42,6 +48,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
+     * @param mocSettlementAddress_ MocSettlement contract address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -53,6 +60,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
+        address mocSettlementAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 tcMintFee_,
@@ -69,6 +77,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             tcRedeemFee_
         );
         __MocEma_init_unchained(emaCalculationBlockSpan_);
+        __MocInterestRate_init_unchained(mocSettlementAddress_);
     }
 
     // ------- Internal Functions -------
@@ -191,6 +200,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param tpRedeemFee_ fee pct sent to Fee Flow for redeem [PREC]
      * @param tpEma_ initial Pegged Token exponential moving average [PREC]
      * @param tpEmaSf_ Pegged Token smoothing factor [PREC]
+     * @param tpTils_ Pegged Token initial interest rate
+     * @param tpTiMin_ Pegged Token minimum interest rate that can be charged
+     * @param tpTiMax_ Pegged Token maximum interest rate that can be charged
+     * @param tpAbeq_ abundance of Pegged Token where it is desired that the model stabilizes
+     * @param tpFacMin_ Pegged Token minimum correction factor for interes rate
+     * @param tpFacMax_ Pegged Token maximum correction factor for interes rate
      */
     function addPeggedToken(
         address tpTokenAddress_,
@@ -200,13 +215,27 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tpMintFee_,
         uint256 tpRedeemFee_,
         uint256 tpEma_,
-        uint256 tpEmaSf_
+        uint256 tpEmaSf_,
+        uint256 tpTils_,
+        uint256 tpTiMin_,
+        uint256 tpTiMax_,
+        uint256 tpAbeq_,
+        uint256 tpFacMin_,
+        uint256 tpFacMax_
     ) public {
         if (tpTokenAddress_ == address(0)) revert InvalidAddress();
         if (priceProviderAddress_ == address(0)) revert InvalidAddress();
-        if (tpMintFee_ > PRECISION) revert InvalidValue();
-        if (tpRedeemFee_ > PRECISION) revert InvalidValue();
-        if (tpEmaSf_ >= ONE) revert InvalidValue();
+        bool[] memory invalidValue = new bool[](9);
+        invalidValue[0] = tpMintFee_ > PRECISION;
+        invalidValue[1] = tpRedeemFee_ > PRECISION;
+        invalidValue[2] = tpEmaSf_ >= ONE;
+        invalidValue[3] = tpTils_ > PRECISION;
+        invalidValue[4] = tpTiMin_ > PRECISION;
+        invalidValue[5] = tpTiMax_ > PRECISION;
+        invalidValue[6] = tpAbeq_ > ONE;
+        invalidValue[7] = tpFacMin_ > ONE;
+        invalidValue[8] = tpFacMax_ < ONE;
+        for (uint8 i = 0; i < invalidValue.length; unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[tpTokenAddress_] != 0) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpToken.length);
@@ -226,6 +255,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         tpRedeemFee.push(tpRedeemFee_);
         // set EMA initial value and smoothing factor
         tpEma.push(EmaItem({ ema: tpEma_, sf: tpEmaSf_ }));
+        // set interest rate item
+        tpInterestRate.push(InterestRateItem({ tils: tpTils_, tiMin: tpTiMin_, tiMax: tpTiMax_ }));
+        // set FAC item
+        tpFAC.push(FACitem({ abeq: tpAbeq_, facMin: tpFacMin_, facMax: tpFacMax_ }));
 
         emit PeggedTokenAdded(
             newTPindex,
@@ -236,7 +269,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
             tpMintFee_,
             tpRedeemFee_,
             tpEma_,
-            tpEmaSf_
+            tpEmaSf_,
+            tpTils_,
+            tpTiMin_,
+            tpTiMax_,
+            tpAbeq_,
+            tpFacMin_,
+            tpFacMax_
         );
     }
 

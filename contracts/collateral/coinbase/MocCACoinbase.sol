@@ -20,6 +20,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
+     * @param mocSettlementAddress_ MocSettlement contract address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -31,6 +32,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address stopper_,
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
+        address mocSettlementAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 tcMintFee_,
@@ -42,6 +44,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             stopper_,
             tcTokenAddress_,
             mocFeeFlowAddress_,
+            mocSettlementAddress_,
             ctarg_,
             protThrld_,
             tcMintFee_,

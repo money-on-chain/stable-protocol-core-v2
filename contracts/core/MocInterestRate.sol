@@ -12,27 +12,41 @@ import "../MocSettlement.sol";
 abstract contract MocInterestRate is MocBaseBucket {
     // ------- Structs -------
     struct InterestRateItem {
+        // actual interest rate for Pegged Token
         uint256 tils;
+        // minimum interest rate that can be charged
         uint256 tiMin;
+        // maximum interest rate that can be charged
         uint256 tiMax;
     }
     struct FACitem {
+        // abundance of Pegged Token where it is desired that the model stabilizes
         uint256 abeq;
+        // minimum correction factor
         uint256 facMin;
+        // maximum correction factor
         uint256 facMax;
     }
+
     // ------- Storage -------
+    // interest rate item for each Pegged Token
     InterestRateItem[] internal tpInterestRate;
+    // correction factor item for each Pegged Token
     FACitem[] internal tpFAC;
-    uint256[] internal bMin;
+    // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
+    uint256[] internal tpBmin;
+    // MocSettlement contract
     MocSettlement internal mocSettlement;
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
+     * @param mocSettlementAddress_ MocSettlement contract address
      */
-    /* solhint-disable-next-line no-empty-blocks */
-    function __MocInterestRate_init_unchained() internal onlyInitializing {}
+    function __MocInterestRate_init_unchained(address mocSettlementAddress_) internal onlyInitializing {
+        if (mocSettlementAddress_ == address(0)) revert InvalidAddress();
+        mocSettlement = MocSettlement(mocSettlementAddress_);
+    }
 
     // ------- Internal Functions -------
 
@@ -43,45 +57,99 @@ abstract contract MocInterestRate is MocBaseBucket {
      * @return interestRate [PREC]
      */
     function _calcTPinterestRate(uint8 i_, uint256 qTP_) internal view returns (uint256 interestRate) {
+        // get the number of blocks remaining for settlement
         uint256 bts = mocSettlement.getBts();
-        // establece si está dentro del límite de bloques para cobrar interés
-        if (bts > bMin[i_]) {
-            // calcula la abundancia inicial de TPi
+        // check if it is within the block limit to charge interest
+        if (bts > tpBmin[i_]) {
+            // get the initial abundance of TPi
+            // [PREC]
             uint256 arb = _getArb(i_);
-            // calcula la abundancia final de TPi
+            // get the final abundance of TPi
+            // [PREC]
             uint256 arf = _getArf(i_, qTP_);
-            // calcula el factor de corrección de tasa inicial
+            // calculate the initial correction factor
+            // [PREC]
             uint256 fctb = _calcFAC(i_, arb);
-            // calcula el factor de corrección de tasa final
+            // calculate the final correction factor
+            // [PREC]
             uint256 fctf = _calcFAC(i_, arf);
-            // calcula el factor de corrección de tasa promedios
+            // calculate the average correction factor
+            // [PREC] = [PREC] + [PREC] / [N]
             uint256 fctavg = fctb + fctf / 2;
-            // calcula la tasa de interés teniendo en cuenta esos factores
-            interestRate = tpInterestRate[i_].tils * fctavg;
-            // calcula la parte proporcional hasta el settlement
+            // calculate the interest rate using the correction factor
+            // [PREC] = [PREC] * [PREC] / [PREC]
+            interestRate = (tpInterestRate[i_].tils * fctavg) / PRECISION;
+            // calculate the proportional part until the settlement
+            // [PREC] = [PREC] * [N] / [N]
             interestRate = (interestRate * bts) / mocSettlement.bes();
         }
         return interestRate;
     }
 
-    function _calcFAC(uint8 i, uint256 arbi) internal view returns (uint256) {
-        //TODO: agregar decimales a estos parametros
-        int256 _abeq = int256(tpFAC[i].abeq);
-        int256 _fACmin = int256(tpFAC[i].facMin);
-        int256 _fACmax = int256(tpFAC[i].facMax);
-        int256 _arbi = int256(arbi);
-        // determina en cuál de las rectas está
-        if (_arbi >= _abeq) {
-            int256 a2num = (_fACmin - int256(ONE));
-            int256 a2den = (int256(ONE) - _abeq);
-            int256 b2 = int256(ONE) - ((_abeq * a2num) / a2den);
-            return uint256((((_arbi * a2num) / a2den) + b2));
-        } else {
-            int256 a1num = (int256(ONE) - _fACmax);
-            int256 a1den = _abeq;
-            int256 b1 = _fACmax;
-            return uint256((((_arbi * a1num) / a1den) + b1));
+    /**
+     * @notice calculate correction factor for interest rate
+     * @param i_ Pegged Token index
+     * @param abri_ instantaneous relative abundance of Pegged Token
+     * @return fac [PREC]
+     */
+    function _calcFAC(uint8 i_, uint256 abri_) internal view returns (uint256) {
+        /**     FAC
+         *       |
+         * facMax--*
+         *       |  *
+         *      4--  *
+         *       |    * <--------- line nª1
+         *      3--    *
+         *       |      *
+         *      2--      *
+         *       |        *
+         *      1-- > > > >*
+         *       |         ^  *
+         *    .75--        ^     * <--------- line nª2
+         *       |         ^         *
+         *     .5--        ^             *
+         *       |         ^                 *
+         *    .25--        ^                     *
+         *       |         ^                         *
+         * facMin--> > > > ^ > > > > > > > > > > > > > > >*
+         *       |         ^                              ^
+         *       |----|----|-----|----|----|----|----|----|----| arbi
+         *       0        abeq       .5        .75        1
+         *
+         * FAC(Abri)= a * Abri + b
+         * The calculation of the correction factor consists of 2 sections of lines:
+         * 1) A steeply sloping line from abundance 0 and a maximum factor (FACmax) to an inflection point
+         *    where the factor is 1 and the abundance where you want the model to stabilize (Abeq).
+         *    a1 = (1 - FACmax) / Abeq
+         *    b1 = FACmax
+         * 2) A line of less steep slope from the inflection point to abundance 1 and a minimum factor (FACmin).
+         *    a2 = FACmin - 1 / 1 - Abeq
+         *    b2 = 1 - (Abeq * a2)
+         */
+
+        FACitem memory fac = tpFAC[i_];
+        int256 abeq = int256(fac.abeq);
+        int256 fACmin = int256(fac.facMin);
+        int256 fACmax = int256(fac.facMax);
+        int256 abri = int256(abri_);
+        int256 a;
+        int256 b;
+        // it is the line nª1
+        if (abri < abeq) {
+            // [N] = ([PREC] - [PREC]) / [PREC]
+            a = (int256(ONE) - fACmax) / abeq;
+            // [PREC]
+            b = fACmax;
         }
+        // it is the line nª2
+        else {
+            // [N] = ([PREC] - [PREC]) / ([PREC] - [PREC])
+            a = (fACmin - int256(ONE)) / (int256(ONE) - abeq);
+            // [PREC] = [PREC] - ([PREC] * [N])
+            b = int256(ONE) - (abeq * a);
+        }
+        // [PREC] = ([PREC] * [N]) + [PREC]
+        return uint256((abri * a) + b);
     }
 
     /**
