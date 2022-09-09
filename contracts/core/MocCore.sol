@@ -272,11 +272,11 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTC_ == 0) revert InvalidValue();
         uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
-
-        // check if coverage is above the protected threshold
-        if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
-
         uint256 ctargema = calcCtargema();
+
+        // check if coverage is above the target coverage adjusted by the moving average
+        if (cglb <= ctargema) revert LowCoverage(cglb, ctargema);
+
         uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargema, lckAC);
 
         // check if there are enough TC available to redeem
