@@ -92,10 +92,9 @@ abstract contract MocCore is MocEma {
         address sender_,
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
-        // evaluates whether or not the system coverage is healthy enough to mint TC
-        (bool abort, uint256 lckAC) = _evalCoverage(protThrld);
-        if (abort) return 0;
-        // calculate how many qAC are needed to mint TC and the qAC fee
+        // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
+        uint256 lckAC = _evalCoverage(protThrld);
+        // calculates how many qAC are needed to mint TC and the qAC fee
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
@@ -119,19 +118,18 @@ abstract contract MocCore is MocEma {
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Collateral Asset
-     * @return qACtoRedeem amount of AC sent to 'recipient_'
+     * @return qACtoRedeem amount of AC sent to `recipient_`
      */
     function _redeemTCto(
         uint256 qTC_,
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 qACtoRedeem) {
+    ) internal notLiquidated returns (uint256 qACtoRedeem) {
         uint256 ctargema = calcCtargema();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
-        // given the target coverage adjusted by the moving average
-        (bool abort, uint256 lckAC) = _evalCoverage(ctargema);
-        if (abort) return 0;
+        // given the target coverage adjusted by the moving average, reverts if it's not
+        uint256 lckAC = _evalCoverage(ctargema);
         // calculate how many total qAC are redemeed and how many correspond for fee
         (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargema, lckAC);
         qACtoRedeem = qACtotalToRedeem - qACfee;
@@ -163,12 +161,11 @@ abstract contract MocCore is MocEma {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 qACtotalNeeded) {
+    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         uint256 ctargema = calcCtargema();
         // evaluates whether or not the system coverage is healthy enough to mint TP
-        // given the target coverage adjusted by the moving average
-        (bool abort, uint256 lckAC) = _evalCoverage(ctargema);
-        if (abort) return 0;
+        // given the target coverage adjusted by the moving average, reverts if it's not
+        uint256 lckAC = _evalCoverage(ctargema);
         // calculate how many qAC are needed to mint TP and the qAC fee
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargema, lckAC);
         qACtotalNeeded = qACNeededtoMint + qACfee;

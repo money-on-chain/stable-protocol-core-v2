@@ -255,31 +255,37 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @dev If liquidation is enabled, verifies if forced liquidation is
-     * reached checking if globalCoverage <= liquidation
+     * @notice If liquidation is enabled, verifies if forced liquidation has been
+     * reached, checking if globalCoverage <= liquidation
      * @return true if liquidation state is reached, false otherwise
      */
-    function isLiquidationReached(uint256 cglob_) public view returns (bool) {
-        return liqEnabled && cglob_ <= liqThrld;
+    function isLiquidationReached() public view returns (bool) {
+        uint256 lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+        return liqEnabled && cglb <= liqThrld;
     }
 
-    // TODO
-    function evalLiquidation(uint256 cglob_) public returns (bool wasLiquidated) {
-        if (isLiquidationReached(cglob_)) {
+    /**
+     * @notice evaluates if liquidation threshold has been reached, and forces contracts liquidation
+     * @return wasLiquidated true if the contract was liquidated
+     */
+    function evalLiquidation() public returns (bool wasLiquidated) {
+        if (isLiquidationReached()) {
             liquidated = true;
+            // TODO: complete liquidation process
             return true;
         }
         return false;
     }
 
-    //TODO
-    function _evalCoverage(uint256 cThrld_) internal returns (bool abort, uint256 lckAC) {
+    /**
+     * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
+     * @param cThrld_ coverage threshold to check for [PREC]
+     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     */
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC) {
         lckAC = getLckAC();
         uint256 cglb = _getCglb(lckAC);
-
-        if (evalLiquidation(cglb)) {
-            return (true, 0);
-        }
 
         // check if coverage is above the given threshold
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
