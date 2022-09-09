@@ -185,12 +185,12 @@ abstract contract MocBaseBucket is MocUpgradable {
     ) internal view returns (uint256 tpAvailableToMint) {
         // [PREC]
         uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargema_, lckAC_);
-        // [PREC²] = [PREC] * [PREC]
-        uint256 num = lckACemaAdjusted * pACtp_;
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        uint256 num = (lckACemaAdjusted * pACtp_) / PRECISION;
         // [PREC] = [PREC] - [PREC]
         uint256 den = ctargema_ - ONE;
-        // [N] = [PREC²] / ([PREC] * [PREC])
-        return num / (den * PRECISION);
+        // [N] = [PREC] / [PREC]
+        return num / den;
     }
 
     // ------- Public Functions -------
@@ -214,10 +214,8 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _getPTCac(uint256 lckAC_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
-        // [N] = [N] + [N] - [N]
-        pTCac = (nACcb + nACioucb) - lckAC_;
-        // [PREC] = ( [N] * [PREC]) / [N]
-        return (pTCac * PRECISION) / nTCcb;
+        // [PREC] = (([N] + [N] - [N]) * [PREC]) / [N]
+        return ((nACcb + nACioucb - lckAC_) * PRECISION) / nTCcb;
     }
 
     /**
@@ -227,10 +225,8 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _getCglb(uint256 lckAC_) internal view returns (uint256 cglob) {
         if (lckAC_ == 0) return UINT256_MAX;
-        // [N] = [N] + [N]
-        cglob = (nACcb + nACioucb);
-        // [PREC] = [N] * [PREC] / [N]
-        cglob = (cglob * PRECISION) / lckAC_;
+        // [PREC] = (([N] + [N]) * [PREC]) / [N]
+        return ((nACcb + nACioucb) * PRECISION) / lckAC_;
     }
 
     /**
