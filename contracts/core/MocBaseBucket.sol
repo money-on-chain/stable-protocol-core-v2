@@ -34,7 +34,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal protThrld;
 
     // Collateral Token
-    IMocRC20 internal tcToken;
+    IMocRC20 public tcToken;
     // total supply of Collateral Token
     uint256 internal nTCcb;
     // fee pct sent to Fee Flow for mint Collateral Tokens
@@ -44,6 +44,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // Pegged Token
     IMocRC20[] internal tpToken;
+    // Pegged Token indexes
+    mapping(address => uint8) internal peggedTokenIndex;
     // peg container
     PegContainerItem[] internal pegContainer;
     // reserve factor
@@ -105,6 +107,16 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice subtract Collateral Token and Collateral Asset from the Bucket
+     * @param qTC_ amount of Collateral Token to sub
+     * @param qAC_ amount of Collateral Asset to sub
+     */
+    function _withdrawTC(uint256 qTC_, uint256 qAC_) internal {
+        nTCcb -= qTC_;
+        nACcb -= qAC_;
+    }
+
+    /**
      * @notice add Pegged Token and Collateral Asset to the Bucket
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to add
@@ -132,22 +144,51 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice get amount of Collateral Asset locked by Pegged Token adjusted by EMA
+     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @return lckACemaAdjusted [PREC]
+     */
+    function _getLckACemaAdjusted(uint256 ctargema_, uint256 lckAC_) internal view returns (uint256 lckACemaAdjusted) {
+        // [PREC] = ([N] + [N]) * [PREC] - [PREC] * [PREC] / [PREC]
+        return (nACcb + nACioucb) * PRECISION - (ctargema_ * lckAC_) / PRECISION;
+    }
+
+    /**
+     * @notice get amount of Collateral Token available to redeem
+     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @return tcAvailableToRedeem [N]
+     */
+    function _getTCAvailableToRedeem(uint256 ctargema_, uint256 lckAC_)
+        internal
+        view
+        returns (uint256 tcAvailableToRedeem)
+    {
+        // [PREC]
+        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargema_, lckAC_);
+        // [N] = [PREC] / [PREC]
+        return lckACemaAdjusted / _getPTCac(lckAC_);
+    }
+
+    /**
      * @notice get amount of Pegged Token available to mint
      * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset
      * @param pTPac_ Pegged Token price [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @return tpAvailableToMint [N]
      */
     function _getTPAvailableToMint(
         uint256 ctargema_,
         uint256 pTPac_,
         uint256 lckAC_
     ) internal view returns (uint256 tpAvailableToMint) {
-        // [PREC] = (N + N) * [PREC] - ([PREC] * [PREC] / [PREC])
-        uint256 num = (nACcb + nACioucb) * PRECISION - ((ctargema_ * lckAC_) / PRECISION);
+        // [PREC]
+        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargema_, lckAC_);
         // [PREC] = [PREC] * ([PREC] - [PREC]) / [PREC]
         uint256 den = (pTPac_ * (ctargema_ - ONE)) / PRECISION;
         // [N] = [PREC] / [PREC]
-        tpAvailableToMint = num / den;
+        return lckACemaAdjusted / den;
     }
 
     // ------- Public Functions -------

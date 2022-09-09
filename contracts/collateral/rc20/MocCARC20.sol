@@ -78,7 +78,7 @@ contract MocCARC20 is MocCore {
         Requires prior sender approval of Collateral Asset to this contract 
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @return qACtotalNeeded amount of qAC used to mint qTC
+     * @return qACtotalNeeded amount of AC used to mint qTC
      */
     function mintTC(uint256 qTC_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
@@ -91,7 +91,7 @@ contract MocCARC20 is MocCore {
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
-     * @return qACtotalNeeded amount of qAC used to mint qTC
+     * @return qACtotalNeeded amount of AC used to mint qTC
      */
     function mintTCto(
         uint256 qTC_,
@@ -103,12 +103,37 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return qACtoRedeem amount of AC sent to sender
+     */
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACtoRedeem) {
+        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to 'recipient_'
+     */
+    function redeemTCto(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACtoRedeem) {
+        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
      * @notice caller sends Collateral Asset and receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract 
      * @param i_ Pegged Token index to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @return qACtotalNeeded amount of qAC used to mint qTP
+     * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function mintTP(
         uint8 i_,
@@ -126,7 +151,7 @@ contract MocCARC20 is MocCore {
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of qAC used to mint qTP
+     * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function mintTPto(
         uint8 i_,

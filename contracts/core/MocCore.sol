@@ -11,8 +11,10 @@ import "./MocEma.sol";
 abstract contract MocCore is MocEma {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
+    event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TPMinted(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
+        uint8 indexed i_,
         address indexed tpTokenAddress_,
         address priceProviderAddress_,
         uint256 tpR_,
@@ -23,9 +25,12 @@ abstract contract MocCore is MocEma {
         uint256 tpEmaSf_
     );
     // ------- Custom Errors -------
+    error PeggedTokenAlreadyAdded();
     error LowCoverage(uint256 cglb_, uint256 protThrld_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
+    error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
+    error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
 
     // ------- Initializer -------
     /**
@@ -80,7 +85,7 @@ abstract contract MocCore is MocEma {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Collateral Token
-     * @return qACtotalNeeded amount of qAC used to mint qTC
+     * @return qACtotalNeeded amount of AC used to mint qTC
      */
     function _mintTCto(
         uint256 qTC_,
@@ -107,13 +112,43 @@ abstract contract MocCore is MocEma {
     }
 
     /**
+     * @notice redeem Collateral Asset in exchange for Collateral Token
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param sender_ address who sends the Collateral Token
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to 'recipient_'
+     */
+    function _redeemTCto(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address sender_,
+        address recipient_
+    ) internal returns (uint256 qACtoRedeem) {
+        // calculate how many total qAC are redemeed and how many correspond for fee
+        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_);
+        qACtoRedeem = qACtotalToRedeem - qACfee;
+        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        // sub qTC and qAC from the Bucket
+        _withdrawTC(qTC_, qACtotalToRedeem);
+        // burn qTC from the sender
+        tcToken.burn(sender_, qTC_);
+        // transfer qAC to the recipient
+        acTransfer(recipient_, qACtoRedeem);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem);
+        return qACtoRedeem;
+    }
+
+    /**
      * @notice mint Pegged Token in exchange for Collateral Asset
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of qAC used to mint qTP
+     * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function _mintTPto(
         uint8 i_,
@@ -170,6 +205,11 @@ abstract contract MocCore is MocEma {
         if (tpMintFee_ > PRECISION) revert InvalidValue();
         if (tpRedeemFee_ > PRECISION) revert InvalidValue();
         if (tpEmaSf_ >= ONE) revert InvalidValue();
+        // TODO: this could be replaced by a "if exists modify it"
+        if (peggedTokenIndex[tpTokenAddress_] != 0) revert PeggedTokenAlreadyAdded();
+        uint8 newTPindex = uint8(tpToken.length);
+        peggedTokenIndex[tpTokenAddress_] = newTPindex;
+
         // set Pegged Token address
         tpToken.push(IMocRC20(tpTokenAddress_));
         // set peg container item
@@ -184,7 +224,9 @@ abstract contract MocCore is MocEma {
         tpRedeemFee.push(tpRedeemFee_);
         // set EMA initial value and smoothing factor
         tpEma.push(EmaItem({ ema: tpEma_, sf: tpEmaSf_ }));
+
         emit PeggedTokenAdded(
+            newTPindex,
             tpTokenAddress_,
             priceProviderAddress_,
             tpR_,
@@ -219,6 +261,35 @@ abstract contract MocCore is MocEma {
     }
 
     /**
+     * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
+     * @param qTC_ amount of Collateral Token to redeem
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     */
+    function _calcQACforRedeemTC(uint256 qTC_) internal returns (uint256 qACtotalToRedeem, uint256 qACfee) {
+        if (qTC_ == 0) revert InvalidValue();
+        uint256 lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+        uint256 ctargema = calcCtargema();
+
+        // check if coverage is above the target coverage adjusted by the moving average
+        if (cglb <= ctargema) revert LowCoverage(cglb, ctargema);
+
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargema, lckAC);
+
+        // check if there are enough TC available to redeem
+        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+
+        // calculate how many qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        qACtotalToRedeem = (qTC_ * _getPTCac(lckAC)) / PRECISION;
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        qACfee = (qACtotalToRedeem * tcRedeemFee) / PRECISION;
+        return (qACtotalToRedeem, qACfee);
+    }
+
+    /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint
@@ -238,7 +309,7 @@ abstract contract MocCore is MocEma {
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema, pTPac, lckAC);
 
         // check if there are enough TP available to mint
-        if (tpAvailableToMint <= qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
+        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
