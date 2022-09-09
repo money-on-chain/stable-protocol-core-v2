@@ -75,12 +75,12 @@ abstract contract MocInterestRate is MocBaseBucket {
             uint256 fctf = _calcFAC(i_, arf);
             // calculate the average correction factor
             // [PREC] = [PREC] + [PREC] / [N]
-            uint256 fctavg = fctb + fctf / 2;
+            uint256 fctAvg = (fctb + fctf) / 2;
             // calculate the interest rate using the correction factor
-            // [PREC] = [PREC] * [PREC] / [PREC]
-            interestRate = (tpInterestRate[i_].tils * fctavg) / PRECISION;
+            // [PREC] = ([PREC] * [PREC]) / [PREC]
+            interestRate = (tpInterestRate[i_].tils * fctAvg) / PRECISION;
             // calculate the proportional part until the settlement
-            // [PREC] = [PREC] * [N] / [N]
+            // [PREC] = ([PREC] * [N]) / [N]
             interestRate = (interestRate * bts) / mocSettlement.bes();
         }
         return interestRate;
