@@ -1,6 +1,7 @@
 pragma solidity ^0.8.16;
 
 import "../interfaces/IMocRC20.sol";
+import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
 
@@ -34,7 +35,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal nACioucb;
 
     // Collateral Token
-    IMocRC20 public tcToken;
+    MocTC public tcToken;
     // total supply of Collateral Token
     uint256 internal nTCcb;
 
@@ -107,7 +108,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (protThrld_ < PRECISION) revert InvalidValue();
         if (tcMintFee_ > PRECISION) revert InvalidValue();
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();
-        tcToken = IMocRC20(tcTokenAddress_);
+        tcToken = MocTC(tcTokenAddress_);
         mocFeeFlowAddress = mocFeeFlowAddress_;
         ctarg = ctarg_;
         protThrld = protThrld_;
@@ -272,7 +273,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     function evalLiquidation() public returns (bool wasLiquidated) {
         if (isLiquidationReached()) {
             liquidated = true;
-            // TODO: complete liquidation process
+            tcToken.pause();
+            // TODO: complete liquidation process: set prices
             return true;
         }
         return false;

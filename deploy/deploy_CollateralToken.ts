@@ -7,12 +7,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deploy } = deployments;
 
   const deployResult = await deploy("CollateralToken", {
-    contract: "MocRC20",
+    contract: "MocTC",
     from: deployer,
     gasLimit: 4000000,
     args: ["CollateralToken", "CollateralToken"],
   });
-  console.log(`MocRC20, as CollateralToken, deployed at ${deployResult.address}`);
+  console.log(`MocTC, as CollateralToken, deployed at ${deployResult.address}`);
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;

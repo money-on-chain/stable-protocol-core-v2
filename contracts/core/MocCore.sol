@@ -260,10 +260,6 @@ abstract contract MocCore is MocEma {
         returns (uint256 qACNeededtoMint, uint256 qACfee)
     {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 lckAC = getLckAC();
-        uint256 cglb = _getCglb(lckAC);
-        // check coverage is above the protected threshold
-        if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
         // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
         qACNeededtoMint = (qTC_ * _getPTCac(lckAC_)) / PRECISION;
@@ -320,9 +316,7 @@ abstract contract MocCore is MocEma {
         if (qTP_ == 0) revert InvalidValue();
 
         uint256 pACtp = _getPACtp(i_);
-
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema_, pACtp, lckAC_);
-
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 

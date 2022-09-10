@@ -14,8 +14,7 @@ contract MocRC20 is AccessControlEnumerable, ERC20, IMocRC20 {
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     /**
-     * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` and `BURNER_ROLE` to the
-     * account that deploys the contract.
+     * @dev Grants `DEFAULT_ADMIN_ROLE` to the account that deploys the contract.
      *
      * See {ERC20-constructor}.
      */
@@ -31,8 +30,7 @@ contract MocRC20 is AccessControlEnumerable, ERC20, IMocRC20 {
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function mint(address to, uint256 amount) public virtual {
-        require(hasRole(MINTER_ROLE, _msgSender()), "MocRC20: must have minter role to mint");
+    function mint(address to, uint256 amount) public virtual onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
 
@@ -43,8 +41,7 @@ contract MocRC20 is AccessControlEnumerable, ERC20, IMocRC20 {
      *
      * - the caller must have the `BURNER_ROLE`.
      */
-    function burn(address to, uint256 amount) public virtual {
-        require(hasRole(BURNER_ROLE, _msgSender()), "MocRC20: must have burner role to burn");
+    function burn(address to, uint256 amount) public virtual onlyRole(BURNER_ROLE) {
         _burn(to, amount);
     }
 }
