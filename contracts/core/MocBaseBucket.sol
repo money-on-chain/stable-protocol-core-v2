@@ -132,11 +132,11 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice get Pegged Token price
+     * @notice get how many Pegged Token equal 1 Collateral Asset
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function _getPTPac(uint8 i_) internal view virtual returns (uint256) {
+    function _getPACtp(uint8 i_) internal view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (bytes32 price, bool has) = priceProvider.peek();
         if (!has) revert InvalidPriceProvider(address(priceProvider));
@@ -146,18 +146,18 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice get amount of Collateral Asset locked by Pegged Token adjusted by EMA
      * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @return lckACemaAdjusted [PREC]
      */
     function _getLckACemaAdjusted(uint256 ctargema_, uint256 lckAC_) internal view returns (uint256 lckACemaAdjusted) {
-        // [PREC] = ([N] + [N]) * [PREC] - [PREC] * [PREC] / [PREC]
-        return (nACcb + nACioucb) * PRECISION - (ctargema_ * lckAC_) / PRECISION;
+        // [PREC] = ([N] + [N]) * [PREC] - [PREC] * [N]
+        return (nACcb + nACioucb) * PRECISION - (ctargema_ * lckAC_);
     }
 
     /**
      * @notice get amount of Collateral Token available to redeem
      * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @return tcAvailableToRedeem [N]
      */
     function _getTCAvailableToRedeem(uint256 ctargema_, uint256 lckAC_)
@@ -174,61 +174,59 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice get amount of Pegged Token available to mint
      * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset
-     * @param pTPac_ Pegged Token price [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param pACtp_ Collateral Asset price in amount of Pegged Token [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @return tpAvailableToMint [N]
      */
     function _getTPAvailableToMint(
         uint256 ctargema_,
-        uint256 pTPac_,
+        uint256 pACtp_,
         uint256 lckAC_
     ) internal view returns (uint256 tpAvailableToMint) {
         // [PREC]
         uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargema_, lckAC_);
-        // [PREC] = [PREC] * ([PREC] - [PREC]) / [PREC]
-        uint256 den = (pTPac_ * (ctargema_ - ONE)) / PRECISION;
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        uint256 num = (lckACemaAdjusted * pACtp_) / PRECISION;
+        // [PREC] = [PREC] - [PREC]
+        uint256 den = ctargema_ - ONE;
         // [N] = [PREC] / [PREC]
-        return lckACemaAdjusted / den;
+        return num / den;
     }
 
     // ------- Public Functions -------
 
     /**
      * @notice get amount of Collateral Asset locked by Pegged Token
-     * @return lckAC [PREC]
+     * @return lckAC [N]
      */
     function getLckAC() public view returns (uint256 lckAC) {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            // [PREC] = [N] * [PREC]
-            lckAC += pegContainer[i].nTP * _getPTPac(i);
+            // [N] = [N] * [PREC] / [PREC]
+            lckAC += (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
         }
     }
 
     /**
      * @notice get Collateral Token price
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @return pTCac [PREC]
      */
     function _getPTCac(uint256 lckAC_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
-        // [PREC] = [N] + [N] * [PREC] - [PREC]
-        pTCac = (nACcb + nACioucb) * PRECISION - lckAC_;
-        // [PREC] = [PREC] / [N]
-        pTCac /= nTCcb;
+        // [PREC] = (([N] + [N] - [N]) * [PREC]) / [N]
+        return ((nACcb + nACioucb - lckAC_) * PRECISION) / nTCcb;
     }
 
     /**
      * @notice get bucket global coverage
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @return cglob [PREC]
      */
     function _getCglb(uint256 lckAC_) internal view returns (uint256 cglob) {
         if (lckAC_ == 0) return UINT256_MAX;
-        // [PREC] = ([N] + [N]) * [PREC]
-        cglob = (nACcb + nACioucb) * PRECISION;
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        cglob = (cglob * PRECISION) / lckAC_;
+        // [PREC] = (([N] + [N]) * [PREC]) / [N]
+        return ((nACcb + nACioucb) * PRECISION) / lckAC_;
     }
 
     /**
