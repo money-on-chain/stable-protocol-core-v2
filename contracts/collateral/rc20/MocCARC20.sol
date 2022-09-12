@@ -26,6 +26,7 @@ contract MocCARC20 is MocCore {
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocSettlementAddress_ MocSettlement contract address
+     * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -39,6 +40,7 @@ contract MocCARC20 is MocCore {
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         address mocSettlementAddress_,
+        address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 tcMintFee_,
@@ -53,6 +55,7 @@ contract MocCARC20 is MocCore {
             tcTokenAddress_,
             mocFeeFlowAddress_,
             mocSettlementAddress_,
+            mocInterestCollectorAddress_,
             ctarg_,
             protThrld_,
             tcMintFee_,

@@ -14,6 +14,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
     event TPMinted(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
+    event TPRedeemed(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
     event PeggedTokenAdded(
         uint8 indexed i_,
         address indexed tpTokenAddress_,
@@ -39,6 +40,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
+    error QacNedeedMustBeGreaterThanZero();
 
     // ------- Initializer -------
     /**
@@ -49,6 +51,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocSettlementAddress_ MocSettlement contract address
+     * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -61,6 +64,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         address mocSettlementAddress_,
+        address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 tcMintFee_,
@@ -71,6 +75,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         __MocBaseBucket_init_unchained(
             tcTokenAddress_,
             mocFeeFlowAddress_,
+            mocInterestCollectorAddress_,
             ctarg_,
             protThrld_,
             tcMintFee_,
@@ -184,6 +189,31 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(mocFeeFlowAddress, qACfee);
         emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded);
         return qACtotalNeeded;
+    }
+
+    function _redeemTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address sender_,
+        address recipient_
+    ) internal returns (uint256 qACtoRedeem) {
+        // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
+        (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTP(i_, qTP_);
+        qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
+        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        // sub qTP and qAC from the Bucket
+        _withdrawTP(i_, qTP_, qACtotalToRedeem);
+        // burn qTP from the sender
+        tpToken[i_].burn(sender_, qTP_);
+        // transfer qAC to the recipient
+        acTransfer(recipient_, qACtoRedeem);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfer qAC for interest
+        acTransfer(mocInterestCollectorAddress, qACinterest);
+        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem);
+        return qACtoRedeem;
     }
 
     // ------- Public Functions -------
@@ -387,7 +417,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
 
         uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
-        // check if there are enough TC available to redeem
+        // check if there are enough TP available to redeem
         if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
 
         uint256 interestRate = _calcTPinterestRate(i_, qTP_);

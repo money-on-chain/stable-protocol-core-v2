@@ -59,12 +59,15 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public ctarg;
     // Moc Fee Flow contract address
     address internal mocFeeFlowAddress;
+    // Moc Interest Collector address
+    address internal mocInterestCollectorAddress;
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
+     * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -73,6 +76,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function __MocBaseBucket_init_unchained(
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
+        address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 tcMintFee_,
@@ -80,12 +84,16 @@ abstract contract MocBaseBucket is MocUpgradable {
     ) internal onlyInitializing {
         if (tcTokenAddress_ == address(0)) revert InvalidAddress();
         if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
-        if (ctarg_ < PRECISION) revert InvalidValue();
-        if (protThrld_ < PRECISION) revert InvalidValue();
-        if (tcMintFee_ > PRECISION) revert InvalidValue();
-        if (tcRedeemFee_ > PRECISION) revert InvalidValue();
+        if (mocInterestCollectorAddress_ == address(0)) revert InvalidAddress();
+        bool[] memory invalidValue = new bool[](4);
+        invalidValue[0] = ctarg_ < PRECISION;
+        invalidValue[0] = protThrld_ < PRECISION;
+        invalidValue[0] = tcMintFee_ > PRECISION;
+        invalidValue[0] = tcRedeemFee_ > PRECISION;
+        for (uint8 i = 0; i < invalidValue.length; unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
         tcToken = IMocRC20(tcTokenAddress_);
         mocFeeFlowAddress = mocFeeFlowAddress_;
+        mocInterestCollectorAddress = mocInterestCollectorAddress_;
         ctarg = ctarg_;
         protThrld = protThrld_;
         tcMintFee = tcMintFee_;

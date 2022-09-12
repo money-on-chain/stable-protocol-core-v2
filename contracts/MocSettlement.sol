@@ -1,26 +1,50 @@
 pragma solidity ^0.8.16;
 
 import "./governance/MocUpgradable.sol";
+import "./core/MocCore.sol";
 
 contract MocSettlement is MocUpgradable {
     // ------- Storage -------
+    // MocCore contract
+    MocCore internal mocCore;
     // number of blocks between settlements
     uint256 public bes;
     // next settlement block
-    uint256 public bns;
+    uint256 internal bns;
     // coverage adjustment block multiplier. How often the adjustment is made
-    uint256 public bmulcdj;
+    uint256 internal bmulcdj;
     // next coverage adjustment block
-    uint256 public bncdj;
+    uint256 internal bncdj;
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
      * @param governor_ The address that will define when a change contract is authorized
      * @param stopper_ The address that is authorized to pause this contract
+     * @param mocCoreAddress_ MocCore contract address
+     * @param bes_ number of blocks between settlements
+     * @param bmulcdj_ coverage adjustment block multiplier. How often the adjustment is made
      */
-    function initialize(IGovernor governor_, address stopper_) external initializer {
+    function initialize(
+        IGovernor governor_,
+        address stopper_,
+        address mocCoreAddress_,
+        uint256 bes_,
+        uint256 bmulcdj_
+    ) external initializer {
+        if (mocCoreAddress_ == address(0)) revert InvalidAddress();
+        bes = bes_;
+        bmulcdj = bmulcdj_;
+        bns = block.number + bes_;
+        bncdj = block.number + (bes_ * bmulcdj_);
         __MocUpgradable_init(governor_, stopper_);
+    }
+
+    // ------- External Functions -------
+
+    // solhint-disable-next-line no-empty-blocks
+    function execInt() external {
+        //TODO: call interestRate interest adjustment
     }
 
     /**
