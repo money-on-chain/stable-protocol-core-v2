@@ -8,6 +8,8 @@ import {
   MocCARC20__factory,
   MocCAWrapper,
   MocCAWrapper__factory,
+  MocTC,
+  MocTC__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation, PAUSER_ROLE } from "../../scripts/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
@@ -23,7 +25,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
-  const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
+  const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
   const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
   if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
@@ -33,7 +35,14 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+
+  // for tests only, we deploy a necessary Mocks
+  if (network == "hardhat") {
+    const governorMockFactory = await ethers.getContractFactory("GovernorMock");
+    governor = (await governorMockFactory.deploy()).address;
+  }
+
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(

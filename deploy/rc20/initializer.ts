@@ -22,8 +22,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  // for tests we deploy a Collateral Asset
-  if (network == "hardhat") {
+  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+
+  // for tests we deploy a Collateral Asset and Governor Mock
+  if (network === "hardhat") {
+    const governorMockFactory = await ethers.getContractFactory("GovernorMock");
+    governor = (await governorMockFactory.deploy()).address;
+
     const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
       contract: "ERC20Mock",
       from: deployer,
@@ -32,7 +37,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     collateralAssetToken = deployedERC20MockContract.address;
   }
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(

@@ -84,19 +84,19 @@ const tcTransfer =
     return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
-export const mocFunctionsCoinbase = async mocContracts => {
+export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => {
   return {
-    mintTC: mintTC(mocContracts.mocImpl),
-    mintTCto: mintTCto(mocContracts.mocImpl),
-    redeemTC: redeemTC(mocContracts.mocImpl),
-    redeemTCto: redeemTCto(mocContracts.mocImpl),
-    mintTP: mintTP(mocContracts.mocImpl),
-    mintTPto: mintTPto(mocContracts.mocImpl),
+    mintTC: mintTC(mocImpl),
+    mintTCto: mintTCto(mocImpl),
+    redeemTC: redeemTC(mocImpl),
+    redeemTCto: redeemTCto(mocImpl),
+    mintTP: mintTP(mocImpl),
+    mintTPto: mintTPto(mocImpl),
     assetBalanceOf: ethersGetBalance(),
     acBalanceOf: ethersGetBalance(),
-    tcBalanceOf: tcBalanceOf(mocContracts.mocCollateralToken),
-    tcTransfer: tcTransfer(mocContracts.mocCollateralToken),
-    tpBalanceOf: tpBalanceOf(mocContracts.mocPeggedTokens),
-    pokePrice: pokePrice(mocContracts.priceProviders),
+    tcBalanceOf: tcBalanceOf(mocCollateralToken),
+    tcTransfer: tcTransfer(mocCollateralToken),
+    tpBalanceOf: tpBalanceOf(mocPeggedTokens),
+    pokePrice: pokePrice(priceProviders),
   };
 };

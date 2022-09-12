@@ -97,20 +97,27 @@ const tcTransfer =
     return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
-export const mocFunctionsCARBag = async (mocContracts, assetDefault) => {
+export const mocFunctionsCARBag = async ({
+  mocWrapper,
+  mocCollateralToken,
+  assetDefault,
+  wcaToken,
+  mocPeggedTokens,
+  priceProviders,
+}) => {
   return {
-    mintTC: mintTC(mocContracts.mocWrapper, assetDefault),
-    mintTCto: mintTCto(mocContracts.mocWrapper, assetDefault),
-    redeemTC: redeemTC(mocContracts.mocWrapper, mocContracts.mocCollateralToken, assetDefault),
-    redeemTCto: redeemTCto(mocContracts.mocWrapper, mocContracts.mocCollateralToken, assetDefault),
-    mintTP: mintTP(mocContracts.mocWrapper, assetDefault),
-    mintTPto: mintTPto(mocContracts.mocWrapper, assetDefault),
+    mintTC: mintTC(mocWrapper, assetDefault),
+    mintTCto: mintTCto(mocWrapper, assetDefault),
+    redeemTC: redeemTC(mocWrapper, mocCollateralToken, assetDefault),
+    redeemTCto: redeemTCto(mocWrapper, mocCollateralToken, assetDefault),
+    mintTP: mintTP(mocWrapper, assetDefault),
+    mintTPto: mintTPto(mocWrapper, assetDefault),
     assetBalanceOf: balanceOf(assetDefault),
-    acBalanceOf: balanceOf(mocContracts.wcaToken),
-    tcBalanceOf: balanceOf(mocContracts.mocCollateralToken),
-    tcTransfer: tcTransfer(mocContracts.mocCollateralToken),
-    tpBalanceOf: tpBalanceOf(mocContracts.mocPeggedTokens),
-    addAsset: addAsset(mocContracts.mocWrapper),
-    pokePrice: pokePrice(mocContracts.priceProviders),
+    acBalanceOf: balanceOf(wcaToken),
+    tcBalanceOf: balanceOf(mocCollateralToken),
+    tcTransfer: tcTransfer(mocCollateralToken),
+    tpBalanceOf: tpBalanceOf(mocPeggedTokens),
+    addAsset: addAsset(mocWrapper),
+    pokePrice: pokePrice(priceProviders),
   };
 };

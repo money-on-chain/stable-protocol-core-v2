@@ -325,7 +325,7 @@ abstract contract MocCore is MocEma {
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTP_ * pACtp) / PRECISION;
+        qACNeededtoMint = (qTP_ * PRECISION) / pACtp;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;

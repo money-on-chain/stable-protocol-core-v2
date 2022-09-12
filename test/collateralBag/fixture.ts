@@ -18,7 +18,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
   wcaToken: MocRC20;
-  asset: ERC20Mock;
+  assetDefault: ERC20Mock;
 }> {
   return deployments.createFixture(async ({ ethers }) => {
     await deployments.fixture();
@@ -42,9 +42,9 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
 
     const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
 
-    const asset = await deployAsset();
+    const assetDefault = await deployAsset();
     const assetPriceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addAsset(asset.address, assetPriceProvider.address);
+    await mocWrapper.addAsset(assetDefault.address, assetPriceProvider.address);
 
     return {
       mocImpl,
@@ -53,7 +53,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
       mocPeggedTokens,
       priceProviders,
       wcaToken,
-      asset,
+      assetDefault,
     };
   });
 }

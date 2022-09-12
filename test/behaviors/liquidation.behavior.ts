@@ -1,30 +1,24 @@
-import { fixtureDeployedMocCoinbase } from "./../coinbase/fixture";
-import { MocCACoinbase, MocRC20, PriceProviderMock } from "../../typechain";
-import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
+import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { ERRORS, pEth } from "../helpers/utils";
 import { ContractTransaction } from "ethers";
 
-describe("Feature: Moc Liquidation", function () {
-  let mocImpl: MocCACoinbase;
+const shouldBehaveLikeLiquidable = function () {
+  let mocImpl: MocCACoinbase | MocCARC20;
   let mocCollateralToken: MocRC20;
-  let mocPeggedTokens: MocRC20[];
   let priceProviders: PriceProviderMock[];
   let alice: Address, bob: Address, charlie: Address;
-  const peggedAmount = 2;
 
-  beforeEach(async function () {
-    ({ alice, bob } = await getNamedAccounts());
-    const fixtureDeploy = fixtureDeployedMocCoinbase(peggedAmount);
-    ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
-    this.mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
-    await this.mocFunctions.mintTC({ from: alice, qTC: 100 });
-    await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
-    await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
-  });
-  describe("GIVEN a MocCoinbase implementation, with two Pegged Tokens", function () {
+  describe("GIVEN there are open positions by multiple users", function () {
+    beforeEach(async function () {
+      ({ alice, bob, charlie } = await getNamedAccounts());
+      await this.mocFunctions.mintTC({ from: alice, qTC: 100 });
+      await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
+      await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
+      ({ mocImpl, mocCollateralToken, priceProviders } = this.mocContracts);
+    });
     describe("WHEN peg prices falls, and makes the coverage go under liquidation threshold", function () {
       beforeEach(async function () {
         await priceProviders[0].poke(pEth(0.1));
@@ -63,22 +57,26 @@ describe("Feature: Moc Liquidation", function () {
         it("THEN even if prices are restored, alice cannot mintTC", async function () {
           await expect(this.mocFunctions.mintTC({ from: alice, qTC: 1 })).to.be.revertedWithCustomError(
             mocImpl,
-            ERRORS.NOT_LIQUIDATED,
+            ERRORS.LIQUIDATED,
           );
         });
-        it("THEN even if prices are restored, alice cannot mintTC", async function () {
-          await expect(this.mocFunctions.redeemTC({ from: alice, qTC: 1 })).to.be.revertedWithCustomError(
-            mocImpl,
-            ERRORS.NOT_LIQUIDATED,
-          );
+        it("THEN even if prices are restored, alice cannot redeemTC", async function () {
+          // errorless revert assert here because, depending on implementation, redeem might fail
+          // before actually executing redeemTC but on moving TC assets and hitting paused revert
+          await expect(this.mocFunctions.redeemTC({ from: alice, qTC: 1 })).to.be.reverted;
         });
         it("THEN even if prices are restored, bob cannot mintTP", async function () {
           await expect(this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
             mocImpl,
-            ERRORS.NOT_LIQUIDATED,
+            ERRORS.LIQUIDATED,
           );
+        });
+        it("THEN even if prices are restored, bob cannot redeemTP", async function () {
+          // TODO: complete when ready
         });
       });
     });
   });
-});
+};
+
+export { shouldBehaveLikeLiquidable };

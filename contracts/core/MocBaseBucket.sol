@@ -17,7 +17,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();
-    error NotLiquidated();
+    error Liquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
 
     // ------- Structs -------
@@ -83,7 +83,7 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Modifiers -------
     modifier notLiquidated() {
-        if (liquidated) revert NotLiquidated();
+        if (liquidated) revert Liquidated();
         _;
     }
 
@@ -290,7 +290,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * May emit a {ContractLiquidated} event.
      */
     function evalLiquidation() public {
-        if (liqEnabled && isLiquidationReached()) {
+        if (liqEnabled && !liquidated && isLiquidationReached()) {
             liquidated = true;
             tcToken.pause();
             emit ContractLiquidated();
