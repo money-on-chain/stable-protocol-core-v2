@@ -44,6 +44,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       mocFeeFlowAddress,
       coreParams.ctarg,
       coreParams.protThrld,
+      coreParams.liqThrld,
       tcParams.mintFee,
       tcParams.redeemFee,
       coreParams.emaCalculationBlockSpan,

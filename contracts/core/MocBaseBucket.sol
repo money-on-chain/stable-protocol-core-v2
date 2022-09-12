@@ -93,7 +93,8 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
-     * @param protThrld_ protected state threshold [PREC]
+     * @param protThrld_ protected coverage threshold [PREC]
+     * @param liqThrld_ liquidation coverage threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
@@ -102,6 +103,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         address mocFeeFlowAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
+        uint256 liqThrld_,
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) internal onlyInitializing {
@@ -115,12 +117,11 @@ abstract contract MocBaseBucket is MocUpgradable {
         mocFeeFlowAddress = mocFeeFlowAddress_;
         ctarg = ctarg_;
         protThrld = protThrld_;
+        liqThrld = liqThrld_;
         tcMintFee = tcMintFee_;
         tcRedeemFee = tcRedeemFee_;
-        // TODO
         liquidated = false;
         liqEnabled = false;
-        liqThrld = ONE;
     }
 
     // ------- Internal Functions -------
