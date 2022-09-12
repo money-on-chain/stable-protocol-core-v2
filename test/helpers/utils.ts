@@ -75,7 +75,9 @@ export type Balance = BigNumber;
 
 export const ERRORS = {
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
+  BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
+  NOT_LIQUIDATED: "NotLiquidated",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
@@ -83,7 +85,6 @@ export const ERRORS = {
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
   QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
-  BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   LOW_COVERAGE: "LowCoverage",

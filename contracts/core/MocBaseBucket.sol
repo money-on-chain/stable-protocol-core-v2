@@ -11,10 +11,13 @@ import "../governance/MocUpgradable.sol";
  * @dev Abstracts all rw opeartions on the main bucket and expose all calculations relative to its state.
  */
 abstract contract MocBaseBucket is MocUpgradable {
+    // ------- Events -------
+    event ContractLiquidated();
+
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();
-    error ContractLiquidated();
+    error NotLiquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
 
     // ------- Structs -------
@@ -70,17 +73,17 @@ abstract contract MocBaseBucket is MocUpgradable {
     // global target coverage of the model [PREC]
     uint256 public ctarg;
     // coverage protected state threshold [PREC]
-    uint256 internal protThrld;
+    uint256 public protThrld;
     // coverage liquidation threshold [PREC]
-    uint256 internal liqThrld;
+    uint256 public liqThrld;
     // liquidation enabled
-    bool internal liqEnabled;
+    bool public liqEnabled;
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
-    bool internal liquidated;
+    bool public liquidated;
 
     // ------- Modifiers -------
     modifier notLiquidated() {
-        if (liquidated) revert ContractLiquidated();
+        if (liquidated) revert NotLiquidated();
         _;
     }
 
@@ -116,7 +119,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         tcRedeemFee = tcRedeemFee_;
         // TODO
         liquidated = false;
-        liqEnabled = true;
+        liqEnabled = false;
         liqThrld = ONE;
     }
 
@@ -219,6 +222,19 @@ abstract contract MocBaseBucket is MocUpgradable {
         return num / den;
     }
 
+    /**
+     * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
+     * @param cThrld_ coverage threshold to check for [PREC]
+     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     */
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC) {
+        lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+
+        // check if coverage is above the given threshold
+        if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -263,34 +279,40 @@ abstract contract MocBaseBucket is MocUpgradable {
     function isLiquidationReached() public view returns (bool) {
         uint256 lckAC = getLckAC();
         uint256 cglb = _getCglb(lckAC);
-        return liqEnabled && cglb <= liqThrld;
+        return cglb <= liqThrld;
     }
 
     /**
-     * @notice evaluates if liquidation threshold has been reached, and forces contracts liquidation
-     * @return wasLiquidated true if the contract was liquidated
+     * @notice evaluates if liquidation threshold has been reached and liq is Enabled.
+     * If so forces contracts liquidation, blocking all mint & redeem operations.
+     *
+     * May emit a {ContractLiquidated} event.
      */
-    function evalLiquidation() public returns (bool wasLiquidated) {
-        if (isLiquidationReached()) {
+    function evalLiquidation() public {
+        if (liqEnabled && isLiquidationReached()) {
             liquidated = true;
             tcToken.pause();
+            emit ContractLiquidated();
             // TODO: complete liquidation process: set prices
-            return true;
         }
-        return false;
+    }
+
+    // ------- Only Authorized Changer Functions -------
+
+    /**
+     * @dev sets the value of the liq threshold configuration param
+     * @param liqThrld_ liquidation threshold
+     */
+    function setLiqThrld(uint256 liqThrld_) public onlyAuthorizedChanger {
+        liqThrld = liqThrld_;
     }
 
     /**
-     * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
-     * @param cThrld_ coverage threshold to check for [PREC]
-     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     * @dev enables and disables the liquidation mechanism.
+     * @param liqEnabled_ is liquidation enabled
      */
-    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC) {
-        lckAC = getLckAC();
-        uint256 cglb = _getCglb(lckAC);
-
-        // check if coverage is above the given threshold
-        if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
+    function setLiqEnabled(bool liqEnabled_) public onlyAuthorizedChanger {
+        liqEnabled = liqEnabled_;
     }
 
     /**

@@ -18,7 +18,14 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+
+  // For testing environment, we use Mock helper contracts
+  if (network == "hardhat") {
+    const governorMockFactory = await ethers.getContractFactory("GovernorMock");
+    governor = (await governorMockFactory.deploy()).address;
+  }
+
   // initializations
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
