@@ -41,6 +41,12 @@ export async function deployAndAddPeggedTokens(
       tpParams.redeemFee,
       tpParams.initialEma,
       tpParams.smoothingFactor,
+      tpParams.tils,
+      tpParams.tiMin,
+      tpParams.tiMax,
+      tpParams.abeq,
+      tpParams.facMin,
+      tpParams.facMax,
     );
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);

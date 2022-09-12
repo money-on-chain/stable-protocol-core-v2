@@ -24,8 +24,8 @@ contract MocCARC20 is MocCore {
      * @param stopper_ The address that is authorized to pause this contract
      * @param acTokenAddress_ Collateral Asset Token contract address
      * @param tcTokenAddress_ Collateral Token contract address
-     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocSettlementAddress_ MocSettlement contract address
+     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
@@ -38,8 +38,8 @@ contract MocCARC20 is MocCore {
         address stopper_,
         address acTokenAddress_,
         address tcTokenAddress_,
-        address mocFeeFlowAddress_,
         address mocSettlementAddress_,
+        address mocFeeFlowAddress_,
         address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
@@ -53,8 +53,8 @@ contract MocCARC20 is MocCore {
             governor_,
             stopper_,
             tcTokenAddress_,
-            mocFeeFlowAddress_,
             mocSettlementAddress_,
+            mocFeeFlowAddress_,
             mocInterestCollectorAddress_,
             ctarg_,
             protThrld_,

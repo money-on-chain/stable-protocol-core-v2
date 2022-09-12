@@ -26,6 +26,7 @@ export function fixtureDeployGovernance(): () => Promise<{
     const governor = await deployAeropagusGovernor(deployer);
 
     const mockAddress = deployer;
+    // TODO: fix these mockAddresses
     // initializations
     await waitForTxConfirmation(
       mocCACoinbase.initialize(
@@ -33,6 +34,8 @@ export function fixtureDeployGovernance(): () => Promise<{
         mockAddress,
         mockAddress,
         mocAddresses[networkName].mocFeeFlowAddress,
+        mockAddress,
+        mockAddress,
         coreParams.ctarg,
         coreParams.protThrld,
         tcParams.mintFee,

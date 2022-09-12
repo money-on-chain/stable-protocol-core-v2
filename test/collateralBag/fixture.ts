@@ -7,6 +7,8 @@ import {
   MocCAWrapper__factory,
   MocRC20,
   MocRC20__factory,
+  MocSettlement,
+  MocSettlement__factory,
   PriceProviderMock,
 } from "../../typechain";
 import { pEth, deployAndAddPeggedTokens, deployPriceProvider, deployAsset } from "../helpers/utils";
@@ -14,6 +16,7 @@ import { pEth, deployAndAddPeggedTokens, deployPriceProvider, deployAsset } from
 export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<{
   mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
+  mocSettlement: MocSettlement;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
@@ -32,6 +35,13 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
     if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
     const mocWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
 
+    const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCABagProxy");
+    if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCABagProxy deployed.");
+    const mocSettlement: MocSettlement = MocSettlement__factory.connect(
+      deployedMocSettlementContractProxy.address,
+      signer,
+    );
+
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
     if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
     const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
@@ -49,6 +59,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
     return {
       mocImpl,
       mocWrapper,
+      mocSettlement,
       mocCollateralToken,
       mocPeggedTokens,
       priceProviders,

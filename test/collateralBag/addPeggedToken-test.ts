@@ -21,6 +21,12 @@ describe("Feature: MocCABag add Pegged Token", function () {
       tpRedeemFee = tpParams.redeemFee,
       tpEma = tpParams.initialEma,
       tpEmaSf = tpParams.smoothingFactor,
+      tpTils = tpParams.tils,
+      tpTiMin = tpParams.tiMin,
+      tpTiMax = tpParams.tiMax,
+      tpAbeq = tpParams.abeq,
+      tpFacMin = tpParams.facMin,
+      tpFacMax = tpParams.facMax,
     }: {
       tpTokenAddress?: Address;
       priceProviderAddress?: Address;
@@ -30,6 +36,12 @@ describe("Feature: MocCABag add Pegged Token", function () {
       tpRedeemFee?: BigNumberish;
       tpEma?: BigNumberish;
       tpEmaSf?: BigNumberish;
+      tpTils?: BigNumberish;
+      tpTiMin?: BigNumberish;
+      tpTiMax?: BigNumberish;
+      tpAbeq?: BigNumberish;
+      tpFacMin?: BigNumberish;
+      tpFacMax?: BigNumberish;
     } = {}) => {
       return mocCARC20.addPeggedToken(
         tpTokenAddress,
@@ -40,6 +52,12 @@ describe("Feature: MocCABag add Pegged Token", function () {
         tpRedeemFee,
         tpEma,
         tpEmaSf,
+        tpTils,
+        tpTiMin,
+        tpTiMax,
+        tpAbeq,
+        tpFacMin,
+        tpFacMax,
       );
     };
 

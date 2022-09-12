@@ -1,7 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { MocRC20, MocRC20__factory, MocCARC20, MocCARC20__factory } from "../../typechain";
+import {
+  MocRC20,
+  MocRC20__factory,
+  MocCARC20,
+  MocCARC20__factory,
+  MocSettlement,
+  MocSettlement__factory,
+} from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation } from "../../scripts/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
@@ -14,6 +21,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
   if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+
+  const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCARC20Proxy");
+  if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCARC20Proxy deployed.");
+  const MocSettlement: MocSettlement = MocSettlement__factory.connect(
+    deployedMocSettlementContractProxy.address,
+    signer,
+  );
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
@@ -32,7 +46,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     collateralAssetToken = deployedERC20MockContract.address;
   }
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  const { governor, stopper, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
@@ -40,7 +54,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       stopper,
       collateralAssetToken,
       CollateralToken.address,
+      MocSettlement.address,
       mocFeeFlowAddress,
+      mocInterestCollectorAddress,
       coreParams.ctarg,
       coreParams.protThrld,
       tcParams.mintFee,
@@ -63,4 +79,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARC20"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARC20"];
-deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20"];
+deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20", "MocSettlementCARC20"];

@@ -40,7 +40,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
-    error QacNedeedMustBeGreaterThanZero();
+    error QacNeededMustBeGreaterThanZero();
 
     // ------- Initializer -------
     /**
@@ -49,8 +49,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param governor_ The address that will define when a change contract is authorized
      * @param stopper_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
-     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocSettlementAddress_ MocSettlement contract address
+     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
@@ -62,8 +62,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         IGovernor governor_,
         address stopper_,
         address tcTokenAddress_,
-        address mocFeeFlowAddress_,
         address mocSettlementAddress_,
+        address mocFeeFlowAddress_,
         address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
@@ -113,6 +113,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        // if is 0 reverts because it is triyng to redeem an amount below precision
+        if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         // add qTC and qAC to the Bucket
         _depositTC(qTC_, qACNeededtoMint);
         // mint qTC to the recipient
@@ -145,6 +147,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_);
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        // if is 0 reverts because it is triyng to redeem an amount below precision
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // sub qTC and qAC from the Bucket
         _withdrawTC(qTC_, qACtotalToRedeem);
         // burn qTC from the sender
@@ -177,6 +181,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        // if is 0 reverts because it is triyng to mint an amount below precision
+        if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         // add qTP and qAC to the Bucket
         _depositTP(i_, qTP_, qACNeededtoMint);
         // mint qTP to the recipient
@@ -202,6 +208,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTP(i_, qTP_);
         qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        // if is 0 reverts because it is triyng to redeem an amount below precision
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qACtotalToRedeem);
         // burn qTP from the sender
@@ -265,7 +273,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         invalidValue[6] = tpAbeq_ > ONE;
         invalidValue[7] = tpFacMin_ > ONE;
         invalidValue[8] = tpFacMax_ < ONE;
-        for (uint8 i = 0; i < invalidValue.length; unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
+        for (uint8 i = 0; i < invalidValue.length; i = unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[tpTokenAddress_] != 0) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpToken.length);
@@ -411,7 +419,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTP_ == 0) revert InvalidValue();
         uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
-        uint256 pTPac = _getPTPac(i_);
+        uint256 pACtp = _getPACtp(i_);
 
         // check if coverage is above the protected threshold
         if (cglb <= protThrld) revert LowCoverage(cglb, protThrld);
@@ -424,7 +432,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = (qTP_ * pTPac) / PRECISION;
+        qACtotalToRedeem = (qTP_ * PRECISION) / pACtp;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACtotalToRedeem * tpRedeemFee[i_]) / PRECISION;

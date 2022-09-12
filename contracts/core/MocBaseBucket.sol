@@ -87,10 +87,10 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (mocInterestCollectorAddress_ == address(0)) revert InvalidAddress();
         bool[] memory invalidValue = new bool[](4);
         invalidValue[0] = ctarg_ < PRECISION;
-        invalidValue[0] = protThrld_ < PRECISION;
-        invalidValue[0] = tcMintFee_ > PRECISION;
-        invalidValue[0] = tcRedeemFee_ > PRECISION;
-        for (uint8 i = 0; i < invalidValue.length; unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
+        invalidValue[1] = protThrld_ < PRECISION;
+        invalidValue[2] = tcMintFee_ > PRECISION;
+        invalidValue[3] = tcRedeemFee_ > PRECISION;
+        for (uint8 i = 0; i < invalidValue.length; i = unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
         tcToken = IMocRC20(tcTokenAddress_);
         mocFeeFlowAddress = mocFeeFlowAddress_;
         mocInterestCollectorAddress = mocInterestCollectorAddress_;

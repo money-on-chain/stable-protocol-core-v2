@@ -1,5 +1,12 @@
 import { fixtureDeployedMocCABag } from "./fixture";
-import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocCAWrapper__factory, MocRC20 } from "../../typechain";
+import {
+  MocCARC20,
+  MocCARC20__factory,
+  MocCAWrapper,
+  MocCAWrapper__factory,
+  MocRC20,
+  MocSettlement,
+} from "../../typechain";
 import { expect } from "chai";
 import { ERRORS, CONSTANTS } from "../helpers/utils";
 import { mocInitialize } from "./initializers";
@@ -9,13 +16,20 @@ import { ethers } from "hardhat";
 describe("Feature: MocCABag initialization", function () {
   let mocProxy: MocCARC20;
   let mocWrapper: MocCAWrapper;
+  let mocSettlement: MocSettlement;
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
   const { governor, stopper } = mocAddresses["hardhat"];
   before(async () => {
-    ({ mocImpl: mocProxy, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeployedMocCABag(0)());
-    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address);
+    ({
+      mocImpl: mocProxy,
+      mocWrapper,
+      mocCollateralToken,
+      wcaToken,
+      mocSettlement,
+    } = await fixtureDeployedMocCABag(0)());
+    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address, mocSettlement.address);
   });
   describe("GIVEN a MocCABag implementation deployed", () => {
     describe("WHEN initialize mocProxy again", async () => {
@@ -41,7 +55,7 @@ describe("Feature: MocCABag initialization", function () {
       const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
       const proxy = await mocCARC20ProxyFactory.deploy(mocCARC20Impl.address, "0x");
       const newMocImpl = MocCARC20__factory.connect(proxy.address, ethers.provider.getSigner());
-      newMocInit = mocInitialize(newMocImpl, wcaToken.address, mocCollateralToken.address);
+      newMocInit = mocInitialize(newMocImpl, wcaToken.address, mocCollateralToken.address, mocSettlement.address);
     });
     describe("WHEN it is initialized with invalid governor address", () => {
       it("THEN tx fails because address is the zero address", async () => {

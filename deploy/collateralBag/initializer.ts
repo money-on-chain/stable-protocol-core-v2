@@ -8,6 +8,8 @@ import {
   MocCARC20__factory,
   MocCAWrapper,
   MocCAWrapper__factory,
+  MocSettlement,
+  MocSettlement__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation } from "../../scripts/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
@@ -21,6 +23,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
+  const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCABagProxy");
+  if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCABagProxy deployed.");
+  const MocSettlement: MocSettlement = MocSettlement__factory.connect(
+    deployedMocSettlementContractProxy.address,
+    signer,
+  );
+
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
@@ -33,7 +42,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  const { governor, stopper, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
@@ -41,7 +50,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       stopper,
       WCAToken.address,
       CollateralToken.address,
+      MocSettlement.address,
       mocFeeFlowAddress,
+      mocInterestCollectorAddress,
       coreParams.ctarg,
       coreParams.protThrld,
       tcParams.mintFee,
@@ -73,4 +84,10 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARBag"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARBag"];
-deployFunc.dependencies = ["MocCABag", "CollateralTokenCARBag", "MocCAWrapper", "WrappedCollateralAsset"];
+deployFunc.dependencies = [
+  "MocCABag",
+  "CollateralTokenCARBag",
+  "MocCAWrapper",
+  "WrappedCollateralAsset",
+  "MocSettlementCARBag",
+];
