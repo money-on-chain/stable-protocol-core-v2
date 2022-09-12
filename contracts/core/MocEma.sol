@@ -54,13 +54,13 @@ abstract contract MocEma is MocBaseBucket {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 nTP = pegContainer[i].nTP;
-            // [PREC] = [N] * [PREC]
-            num += nTP * tpEma[i].ema;
-            // [PREC] = [N] * [PREC]
-            den += nTP * _getPTPac(i);
+            // [N] = [N] * [PREC] / [PREC]
+            num += (nTP * PRECISION) / tpEma[i].ema;
+            // [N] = [N] * [PREC] / [PREC]
+            den += (nTP * PRECISION) / _getPACtp(i);
         }
         if (den >= num || den == 0) return ctarg;
-        // [PREC] = [PREC] * [PREC] / [PREC]
+        // [PREC] = [PREC] * [N] / [N]
         ctargema = (ctarg * num) / den;
     }
 
@@ -94,13 +94,13 @@ abstract contract MocEma is MocBaseBucket {
      */
     function updateTPema(uint8 i_) internal {
         EmaItem memory currentTPema = tpEma[i_];
-        uint256 pTPac = _getPTPac(i_);
-        // [PREC] = [PREC] * [PREC] / ([PREC] - [PREC])
-        uint256 term1 = (PRECISION * currentTPema.ema) / (ONE - currentTPema.sf);
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 term2 = (PRECISION * currentTPema.sf) / pTPac;
-        // [PREC] = [PREC] + [PREC]
-        uint256 newEma = term1 + term2;
+        uint256 pACtp = _getPACtp(i_);
+        // [PREC²] = [PREC] * ([PREC] - [PREC])
+        uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
+        // [PREC²] = [PREC] * [PREC]
+        uint256 term2 = currentTPema.sf * pACtp;
+        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
+        uint256 newEma = (term1 + term2) / PRECISION;
         // save new ema value to storage
         tpEma[i_].ema = newEma;
         emit TPemaUpdated(i_, currentTPema.ema, newEma);

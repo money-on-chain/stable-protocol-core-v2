@@ -371,20 +371,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTP_ == 0) revert InvalidValue();
         uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
-        uint256 pTPac = _getPTPac(i_);
+        uint256 pACtp = _getPACtp(i_);
         uint256 ctargema = calcCtargema();
 
         // check if coverage is above the target coverage adjusted by the moving average
         if (cglb <= ctargema) revert LowCoverage(cglb, ctargema);
 
-        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema, pTPac, lckAC);
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema, pACtp, lckAC);
 
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTP_ * pTPac) / PRECISION;
+        qACNeededtoMint = (qTP_ * PRECISION) / pACtp;
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
