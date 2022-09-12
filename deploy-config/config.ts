@@ -6,6 +6,7 @@ const DAY_BLOCK_SPAN = 2880;
 export const coreParams = {
   ctarg: PCT_BASE.mul(4), // 4
   protThrld: PCT_BASE.mul(2), // 2
+  liqThrld: PCT_BASE.mul(104).div(100), // 1.04
   emaCalculationBlockSpan: DAY_BLOCK_SPAN,
 };
 

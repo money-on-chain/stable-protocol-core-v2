@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { MocRC20, MocRC20__factory, MocCACoinbase, MocCACoinbase__factory } from "../../typechain";
-import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation } from "../../scripts/utils";
+import { MocCACoinbase, MocCACoinbase__factory, MocTC, MocTC__factory } from "../../typechain";
+import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, waitForTxConfirmation } from "../../scripts/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -16,9 +16,16 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
-  const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
+  const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+
+  // For testing environment, we use Mock helper contracts
+  if (network == "hardhat") {
+    const governorMockFactory = await ethers.getContractFactory("GovernorMock");
+    governor = (await governorMockFactory.deploy()).address;
+  }
+
   // initializations
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
@@ -28,6 +35,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       mocFeeFlowAddress,
       coreParams.ctarg,
       coreParams.protThrld,
+      coreParams.liqThrld,
       tcParams.mintFee,
       tcParams.redeemFee,
       coreParams.emaCalculationBlockSpan,
@@ -37,7 +45,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // set minter and burner roles
   await Promise.all(
-    [MINTER_ROLE, BURNER_ROLE].map(role =>
+    [MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE].map(role =>
       waitForTxConfirmation(CollateralToken.grantRole(role, MocCACoinbase.address, { gasLimit: GAS_LIMIT_PATCH })),
     ),
   );

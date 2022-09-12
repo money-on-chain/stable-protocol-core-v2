@@ -61,13 +61,11 @@ export async function deployAeropagusGovernor(deployer: Address): Promise<IGover
 }
 
 export async function deployAsset(): Promise<ERC20Mock> {
-  let alice: Address;
-  let bob: Address;
-  ({ alice, bob } = await getNamedAccounts());
   const factory = await ethers.getContractFactory("ERC20Mock");
   const asset = await factory.deploy();
-  await asset.mint(alice, pEth(100000));
-  await asset.mint(bob, pEth(100000));
+  // Fill users accounts with balance so that they can operate
+  const { alice, bob, charlie } = await getNamedAccounts();
+  await Promise.all([alice, bob, charlie].map(address => asset.mint(address, pEth(100000))));
   return asset;
 }
 
@@ -75,7 +73,9 @@ export type Balance = BigNumber;
 
 export const ERRORS = {
   ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
+  BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
+  LIQUIDATED: "Liquidated",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
@@ -83,7 +83,6 @@ export const ERRORS = {
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
   QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
-  BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   LOW_COVERAGE: "LowCoverage",

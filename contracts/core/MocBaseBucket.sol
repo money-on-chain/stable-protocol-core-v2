@@ -1,6 +1,7 @@
 pragma solidity ^0.8.16;
 
 import "../interfaces/IMocRC20.sol";
+import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
 
@@ -10,9 +11,14 @@ import "../governance/MocUpgradable.sol";
  * @dev Abstracts all rw opeartions on the main bucket and expose all calculations relative to its state.
  */
 abstract contract MocBaseBucket is MocUpgradable {
+    // ------- Events -------
+    event ContractLiquidated();
+
     // ------- Custom Errors -------
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();
+    error Liquidated();
+    error LowCoverage(uint256 cglb_, uint256 covThrld_);
 
     // ------- Structs -------
     struct PegContainerItem {
@@ -30,17 +36,11 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     uint256 internal nACioucb;
-    // protected state threshold
-    uint256 internal protThrld;
 
     // Collateral Token
-    IMocRC20 public tcToken;
+    MocTC public tcToken;
     // total supply of Collateral Token
     uint256 internal nTCcb;
-    // fee pct sent to Fee Flow for mint Collateral Tokens
-    uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Collateral Tokens
-    uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Pegged Token
     IMocRC20[] internal tpToken;
@@ -52,15 +52,40 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpR;
     // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
     uint256[] internal tpBmin;
-    // fee pct sent to Fee Flow for mint Pegged Tokens
+
+    // ------- Storage Fees -------
+
+    // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+    uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+    uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+
+    // fee pct sent to Fee Flow for mint Pegged Tokens [PREC]
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Pegged Tokens
+    // fee pct sent to Fee Flow for redeem Pegged Tokens [PREC]
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
-    // global target coverage of the model
-    uint256 public ctarg;
     // Moc Fee Flow contract address
     address internal mocFeeFlowAddress;
+
+    // ------- Storage Coverage Tracking -------
+
+    // global target coverage of the model [PREC]
+    uint256 public ctarg;
+    // coverage protected state threshold [PREC]
+    uint256 public protThrld;
+    // coverage liquidation threshold [PREC]
+    uint256 public liqThrld;
+    // liquidation enabled
+    bool public liqEnabled;
+    // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
+    bool public liquidated;
+
+    // ------- Modifiers -------
+    modifier notLiquidated() {
+        if (liquidated) revert Liquidated();
+        _;
+    }
 
     // ------- Initializer -------
     /**
@@ -68,7 +93,8 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param ctarg_ global target coverage of the model [PREC]
-     * @param protThrld_ protected state threshold [PREC]
+     * @param protThrld_ protected coverage threshold [PREC]
+     * @param liqThrld_ liquidation coverage threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      */
@@ -77,6 +103,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         address mocFeeFlowAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
+        uint256 liqThrld_,
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) internal onlyInitializing {
@@ -86,12 +113,15 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (protThrld_ < PRECISION) revert InvalidValue();
         if (tcMintFee_ > PRECISION) revert InvalidValue();
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();
-        tcToken = IMocRC20(tcTokenAddress_);
+        tcToken = MocTC(tcTokenAddress_);
         mocFeeFlowAddress = mocFeeFlowAddress_;
         ctarg = ctarg_;
         protThrld = protThrld_;
+        liqThrld = liqThrld_;
         tcMintFee = tcMintFee_;
         tcRedeemFee = tcRedeemFee_;
+        liquidated = false;
+        liqEnabled = false;
     }
 
     // ------- Internal Functions -------
@@ -193,6 +223,19 @@ abstract contract MocBaseBucket is MocUpgradable {
         return num / den;
     }
 
+    /**
+     * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
+     * @param cThrld_ coverage threshold to check for [PREC]
+     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     */
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC) {
+        lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+
+        // check if coverage is above the given threshold
+        if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -227,6 +270,50 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = (([N] + [N]) * [PREC]) / [N]
         return ((nACcb + nACioucb) * PRECISION) / lckAC_;
+    }
+
+    /**
+     * @notice If liquidation is enabled, verifies if forced liquidation has been
+     * reached, checking if globalCoverage <= liquidation
+     * @return true if liquidation state is reached, false otherwise
+     */
+    function isLiquidationReached() public view returns (bool) {
+        uint256 lckAC = getLckAC();
+        uint256 cglb = _getCglb(lckAC);
+        return cglb <= liqThrld;
+    }
+
+    /**
+     * @notice evaluates if liquidation threshold has been reached and liq is Enabled.
+     * If so forces contracts liquidation, blocking all mint & redeem operations.
+     *
+     * May emit a {ContractLiquidated} event.
+     */
+    function evalLiquidation() public {
+        if (liqEnabled && !liquidated && isLiquidationReached()) {
+            liquidated = true;
+            tcToken.pause();
+            emit ContractLiquidated();
+            // TODO: complete liquidation process: set prices
+        }
+    }
+
+    // ------- Only Authorized Changer Functions -------
+
+    /**
+     * @dev sets the value of the liq threshold configuration param
+     * @param liqThrld_ liquidation threshold
+     */
+    function setLiqThrld(uint256 liqThrld_) public onlyAuthorizedChanger {
+        liqThrld = liqThrld_;
+    }
+
+    /**
+     * @dev enables and disables the liquidation mechanism.
+     * @param liqEnabled_ is liquidation enabled
+     */
+    function setLiqEnabled(bool liqEnabled_) public onlyAuthorizedChanger {
+        liqEnabled = liqEnabled_;
     }
 
     /**

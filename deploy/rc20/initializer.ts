@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
 import { MocRC20, MocRC20__factory, MocCARC20, MocCARC20__factory } from "../../typechain";
-import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation } from "../../scripts/utils";
+import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation, PAUSER_ROLE } from "../../scripts/utils";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -22,8 +22,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  // for tests we deploy a Collateral Asset
-  if (network == "hardhat") {
+  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+
+  // for tests we deploy a Collateral Asset and Governor Mock
+  if (network === "hardhat") {
+    const governorMockFactory = await ethers.getContractFactory("GovernorMock");
+    governor = (await governorMockFactory.deploy()).address;
+
     const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
       contract: "ERC20Mock",
       from: deployer,
@@ -32,7 +37,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     collateralAssetToken = deployedERC20MockContract.address;
   }
 
-  const { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
@@ -43,6 +47,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       mocFeeFlowAddress,
       coreParams.ctarg,
       coreParams.protThrld,
+      coreParams.liqThrld,
       tcParams.mintFee,
       tcParams.redeemFee,
       coreParams.emaCalculationBlockSpan,
@@ -52,7 +57,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // set minter and burner roles
   await Promise.all(
-    [MINTER_ROLE, BURNER_ROLE].map(role =>
+    [MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE].map(role =>
       waitForTxConfirmation(CollateralToken.grantRole(role, mocCARC20.address, { gasLimit: GAS_LIMIT_PATCH })),
     ),
   );
