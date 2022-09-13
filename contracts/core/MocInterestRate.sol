@@ -12,19 +12,19 @@ import "../MocSettlement.sol";
 abstract contract MocInterestRate is MocBaseBucket {
     // ------- Structs -------
     struct InterestRateItem {
-        // actual interest rate for Pegged Token
+        // actual interest rate for Pegged Token [PREC]
         uint256 tils;
-        // minimum interest rate that can be charged
+        // minimum interest rate that can be charged [PREC]
         uint256 tiMin;
-        // maximum interest rate that can be charged
+        // maximum interest rate that can be charged [PREC]
         uint256 tiMax;
     }
     struct FACitem {
-        // abundance of Pegged Token where it is desired that the model stabilizes
+        // abundance of Pegged Token where it is desired that the model stabilizes [PREC]
         int256 abeq;
-        // minimum correction factor
+        // minimum correction factor sub ONE [PREC]
         int256 facMinSubOne;
-        // maximum correction factor
+        // maximum correction factor [PREC]
         int256 facMax;
     }
 
