@@ -48,7 +48,8 @@
     "ts-generator": "0.1.1",
     "ts-node": "10.9.1",
     "typechain": "8.1.0",
-    "typescript": "4.8.2"
+    "typescript": "4.8.2",
+    "patch-package": "^6.4.7"
   },
   "comments": {
     "dependencies": "hardhat-solhint includes an old version of solhint, that's why specific solhint dependency is added"
@@ -86,6 +87,7 @@
     "report:gas": "REPORT_GAS=true hardhat test",
     "mythril:Greeter": "sudo docker run -it -v $(pwd):/tmp mythril/myth -v4 a -f /tmp/bytecodes/Greeter --max-depth 50",
     "mythril": "npx ts-node ./scripts/bytecodes-extractor.ts && npm run mythril:Greeter",
-    "storage-layout": "npx ts-node ./scripts/storage-layout.ts"
+    "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
+    "postinstall": "patch-package --patch-dir .patches"
   }
 }
