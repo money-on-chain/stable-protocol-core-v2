@@ -18,6 +18,8 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
         deployer,
         deployer,
         deployer,
+        deployer,
+        deployer,
         coreParams.ctarg,
         coreParams.protThrld,
         coreParams.liqThrld,

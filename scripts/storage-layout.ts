@@ -1,6 +1,7 @@
 import hre from "hardhat";
 
 async function main() {
+  //@ts-ignore
   await hre.storageLayout.export();
 }
 

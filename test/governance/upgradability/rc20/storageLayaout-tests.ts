@@ -19,6 +19,8 @@ describe("Feature: Check MocRC20 storage layout compatibility using openzeppelin
         deployer,
         deployer,
         deployer,
+        deployer,
+        deployer,
         coreParams.ctarg,
         coreParams.protThrld,
         coreParams.liqThrld,
