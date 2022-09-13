@@ -21,11 +21,11 @@ abstract contract MocInterestRate is MocBaseBucket {
     }
     struct FACitem {
         // abundance of Pegged Token where it is desired that the model stabilizes
-        uint256 abeq;
+        int256 abeq;
         // minimum correction factor
-        uint256 facMin;
+        int256 facMinSubOne;
         // maximum correction factor
-        uint256 facMax;
+        int256 facMax;
     }
 
     // ------- Storage -------
@@ -56,17 +56,22 @@ abstract contract MocInterestRate is MocBaseBucket {
      * @param qTP_ amount of Pegged Token to redeem
      * @return interestRate [PREC]
      */
-    function _calcTPinterestRate(uint8 i_, uint256 qTP_) internal view returns (uint256 interestRate) {
+    function _calcTPinterestRate(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 tpAvailableToRedeem,
+        uint256 nTP_
+    ) internal view returns (uint256 interestRate) {
         // get the number of blocks remaining for settlement
         uint256 bts = mocSettlement.getBts();
         // check if it is within the block limit to charge interest
         if (bts > tpBmin[i_]) {
             // get the initial abundance of TPi
             // [PREC]
-            uint256 arb = _getArb(i_);
+            uint256 arb = _getArb(tpAvailableToRedeem, nTP_);
             // get the final abundance of TPi
             // [PREC]
-            uint256 arf = _getArf(i_, qTP_);
+            uint256 arf = _getArf(tpAvailableToRedeem, nTP_, qTP_);
             // calculate the initial correction factor
             // [PREC]
             uint256 fctb = _calcFAC(i_, arb);
@@ -88,65 +93,60 @@ abstract contract MocInterestRate is MocBaseBucket {
 
     /**
      * @notice calculate correction factor for interest rate
+     *      FAC
+     *       |
+     * facMax--*
+     *       |  *
+     *      4--  *
+     *       |    * <--------- line nª1
+     *      3--    *
+     *       |      *
+     *      2--      *
+     *       |        *
+     *      1-- > > > >*
+     *       |         ^  *
+     *    .75--        ^     * <--------- line nª2
+     *       |         ^         *
+     *     .5--        ^             *
+     *       |         ^                 *
+     *    .25--        ^                     *
+     *       |         ^                         *
+     * facMin--> > > > ^ > > > > > > > > > > > > > > >*
+     *       |         ^                              ^
+     *       |----|----|-----|----|----|----|----|----|----| arbi
+     *       0        abeq       .5        .75        1
+     *
+     * FAC(Abri)= a * Abri + b
+     * The calculation of the correction factor consists of 2 sections of lines:
+     * 1) A steeply sloping line from abundance 0 and a maximum factor (FACmax) to an inflection point
+     *    where the factor is 1 and the abundance where you want the model to stabilize (Abeq).
+     *    a1 = (1 - FACmax) / Abeq
+     *    b1 = FACmax
+     * 2) A line of less steep slope from the inflection point to abundance 1 and a minimum factor (FACmin).
+     *    a2 = FACmin - 1 / 1 - Abeq
+     *    b2 = 1 - (Abeq * a2)
      * @param i_ Pegged Token index
      * @param abri_ instantaneous relative abundance of Pegged Token
      * @return fac [PREC]
      */
     function _calcFAC(uint8 i_, uint256 abri_) internal view returns (uint256) {
-        /**     FAC
-         *       |
-         * facMax--*
-         *       |  *
-         *      4--  *
-         *       |    * <--------- line nª1
-         *      3--    *
-         *       |      *
-         *      2--      *
-         *       |        *
-         *      1-- > > > >*
-         *       |         ^  *
-         *    .75--        ^     * <--------- line nª2
-         *       |         ^         *
-         *     .5--        ^             *
-         *       |         ^                 *
-         *    .25--        ^                     *
-         *       |         ^                         *
-         * facMin--> > > > ^ > > > > > > > > > > > > > > >*
-         *       |         ^                              ^
-         *       |----|----|-----|----|----|----|----|----|----| arbi
-         *       0        abeq       .5        .75        1
-         *
-         * FAC(Abri)= a * Abri + b
-         * The calculation of the correction factor consists of 2 sections of lines:
-         * 1) A steeply sloping line from abundance 0 and a maximum factor (FACmax) to an inflection point
-         *    where the factor is 1 and the abundance where you want the model to stabilize (Abeq).
-         *    a1 = (1 - FACmax) / Abeq
-         *    b1 = FACmax
-         * 2) A line of less steep slope from the inflection point to abundance 1 and a minimum factor (FACmin).
-         *    a2 = FACmin - 1 / 1 - Abeq
-         *    b2 = 1 - (Abeq * a2)
-         */
-
         FACitem memory fac = tpFAC[i_];
-        int256 abeq = int256(fac.abeq);
-        int256 fACmin = int256(fac.facMin);
-        int256 fACmax = int256(fac.facMax);
         int256 abri = int256(abri_);
         int256 a;
         int256 b;
         // it is the line nª1
-        if (abri < abeq) {
+        if (abri < fac.abeq) {
             // [N] = ([PREC] - [PREC]) / [PREC]
-            a = (int256(ONE) - fACmax) / abeq;
+            a = (int256(ONE) - fac.facMax) / fac.abeq;
             // [PREC]
-            b = fACmax;
+            b = fac.facMax;
         }
         // it is the line nª2
         else {
-            // [N] = ([PREC] - [PREC]) / ([PREC] - [PREC])
-            a = (fACmin - int256(ONE)) / (int256(ONE) - abeq);
+            // [N] = [PREC] / ([PREC] - [PREC])
+            a = fac.facMinSubOne / (int256(ONE) - fac.abeq);
             // [PREC] = [PREC] - ([PREC] * [N])
-            b = int256(ONE) - (abeq * a);
+            b = int256(ONE) - (fac.abeq * a);
         }
         // [PREC] = ([PREC] * [N]) + [PREC]
         return uint256((abri * a) + b);

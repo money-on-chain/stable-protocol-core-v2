@@ -11,10 +11,25 @@ import "./MocInterestRate.sol";
  */
 abstract contract MocCore is MocEma, MocInterestRate {
     // ------- Events -------
-    event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
-    event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_);
-    event TPMinted(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
-    event TPRedeemed(uint8 indexed i_, address indexed sender_, address indexed recipient_, uint256 qTP_, uint256 qAC_);
+    event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
+    event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
+    event TPMinted(
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_
+    );
+    event TPRedeemed(
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    );
     event PeggedTokenAdded(
         uint8 indexed i_,
         address indexed tpTokenAddress_,
@@ -28,9 +43,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tpTils_,
         uint256 tpTiMin_,
         uint256 tpTiMax_,
-        uint256 tpAbeq_,
-        uint256 tpFacMin_,
-        uint256 tpFacMax_
+        int256 tpAbeq_,
+        int256 tpFacMin_,
+        int256 tpFacMax_
     );
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
@@ -129,7 +144,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded);
+        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
 
@@ -165,7 +180,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(recipient_, qACtoRedeem);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem);
+        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
 
@@ -205,7 +220,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded);
+        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
 
@@ -235,7 +250,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(mocFeeFlowAddress, qACfee);
         // transfer qAC for interest
         acTransfer(mocInterestCollectorAddress, qACinterest);
-        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem);
+        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee, qACinterest);
         return qACtoRedeem;
     }
 
@@ -272,23 +287,21 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tpTils_,
         uint256 tpTiMin_,
         uint256 tpTiMax_,
-        uint256 tpAbeq_,
-        uint256 tpFacMin_,
-        uint256 tpFacMax_
+        int256 tpAbeq_,
+        int256 tpFacMin_,
+        int256 tpFacMax_
     ) public {
         if (tpTokenAddress_ == address(0)) revert InvalidAddress();
         if (priceProviderAddress_ == address(0)) revert InvalidAddress();
-        bool[] memory invalidValue = new bool[](9);
-        invalidValue[0] = tpMintFee_ > PRECISION;
-        invalidValue[1] = tpRedeemFee_ > PRECISION;
-        invalidValue[2] = tpEmaSf_ >= ONE;
-        invalidValue[3] = tpTils_ > PRECISION;
-        invalidValue[4] = tpTiMin_ > PRECISION;
-        invalidValue[5] = tpTiMax_ > PRECISION;
-        invalidValue[6] = tpAbeq_ > ONE;
-        invalidValue[7] = tpFacMin_ > ONE;
-        invalidValue[8] = tpFacMax_ < ONE;
-        for (uint8 i = 0; i < invalidValue.length; i = unchecked_inc(i)) if (invalidValue[i]) revert InvalidValue();
+        if (tpMintFee_ > PRECISION) revert InvalidValue();
+        if (tpRedeemFee_ > PRECISION) revert InvalidValue();
+        if (tpEmaSf_ >= ONE) revert InvalidValue();
+        if (tpTils_ > PRECISION) revert InvalidValue();
+        if (tpTiMin_ > PRECISION) revert InvalidValue();
+        if (tpTiMax_ > PRECISION) revert InvalidValue();
+        if (tpAbeq_ > int256(ONE)) revert InvalidValue();
+        if (tpFacMin_ > int256(ONE)) revert InvalidValue();
+        if (tpFacMax_ < int256(ONE)) revert InvalidValue();
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[tpTokenAddress_] != 0) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpToken.length);
@@ -311,7 +324,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // set interest rate item
         tpInterestRate.push(InterestRateItem({ tils: tpTils_, tiMin: tpTiMin_, tiMax: tpTiMax_ }));
         // set FAC item
-        tpFAC.push(FACitem({ abeq: tpAbeq_, facMin: tpFacMin_, facMax: tpFacMax_ }));
+        tpFAC.push(FACitem({ abeq: tpAbeq_, facMinSubOne: tpFacMin_ - int256(ONE), facMax: tpFacMax_ }));
 
         emit PeggedTokenAdded(
             newTPindex,
@@ -434,11 +447,14 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTP_ == 0) revert InvalidValue();
 
         uint256 pACtp = _getPACtp(i_);
-        uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
+        // get amount of TP in the bucket
+        uint256 nTP = pegContainer[i_].nTP;
+        // [N] = [N] - [N]
+        uint256 tpAvailableToRedeem = nTP - pegContainer[i_].nTPXV;
         // check if there are enough TP available to redeem
         if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
 
-        uint256 interestRate = _calcTPinterestRate(i_, qTP_);
+        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP);
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]

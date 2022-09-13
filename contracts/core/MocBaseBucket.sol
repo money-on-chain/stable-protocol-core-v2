@@ -50,8 +50,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
-    // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
-    uint256[] internal tpBmin;
 
     // ------- Storage Fees -------
 
@@ -245,36 +243,30 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice get amount of Pegged Token available to redeem
-     * @param i_ Pegged Token index
-     * @return tpAvailableToRedeem [N]
-     */
-    function _getTPAvailableToRedeem(uint8 i_) internal view returns (uint256 tpAvailableToRedeem) {
-        // [N] = [N] - [N]
-        return pegContainer[i_].nTP - pegContainer[i_].nTPXV;
-    }
-
-    /**
-     * @notice get initial abundance of Pegged Token
-     * @param i_ Pegged Token index
+     * @notice get abundance ratio (beginning) of Pegged Token
+     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_ amount Pegged Token in the bucket [N]
      * @return arb [PREC]
      */
-    function _getArb(uint8 i_) internal view returns (uint256 arb) {
-        uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
+    function _getArb(uint256 tpAvailableToRedeem_, uint256 nTP_) internal pure returns (uint256 arb) {
         // [PREC] = [N] * [PREC] / [N]
-        return (tpAvailableToRedeem * PRECISION) / pegContainer[i_].nTP;
+        return (tpAvailableToRedeem_ * PRECISION) / nTP_;
     }
 
     /**
-     * @notice get final abundance of Pegged Token
-     * @param i_ Pegged Token index
+     * @notice get abundance ratio (final) of Pegged Token
+     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_ amount Pegged Token in the bucket [N]
      * @param qTP_ amount of Pegged Token to calculate the final abundance
      * @return arf [PREC]
      */
-    function _getArf(uint8 i_, uint256 qTP_) internal view returns (uint256 arf) {
-        uint256 tpAvailableToRedeem = _getTPAvailableToRedeem(i_);
+    function _getArf(
+        uint256 tpAvailableToRedeem_,
+        uint256 nTP_,
+        uint256 qTP_
+    ) internal pure returns (uint256 arf) {
         // [PREC] = [N] * [PREC] / [N]
-        return ((tpAvailableToRedeem - qTP_) * PRECISION) / (pegContainer[i_].nTP - qTP_);
+        return ((tpAvailableToRedeem_ - qTP_) * PRECISION) / (nTP_ - qTP_);
     }
 
     /**
