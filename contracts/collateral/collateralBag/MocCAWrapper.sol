@@ -237,6 +237,41 @@ contract MocCAWrapper is MocUpgradable {
         SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
     }
 
+    /**
+     * @notice caller sends Pegged Token and recipient receives Assets
+        Requires prior sender approval of Pegged Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param sender_ address who sends the Pegged Token
+     * @param recipient_ address who receives the Asset
+     */
+    function _redeemTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        // get Pegged Token contract address
+        IERC20 tpToken = mocCore.tpToken(i_);
+        // transfer Pegged Token from sender to this address
+        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // checking it after with qAssetMin
+        uint256 wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
+        // calculate the equivalent amount of Asset
+        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
+        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
+        // burn the wcaToken redeemed
+        wcaToken.burn(address(this), wcaTokenAmountRedeemed);
+        // transfer Asset to the recipient
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+    }
+
     // ------- Public Functions -------
 
     /**

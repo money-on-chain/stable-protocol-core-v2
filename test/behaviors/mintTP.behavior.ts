@@ -96,9 +96,17 @@ const mintTPBehavior = function () {
           // receiver: alice
           // qTP: 100 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
+          // qACfee: 5% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(0, mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
+            .withArgs(
+              0,
+              mocContracts.mocWrapper?.address || alice,
+              alice,
+              pEth(100),
+              pEth(100 * 1.05),
+              pEth(100 * 0.05),
+            );
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: Zero Address
@@ -205,9 +213,10 @@ const mintTPBehavior = function () {
           // receiver: bob
           // qTP: 100 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
+          // qACfee: 5% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
+            .withArgs(0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05));
         });
       });
       describe("AND 100 TP are minted", function () {

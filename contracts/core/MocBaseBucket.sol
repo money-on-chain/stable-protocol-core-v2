@@ -43,7 +43,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal nTCcb;
 
     // Pegged Token
-    IMocRC20[] internal tpToken;
+    IMocRC20[] public tpToken;
     // Pegged Token indexes
     mapping(address => uint8) internal peggedTokenIndex;
     // peg container

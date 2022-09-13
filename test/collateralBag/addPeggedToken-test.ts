@@ -123,6 +123,12 @@ describe("Feature: MocCABag add Pegged Token", function () {
             tpParams.redeemFee,
             tpParams.initialEma,
             tpParams.smoothingFactor,
+            tpParams.tils,
+            tpParams.tiMin,
+            tpParams.tiMax,
+            tpParams.abeq,
+            tpParams.facMin,
+            tpParams.facMax,
           );
       });
       describe("AND try to add it again", () => {

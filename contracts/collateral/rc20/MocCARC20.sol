@@ -173,6 +173,38 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends Pegged Token and receives Collateral Asset
+     * @param i_ Pegged Token index to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return qACtoRedeem amount of AC sent to sender
+     */
+    function redeemTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external returns (uint256 qACtoRedeem) {
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Collateral Asset
+     * @param i_ Pegged Token index to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to 'recipient_'
+     */
+    function redeemTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACtoRedeem) {
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
