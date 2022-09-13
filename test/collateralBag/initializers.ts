@@ -16,6 +16,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     interestCollectorAddress = mocInterestCollectorAddress,
     ctarg = coreParams.ctarg,
     protThrld = coreParams.protThrld,
+    liqThrld = coreParams.liqThrld,
     tcMintFee = tcParams.mintFee,
     tcRedeemFee = tcParams.redeemFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
@@ -29,6 +30,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     interestCollectorAddress?: Address;
     ctarg?: BigNumberish;
     protThrld?: BigNumberish;
+    liqThrld?: BigNumberish;
     tcMintFee?: BigNumberish;
     tcRedeemFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
@@ -43,6 +45,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
       interestCollectorAddress,
       ctarg,
       protThrld,
+      liqThrld,
       tcMintFee,
       tcRedeemFee,
       emaCalculationBlockSpan,

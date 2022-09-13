@@ -24,6 +24,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected state threshold [PREC]
+     * @param liqThrld_ liquidation coverage threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
@@ -37,6 +38,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
+        uint256 liqThrld_,
         uint256 tcMintFee_,
         uint256 tcRedeemFee_,
         uint256 emaCalculationBlockSpan_
@@ -50,6 +52,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             mocInterestCollectorAddress_,
             ctarg_,
             protThrld_,
+            liqThrld_,
             tcMintFee_,
             tcRedeemFee_,
             emaCalculationBlockSpan_

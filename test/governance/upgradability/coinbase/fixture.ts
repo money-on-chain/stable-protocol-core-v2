@@ -38,6 +38,7 @@ export function fixtureDeployGovernance(): () => Promise<{
         mockAddress,
         coreParams.ctarg,
         coreParams.protThrld,
+        coreParams.liqThrld,
         tcParams.mintFee,
         tcParams.redeemFee,
         coreParams.emaCalculationBlockSpan,

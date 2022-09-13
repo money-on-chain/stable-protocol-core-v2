@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCABag } from "./fixture";
-import { ERC20Mock, MocCARC20, MocCAWrapper, MocRC20, PriceProviderMock } from "../../typechain";
+import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth } from "../helpers/utils";
@@ -9,13 +9,7 @@ import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
 
 describe("Feature: MocCABag mint TP", function () {
-  let mocImpl: MocCARC20;
   let mocWrapper: MocCAWrapper;
-  let wcaToken: MocRC20;
-  let mocCollateralToken: MocRC20;
-  let mocPeggedTokens: MocRC20[];
-  let priceProviders: PriceProviderMock[];
-  let asset: ERC20Mock;
   let mocFunctions: any;
   let deployer: Address;
   let alice: Address;
@@ -23,15 +17,10 @@ describe("Feature: MocCABag mint TP", function () {
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
       ({ deployer, alice } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocCABag(5);
-      ({ mocImpl, mocWrapper, mocCollateralToken, mocPeggedTokens, priceProviders, wcaToken, asset } =
-        await fixtureDeploy());
-      mocFunctions = await mocFunctionsCARBag(
-        { mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders, mocWrapper, wcaToken },
-        asset,
-      );
+      this.mocContracts = await fixtureDeployedMocCABag(5)();
+      mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      this.mocContracts = { mocImpl, mocWrapper, mocCollateralToken, mocPeggedTokens };
+      ({ mocWrapper } = this.mocContracts);
     });
     mintTPBehavior();
 
