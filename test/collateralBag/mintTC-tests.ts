@@ -7,16 +7,18 @@ import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
+import { ContractTransaction } from "ethers";
 
 describe("Feature: MocCABag mint TC", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
   let mocFunctions: any;
   let alice: Address;
+  let bob: Address;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
-      ({ alice } = await getNamedAccounts());
+      ({ alice, bob } = await getNamedAccounts());
       this.mocContracts = await fixtureDeployedMocCABag(1)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
@@ -44,6 +46,40 @@ describe("Feature: MocCABag mint TC", function () {
           mocWrapper,
           ERRORS.INVALID_ADDRESS,
         );
+      });
+    });
+
+    describe("WHEN alice mints 10 TC", () => {
+      let tx: ContractTransaction;
+      beforeEach(async () => {
+        tx = await mocFunctions.mintTC({ from: alice, qTC: 10 });
+      });
+      it("THEN a TCMinted event is emitted by MocWrapper", async function () {
+        // asset: assetDefault
+        // sender: alice
+        // receiver: alice
+        // qTC: 10 TC
+        // qAC: 10AC + 5% for Moc Fee Flow
+        await expect(tx)
+          .to.emit(mocWrapper, "TCMinted")
+          .withArgs(assetDefault.address, alice, alice, pEth(10), pEth(10 * 1.05));
+      });
+    });
+
+    describe("WHEN alice mints 10 TC to bob", () => {
+      let tx: ContractTransaction;
+      beforeEach(async () => {
+        tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 10 });
+      });
+      it("THEN a TCMinted event is emitted by MocWrapper", async function () {
+        // asset: assetDefault
+        // sender: alice
+        // receiver: bob
+        // qTC: 10 TC
+        // qAC: 10AC + 5% for Moc Fee Flow
+        await expect(tx)
+          .to.emit(mocWrapper, "TCMinted")
+          .withArgs(assetDefault.address, alice, bob, pEth(10), pEth(10 * 1.05));
       });
     });
 

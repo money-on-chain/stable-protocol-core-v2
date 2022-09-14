@@ -230,7 +230,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 qACtoRedeem) {
+    ) internal notLiquidated returns (uint256 qACtoRedeem) {
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         _evalCoverage(protThrld);
         // calculate how many qAC are needed to mint TP and the qAC fee

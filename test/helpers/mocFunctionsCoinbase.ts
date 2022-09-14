@@ -68,6 +68,28 @@ const mintTPto =
     return mocImpl.connect(signer).mintTPto(i, qTP, to, { value: qACmax, gasPrice: 0 });
   };
 
+const redeemTP =
+  mocImpl =>
+  async ({ i, from, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    return mocImpl.connect(signer).redeemTP(i, qTP, qACmin, { gasPrice: 0 });
+  };
+
+const redeemTPto =
+  mocImpl =>
+  async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to, { gasPrice: 0 });
+  };
+
 const ethersGetBalance = () => account => ethers.provider.getBalance(account);
 
 const tcBalanceOf = mocCollateralToken => async account => mocCollateralToken.balanceOf(account);
@@ -92,6 +114,8 @@ export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeg
     redeemTCto: redeemTCto(mocImpl),
     mintTP: mintTP(mocImpl),
     mintTPto: mintTPto(mocImpl),
+    redeemTP: redeemTP(mocImpl),
+    redeemTPto: redeemTPto(mocImpl),
     assetBalanceOf: ethersGetBalance(),
     acBalanceOf: ethersGetBalance(),
     tcBalanceOf: tcBalanceOf(mocCollateralToken),

@@ -147,7 +147,7 @@ const redeemTCBehavior = function () {
           // sender: alice || mocWrapper
           // receiver: bob || mocWrapper
           // qTC: 300 TC
-          // qAC: 300 AC + 5% for Moc Fee Flow
+          // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCRedeemed")
