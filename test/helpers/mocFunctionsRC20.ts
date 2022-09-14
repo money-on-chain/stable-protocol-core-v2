@@ -112,6 +112,16 @@ const tcTransfer =
     return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
+const tpTransfer =
+  mocPeggedTokens =>
+  async ({ i, from, to, amount, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      amount = pEth(amount);
+    }
+    return mocPeggedTokens[i].connect(signer).transfer(to, amount, { gasPrice: 0 });
+  };
+
 export const mocFunctionsRC20 = async ({
   mocImpl,
   collateralAsset,
@@ -132,5 +142,6 @@ export const mocFunctionsRC20 = async ({
   tcBalanceOf: balanceOf(mocCollateralToken),
   tcTransfer: tcTransfer(mocCollateralToken),
   tpBalanceOf: tpBalanceOf(mocPeggedTokens),
+  tpTransfer: tpTransfer(mocPeggedTokens),
   pokePrice: pokePrice(priceProviders),
 });

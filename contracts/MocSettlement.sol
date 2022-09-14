@@ -10,7 +10,7 @@ contract MocSettlement is MocUpgradable {
     // number of blocks between settlements
     uint256 public bes;
     // next settlement block
-    uint256 internal bns;
+    uint256 public bns;
     // coverage adjustment block multiplier. How often the adjustment is made
     uint256 internal bmulcdj;
     // next coverage adjustment block

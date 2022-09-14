@@ -10,7 +10,7 @@ import {
   MocSettlement__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, waitForTxConfirmation } from "../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, settlementParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
@@ -57,6 +57,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       coreParams.emaCalculationBlockSpan,
       { gasLimit: GAS_LIMIT_PATCH },
     ),
+  );
+
+  await waitForTxConfirmation(
+    MocSettlement.initialize(governor, stopper, MocCACoinbase.address, settlementParams.bes, settlementParams.bmulcdj),
   );
 
   // set minter and burner roles

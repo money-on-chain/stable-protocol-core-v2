@@ -132,24 +132,29 @@ abstract contract MocInterestRate is MocBaseBucket {
     function _calcFAC(uint8 i_, uint256 abri_) internal view returns (uint256) {
         FACitem memory fac = tpFAC[i_];
         int256 abri = int256(abri_);
-        int256 a;
+        int256 aNum;
+        int256 aDen;
         int256 b;
         // it is the line nª1
         if (abri < fac.abeq) {
-            // [N] = ([PREC] - [PREC]) / [PREC]
-            a = (int256(ONE) - fac.facMax) / fac.abeq;
+            // [PREC] = [PREC] - [PREC]
+            aNum = (int256(ONE) - fac.facMax);
+            // [PREC]
+            aDen = fac.abeq;
             // [PREC]
             b = fac.facMax;
         }
         // it is the line nª2
         else {
-            // [N] = [PREC] / ([PREC] - [PREC])
-            a = fac.facMinSubOne / (int256(ONE) - fac.abeq);
-            // [PREC] = [PREC] - ([PREC] * [N])
-            b = int256(ONE) - (fac.abeq * a);
+            // [PREC] = [PREC]
+            aNum = fac.facMinSubOne;
+            // [PREC] = [PREC] - [PREC]
+            aDen = int256(ONE) - fac.abeq;
+            // [PREC] = [PREC] - (([PREC] * [PREC]) / [PREC])
+            b = int256(ONE) - ((fac.abeq * aNum) / aDen);
         }
-        // [PREC] = ([PREC] * [N]) + [PREC]
-        return uint256((abri * a) + b);
+        // [PREC] = (([PREC] * [PREC]) / [PREC]) + [PREC]
+        return uint256(((abri * aNum) / aDen) + b);
     }
 
     /**

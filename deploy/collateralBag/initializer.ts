@@ -14,7 +14,7 @@ import {
   MocTC__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation, PAUSER_ROLE } from "../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, settlementParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
@@ -74,6 +74,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   await waitForTxConfirmation(
     MocCAWrapper.initialize(governor, stopper, mocCARC20.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
+  );
+
+  await waitForTxConfirmation(
+    MocSettlement.initialize(governor, stopper, mocCARC20.address, settlementParams.bes, settlementParams.bmulcdj),
   );
 
   // set minter and burner roles
