@@ -2,24 +2,25 @@ import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../type
 import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
-import { ERRORS, pEth } from "../helpers/utils";
+import { Balance, ERRORS, pEth } from "../helpers/utils";
 import { ContractTransaction } from "ethers";
+import { assertPrec } from "../helpers/assertHelper";
 
 const shouldBehaveLikeLiquidable = function () {
   let mocImpl: MocCACoinbase | MocCARC20;
   let mocCollateralToken: MocRC20;
   let priceProviders: PriceProviderMock[];
-  let alice: Address, bob: Address, charlie: Address;
+  let alice: Address, bob: Address, charlie: Address, otherUser: Address;
 
   describe("GIVEN there are open positions by multiple users", function () {
     beforeEach(async function () {
-      ({ alice, bob, charlie } = await getNamedAccounts());
+      ({ alice, bob, charlie, otherUser } = await getNamedAccounts());
       await this.mocFunctions.mintTC({ from: alice, qTC: 100 });
       await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
       await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
       ({ mocImpl, mocCollateralToken, priceProviders } = this.mocContracts);
     });
-    describe("WHEN peg prices falls, and makes the coverage go under liquidation threshold", function () {
+    describe("WHEN AC prices falls, and makes the coverage go under liquidation threshold", function () {
       beforeEach(async function () {
         await priceProviders[0].poke(pEth(0.1));
         await priceProviders[1].poke(pEth(0.1));
@@ -76,6 +77,74 @@ const shouldBehaveLikeLiquidable = function () {
             mocImpl,
             ERRORS.LIQUIDATED,
           );
+        });
+        describe("WHEN Bob and Charlie redeem their TPs by liquidation redeem", async function () {
+          let bobPrevAssetBalance: Balance, charliePrevAssetBalance: Balance, otherUserPrevAssetBalance: Balance;
+          beforeEach(async function () {
+            [bobPrevAssetBalance, charliePrevAssetBalance, otherUserPrevAssetBalance] = await Promise.all(
+              [bob, charlie, otherUser].map(account => this.mocFunctions.assetBalanceOf(account)),
+            );
+            await this.mocFunctions.liqRedeemTP({ i: 0, from: bob });
+            tx = await this.mocFunctions.liqRedeemTPto({ i: 1, from: charlie, to: otherUser });
+          });
+          it("THEN theirs TP are burned", async function () {
+            assertPrec(0, await this.mocFunctions.tpBalanceOf(0, bob));
+            assertPrec(0, await this.mocFunctions.tpBalanceOf(1, charlie));
+          });
+          it("THEN a redeem event is generated for Charlie", async function () {
+            // i: 0
+            // sender: charlie || mocWrapper
+            // receiver: charlie || mocWrapper
+            // qTP: 10 TP
+            // qAC: 0.43333... AC
+            // qACfee: 0 AC
+            // qACInterest: 0 AC
+            await expect(tx)
+              .to.emit(mocImpl, "TPRedeemed")
+              .withArgs(
+                1,
+                this.mocContracts.mocWrapper?.address || charlie,
+                this.mocContracts.mocWrapper?.address || otherUser,
+                pEth(10),
+                "43333333333333333247",
+                0,
+                0,
+              );
+          });
+          it("THEN they receive the corresponding AC amount", async function () {
+            // Alice, bob and Charlie contribution at 1:1
+            const totalAC = 100 + 20 + 10;
+            const lckAC = 20 + 10;
+            const bobACShare = pEth(20 * totalAC).div(lckAC);
+            const charlieACShare = pEth(10 * totalAC).div(lckAC);
+            const [bobActualAssetBalance, charlieActualAssetBalance, otherUserActualAssetBalance] = await Promise.all(
+              [bob, charlie, otherUser].map(account => this.mocFunctions.assetBalanceOf(account)),
+            );
+            const bobDiff = bobActualAssetBalance.sub(bobPrevAssetBalance);
+            const charlieDiff = charlieActualAssetBalance.sub(charliePrevAssetBalance);
+            const otherUserDiff = otherUserActualAssetBalance.sub(otherUserPrevAssetBalance);
+            // 1/14th of a reference value as tolerance
+            const tolerance = bobACShare.div(10e14).toNumber();
+            assertPrec(bobACShare, bobDiff, "Bob's Asset balance", tolerance);
+            assertPrec(0, charlieDiff, "Charlies's Asset balance", tolerance);
+            assertPrec(charlieACShare, otherUserDiff, "Charlies's Asset balance", tolerance);
+          });
+          it("THEN contract balance is zero", async function () {
+            assertPrec(0, await this.mocFunctions.acBalanceOf(mocImpl.address));
+          });
+          describe("WHEN Bob tries to redeem again", async function () {
+            it("THEN it fails as he has no TPs left", async function () {
+              await expect(this.mocFunctions.liqRedeemTP({ i: 1, from: bob })).to.be.revertedWithCustomError(
+                mocImpl,
+                ERRORS.INSUFFICIENT_TP_TO_REDEEM,
+              );
+            });
+          });
+        });
+        describe("WHEN otherUser tries to redeem TPs by liquidation redeem", async function () {
+          it("THEN it fails", async function () {
+            await expect(this.mocFunctions.liqRedeemTP({ i: 1, from: otherUser })).to.be.reverted;
+          });
         });
       });
     });
