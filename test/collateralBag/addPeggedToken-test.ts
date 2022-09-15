@@ -105,6 +105,54 @@ describe("Feature: MocCABag add Pegged Token", function () {
         );
       });
     });
+    describe("WHEN a Pegged Token is added with invalid initial interest rate value", () => {
+      it("THEN tx fails because interest rate is above ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpTils: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN a Pegged Token is added with invalid minimum interest rate value", () => {
+      it("THEN tx fails because minimum interest rate is above ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpTiMin: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN a Pegged Token is added with invalid maximum interest rate value", () => {
+      it("THEN tx fails because maximum interest rate is above ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpTiMax: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN a Pegged Token is added with invalid abundance value", () => {
+      it("THEN tx fails because abundance is above ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpAbeq: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN a Pegged Token is added with invalid minimum correction factor for interest rate value", () => {
+      it("THEN tx fails because minimum correction factor for interest rate is above ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpFacMin: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN a Pegged Token is added with invalid minimum correction factor for interest rate value", () => {
+      it("THEN tx fails because minimum correction factor for interest rate is below ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpFacMax: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
     describe("WHEN a Pegged Token is added with valid parameters", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {

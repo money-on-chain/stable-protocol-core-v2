@@ -62,29 +62,29 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address tpTokenAddress;
         // priceProviderAddress Pegged Token price provider contract address
         address priceProviderAddress;
-        // tpR Pegged Token reserve factor [PREC]
+        // Pegged Token reserve factor [PREC]
         uint256 tpR;
-        // tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
+        // Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
         uint256 tpBmin;
-        // tpMintFee fee pct sent to Fee Flow for mint [PREC]
+        // fee pct sent to Fee Flow for mint [PREC]
         uint256 tpMintFee;
-        // tpRedeemFee fee pct sent to Fee Flow for redeem [PREC]
+        // fee pct sent to Fee Flow for redeem [PREC]
         uint256 tpRedeemFee;
-        // tpEma initial Pegged Token exponential moving average [PREC]
+        // initial Pegged Token exponential moving average [PREC]
         uint256 tpEma;
-        // tpEmaSf Pegged Token smoothing factor [PREC]
+        // Pegged Token smoothing factor [PREC]
         uint256 tpEmaSf;
-        // tpTils Pegged Token initial interest rate
+        // Pegged Token initial interest rate
         uint256 tpTils;
-        // tpTiMin Pegged Token minimum interest rate that can be charged
+        // Pegged Token minimum interest rate that can be charged
         uint256 tpTiMin;
-        // tpTiMax Pegged Token maximum interest rate that can be charged
+        // Pegged Token maximum interest rate that can be charged
         uint256 tpTiMax;
-        // tpAbeq abundance of Pegged Token where it is desired that the model stabilizes
+        // abundance of Pegged Token where it is desired that the model stabilizes
         int256 tpAbeq;
-        // tpFacMin Pegged Token minimum correction factor for interes rate
+        // Pegged Token minimum correction factor for interest rate
         int256 tpFacMin;
-        // tpFacMax Pegged Token maximum correction factor for interes rate
+        // Pegged Token maximum correction factor for interest rate
         int256 tpFacMax;
     }
 
@@ -331,8 +331,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *      tpTiMin Pegged Token minimum interest rate that can be charged
      *      tpTiMax Pegged Token maximum interest rate that can be charged
      *      tpAbeq abundance of Pegged Token where it is desired that the model stabilizes
-     *      tpFacMin Pegged Token minimum correction factor for interes rate
-     *      tpFacMax Pegged Token maximum correction factor for interes rate
+     *      tpFacMin Pegged Token minimum correction factor for interest rate
+     *      tpFacMax Pegged Token maximum correction factor for interest rate
      */
     function addPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external {
         if (addPeggedTokenParams_.tpTokenAddress == address(0)) revert InvalidAddress();

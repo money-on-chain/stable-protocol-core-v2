@@ -34,7 +34,7 @@ abstract contract MocInterestRate is MocBaseBucket {
     // correction factor item for each Pegged Token
     FACitem[] internal tpFAC;
     // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
-    uint256[] internal tpBmin;
+    uint256[] public tpBmin;
     // MocSettlement contract
     MocSettlement internal mocSettlement;
 

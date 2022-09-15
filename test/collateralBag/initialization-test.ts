@@ -89,9 +89,25 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
+    describe("WHEN it is initialized with invalid Moc Settlement address", () => {
+      it("THEN tx fails because address is the zero address", async () => {
+        await expect(newMocInit({ mocSettlementAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_ADDRESS,
+        );
+      });
+    });
     describe("WHEN it is initialized with invalid Moc Fee Flow address", () => {
       it("THEN tx fails because address is the zero address", async () => {
         await expect(newMocInit({ feeFlowAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_ADDRESS,
+        );
+      });
+    });
+    describe("WHEN it is initialized with invalid Moc interest collector address", () => {
+      it("THEN tx fails because address is the zero address", async () => {
+        await expect(newMocInit({ interestCollectorAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_ADDRESS,
         );
