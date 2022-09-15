@@ -73,20 +73,20 @@ contract MocCAWrapper is MocUpgradable {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param governor_ The address that will define when a change contract is authorized
-     * @param stopper_ The address that is authorized to pause this contract
+     * @param governorAddress_ The address that will define when a change contract is authorized
+     * @param stopperAddress_ The address that is authorized to pause this contract
      * @param mocCoreAddress_ Moc Core contract address
      * @param wcaTokenAddress_ Wrapped Collateral Asset Token contract address
      */
     function initialize(
-        IGovernor governor_,
-        address stopper_,
+        address governorAddress_,
+        address stopperAddress_,
         address mocCoreAddress_,
         address wcaTokenAddress_
     ) external initializer {
         if (mocCoreAddress_ == address(0)) revert InvalidAddress();
         if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
-        __MocUpgradable_init(governor_, stopper_);
+        __MocUpgradable_init(governorAddress_, stopperAddress_);
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core

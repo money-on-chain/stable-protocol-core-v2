@@ -14,18 +14,20 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
 
       const mocProxyFactory = await ethers.getContractFactory("MocCACoinbase");
       const initParams = [
-        governorMock.address,
-        deployer,
-        deployer,
-        deployer,
-        deployer,
-        deployer,
-        coreParams.ctarg,
-        coreParams.protThrld,
-        coreParams.liqThrld,
-        tcParams.mintFee,
-        tcParams.redeemFee,
-        coreParams.emaCalculationBlockSpan,
+        {
+          governorAddress: governorMock.address,
+          stopperAddress: deployer,
+          tcTokenAddress: deployer,
+          mocSettlementAddress: deployer,
+          mocFeeFlowAddress: deployer,
+          mocInterestCollectorAddress: deployer,
+          ctarg: coreParams.ctarg,
+          protThrld: coreParams.protThrld,
+          liqThrld: coreParams.liqThrld,
+          tcMintFee: tcParams.mintFee,
+          tcRedeemFee: tcParams.redeemFee,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+        },
       ];
       mocProxy = await upgrades.deployProxy(mocProxyFactory, initParams, {
         kind: "uups",

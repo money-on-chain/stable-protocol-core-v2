@@ -16,4 +16,6 @@ module.exports = {
     mnemonic,
   },
   skipFiles: ["mocks", "test"],
+  // to don't get stack too deep: https://github.com/sc-forks/solidity-coverage/blob/master/docs/faq.md#running-out-of-stack
+  configureYulOptimizer: true,
 };

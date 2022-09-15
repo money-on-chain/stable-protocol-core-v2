@@ -36,12 +36,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  let { governor, stopper, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
+  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
 
   // for tests we deploy a Collateral Asset and Governor Mock
   if (network === "hardhat") {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-    governor = (await governorMockFactory.deploy()).address;
+    governorAddress = (await governorMockFactory.deploy()).address;
 
     const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
       contract: "ERC20Mock",
@@ -54,25 +54,33 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
-      governor,
-      stopper,
-      collateralAssetToken,
-      CollateralToken.address,
-      MocSettlement.address,
-      mocFeeFlowAddress,
-      mocInterestCollectorAddress,
-      coreParams.ctarg,
-      coreParams.protThrld,
-      coreParams.liqThrld,
-      tcParams.mintFee,
-      tcParams.redeemFee,
-      coreParams.emaCalculationBlockSpan,
+      {
+        governorAddress,
+        stopperAddress,
+        acTokenAddress: collateralAssetToken,
+        tcTokenAddress: CollateralToken.address,
+        mocSettlementAddress: MocSettlement.address,
+        mocFeeFlowAddress,
+        mocInterestCollectorAddress,
+        ctarg: coreParams.ctarg,
+        protThrld: coreParams.protThrld,
+        liqThrld: coreParams.liqThrld,
+        tcMintFee: tcParams.mintFee,
+        tcRedeemFee: tcParams.redeemFee,
+        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+      },
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );
 
   await waitForTxConfirmation(
-    MocSettlement.initialize(governor, stopper, mocCARC20.address, settlementParams.bes, settlementParams.bmulcdj),
+    MocSettlement.initialize(
+      governorAddress,
+      stopperAddress,
+      mocCARC20.address,
+      settlementParams.bes,
+      settlementParams.bmulcdj,
+    ),
   );
 
   // set minter and burner roles

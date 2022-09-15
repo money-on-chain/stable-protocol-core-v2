@@ -59,13 +59,13 @@ contract Stoppable is Governed {
     @notice Initialize the contract with the basic settings
     @dev This initialize replaces the constructor but it is not called automatically.
     It is necessary because of the upgradeability of the contracts. Either this function or the previous can be used
-    @param stopper_ The address that is authorized to stop this contract
+    @param stopperAddress_ The address that is authorized to stop this contract
     @param stoppable_ Define if the contract starts being unstoppable or not
    */
-    function __Stoppable_init_unchained(address stopper_, bool stoppable_) internal onlyInitializing {
-        if (stopper_ == address(0)) revert InvalidAddress();
+    function __Stoppable_init_unchained(address stopperAddress_, bool stoppable_) internal onlyInitializing {
+        if (stopperAddress_ == address(0)) revert InvalidAddress();
         stoppable = stoppable_;
-        stopper = stopper_;
+        stopper = stopperAddress_;
     }
 
     /**

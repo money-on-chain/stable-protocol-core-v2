@@ -43,7 +43,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
       tpFacMin?: BigNumberish;
       tpFacMax?: BigNumberish;
     } = {}) => {
-      return mocCARC20.addPeggedToken(
+      return mocCARC20.addPeggedToken({
         tpTokenAddress,
         priceProviderAddress,
         tpR,
@@ -58,7 +58,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
         tpAbeq,
         tpFacMin,
         tpFacMax,
-      );
+      });
     };
 
   describe("GIVEN a MocCABag implementation deployed", () => {

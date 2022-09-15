@@ -33,15 +33,15 @@ abstract contract Governed is Initializable, MocHelper {
     @notice Initialize the contract with the basic settings
     @dev This initialize replaces the constructor but it is not called automatically.
     It is necessary because of the upgradeability of the contracts
-    @param governor_ Governor address
+    @param governorAddress_ Governor address
    */
-    function __Governed_init(IGovernor governor_) internal onlyInitializing {
-        __Governed_init_unchained(governor_);
+    function __Governed_init(address governorAddress_) internal onlyInitializing {
+        __Governed_init_unchained(governorAddress_);
     }
 
-    function __Governed_init_unchained(IGovernor governor_) internal onlyInitializing {
-        if (address(governor_) == address(0)) revert InvalidAddress();
-        governor = IGovernor(governor_);
+    function __Governed_init_unchained(address governorAddress_) internal onlyInitializing {
+        if (governorAddress_ == address(0)) revert InvalidAddress();
+        governor = IGovernor(governorAddress_);
     }
 
     /**

@@ -38,20 +38,20 @@ export const tpParams = {
 
 export const mocAddresses = {
   mainnet: {
-    governor: "",
-    stopper: "",
+    governorAddress: "",
+    stopperAddress: "",
     mocFeeFlowAddress: "",
     mocInterestCollectorAddress: "",
   },
   rsktestnet: {
-    governor: "",
-    stopper: "",
+    governorAddress: "",
+    stopperAddress: "",
     mocFeeFlowAddress: "",
     mocInterestCollectorAddress: "",
   },
   hardhat: {
-    governor: "0x26a00af444928d689dDEc7B4D17C0e4A8c9D407A",
-    stopper: "0x26a00aF444928D689DDec7B4D17C0e4a8c9d407b",
+    governorAddress: "0x26a00af444928d689dDEc7B4D17C0e4A8c9D407A",
+    stopperAddress: "0x26a00aF444928D689DDec7B4D17C0e4a8c9d407b",
     mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
     mocInterestCollectorAddress: "0x26a00AF444928D689DDeC7b4D17c0E4a8C9d407E",
   },

@@ -44,40 +44,50 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  let { governor, stopper, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
+  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
 
   // for tests only, we deploy a necessary Mocks
   if (network == "hardhat") {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-    governor = (await governorMockFactory.deploy()).address;
+    governorAddress = (await governorMockFactory.deploy()).address;
   }
 
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
-      governor,
-      stopper,
-      WCAToken.address,
-      CollateralToken.address,
-      MocSettlement.address,
-      mocFeeFlowAddress,
-      mocInterestCollectorAddress,
-      coreParams.ctarg,
-      coreParams.protThrld,
-      coreParams.liqThrld,
-      tcParams.mintFee,
-      tcParams.redeemFee,
-      coreParams.emaCalculationBlockSpan,
+      {
+        governorAddress,
+        stopperAddress,
+        acTokenAddress: WCAToken.address,
+        tcTokenAddress: CollateralToken.address,
+        mocSettlementAddress: MocSettlement.address,
+        mocFeeFlowAddress,
+        mocInterestCollectorAddress,
+        ctarg: coreParams.ctarg,
+        protThrld: coreParams.protThrld,
+        liqThrld: coreParams.liqThrld,
+        tcMintFee: tcParams.mintFee,
+        tcRedeemFee: tcParams.redeemFee,
+        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+      },
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );
 
   await waitForTxConfirmation(
-    MocCAWrapper.initialize(governor, stopper, mocCARC20.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
+    MocCAWrapper.initialize(governorAddress, stopperAddress, mocCARC20.address, WCAToken.address, {
+      gasLimit: GAS_LIMIT_PATCH,
+    }),
   );
 
   await waitForTxConfirmation(
-    MocSettlement.initialize(governor, stopper, mocCARC20.address, settlementParams.bes, settlementParams.bmulcdj),
+    MocSettlement.initialize(
+      governorAddress,
+      stopperAddress,
+      mocCARC20.address,
+      settlementParams.bes,
+      settlementParams.bmulcdj,
+    ),
   );
 
   // set minter and burner roles

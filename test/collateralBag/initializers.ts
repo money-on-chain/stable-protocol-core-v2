@@ -3,12 +3,12 @@ import { Address } from "hardhat-deploy/types";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 
-const { governor, stopper, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
+const { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
 
 export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocSettlement: Address) {
   return ({
-    governorAddress = governor,
-    stopperAddress = stopper,
+    mocGovernorAddress = governorAddress,
+    mocStopperAddress = stopperAddress,
     wcaTokenAddress = wcaToken,
     mocTCAddress = mocTC,
     mocSettlementAddress = mocSettlement,
@@ -21,8 +21,8 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     tcRedeemFee = tcParams.redeemFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
   }: {
-    governorAddress?: Address;
-    stopperAddress?: Address;
+    mocGovernorAddress?: Address;
+    mocStopperAddress?: Address;
     wcaTokenAddress?: Address;
     mocTCAddress?: Address;
     mocSettlementAddress?: Address;
@@ -35,20 +35,20 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     tcRedeemFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
   } = {}) => {
-    return mocCARC20.initialize(
-      governorAddress,
-      stopperAddress,
-      wcaTokenAddress,
-      mocTCAddress,
+    return mocCARC20.initialize({
+      governorAddress: mocGovernorAddress,
+      stopperAddress: mocStopperAddress,
+      acTokenAddress: wcaTokenAddress,
+      tcTokenAddress: mocTCAddress,
       mocSettlementAddress,
-      feeFlowAddress,
-      interestCollectorAddress,
+      mocFeeFlowAddress: feeFlowAddress,
+      mocInterestCollectorAddress: interestCollectorAddress,
       ctarg,
       protThrld,
       liqThrld,
       tcMintFee,
       tcRedeemFee,
       emaCalculationBlockSpan,
-    );
+    });
   };
 }

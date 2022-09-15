@@ -26,7 +26,7 @@ export function fixtureDeployGovernance(): () => Promise<{
 
     const mockAddress = deployer;
     // TODO: fix these mockAddresses
-    await mocInitialize(mocCARC20, mockAddress, mockAddress, mockAddress)({ governorAddress: governor.address });
+    await mocInitialize(mocCARC20, mockAddress, mockAddress, mockAddress)({ mocGovernorAddress: governor.address });
 
     return {
       governor,

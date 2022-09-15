@@ -32,35 +32,43 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
   const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
-  let { governor, stopper, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
+  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
 
   // For testing environment, we use Mock helper contracts
   if (network == "hardhat") {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-    governor = (await governorMockFactory.deploy()).address;
+    governorAddress = (await governorMockFactory.deploy()).address;
   }
 
   // initializations
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
-      governor,
-      stopper,
-      CollateralToken.address,
-      MocSettlement.address,
-      mocFeeFlowAddress,
-      mocInterestCollectorAddress,
-      coreParams.ctarg,
-      coreParams.protThrld,
-      coreParams.liqThrld,
-      tcParams.mintFee,
-      tcParams.redeemFee,
-      coreParams.emaCalculationBlockSpan,
+      {
+        governorAddress,
+        stopperAddress,
+        tcTokenAddress: CollateralToken.address,
+        mocSettlementAddress: MocSettlement.address,
+        mocFeeFlowAddress,
+        mocInterestCollectorAddress,
+        ctarg: coreParams.ctarg,
+        protThrld: coreParams.protThrld,
+        liqThrld: coreParams.liqThrld,
+        tcMintFee: tcParams.mintFee,
+        tcRedeemFee: tcParams.redeemFee,
+        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+      },
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );
 
   await waitForTxConfirmation(
-    MocSettlement.initialize(governor, stopper, MocCACoinbase.address, settlementParams.bes, settlementParams.bmulcdj),
+    MocSettlement.initialize(
+      governorAddress,
+      stopperAddress,
+      MocCACoinbase.address,
+      settlementParams.bes,
+      settlementParams.bmulcdj,
+    ),
   );
 
   // set minter and burner roles

@@ -269,7 +269,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 den = nTP_ - qTP_;
         if (den == 0) return 0;
         // [PREC] = [N] * [PREC] / [N]
-        return ((tpAvailableToRedeem_ - qTP_) * PRECISION) / (nTP_ - qTP_);
+        return ((tpAvailableToRedeem_ - qTP_) * PRECISION) / den;
     }
 
     /**

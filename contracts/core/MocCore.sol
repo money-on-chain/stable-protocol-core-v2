@@ -56,12 +56,44 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
 
+    // ------- Structs -------
+    struct AddPeggedTokenParams {
+        // Pegged Token contract address to add
+        address tpTokenAddress;
+        // priceProviderAddress Pegged Token price provider contract address
+        address priceProviderAddress;
+        // tpR Pegged Token reserve factor [PREC]
+        uint256 tpR;
+        // tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
+        uint256 tpBmin;
+        // tpMintFee fee pct sent to Fee Flow for mint [PREC]
+        uint256 tpMintFee;
+        // tpRedeemFee fee pct sent to Fee Flow for redeem [PREC]
+        uint256 tpRedeemFee;
+        // tpEma initial Pegged Token exponential moving average [PREC]
+        uint256 tpEma;
+        // tpEmaSf Pegged Token smoothing factor [PREC]
+        uint256 tpEmaSf;
+        // tpTils Pegged Token initial interest rate
+        uint256 tpTils;
+        // tpTiMin Pegged Token minimum interest rate that can be charged
+        uint256 tpTiMin;
+        // tpTiMax Pegged Token maximum interest rate that can be charged
+        uint256 tpTiMax;
+        // tpAbeq abundance of Pegged Token where it is desired that the model stabilizes
+        int256 tpAbeq;
+        // tpFacMin Pegged Token minimum correction factor for interes rate
+        int256 tpFacMin;
+        // tpFacMax Pegged Token maximum correction factor for interes rate
+        int256 tpFacMax;
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
-     * @param governor_ The address that will define when a change contract is authorized
-     * @param stopper_ The address that is authorized to pause this contract
+     * @param governorAddress_ The address that will define when a change contract is authorized
+     * @param stopperAddress_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocSettlementAddress_ MocSettlement contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
@@ -74,8 +106,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
      */
     function __MocCore_init(
-        IGovernor governor_,
-        address stopper_,
+        address governorAddress_,
+        address stopperAddress_,
         address tcTokenAddress_,
         address mocSettlementAddress_,
         address mocFeeFlowAddress_,
@@ -87,7 +119,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tcRedeemFee_,
         uint256 emaCalculationBlockSpan_
     ) internal onlyInitializing {
-        __MocUpgradable_init(governor_, stopper_);
+        __MocUpgradable_init(governorAddress_, stopperAddress_);
         __MocBaseBucket_init_unchained(
             tcTokenAddress_,
             mocFeeFlowAddress_,
@@ -254,95 +286,109 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return qACtoRedeem;
     }
 
+    /**
+     * @notice internal function to emit PeggedTokenAdded event
+     * @dev we need this function to avoid stack too deep error
+     * @param newTPindex_ new Pegged Token index
+     * @param addPeggedTokenParams_ new Pegged Token params
+     */
+    function _emitPeggedTokenAddedEvent(uint8 newTPindex_, AddPeggedTokenParams memory addPeggedTokenParams_) internal {
+        emit PeggedTokenAdded(
+            newTPindex_,
+            addPeggedTokenParams_.tpTokenAddress,
+            addPeggedTokenParams_.priceProviderAddress,
+            addPeggedTokenParams_.tpR,
+            addPeggedTokenParams_.tpBmin,
+            addPeggedTokenParams_.tpMintFee,
+            addPeggedTokenParams_.tpRedeemFee,
+            addPeggedTokenParams_.tpEma,
+            addPeggedTokenParams_.tpEmaSf,
+            addPeggedTokenParams_.tpTils,
+            addPeggedTokenParams_.tpTiMin,
+            addPeggedTokenParams_.tpTiMax,
+            addPeggedTokenParams_.tpAbeq,
+            addPeggedTokenParams_.tpFacMin,
+            addPeggedTokenParams_.tpFacMax
+        );
+    }
+
     // ------- Public Functions -------
 
     /**
      * @notice add a Pegged Token to the protocol
      * @dev Note that the ema value, should consider `nextEmaCalculation`
      * TODO: this function should be called only through governance system
-     * @param tpTokenAddress_ Pegged Token contract address to add
-     * @param priceProviderAddress_ Pegged Token price provider contract address
-     * @param tpR_ Pegged Token reserve factor [PREC]
-     * @param tpBmin_ Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
-     * @param tpMintFee_ fee pct sent to Fee Flow for mint [PREC]
-     * @param tpRedeemFee_ fee pct sent to Fee Flow for redeem [PREC]
-     * @param tpEma_ initial Pegged Token exponential moving average [PREC]
-     * @param tpEmaSf_ Pegged Token smoothing factor [PREC]
-     * @param tpTils_ Pegged Token initial interest rate
-     * @param tpTiMin_ Pegged Token minimum interest rate that can be charged
-     * @param tpTiMax_ Pegged Token maximum interest rate that can be charged
-     * @param tpAbeq_ abundance of Pegged Token where it is desired that the model stabilizes
-     * @param tpFacMin_ Pegged Token minimum correction factor for interes rate
-     * @param tpFacMax_ Pegged Token maximum correction factor for interes rate
+     * @param addPeggedTokenParams_ params of Pegged Token to add
+     * @dev tpTokenAddress Pegged Token contract address to add
+     *      priceProviderAddress Pegged Token price provider contract address
+     *      tpR Pegged Token reserve factor [PREC]
+     *      tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
+     *      tpMintFee fee pct sent to Fee Flow for mint [PREC]
+     *      tpRedeemFee fee pct sent to Fee Flow for redeem [PREC]
+     *      tpEma initial Pegged Token exponential moving average [PREC]
+     *      tpEmaSf Pegged Token smoothing factor [PREC]
+     *      tpTils Pegged Token initial interest rate
+     *      tpTiMin Pegged Token minimum interest rate that can be charged
+     *      tpTiMax Pegged Token maximum interest rate that can be charged
+     *      tpAbeq abundance of Pegged Token where it is desired that the model stabilizes
+     *      tpFacMin Pegged Token minimum correction factor for interes rate
+     *      tpFacMax Pegged Token maximum correction factor for interes rate
      */
-    function addPeggedToken(
-        address tpTokenAddress_,
-        address priceProviderAddress_,
-        uint256 tpR_,
-        uint256 tpBmin_,
-        uint256 tpMintFee_,
-        uint256 tpRedeemFee_,
-        uint256 tpEma_,
-        uint256 tpEmaSf_,
-        uint256 tpTils_,
-        uint256 tpTiMin_,
-        uint256 tpTiMax_,
-        int256 tpAbeq_,
-        int256 tpFacMin_,
-        int256 tpFacMax_
-    ) public {
-        if (tpTokenAddress_ == address(0)) revert InvalidAddress();
-        if (priceProviderAddress_ == address(0)) revert InvalidAddress();
-        if (tpMintFee_ > PRECISION) revert InvalidValue();
-        if (tpRedeemFee_ > PRECISION) revert InvalidValue();
-        if (tpEmaSf_ >= ONE) revert InvalidValue();
-        if (tpTils_ > PRECISION) revert InvalidValue();
-        if (tpTiMin_ > PRECISION) revert InvalidValue();
-        if (tpTiMax_ > PRECISION) revert InvalidValue();
-        if (tpAbeq_ > int256(ONE)) revert InvalidValue();
-        if (tpFacMin_ > int256(ONE)) revert InvalidValue();
-        if (tpFacMax_ < int256(ONE)) revert InvalidValue();
+    function addPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external {
+        if (addPeggedTokenParams_.tpTokenAddress == address(0)) revert InvalidAddress();
+        if (addPeggedTokenParams_.priceProviderAddress == address(0)) revert InvalidAddress();
+        if (addPeggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
+        if (addPeggedTokenParams_.tpTils > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpTiMin > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpTiMax > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
+        if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
+        if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
         // TODO: this could be replaced by a "if exists modify it"
-        if (peggedTokenIndex[tpTokenAddress_] != 0) revert PeggedTokenAlreadyAdded();
+        if (peggedTokenIndex[addPeggedTokenParams_.tpTokenAddress] != 0) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpToken.length);
-        peggedTokenIndex[tpTokenAddress_] = newTPindex;
+        peggedTokenIndex[addPeggedTokenParams_.tpTokenAddress] = newTPindex;
 
         // set Pegged Token address
-        tpToken.push(IMocRC20(tpTokenAddress_));
+        tpToken.push(IMocRC20(addPeggedTokenParams_.tpTokenAddress));
         // set peg container item
-        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, priceProvider: IPriceProvider(priceProviderAddress_) }));
-        // set reserve factor
-        tpR.push(tpR_);
-        // set minimum amount of blocks
-        tpBmin.push(tpBmin_);
-        // set mint fee pct
-        tpMintFee.push(tpMintFee_);
-        // set redeem fee pct
-        tpRedeemFee.push(tpRedeemFee_);
-        // set EMA initial value and smoothing factor
-        tpEma.push(EmaItem({ ema: tpEma_, sf: tpEmaSf_ }));
-        // set interest rate item
-        tpInterestRate.push(InterestRateItem({ tils: tpTils_, tiMin: tpTiMin_, tiMax: tpTiMax_ }));
-        // set FAC item
-        tpFAC.push(FACitem({ abeq: tpAbeq_, facMinSubOne: tpFacMin_ - int256(ONE), facMax: tpFacMax_ }));
-
-        emit PeggedTokenAdded(
-            newTPindex,
-            tpTokenAddress_,
-            priceProviderAddress_,
-            tpR_,
-            tpBmin_,
-            tpMintFee_,
-            tpRedeemFee_,
-            tpEma_,
-            tpEmaSf_,
-            tpTils_,
-            tpTiMin_,
-            tpTiMax_,
-            tpAbeq_,
-            tpFacMin_,
-            tpFacMax_
+        pegContainer.push(
+            PegContainerItem({
+                nTP: 0,
+                nTPXV: 0,
+                priceProvider: IPriceProvider(addPeggedTokenParams_.priceProviderAddress)
+            })
         );
+        // set reserve factor
+        tpR.push(addPeggedTokenParams_.tpR);
+        // set minimum amount of blocks
+        tpBmin.push(addPeggedTokenParams_.tpBmin);
+        // set mint fee pct
+        tpMintFee.push(addPeggedTokenParams_.tpMintFee);
+        // set redeem fee pct
+        tpRedeemFee.push(addPeggedTokenParams_.tpRedeemFee);
+        // set EMA initial value and smoothing factor
+        tpEma.push(EmaItem({ ema: addPeggedTokenParams_.tpEma, sf: addPeggedTokenParams_.tpEmaSf }));
+        // set interest rate item
+        tpInterestRate.push(
+            InterestRateItem({
+                tils: addPeggedTokenParams_.tpTils,
+                tiMin: addPeggedTokenParams_.tpTiMin,
+                tiMax: addPeggedTokenParams_.tpTiMax
+            })
+        );
+        // set FAC item
+        tpFAC.push(
+            FACitem({
+                abeq: addPeggedTokenParams_.tpAbeq,
+                facMinSubOne: addPeggedTokenParams_.tpFacMin - int256(ONE),
+                facMax: addPeggedTokenParams_.tpFacMax
+            })
+        );
+        // emit the event
+        _emitPeggedTokenAddedEvent(newTPindex, addPeggedTokenParams_);
     }
 
     /**

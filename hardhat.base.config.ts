@@ -96,8 +96,6 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
-      // https://blog.soliditylang.org/2022/03/16/solidity-0.8.13-release-announcement/
-      viaIR: true,
       outputSelection: {
         "*": {
           "*": ["storageLayout"],
