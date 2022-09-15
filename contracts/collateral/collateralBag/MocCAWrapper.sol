@@ -281,16 +281,22 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAssetMin_,
         address sender_,
-        address recipient_
+        address recipient_,
+        bool isLiqRedeem_
     ) internal validAsset(assetAddress_) {
         // get Pegged Token contract address
         IERC20 tpToken = mocCore.tpToken(i_);
+        // When liquidating, we extract all the user's balance
+        if (isLiqRedeem_) qTP_ = tpToken.balanceOf(sender_);
         // transfer Pegged Token from sender to this address
         SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
         // checking it after with qAssetMin
-        uint256 wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
+
+        uint256 wcaTokenAmountRedeemed;
+        if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
+        else wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
         // calculate the equivalent amount of Asset
         uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
         if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
@@ -455,7 +461,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAssetMin_
     ) external {
-        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, msg.sender);
+        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, msg.sender, false);
     }
 
     /**
@@ -474,7 +480,34 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qAssetMin_,
         address recipient_
     ) external {
-        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, recipient_);
+        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, recipient_, false);
+    }
+
+    /**
+     * @notice on liquidation, caller claims all Pegged Token `i_` and receives Asset
+        Requires prior sender approval of Pegged Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     */
+    function liqRedeemTP(address assetAddress_, uint8 i_) external {
+        // qTP = 0 as it's calculated internally, liqRedeem = true
+        _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, msg.sender, true);
+    }
+
+    /**
+     * @notice on liquidation, caller sends Pegged Token and recipient receives Asset
+        Requires prior sender approval of Pegged Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param recipient_ address who receives the Asset
+     */
+    function liqRedeemTPto(
+        address assetAddress_,
+        uint8 i_,
+        address recipient_
+    ) external {
+        // qTP = 0 as it's calculated internally, liqRedeem = true
+        _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
     }
 
     /*

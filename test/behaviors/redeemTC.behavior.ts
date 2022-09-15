@@ -5,7 +5,6 @@ import { Address } from "hardhat-deploy/dist/types";
 import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
-import { beforeEach } from "mocha";
 
 const redeemTCBehavior = function () {
   let mocContracts: any;

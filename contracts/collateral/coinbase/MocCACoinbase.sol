@@ -78,9 +78,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
     // ------- Internal Functions -------
 
     /**
-     * @notice transfer Collateral Asset
-     * @param to_ address who receives the Collateral Asset
-     * @param amount_ amount of Collateral Asset to transfer
+     * @inheritdoc MocCore
      */
     function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
         if (amount_ > 0) {
@@ -89,6 +87,13 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             (bool success, ) = to_.call{ value: amount_ }("");
             if (!success) revert TransferFailed();
         }
+    }
+
+    /**
+     * @inheritdoc MocCore
+     */
+    function acBalanceOf(address account) internal view override returns (uint256 balance) {
+        return account.balance;
     }
 
     // ------- External Functions -------

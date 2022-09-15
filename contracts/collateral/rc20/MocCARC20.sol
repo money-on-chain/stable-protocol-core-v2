@@ -86,14 +86,19 @@ contract MocCARC20 is MocCore {
     // ------- Internal Functions -------
 
     /**
-     * @notice transfer Collateral Asset
-     * @param to_ address who receives the Collateral Asset
-     * @param amount_ amount of Collateral Asset to transfer
+     * @inheritdoc MocCore
      */
     function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
             SafeERC20.safeTransfer(acToken, to_, amount_);
         }
+    }
+
+    /**
+     * @inheritdoc MocCore
+     */
+    function acBalanceOf(address account) internal view override returns (uint256 balance) {
+        return acToken.balanceOf(account);
     }
 
     // ------- External Functions -------
