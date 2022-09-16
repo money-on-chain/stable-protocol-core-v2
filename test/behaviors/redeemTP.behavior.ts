@@ -235,39 +235,15 @@ const redeemTPBehavior = function () {
           => interest = 0%
           */
           let tx: ContractTransaction;
-          let alicePrevACBalance: Balance;
-          let mocPrevACBalance: Balance;
-          let mocFeeFlowPrevACBalance: Balance;
           let mocInterestCollectorPrevACBalance: Balance;
           beforeEach(async function () {
-            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-            mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-            mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
             mocInterestCollectorPrevACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
             tx = await mocFunctions.redeemTP({ i: 0, from: alice, qTP: 100 });
-          });
-          it("THEN alice has 0 TP", async function () {
-            assertPrec(0, await mocFunctions.tpBalanceOf(0, alice));
-          });
-          it("THEN Moc balance decrease 100 AC", async function () {
-            const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-            const diff = mocPrevACBalance.sub(mocActualACBalance);
-            assertPrec(100, diff);
-          });
-          it("THEN Moc Fee Flow balance increase 5% of 100 AC", async function () {
-            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-            const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
-            assertPrec(100 * 0.05, diff);
           });
           it("THEN Moc Interest Collector balance didn't increase AC", async function () {
             const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
             const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
             assertPrec(0, diff);
-          });
-          it("THEN alice balance increase 100 Asset - 5% for Moc Fee Flow", async function () {
-            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-            const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(100 * 0.95, diff);
           });
           it("THEN a TPRedeemed event is emitted", async function () {
             // i: 0
