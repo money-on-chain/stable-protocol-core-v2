@@ -15,6 +15,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
     ({
       tpTokenAddress = mocPeggedToken.address,
       priceProviderAddress = priceProvider.address,
+      tpCtarg = tpParams.ctarg,
       tpR = tpParams.r,
       tpBmin = tpParams.bmin,
       tpMintFee = tpParams.mintFee,
@@ -30,6 +31,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
     }: {
       tpTokenAddress?: Address;
       priceProviderAddress?: Address;
+      tpCtarg?: BigNumberish;
       tpR?: BigNumberish;
       tpBmin?: BigNumberish;
       tpMintFee?: BigNumberish;
@@ -46,6 +48,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
       return mocCARC20.addPeggedToken({
         tpTokenAddress,
         priceProviderAddress,
+        tpCtarg,
         tpR,
         tpBmin,
         tpMintFee,
@@ -79,6 +82,14 @@ describe("Feature: MocCABag add Pegged Token", function () {
         await expect(
           mocAddPeggedToken(mocImpl)({ priceProviderAddress: CONSTANTS.ZERO_ADDRESS }),
         ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
+      });
+    });
+    describe("WHEN a Pegged Token is added with invalid target coverage value", () => {
+      it("THEN tx fails because target coverage is below ONE", async () => {
+        await expect(mocAddPeggedToken(mocImpl)({ tpCtarg: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.INVALID_VALUE,
+        );
       });
     });
     describe("WHEN a Pegged Token is added with invalid mint fee value", () => {
@@ -161,10 +172,10 @@ describe("Feature: MocCABag add Pegged Token", function () {
       it("THEN a PeggedTokenAdded event is emmited", async () => {
         await expect(tx)
           .to.emit(mocImpl, "PeggedTokenAdded")
-          .withArgs(
-            0,
+          .withArgs(0, [
             mocPeggedToken.address,
             priceProvider.address,
+            tpParams.ctarg,
             tpParams.r,
             tpParams.bmin,
             tpParams.mintFee,
@@ -177,7 +188,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
             tpParams.abeq,
             tpParams.facMin,
             tpParams.facMax,
-          );
+          ]);
       });
       describe("AND try to add it again", () => {
         it("THEN tx fails because Pegged Token is already added", async () => {

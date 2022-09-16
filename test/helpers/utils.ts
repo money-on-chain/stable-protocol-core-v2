@@ -37,6 +37,7 @@ export async function deployAndAddPeggedTokens(
     await mocImpl.addPeggedToken({
       tpTokenAddress: peggedToken.address,
       priceProviderAddress: priceProvider.address,
+      tpCtarg: tpParams.ctarg,
       tpR: tpParams.r,
       tpBmin: tpParams.bmin,
       tpMintFee: tpParams.mintFee,

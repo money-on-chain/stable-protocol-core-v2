@@ -15,15 +15,15 @@ const shouldBehaveLikeLiquidable = function () {
   describe("GIVEN there are open positions by multiple users", function () {
     beforeEach(async function () {
       ({ alice, bob, charlie, otherUser } = await getNamedAccounts());
-      await this.mocFunctions.mintTC({ from: alice, qTC: 100 });
+      await this.mocFunctions.mintTC({ from: alice, qTC: 1000 });
       await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
       await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
       ({ mocImpl, mocCollateralToken, priceProviders } = this.mocContracts);
     });
     describe("WHEN AC prices falls, and makes the coverage go under liquidation threshold", function () {
       beforeEach(async function () {
-        await priceProviders[0].poke(pEth(0.1));
-        await priceProviders[1].poke(pEth(0.1));
+        await priceProviders[0].poke(pEth(0.01));
+        await priceProviders[1].poke(pEth(0.01));
       });
       it("THEN isLiquidationReached returns true", async function () {
         expect(await mocImpl.isLiquidationReached()).to.be.true;
@@ -96,7 +96,7 @@ const shouldBehaveLikeLiquidable = function () {
             // sender: charlie || mocWrapper
             // receiver: charlie || mocWrapper
             // qTP: 10 TP
-            // qAC: 0.43333... AC
+            // qAC: 0.343333... AC
             // qACfee: 0 AC
             // qACInterest: 0 AC
             await expect(tx)
@@ -106,14 +106,14 @@ const shouldBehaveLikeLiquidable = function () {
                 this.mocContracts.mocWrapper?.address || charlie,
                 this.mocContracts.mocWrapper?.address || otherUser,
                 pEth(10),
-                "43333333333333333247",
+                "343333333333333316625",
                 0,
                 0,
               );
           });
           it("THEN they receive the corresponding AC amount", async function () {
             // Alice, bob and Charlie contribution at 1:1
-            const totalAC = 100 + 20 + 10;
+            const totalAC = 1000 + 20 + 10;
             const lckAC = 20 + 10;
             const bobACShare = pEth(20 * totalAC).div(lckAC);
             const charlieACShare = pEth(10 * totalAC).div(lckAC);

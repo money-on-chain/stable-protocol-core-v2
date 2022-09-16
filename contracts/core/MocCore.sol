@@ -30,23 +30,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
-    event PeggedTokenAdded(
-        uint8 indexed i_,
-        address indexed tpTokenAddress_,
-        address priceProviderAddress_,
-        uint256 tpR_,
-        uint256 tpBmin_,
-        uint256 tpMintFee_,
-        uint256 tpRedeemFee_,
-        uint256 tpEma_,
-        uint256 tpEmaSf_,
-        uint256 tpTils_,
-        uint256 tpTiMin_,
-        uint256 tpTiMax_,
-        int256 tpAbeq_,
-        int256 tpFacMin_,
-        int256 tpFacMax_
-    );
+    event PeggedTokenAdded(uint8 indexed i_, AddPeggedTokenParams addPeggedTokenParams_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
@@ -62,6 +46,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address tpTokenAddress;
         // priceProviderAddress Pegged Token price provider contract address
         address priceProviderAddress;
+        // Pegged Token target coverage [PREC]
+        uint256 tpCtarg;
         // Pegged Token reserve factor [PREC]
         uint256 tpR;
         // Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
@@ -202,12 +188,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated returns (uint256 qACtoRedeem) {
-        uint256 ctargema = calcCtargema();
+        uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
-        uint256 lckAC = _evalCoverage(ctargema);
+        uint256 lckAC = _evalCoverage(ctargemaCA);
         // calculate how many total qAC are redemeed and how many correspond for fee
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargema, lckAC);
+        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargemaCA, lckAC);
         // if is 0 reverts because it is triyng to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
@@ -240,12 +226,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
-        uint256 ctargema = calcCtargema();
+        uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
-        uint256 lckAC = _evalCoverage(ctargema);
+        uint256 lckAC = _evalCoverage(ctargemaCA);
         // calculate how many qAC are needed to mint TP and the qAC fee
-        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargema, lckAC);
+        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargemaCA, lckAC);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is triyng to mint an amount below precision
@@ -323,32 +309,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0);
     }
 
-    /**
-     * @notice internal function to emit PeggedTokenAdded event
-     * @dev we need this function to avoid stack too deep error
-     * @param newTPindex_ new Pegged Token index
-     * @param addPeggedTokenParams_ new Pegged Token params
-     */
-    function _emitPeggedTokenAddedEvent(uint8 newTPindex_, AddPeggedTokenParams memory addPeggedTokenParams_) internal {
-        emit PeggedTokenAdded(
-            newTPindex_,
-            addPeggedTokenParams_.tpTokenAddress,
-            addPeggedTokenParams_.priceProviderAddress,
-            addPeggedTokenParams_.tpR,
-            addPeggedTokenParams_.tpBmin,
-            addPeggedTokenParams_.tpMintFee,
-            addPeggedTokenParams_.tpRedeemFee,
-            addPeggedTokenParams_.tpEma,
-            addPeggedTokenParams_.tpEmaSf,
-            addPeggedTokenParams_.tpTils,
-            addPeggedTokenParams_.tpTiMin,
-            addPeggedTokenParams_.tpTiMax,
-            addPeggedTokenParams_.tpAbeq,
-            addPeggedTokenParams_.tpFacMin,
-            addPeggedTokenParams_.tpFacMax
-        );
-    }
-
     // ------- Public Functions -------
 
     /**
@@ -379,6 +339,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param addPeggedTokenParams_ params of Pegged Token to add
      * @dev tpTokenAddress Pegged Token contract address to add
      *      priceProviderAddress Pegged Token price provider contract address
+     *      tpCtarg Pegged Token target coverage [PREC]
      *      tpR Pegged Token reserve factor [PREC]
      *      tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
      *      tpMintFee fee pct sent to Fee Flow for mint [PREC]
@@ -395,6 +356,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function addPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external {
         if (addPeggedTokenParams_.tpTokenAddress == address(0)) revert InvalidAddress();
         if (addPeggedTokenParams_.priceProviderAddress == address(0)) revert InvalidAddress();
+        if (addPeggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
         if (addPeggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
         if (addPeggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
         if (addPeggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
@@ -419,6 +381,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
                 priceProvider: IPriceProvider(addPeggedTokenParams_.priceProviderAddress)
             })
         );
+        // set target coverage
+        tpCtarg.push(addPeggedTokenParams_.tpCtarg);
         // set reserve factor
         tpR.push(addPeggedTokenParams_.tpR);
         // set minimum amount of blocks
@@ -446,7 +410,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             })
         );
         // emit the event
-        _emitPeggedTokenAddedEvent(newTPindex, addPeggedTokenParams_);
+        emit PeggedTokenAdded(newTPindex, addPeggedTokenParams_);
     }
 
     /**
@@ -475,18 +439,18 @@ abstract contract MocCore is MocEma, MocInterestRate {
     /**
      * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
      * @param qTC_ amount of Collateral Token to redeem [N]
-     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
     function _calcQACforRedeemTC(
         uint256 qTC_,
-        uint256 ctargema_,
+        uint256 ctargemaCA_,
         uint256 lckAC_
     ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargema_, lckAC_);
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_);
 
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
@@ -504,7 +468,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint [N]
-     * @param ctargema_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
@@ -512,13 +476,14 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function _calcQACforMintTP(
         uint8 i_,
         uint256 qTP_,
-        uint256 ctargema_,
+        uint256 ctargemaCA_,
         uint256 lckAC_
     ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
 
         uint256 pACtp = _getPACtp(i_);
-        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargema_, pACtp, lckAC_);
+        uint256 ctargemaTP = _getCtargemaTP(i_, pACtp);
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, ctargemaTP, pACtp, lckAC_);
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 

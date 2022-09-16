@@ -22,6 +22,7 @@ export const tcParams = {
 };
 
 export const tpParams = {
+  ctarg: PCT_BASE.mul(5), // 5
   r: 0,
   bmin: DAY_BLOCK_SPAN,
   mintFee: PCT_BASE.mul(5).div(100), // 5%

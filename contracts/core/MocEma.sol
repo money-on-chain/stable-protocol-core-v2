@@ -40,28 +40,48 @@ abstract contract MocEma is MocBaseBucket {
         emaCalculationBlockSpan = emaCalculationBlockSpan_;
     }
 
+    // ------- Internal Functions -------
+
+    /**
+     * @notice get target coverage adjusted by the moving average of the value of a Pegged Token
+     * @param i_ Pegged Token index
+     * @param pACtp_ Pegged Token price [PREC]
+     * @return ctargemaTP [PREC]
+     */
+    function _getCtargemaTP(uint8 i_, uint256 pACtp_) internal view returns (uint256 ctargemaTP) {
+        uint256 auxTPctarg = tpCtarg[i_];
+        uint256 auxTpEma = tpEma[i_].ema;
+        if (auxTpEma >= pACtp_) return auxTPctarg;
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        return (auxTPctarg * pACtp_) / auxTpEma;
+    }
+
     // ------- Public Functions -------
 
     /**
      * @notice calculates target coverage adjusted by all Pegged Token's to Collateral Asset rate moving average
-     * @return ctargema [PREC]
+     * @dev currency = nTP / pACtp
+     *      ctargemaCA = ∑(tpCarg * currency) / ∑(currency)
+     * @return ctargemaCA [PREC]
      */
-    function calcCtargema() public returns (uint256 ctargema) {
+    function calcCtargemaCA() public returns (uint256 ctargemaCA) {
         // Make sure EMAs are up to date for all the pegs
         updateEmas();
         uint256 num;
         uint256 den;
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 nTP = pegContainer[i].nTP;
+            uint256 pACtp = _getPACtp(i);
             // [N] = [N] * [PREC] / [PREC]
-            num += (nTP * PRECISION) / tpEma[i].ema;
-            // [N] = [N] * [PREC] / [PREC]
-            den += (nTP * PRECISION) / _getPACtp(i);
+            uint256 currency = (pegContainer[i].nTP * PRECISION) / pACtp;
+            // [PREC] = [PREC] * [N]
+            num += _getCtargemaTP(i, pACtp) * currency;
+            // [PREC] = [N] * [PREC]
+            den += currency * PRECISION;
         }
         if (den >= num || den == 0) return ctarg;
-        // [PREC] = [PREC] * [N] / [N]
-        ctargema = (ctarg * num) / den;
+        // [PREC] = ([PREC] * [PREC]) / [PREC]
+        ctargemaCA = (num * PRECISION) / den;
     }
 
     /**
