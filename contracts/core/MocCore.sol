@@ -145,6 +145,14 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function acTransfer(address to_, uint256 amount_) internal virtual;
 
     /**
+     * @notice Collateral Asset balance
+     * @dev this function must be overriden by the AC implementation
+     * @param account address whos Collateral Asset balance we want to know of
+     * @param balance `account`'s total amount of Colateral Asset
+     */
+    function acBalanceOf(address account) internal view virtual returns (uint256 balance);
+
+    /**
      * @notice mint Collateral Token in exchange for Collateral Asset
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
@@ -287,6 +295,35 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
+     * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
+     * the equivalent AC given the liquidation frozen price.
+     * @param i_ Pegged Token index
+     * @param sender_ address owner of the TP to be redeemed
+     * @param recipient_ address who receives the AC
+     * @return qACRedeemed amount of AC sent to `recipient_`
+     */
+    function _liqRedeemTPTo(
+        uint8 i_,
+        address sender_,
+        address recipient_
+    ) internal returns (uint256 qACRedeemed) {
+        if (!liquidated) revert OnlyWhenLiquidated();
+        uint256 qTP = tpToken[i_].balanceOf(sender_);
+        if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
+        // [PREC]
+        uint256 liqPACtp = tpLiqPrices[i_];
+        // [PREC] = [N] * [PREC] / [PREC]
+        qACRedeemed = (qTP * PRECISION) / liqPACtp;
+        // burn qTP from the sender
+        tpToken[i_].burn(sender_, qTP);
+        // Given rounding errors, the last redeemer might receive a little less
+        if (acBalanceOf(address(this)) < qACRedeemed) qACRedeemed = acBalanceOf(address(this));
+        // transfer qAC to the recipient, reverts if fail
+        acTransfer(recipient_, qACRedeemed);
+        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0);
+    }
+
+    /**
      * @notice internal function to emit PeggedTokenAdded event
      * @dev we need this function to avoid stack too deep error
      * @param newTPindex_ new Pegged Token index
@@ -313,6 +350,27 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     // ------- Public Functions -------
+
+    /**
+     * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
+     * the equivalent AC given the liquidation frozen price.
+     * @param i_ Pegged Token index
+     * @return qACRedeemed amount of AC sent to sender
+     */
+    function liqRedeemTP(uint8 i_) public returns (uint256 qACRedeemed) {
+        return _liqRedeemTPTo(i_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
+     * the equivalent AC given the liquidation frozen price.
+     * @param i_ Pegged Token index
+     * @param recipient_ address who receives the AC
+     * @return qACRedeemed amount of AC sent to `recipient_`
+     */
+    function liqRedeemTPto(uint8 i_, address recipient_) public returns (uint256 qACRedeemed) {
+        return _liqRedeemTPTo(i_, msg.sender, recipient_);
+    }
 
     /**
      * @notice add a Pegged Token to the protocol

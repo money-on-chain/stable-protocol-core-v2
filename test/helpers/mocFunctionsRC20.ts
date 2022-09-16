@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { pEth } from "./utils";
+import { GAS_LIMIT_PATCH, pEth } from "./utils";
 
 const mintTC =
   (mocImpl, collateralAsset) =>
@@ -98,6 +98,19 @@ const redeemTPto =
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to);
   };
 
+const liqRedeemTP =
+  mocImpl =>
+  async ({ i, from }) => {
+    const signer = await ethers.getSigner(from);
+    return mocImpl.connect(signer).liqRedeemTP(i, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
+const liqRedeemTPto =
+  mocImpl =>
+  async ({ i, from, to }) => {
+    const signer = await ethers.getSigner(from);
+    return mocImpl.connect(signer).liqRedeemTPto(i, to, { gasLimit: GAS_LIMIT_PATCH });
+  };
 const balanceOf = asset => account => asset.balanceOf(account);
 const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].balanceOf(account);
 const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
@@ -137,6 +150,8 @@ export const mocFunctionsRC20 = async ({
   mintTPto: mintTPto(mocImpl, collateralAsset),
   redeemTP: redeemTP(mocImpl, mocPeggedTokens),
   redeemTPto: redeemTPto(mocImpl, mocPeggedTokens),
+  liqRedeemTP: liqRedeemTP(mocImpl),
+  liqRedeemTPto: liqRedeemTPto(mocImpl),
   assetBalanceOf: balanceOf(collateralAsset),
   acBalanceOf: balanceOf(collateralAsset),
   tcBalanceOf: balanceOf(mocCollateralToken),

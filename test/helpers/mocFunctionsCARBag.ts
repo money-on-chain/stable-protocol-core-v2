@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { pEth } from "./utils";
+import { GAS_LIMIT_PATCH, pEth } from "./utils";
 
 const mintTC =
   (mocWrapper, assetDefault) =>
@@ -98,6 +98,23 @@ const redeemTPto =
     return mocWrapper.connect(signer).redeemTPto(asset.address, i, qTP, qACmin, to);
   };
 
+const liqRedeemTP =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+
+    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, pEth(1e10));
+    return mocWrapper.connect(signer).liqRedeemTP(asset.address, i, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
+const liqRedeemTPto =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, to, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, pEth(1e10));
+    return mocWrapper.connect(signer).liqRedeemTPto(asset.address, i, to, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
 const balanceOf =
   assetDefault =>
   (account, asset = assetDefault) =>
@@ -148,6 +165,8 @@ export const mocFunctionsCARBag = async ({
     mintTPto: mintTPto(mocWrapper, assetDefault),
     redeemTP: redeemTP(mocWrapper, mocPeggedTokens, assetDefault),
     redeemTPto: redeemTPto(mocWrapper, mocPeggedTokens, assetDefault),
+    liqRedeemTP: liqRedeemTP(mocWrapper, mocPeggedTokens, assetDefault),
+    liqRedeemTPto: liqRedeemTPto(mocWrapper, mocPeggedTokens, assetDefault),
     assetBalanceOf: balanceOf(assetDefault),
     acBalanceOf: balanceOf(wcaToken),
     tcBalanceOf: balanceOf(mocCollateralToken),

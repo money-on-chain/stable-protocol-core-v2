@@ -18,6 +18,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     error InvalidPriceProvider(address priceProviderAddress_);
     error TransferFailed();
     error Liquidated();
+    error OnlyWhenLiquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
 
     // ------- Structs -------
@@ -50,6 +51,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
+    // prices for each TP, at wich they can be redeem after liquidation event
+    uint256[] internal tpLiqPrices;
 
     // ------- Storage Fees -------
 
@@ -285,6 +288,35 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
     }
 
+    /**
+     * @dev Calculates price at liquidation event as a relation between Pegs total supply
+     * and the amount of Asset Collateral available to distribute
+     */
+    function settleLiquidationPrices() internal {
+        // Total amount of AC available to be redeemed
+        uint256 totalACAvailable = nACcb + nACioucb;
+        if (totalACAvailable == 0) return;
+
+        uint256 pegAmount = pegContainer.length;
+        // this could be get by getLckAC(), but given the prices are needed after,
+        // it's better to cache them here.
+        uint256 lckAC;
+        // Auxiliar cache of pegs pACtp
+        uint256[] memory pACtps = new uint256[](pegAmount);
+        // for each peg, calculates the proportion of AC reserves it's locked
+
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            pACtps[i] = _getPACtp(i);
+            // [N] = [N] * [PREC] / [PREC]
+            lckAC += (pegContainer[i].nTP * PRECISION) / pACtps[i];
+        }
+
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            // [PREC] = [PREC] * [N] / [N];
+            tpLiqPrices.push((pACtps[i] * lckAC) / totalACAvailable);
+        }
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -342,8 +374,9 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (liqEnabled && !liquidated && isLiquidationReached()) {
             liquidated = true;
             tcToken.pause();
+            // Freeze current Peg Price given the AC available
+            settleLiquidationPrices();
             emit ContractLiquidated();
-            // TODO: complete liquidation process: set prices
         }
     }
 

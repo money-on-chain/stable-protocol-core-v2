@@ -8,6 +8,8 @@ import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
+export const GAS_LIMIT_PATCH = 30000000;
+
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
   if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false }).replace(",", ".");
@@ -86,6 +88,7 @@ export const ERRORS = {
   INVALID_VALUE: "InvalidValue",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
+  INSUFFICIENT_TP_TO_REDEEM: "InsufficientTPtoRedeem",
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
   QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
