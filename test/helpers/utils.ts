@@ -32,16 +32,22 @@ export async function deployAndAddPeggedTokens(
     await peggedToken.grantRole(BURNER_ROLE, mocImpl.address);
 
     const priceProvider = await deployPriceProvider(pEth(1));
-    await mocImpl.addPeggedToken(
-      peggedToken.address,
-      priceProvider.address,
-      tpParams.r,
-      tpParams.bmin,
-      tpParams.mintFee,
-      tpParams.redeemFee,
-      tpParams.initialEma,
-      tpParams.smoothingFactor,
-    );
+    await mocImpl.addPeggedToken({
+      tpTokenAddress: peggedToken.address,
+      priceProviderAddress: priceProvider.address,
+      tpR: tpParams.r,
+      tpBmin: tpParams.bmin,
+      tpMintFee: tpParams.mintFee,
+      tpRedeemFee: tpParams.redeemFee,
+      tpEma: tpParams.initialEma,
+      tpEmaSf: tpParams.smoothingFactor,
+      tpTils: tpParams.tils,
+      tpTiMin: tpParams.tiMin,
+      tpTiMax: tpParams.tiMax,
+      tpAbeq: tpParams.abeq,
+      tpFacMin: tpParams.facMin,
+      tpFacMax: tpParams.facMax,
+    });
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);
   }

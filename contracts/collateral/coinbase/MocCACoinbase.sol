@@ -8,6 +8,34 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
 contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
+    // ------- Structs -------
+    struct InitializeParams {
+        // The address that will define when a change contract is authorized
+        address governorAddress;
+        // The address that is authorized to pause this contract
+        address stopperAddress;
+        // Collateral Token contract address
+        address tcTokenAddress;
+        // MocSettlement contract address
+        address mocSettlementAddress;
+        // Moc Fee Flow contract address
+        address mocFeeFlowAddress;
+        // mocInterestCollector address
+        address mocInterestCollectorAddress;
+        // global target coverage of the model [PREC]
+        uint256 ctarg;
+        // protected state threshold [PREC]
+        uint256 protThrld;
+        // liquidation coverage threshold [PREC]
+        uint256 liqThrld;
+        // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+        uint256 tcMintFee;
+        // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+        uint256 tcRedeemFee;
+        // amount of blocks to wait between Pegged ema calculation
+        uint256 emaCalculationBlockSpan;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -16,40 +44,34 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param governor_ The address that will define when a change contract is authorized
-     * @param stopper_ The address that is authorized to pause this contract
-     * @param tcTokenAddress_ Collateral Token contract address
-     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
-     * @param ctarg_ global target coverage of the model [PREC]
-     * @param protThrld_ protected state threshold [PREC]
-     * @param liqThrld_ liquidation coverage threshold [PREC]
-     * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-     * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
+     * @param initializeParams_ contract initializer params
+     * @dev governorAddress The address that will define when a change contract is authorized
+     *      stopperAddress The address that is authorized to pause this contract
+     *      tcTokenAddress Collateral Token contract address
+     *      mocSettlementAddress MocSettlement contract address
+     *      mocFeeFlowAddress Moc Fee Flow contract address
+     *      mocInterestCollectorAddress mocInterestCollector address
+     *      ctarg global target coverage of the model [PREC]
+     *      protThrld protected state threshold [PREC]
+     *      liqThrld liquidation coverage threshold [PREC]
+     *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+     *      tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
-    function initialize(
-        IGovernor governor_,
-        address stopper_,
-        address tcTokenAddress_,
-        address mocFeeFlowAddress_,
-        uint256 ctarg_,
-        uint256 protThrld_,
-        uint256 liqThrld_,
-        uint256 tcMintFee_,
-        uint256 tcRedeemFee_,
-        uint256 emaCalculationBlockSpan_
-    ) external initializer {
+    function initialize(InitializeParams calldata initializeParams_) external initializer {
         __MocCore_init(
-            governor_,
-            stopper_,
-            tcTokenAddress_,
-            mocFeeFlowAddress_,
-            ctarg_,
-            protThrld_,
-            liqThrld_,
-            tcMintFee_,
-            tcRedeemFee_,
-            emaCalculationBlockSpan_
+            initializeParams_.governorAddress,
+            initializeParams_.stopperAddress,
+            initializeParams_.tcTokenAddress,
+            initializeParams_.mocSettlementAddress,
+            initializeParams_.mocFeeFlowAddress,
+            initializeParams_.mocInterestCollectorAddress,
+            initializeParams_.ctarg,
+            initializeParams_.protThrld,
+            initializeParams_.liqThrld,
+            initializeParams_.tcMintFee,
+            initializeParams_.tcRedeemFee,
+            initializeParams_.emaCalculationBlockSpan
         );
     }
 
@@ -142,6 +164,38 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address recipient_
     ) external payable returns (uint256 qACtotalNeeded) {
         return _mintTPto(i_, qTP_, msg.value, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and receives coinbase as Collateral Asset
+     * @param i_ Pegged Token index to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return qACtoRedeem amount of AC sent to sender
+     */
+    function redeemTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external returns (uint256 qACtoRedeem) {
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives coinbase as Collateral Asset
+     * @param i_ Pegged Token index to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to 'recipient_'
+     */
+    function redeemTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACtoRedeem) {
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
     }
 
     /**

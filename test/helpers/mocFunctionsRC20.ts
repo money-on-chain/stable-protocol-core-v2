@@ -74,6 +74,30 @@ const mintTPto =
     return mocImpl.connect(signer).mintTPto(i, qTP, qACmax, to);
   };
 
+const redeemTP =
+  (mocImpl, mocPeggedTokens) =>
+  async ({ i, from, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    await mocPeggedTokens[i].connect(signer).approve(mocImpl.address, qTP);
+    return mocImpl.connect(signer).redeemTP(i, qTP, qACmin);
+  };
+
+const redeemTPto =
+  (mocImpl, mocPeggedTokens) =>
+  async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    await mocPeggedTokens[i].connect(signer).approve(mocImpl.address, qTP);
+    return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to);
+  };
+
 const balanceOf = asset => account => asset.balanceOf(account);
 const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].balanceOf(account);
 const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
@@ -86,6 +110,16 @@ const tcTransfer =
       amount = pEth(amount);
     }
     return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
+  };
+
+const tpTransfer =
+  mocPeggedTokens =>
+  async ({ i, from, to, amount, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      amount = pEth(amount);
+    }
+    return mocPeggedTokens[i].connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
 export const mocFunctionsRC20 = async ({
@@ -101,10 +135,13 @@ export const mocFunctionsRC20 = async ({
   redeemTCto: redeemTCto(mocImpl, mocCollateralToken),
   mintTP: mintTP(mocImpl, collateralAsset),
   mintTPto: mintTPto(mocImpl, collateralAsset),
+  redeemTP: redeemTP(mocImpl, mocPeggedTokens),
+  redeemTPto: redeemTPto(mocImpl, mocPeggedTokens),
   assetBalanceOf: balanceOf(collateralAsset),
   acBalanceOf: balanceOf(collateralAsset),
   tcBalanceOf: balanceOf(mocCollateralToken),
   tcTransfer: tcTransfer(mocCollateralToken),
   tpBalanceOf: tpBalanceOf(mocPeggedTokens),
+  tpTransfer: tpTransfer(mocPeggedTokens),
   pokePrice: pokePrice(priceProviders),
 });

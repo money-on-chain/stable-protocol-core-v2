@@ -1,9 +1,16 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { MocRC20, MocRC20__factory, MocCARC20, MocCARC20__factory } from "../../typechain";
+import {
+  MocRC20,
+  MocRC20__factory,
+  MocCARC20,
+  MocCARC20__factory,
+  MocSettlement,
+  MocSettlement__factory,
+} from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation, PAUSER_ROLE } from "../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, settlementParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
@@ -15,6 +22,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
+  const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCARC20Proxy");
+  if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCARC20Proxy deployed.");
+  const MocSettlement: MocSettlement = MocSettlement__factory.connect(
+    deployedMocSettlementContractProxy.address,
+    signer,
+  );
+
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
@@ -22,12 +36,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
 
   // for tests we deploy a Collateral Asset and Governor Mock
   if (network === "hardhat") {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-    governor = (await governorMockFactory.deploy()).address;
+    governorAddress = (await governorMockFactory.deploy()).address;
 
     const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
       contract: "ERC20Mock",
@@ -40,18 +54,32 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
-      governor,
-      stopper,
-      collateralAssetToken,
-      CollateralToken.address,
-      mocFeeFlowAddress,
-      coreParams.ctarg,
-      coreParams.protThrld,
-      coreParams.liqThrld,
-      tcParams.mintFee,
-      tcParams.redeemFee,
-      coreParams.emaCalculationBlockSpan,
+      {
+        governorAddress,
+        stopperAddress,
+        acTokenAddress: collateralAssetToken,
+        tcTokenAddress: CollateralToken.address,
+        mocSettlementAddress: MocSettlement.address,
+        mocFeeFlowAddress,
+        mocInterestCollectorAddress,
+        ctarg: coreParams.ctarg,
+        protThrld: coreParams.protThrld,
+        liqThrld: coreParams.liqThrld,
+        tcMintFee: tcParams.mintFee,
+        tcRedeemFee: tcParams.redeemFee,
+        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+      },
       { gasLimit: GAS_LIMIT_PATCH },
+    ),
+  );
+
+  await waitForTxConfirmation(
+    MocSettlement.initialize(
+      governorAddress,
+      stopperAddress,
+      mocCARC20.address,
+      settlementParams.bes,
+      settlementParams.bmulcdj,
     ),
   );
 
@@ -68,4 +96,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARC20"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARC20"];
-deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20"];
+deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20", "MocSettlementCARC20"];

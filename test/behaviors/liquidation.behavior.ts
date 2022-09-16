@@ -72,7 +72,10 @@ const shouldBehaveLikeLiquidable = function () {
           );
         });
         it("THEN even if prices are restored, bob cannot redeemTP", async function () {
-          // TODO: complete when ready
+          await expect(this.mocFunctions.redeemTP({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.LIQUIDATED,
+          );
         });
       });
     });

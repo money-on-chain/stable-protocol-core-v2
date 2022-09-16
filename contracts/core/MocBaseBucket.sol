@@ -43,15 +43,13 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal nTCcb;
 
     // Pegged Token
-    IMocRC20[] internal tpToken;
+    IMocRC20[] public tpToken;
     // Pegged Token indexes
     mapping(address => uint8) internal peggedTokenIndex;
     // peg container
     PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
-    // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
-    uint256[] internal tpBmin;
 
     // ------- Storage Fees -------
 
@@ -67,6 +65,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // Moc Fee Flow contract address
     address internal mocFeeFlowAddress;
+    // Moc Interest Collector address
+    address internal mocInterestCollectorAddress;
 
     // ------- Storage Coverage Tracking -------
 
@@ -92,6 +92,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @notice contract initializer
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
+     * @param mocInterestCollectorAddress_ mocInterestCollector address
      * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected coverage threshold [PREC]
      * @param liqThrld_ liquidation coverage threshold [PREC]
@@ -101,6 +102,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function __MocBaseBucket_init_unchained(
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
+        address mocInterestCollectorAddress_,
         uint256 ctarg_,
         uint256 protThrld_,
         uint256 liqThrld_,
@@ -109,12 +111,14 @@ abstract contract MocBaseBucket is MocUpgradable {
     ) internal onlyInitializing {
         if (tcTokenAddress_ == address(0)) revert InvalidAddress();
         if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
+        if (mocInterestCollectorAddress_ == address(0)) revert InvalidAddress();
         if (ctarg_ < PRECISION) revert InvalidValue();
         if (protThrld_ < PRECISION) revert InvalidValue();
         if (tcMintFee_ > PRECISION) revert InvalidValue();
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();
         tcToken = MocTC(tcTokenAddress_);
         mocFeeFlowAddress = mocFeeFlowAddress_;
+        mocInterestCollectorAddress = mocInterestCollectorAddress_;
         ctarg = ctarg_;
         protThrld = protThrld_;
         liqThrld = liqThrld_;
@@ -138,8 +142,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     /**
      * @notice subtract Collateral Token and Collateral Asset from the Bucket
-     * @param qTC_ amount of Collateral Token to sub
-     * @param qAC_ amount of Collateral Asset to sub
+     * @param qTC_ amount of Collateral Token to subtract
+     * @param qAC_ amount of Collateral Asset to subtract
      */
     function _withdrawTC(uint256 qTC_, uint256 qAC_) internal {
         nTCcb -= qTC_;
@@ -159,6 +163,21 @@ abstract contract MocBaseBucket is MocUpgradable {
     ) internal {
         pegContainer[i_].nTP += qTP_;
         nACcb += qAC_;
+    }
+
+    /**
+     * @notice subtract Pegged Token and Collateral Asset from the Bucket
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to subtract
+     * @param qAC_ amount of Collateral Asset to subtract
+     */
+    function _withdrawTP(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAC_
+    ) internal {
+        pegContainer[i_].nTP -= qTP_;
+        nACcb -= qAC_;
     }
 
     /**
@@ -224,12 +243,42 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice get abundance ratio (beginning) of Pegged Token
+     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_ amount Pegged Token in the bucket [N]
+     * @return arb [PREC]
+     */
+    function _getArb(uint256 tpAvailableToRedeem_, uint256 nTP_) internal pure returns (uint256 arb) {
+        // [PREC] = [N] * [PREC] / [N]
+        return (tpAvailableToRedeem_ * PRECISION) / nTP_;
+    }
+
+    /**
+     * @notice get abundance ratio (final) of Pegged Token
+     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_ amount Pegged Token in the bucket [N]
+     * @param qTP_ amount of Pegged Token to calculate the final abundance
+     * @return arf [PREC]
+     */
+    function _getArf(
+        uint256 tpAvailableToRedeem_,
+        uint256 nTP_,
+        uint256 qTP_
+    ) internal pure returns (uint256 arf) {
+        // [N] = [N] - [N]
+        uint256 den = nTP_ - qTP_;
+        if (den == 0) return 0;
+        // [PREC] = [N] * [PREC] / [N]
+        return ((tpAvailableToRedeem_ - qTP_) * PRECISION) / den;
+    }
+
+    /**
      * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
      * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
      */
     function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC) {
-        lckAC = getLckAC();
+        lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
 
         // check if coverage is above the given threshold
@@ -242,7 +291,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @notice get amount of Collateral Asset locked by Pegged Token
      * @return lckAC [N]
      */
-    function getLckAC() public view returns (uint256 lckAC) {
+    function _getLckAC() internal view returns (uint256 lckAC) {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [N] = [N] * [PREC] / [PREC]
@@ -278,7 +327,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return true if liquidation state is reached, false otherwise
      */
     function isLiquidationReached() public view returns (bool) {
-        uint256 lckAC = getLckAC();
+        uint256 lckAC = _getLckAC();
         uint256 cglb = _getCglb(lckAC);
         return cglb <= liqThrld;
     }

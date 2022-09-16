@@ -9,15 +9,22 @@ abstract contract MocUpgradable is UUPSUpgradeable, Stoppable {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param stopper_ The address that is authorized to stop this contract
-     * @param governor_ The address that will define when a change contract is authorized
+     * @param governorAddress_ The address that will define when a change contract is authorized
+     * @param stopperAddress_ The address that is authorized to stop this contract
      */
-    function __MocUpgradable_init(IGovernor governor_, address stopper_) internal onlyInitializing {
+    function __MocUpgradable_init(address governorAddress_, address stopperAddress_) internal onlyInitializing {
         __UUPSUpgradeable_init();
-        __Governed_init(governor_);
-        __Stoppable_init_unchained(stopper_, true);
+        __Governed_init(governorAddress_);
+        __Stoppable_init_unchained(stopperAddress_, true);
     }
 
     /* solhint-disable-next-line no-empty-blocks */
     function _authorizeUpgrade(address newImplementation) internal override onlyAuthorizedChanger {}
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

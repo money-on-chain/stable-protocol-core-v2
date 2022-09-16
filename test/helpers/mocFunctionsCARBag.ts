@@ -74,6 +74,30 @@ const mintTPto =
     return mocWrapper.connect(signer).mintTPto(asset.address, i, qTP, qACmax, to);
   };
 
+const redeemTP =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+    return mocWrapper.connect(signer).redeemTP(asset.address, i, qTP, qACmin);
+  };
+
+const redeemTPto =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+    return mocWrapper.connect(signer).redeemTPto(asset.address, i, qTP, qACmin, to);
+  };
+
 const balanceOf =
   assetDefault =>
   (account, asset = assetDefault) =>
@@ -97,6 +121,16 @@ const tcTransfer =
     return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
+const tpTransfer =
+  mocPeggedTokens =>
+  async ({ i, from, to, amount, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      amount = pEth(amount);
+    }
+    return mocPeggedTokens[i].connect(signer).transfer(to, amount, { gasPrice: 0 });
+  };
+
 export const mocFunctionsCARBag = async ({
   mocWrapper,
   mocCollateralToken,
@@ -112,11 +146,14 @@ export const mocFunctionsCARBag = async ({
     redeemTCto: redeemTCto(mocWrapper, mocCollateralToken, assetDefault),
     mintTP: mintTP(mocWrapper, assetDefault),
     mintTPto: mintTPto(mocWrapper, assetDefault),
+    redeemTP: redeemTP(mocWrapper, mocPeggedTokens, assetDefault),
+    redeemTPto: redeemTPto(mocWrapper, mocPeggedTokens, assetDefault),
     assetBalanceOf: balanceOf(assetDefault),
     acBalanceOf: balanceOf(wcaToken),
     tcBalanceOf: balanceOf(mocCollateralToken),
     tcTransfer: tcTransfer(mocCollateralToken),
     tpBalanceOf: tpBalanceOf(mocPeggedTokens),
+    tpTransfer: tpTransfer(mocPeggedTokens),
     addAsset: addAsset(mocWrapper),
     pokePrice: pokePrice(priceProviders),
   };

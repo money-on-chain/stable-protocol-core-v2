@@ -69,9 +69,10 @@ const mintTCBehavior = function () {
         // receiver: alice
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow
+        // qACfee: %5 AC
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
-          .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05));
+          .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05));
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
         // from: Zero Address
@@ -141,9 +142,10 @@ const mintTCBehavior = function () {
         // receiver: bob
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow
+        // qACfee: %5 AC
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
-          .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05));
+          .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05));
       });
     });
     describe("GIVEN 3000 TC and 100 TP are minted", function () {

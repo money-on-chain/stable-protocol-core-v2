@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
 import { pEth } from "./utils";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 const mintTC =
   mocImpl =>
@@ -68,6 +69,32 @@ const mintTPto =
     return mocImpl.connect(signer).mintTPto(i, qTP, to, { value: qACmax, gasPrice: 0 });
   };
 
+const redeemTP =
+  mocImpl =>
+  async ({ i, from, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    // mine 1 so that it consumes the same number of blocks as the other flavors and makes the interest payment maths easier
+    await mine(1);
+    return mocImpl.connect(signer).redeemTP(i, qTP, qACmin, { gasPrice: 0 });
+  };
+
+const redeemTPto =
+  mocImpl =>
+  async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    // mine 1 so that it consumes the same number of blocks as the other flavors and makes the interest payment maths easier
+    await mine(1);
+    return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to, { gasPrice: 0 });
+  };
+
 const ethersGetBalance = () => account => ethers.provider.getBalance(account);
 
 const tcBalanceOf = mocCollateralToken => async account => mocCollateralToken.balanceOf(account);
@@ -84,6 +111,16 @@ const tcTransfer =
     return mocCollateralToken.connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
+const tpTransfer =
+  mocPeggedTokens =>
+  async ({ i, from, to, amount, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      amount = pEth(amount);
+    }
+    return mocPeggedTokens[i].connect(signer).transfer(to, amount, { gasPrice: 0 });
+  };
+
 export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => {
   return {
     mintTC: mintTC(mocImpl),
@@ -92,11 +129,14 @@ export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeg
     redeemTCto: redeemTCto(mocImpl),
     mintTP: mintTP(mocImpl),
     mintTPto: mintTPto(mocImpl),
+    redeemTP: redeemTP(mocImpl),
+    redeemTPto: redeemTPto(mocImpl),
     assetBalanceOf: ethersGetBalance(),
     acBalanceOf: ethersGetBalance(),
     tcBalanceOf: tcBalanceOf(mocCollateralToken),
     tcTransfer: tcTransfer(mocCollateralToken),
     tpBalanceOf: tpBalanceOf(mocPeggedTokens),
+    tpTransfer: tpTransfer(mocPeggedTokens),
     pokePrice: pokePrice(priceProviders),
   };
 };

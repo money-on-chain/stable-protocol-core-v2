@@ -32,6 +32,7 @@ export function fixtureDeployGovernance(): () => Promise<{
 
     const mockAddress = deployer;
     // initializations
+    // TODO: fix these mockAddresses
     await waitForTxConfirmation(
       MocCAWrapper.initialize(governor.address, mockAddress, deployedMocContract.address, deployedTCContract.address, {
         gasLimit: GAS_LIMIT_PATCH,

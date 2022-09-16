@@ -98,6 +98,7 @@ const redeemTCBehavior = function () {
           // receiver: alice || mocWrapper
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
+          // qACfee: 5% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCRedeemed")
             .withArgs(
@@ -105,6 +106,7 @@ const redeemTCBehavior = function () {
               mocContracts.mocWrapper?.address || alice,
               pEth(300),
               pEth(300 * 0.95),
+              pEth(300 * 0.05),
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -145,7 +147,8 @@ const redeemTCBehavior = function () {
           // sender: alice || mocWrapper
           // receiver: bob || mocWrapper
           // qTC: 300 TC
-          // qAC: 300 AC + 5% for Moc Fee Flow
+          // qAC: 300 AC - 5% for Moc Fee Flow
+          // qACfee: 5% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCRedeemed")
             .withArgs(
@@ -153,6 +156,7 @@ const redeemTCBehavior = function () {
               mocContracts.mocWrapper?.address || bob,
               pEth(300),
               pEth(300 * 0.95),
+              pEth(300 * 0.05),
             );
         });
       });

@@ -7,20 +7,23 @@ import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
+import { ContractTransaction } from "ethers";
 
 describe("Feature: MocCABag redeem TC", function () {
   let mocWrapper: MocCAWrapper;
+  let assetDefault: ERC20Mock;
   let mocFunctions: any;
   let deployer: Address;
   let alice: Address;
+  let bob: Address;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
-      ({ deployer, alice } = await getNamedAccounts());
+      ({ deployer, alice, bob } = await getNamedAccounts());
       this.mocContracts = await fixtureDeployedMocCABag(1)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ mocWrapper } = this.mocContracts);
+      ({ assetDefault, mocWrapper } = this.mocContracts);
     });
     redeemTCBehavior();
 
@@ -35,6 +38,44 @@ describe("Feature: MocCABag redeem TC", function () {
           ERRORS.INVALID_ADDRESS,
         );
       });
+    });
+  });
+
+  describe("WHEN alice redeems 10 TC", () => {
+    let tx: ContractTransaction;
+    beforeEach(async () => {
+      //add collateral
+      await mocFunctions.mintTC({ from: alice, qTC: 1000 });
+      tx = await mocFunctions.redeemTC({ from: alice, qTC: 10 });
+    });
+    it("THEN a TCRedeemed event is emitted by MocWrapper", async function () {
+      // asset: assetDefault
+      // sender: alice
+      // receiver: alice
+      // qTC: 10 TC
+      // qAC: 10AC - 5% for Moc Fee Flow
+      await expect(tx)
+        .to.emit(mocWrapper, "TCRedeemed")
+        .withArgs(assetDefault.address, alice, alice, pEth(10), pEth(10 * 0.95));
+    });
+  });
+
+  describe("WHEN alice redeems 10 TC to bob", () => {
+    let tx: ContractTransaction;
+    beforeEach(async () => {
+      //add collateral
+      await mocFunctions.mintTC({ from: alice, qTC: 1000 });
+      tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 10 });
+    });
+    it("THEN a TCRedeemed event is emitted by MocWrapper", async function () {
+      // asset: assetDefault
+      // sender: alice
+      // receiver: bob
+      // qTC: 10 TC
+      // qAC: 10AC - 5% for Moc Fee Flow
+      await expect(tx)
+        .to.emit(mocWrapper, "TCRedeemed")
+        .withArgs(assetDefault.address, alice, bob, pEth(10), pEth(10 * 0.95));
     });
   });
 

@@ -3,15 +3,17 @@ import { Address } from "hardhat-deploy/types";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 
-const { governor, stopper, mocFeeFlowAddress } = mocAddresses["hardhat"];
+const { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
 
-export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address) {
+export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocSettlement: Address) {
   return ({
-    governorAddress = governor,
-    stopperAddress = stopper,
+    mocGovernorAddress = governorAddress,
+    mocStopperAddress = stopperAddress,
     wcaTokenAddress = wcaToken,
     mocTCAddress = mocTC,
+    mocSettlementAddress = mocSettlement,
     feeFlowAddress = mocFeeFlowAddress,
+    interestCollectorAddress = mocInterestCollectorAddress,
     ctarg = coreParams.ctarg,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
@@ -19,11 +21,13 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     tcRedeemFee = tcParams.redeemFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
   }: {
-    governorAddress?: Address;
-    stopperAddress?: Address;
+    mocGovernorAddress?: Address;
+    mocStopperAddress?: Address;
     wcaTokenAddress?: Address;
     mocTCAddress?: Address;
+    mocSettlementAddress?: Address;
     feeFlowAddress?: Address;
+    interestCollectorAddress?: Address;
     ctarg?: BigNumberish;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
@@ -31,18 +35,20 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     tcRedeemFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
   } = {}) => {
-    return mocCARC20.initialize(
-      governorAddress,
-      stopperAddress,
-      wcaTokenAddress,
-      mocTCAddress,
-      feeFlowAddress,
+    return mocCARC20.initialize({
+      governorAddress: mocGovernorAddress,
+      stopperAddress: mocStopperAddress,
+      acTokenAddress: wcaTokenAddress,
+      tcTokenAddress: mocTCAddress,
+      mocSettlementAddress,
+      mocFeeFlowAddress: feeFlowAddress,
+      mocInterestCollectorAddress: interestCollectorAddress,
       ctarg,
       protThrld,
       liqThrld,
       tcMintFee,
       tcRedeemFee,
       emaCalculationBlockSpan,
-    );
+    });
   };
 }

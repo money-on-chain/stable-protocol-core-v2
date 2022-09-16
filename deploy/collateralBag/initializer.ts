@@ -8,11 +8,13 @@ import {
   MocCARC20__factory,
   MocCAWrapper,
   MocCAWrapper__factory,
+  MocSettlement,
+  MocSettlement__factory,
   MocTC,
   MocTC__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation, PAUSER_ROLE } from "../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, settlementParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
@@ -22,6 +24,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
   if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+
+  const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCABagProxy");
+  if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCABagProxy deployed.");
+  const MocSettlement: MocSettlement = MocSettlement__factory.connect(
+    deployedMocSettlementContractProxy.address,
+    signer,
+  );
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
@@ -35,34 +44,50 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  let { governor, stopper, mocFeeFlowAddress } = mocAddresses[network];
+  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
 
   // for tests only, we deploy a necessary Mocks
   if (network == "hardhat") {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-    governor = (await governorMockFactory.deploy()).address;
+    governorAddress = (await governorMockFactory.deploy()).address;
   }
 
   // initializations
   await waitForTxConfirmation(
     mocCARC20.initialize(
-      governor,
-      stopper,
-      WCAToken.address,
-      CollateralToken.address,
-      mocFeeFlowAddress,
-      coreParams.ctarg,
-      coreParams.protThrld,
-      coreParams.liqThrld,
-      tcParams.mintFee,
-      tcParams.redeemFee,
-      coreParams.emaCalculationBlockSpan,
+      {
+        governorAddress,
+        stopperAddress,
+        acTokenAddress: WCAToken.address,
+        tcTokenAddress: CollateralToken.address,
+        mocSettlementAddress: MocSettlement.address,
+        mocFeeFlowAddress,
+        mocInterestCollectorAddress,
+        ctarg: coreParams.ctarg,
+        protThrld: coreParams.protThrld,
+        liqThrld: coreParams.liqThrld,
+        tcMintFee: tcParams.mintFee,
+        tcRedeemFee: tcParams.redeemFee,
+        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+      },
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );
 
   await waitForTxConfirmation(
-    MocCAWrapper.initialize(governor, stopper, mocCARC20.address, WCAToken.address, { gasLimit: GAS_LIMIT_PATCH }),
+    MocCAWrapper.initialize(governorAddress, stopperAddress, mocCARC20.address, WCAToken.address, {
+      gasLimit: GAS_LIMIT_PATCH,
+    }),
+  );
+
+  await waitForTxConfirmation(
+    MocSettlement.initialize(
+      governorAddress,
+      stopperAddress,
+      mocCARC20.address,
+      settlementParams.bes,
+      settlementParams.bmulcdj,
+    ),
   );
 
   // set minter and burner roles
@@ -83,4 +108,10 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARBag"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARBag"];
-deployFunc.dependencies = ["MocCABag", "CollateralTokenCARBag", "MocCAWrapper", "WrappedCollateralAsset"];
+deployFunc.dependencies = [
+  "MocCABag",
+  "CollateralTokenCARBag",
+  "MocCAWrapper",
+  "WrappedCollateralAsset",
+  "MocSettlementCARBag",
+];

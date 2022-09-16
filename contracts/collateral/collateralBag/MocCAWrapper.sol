@@ -10,6 +10,31 @@ import "../rc20/MocCARC20.sol";
  *  Moc Collateral Asset Bag protocol implementation
  */
 contract MocCAWrapper is MocUpgradable {
+    // ------- Events -------
+    event TCMinted(address asset_, address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAsset_);
+    event TCRedeemed(
+        address asset_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAsset_
+    );
+    event TPMinted(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
+    event TPRedeemed(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
     // ------- Custom Errors -------
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
@@ -48,20 +73,20 @@ contract MocCAWrapper is MocUpgradable {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param governor_ The address that will define when a change contract is authorized
-     * @param stopper_ The address that is authorized to pause this contract
+     * @param governorAddress_ The address that will define when a change contract is authorized
+     * @param stopperAddress_ The address that is authorized to pause this contract
      * @param mocCoreAddress_ Moc Core contract address
      * @param wcaTokenAddress_ Wrapped Collateral Asset Token contract address
      */
     function initialize(
-        IGovernor governor_,
-        address stopper_,
+        address governorAddress_,
+        address stopperAddress_,
         address mocCoreAddress_,
         address wcaTokenAddress_
     ) external initializer {
         if (mocCoreAddress_ == address(0)) revert InvalidAddress();
         if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
-        __MocUpgradable_init(governor_, stopper_);
+        __MocUpgradable_init(governorAddress_, stopperAddress_);
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
@@ -166,6 +191,7 @@ contract MocCAWrapper is MocUpgradable {
 
         // transfer back to sender the unused asset
         SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+        emit TCMinted(assetAddress_, sender_, recipient_, qTC_, qAssetMax_ - assetUnused);
     }
 
     /**
@@ -199,6 +225,7 @@ contract MocCAWrapper is MocUpgradable {
         wcaToken.burn(address(this), wcaTokenAmountRedeemed);
         // transfer Asset to the recipient
         SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+        emit TCRedeemed(assetAddress_, sender_, recipient_, qTC_, assetAmount);
     }
 
     /**
@@ -235,6 +262,43 @@ contract MocCAWrapper is MocUpgradable {
 
         // transfer back to sender the unused asset
         SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+        emit TPMinted(assetAddress_, i_, sender_, recipient_, qTP_, qAssetMax_ - assetUnused);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Assets
+        Requires prior sender approval of Pegged Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param sender_ address who sends the Pegged Token
+     * @param recipient_ address who receives the Asset
+     */
+    function _redeemTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        // get Pegged Token contract address
+        IERC20 tpToken = mocCore.tpToken(i_);
+        // transfer Pegged Token from sender to this address
+        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // checking it after with qAssetMin
+        uint256 wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
+        // calculate the equivalent amount of Asset
+        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
+        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
+        // burn the wcaToken redeemed
+        wcaToken.burn(address(this), wcaTokenAmountRedeemed);
+        // transfer Asset to the recipient
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+        emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetAmount);
     }
 
     // ------- Public Functions -------
@@ -375,6 +439,42 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) external {
         _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and receives Asset
+        Requires prior sender approval of Pegged Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that sender expects receive
+     */
+    function redeemTP(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAssetMin_
+    ) external {
+        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Asset
+        Requires prior sender approval of Pegged Token to this contract 
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Asset
+     */
+    function redeemTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address recipient_
+    ) external {
+        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, recipient_);
     }
 
     /*
