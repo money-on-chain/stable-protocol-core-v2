@@ -64,7 +64,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
   describe("GIVEN a MocCABag implementation deployed", () => {
     before(async () => {
       ({ mocImpl } = await fixtureDeployedMocCABag(0)());
-      mocPeggedToken = await deployPeggedToken();
+      mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
       priceProvider = await deployPriceProvider(pEth(1));
     });
     describe("WHEN a Pegged Token is added with invalid token address", () => {

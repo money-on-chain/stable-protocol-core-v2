@@ -1,18 +1,18 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { MocTC } from "../../typechain";
-import { MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE } from "../../scripts/utils";
+import { MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE } from "../helpers/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Feature: Moc Tokens Role Access restrictions", () => {
   let token: MocTC;
-  let otherUser: string;
+  let deployer, otherUser: string;
   let otherSigner: SignerWithAddress;
   describe("GIVEN there is a MocTC", () => {
     before(async () => {
       const MocTCFactory = await ethers.getContractFactory("MocTC");
-      token = await MocTCFactory.deploy("TestMocRC20", "TestMocRC20");
-      ({ otherUser } = await getNamedAccounts());
+      ({ otherUser, deployer } = await getNamedAccounts());
+      token = await MocTCFactory.deploy("TestMocRC20", "TestMocRC20", deployer);
       otherSigner = await ethers.getSigner(otherUser);
     });
     describe("WHEN a BURNER Role address invokes mint", () => {

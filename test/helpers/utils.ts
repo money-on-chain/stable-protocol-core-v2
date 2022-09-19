@@ -2,13 +2,16 @@ import { ethers, getNamedAccounts, network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ERC20Mock, PriceProviderMock, MocRC20, MocCore } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
-import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
 import { tpParams } from "../../deploy-config/config";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
 export const GAS_LIMIT_PATCH = 30000000;
+
+export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
+export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
+export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -17,9 +20,9 @@ export function pEth(eth: string | number): BigNumber {
   return ethers.utils.parseEther(ethStr);
 }
 
-export async function deployPeggedToken(): Promise<MocRC20> {
+export async function deployPeggedToken({ mocImplAddress }: { mocImplAddress: Address }): Promise<MocRC20> {
   const factory = await ethers.getContractFactory("MocRC20");
-  return factory.deploy("PeggedToken", "PeggedToken");
+  return factory.deploy("PeggedToken", "PeggedToken", mocImplAddress);
 }
 
 export async function deployAndAddPeggedTokens(
@@ -29,9 +32,7 @@ export async function deployAndAddPeggedTokens(
   const mocPeggedTokens: Array<MocRC20> = [];
   const priceProviders: Array<PriceProviderMock> = [];
   for (let i = 1; i <= amountPegTokens; i++) {
-    const peggedToken = await deployPeggedToken();
-    await peggedToken.grantRole(MINTER_ROLE, mocImpl.address);
-    await peggedToken.grantRole(BURNER_ROLE, mocImpl.address);
+    const peggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
 
     const priceProvider = await deployPriceProvider(pEth(1));
     await mocImpl.addPeggedToken({

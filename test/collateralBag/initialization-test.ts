@@ -54,8 +54,12 @@ describe("Feature: MocCABag initialization", function () {
 
       const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
       const proxy = await mocCARC20ProxyFactory.deploy(mocCARC20Impl.address, "0x");
+
+      const mocTCFactory = await ethers.getContractFactory("MocTC");
+      const newMocTC = await mocTCFactory.deploy("mocCT", "CT", proxy.address);
+
       const newMocImpl = MocCARC20__factory.connect(proxy.address, ethers.provider.getSigner());
-      newMocInit = mocInitialize(newMocImpl, wcaToken.address, mocCollateralToken.address, mocSettlement.address);
+      newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address, mocSettlement.address);
     });
     describe("WHEN it is initialized with invalid governor address", () => {
       it("THEN tx fails because address is the zero address", async () => {
