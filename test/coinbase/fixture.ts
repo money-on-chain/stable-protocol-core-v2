@@ -10,7 +10,10 @@ import {
 } from "../../typechain";
 import { deployAndAddPeggedTokens } from "../helpers/utils";
 
-export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promise<{
+export function fixtureDeployedMocCoinbase(
+  amountPegTokens: number,
+  tpParams?: any,
+): () => Promise<{
   mocImpl: MocCACoinbase;
   mocSettlement: MocSettlement;
   mocCollateralToken: MocRC20;
@@ -36,7 +39,7 @@ export function fixtureDeployedMocCoinbase(amountPegTokens: number): () => Promi
     if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
     const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
-    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
+    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
     return {
       mocImpl,

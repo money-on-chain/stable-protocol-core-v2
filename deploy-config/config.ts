@@ -21,6 +21,7 @@ export const tcParams = {
 };
 
 export const tpParams = {
+  price: PCT_BASE, // 1
   ctarg: PCT_BASE.mul(4), // 4
   r: 0,
   bmin: DAY_BLOCK_SPAN,

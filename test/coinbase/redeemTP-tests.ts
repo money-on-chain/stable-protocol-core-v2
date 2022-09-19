@@ -32,7 +32,7 @@ describe("Feature: MocCoinbase redeem TP", function () {
       describe("WHEN it tries to redeemTP", () => {
         it("THEN tx fails because contract cannot receive the coinbase as Collateral Asset", async () => {
           // add collateral
-          await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+          await mocFunctions.mintTC({ from: deployer, qTC: 300 });
           // mint TP to non payable contract
           await mocFunctions.mintTPto({ i: 0, from: deployer, to: nonPayable.address, qTP: 100 });
           const data = mocImpl.interface.encodeFunctionData("redeemTP", [0, pEth(1), 0]);
