@@ -73,8 +73,6 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage Coverage Tracking -------
 
-    // global target coverage of the model [PREC]
-    uint256 public ctarg;
     // target coverage for each Pegged Token [PREC]
     uint256[] public tpCtarg;
     // coverage protected state threshold [PREC]
@@ -98,7 +96,6 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
      * @param mocInterestCollectorAddress_ mocInterestCollector address
-     * @param ctarg_ global target coverage of the model [PREC]
      * @param protThrld_ protected coverage threshold [PREC]
      * @param liqThrld_ liquidation coverage threshold [PREC]
      * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -108,7 +105,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         address tcTokenAddress_,
         address mocFeeFlowAddress_,
         address mocInterestCollectorAddress_,
-        uint256 ctarg_,
         uint256 protThrld_,
         uint256 liqThrld_,
         uint256 tcMintFee_,
@@ -117,14 +113,12 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (tcTokenAddress_ == address(0)) revert InvalidAddress();
         if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
         if (mocInterestCollectorAddress_ == address(0)) revert InvalidAddress();
-        if (ctarg_ < PRECISION) revert InvalidValue();
         if (protThrld_ < PRECISION) revert InvalidValue();
         if (tcMintFee_ > PRECISION) revert InvalidValue();
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();
         tcToken = MocTC(tcTokenAddress_);
         mocFeeFlowAddress = mocFeeFlowAddress_;
         mocInterestCollectorAddress = mocInterestCollectorAddress_;
-        ctarg = ctarg_;
         protThrld = protThrld_;
         liqThrld = liqThrld_;
         tcMintFee = tcMintFee_;

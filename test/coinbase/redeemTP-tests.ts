@@ -45,7 +45,7 @@ describe("Feature: MocCoinbase redeem TP", function () {
       describe("WHEN a TP holder tries to redeemTP to it", () => {
         it("THEN tx fails because contract cannot receive the coinbase as Collateral Asset", async () => {
           // add collateral
-          await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+          await mocFunctions.mintTC({ from: deployer, qTC: 300 });
           // mint TP to deployer
           await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
           await expect(
@@ -61,7 +61,7 @@ describe("Feature: MocCoinbase redeem TP", function () {
         const factory = await ethers.getContractFactory("ReentrancyAttackerMock");
         reentrancyAttacker = await factory.deploy();
         // add collateral
-        await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+        await mocFunctions.mintTC({ from: deployer, qTC: 300 });
         // mint TP to reentracy attacker contract
         await mocFunctions.mintTPto({ i: 0, from: deployer, to: reentrancyAttacker.address, qTP: 100 });
       });

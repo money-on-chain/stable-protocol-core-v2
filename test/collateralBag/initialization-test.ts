@@ -113,14 +113,6 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
-    describe("WHEN it is initialized with invalid ctarg value", () => {
-      it("THEN tx fails because ctarg is below ONE", async () => {
-        await expect(newMocInit({ ctarg: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_VALUE,
-        );
-      });
-    });
     describe("WHEN it is initialized with invalid protThrld value", () => {
       it("THEN tx fails because protThrld is below ONE", async () => {
         await expect(newMocInit({ protThrld: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(

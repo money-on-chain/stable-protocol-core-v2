@@ -21,7 +21,6 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
           mocSettlementAddress: deployer,
           mocFeeFlowAddress: deployer,
           mocInterestCollectorAddress: deployer,
-          ctarg: coreParams.ctarg,
           protThrld: coreParams.protThrld,
           liqThrld: coreParams.liqThrld,
           tcMintFee: tcParams.mintFee,

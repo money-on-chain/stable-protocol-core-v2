@@ -167,30 +167,30 @@ const redeemTCBehavior = function () {
         nAC = 310   
         nTP = 10
         lckAC = 10
-        ctarg = 5
-        => TC available to redeem = 260
+        ctarg = 4
+        => TC available to redeem = 270
         */
-        describe("WHEN alice tries to redeem 261 TC", function () {
+        describe("WHEN alice tries to redeem 271 TC", function () {
           it("THEN tx reverts because there is not enough TC available to redeem", async function () {
-            await expect(mocFunctions.redeemTC({ from: alice, qTC: 261 })).to.be.revertedWithCustomError(
+            await expect(mocFunctions.redeemTC({ from: alice, qTC: 271 })).to.be.revertedWithCustomError(
               mocContracts.mocImpl,
               ERRORS.INSUFFICIENT_TC_TO_REDEEM,
             );
           });
         });
-        describe("WHEN alice redeems 260 TC", function () {
+        describe("WHEN alice redeems 270 TC", function () {
           let alicePrevACBalance: Balance;
           beforeEach(async function () {
             alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-            await mocFunctions.redeemTC({ from: alice, qTC: 260 });
+            await mocFunctions.redeemTC({ from: alice, qTC: 270 });
           });
-          it("THEN alice balance decrease 260 TC", async function () {
-            assertPrec(40, await mocFunctions.tcBalanceOf(alice));
+          it("THEN alice balance decrease 270 TC", async function () {
+            assertPrec(30, await mocFunctions.tcBalanceOf(alice));
           });
-          it("THEN alice balance increase 260 Asset - 5% for Moc Fee Flow", async function () {
+          it("THEN alice balance increase 270 Asset - 5% for Moc Fee Flow", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(260 * 0.95, diff);
+            assertPrec(270 * 0.95, diff);
           });
         });
         describe("AND Collateral Asset relation with Pegged Token price falls to 1/15.5", function () {

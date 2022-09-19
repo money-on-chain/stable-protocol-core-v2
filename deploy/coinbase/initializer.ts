@@ -50,7 +50,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         mocSettlementAddress: MocSettlement.address,
         mocFeeFlowAddress,
         mocInterestCollectorAddress,
-        ctarg: coreParams.ctarg,
         protThrld: coreParams.protThrld,
         liqThrld: coreParams.liqThrld,
         tcMintFee: tcParams.mintFee,
