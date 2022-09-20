@@ -6,6 +6,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { ERRORS, pEth } from "../helpers/utils";
 import { Address } from "hardhat-deploy/types";
+import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCoinbase mint TP", function () {
   let mocImpl: MocCACoinbase;
@@ -18,7 +19,7 @@ describe("Feature: MocCoinbase mint TP", function () {
   describe("GIVEN a MocCoinbase implementation deployed", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocCoinbase(5);
+      const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
       ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
       mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
       this.mocFunctions = mocFunctions;

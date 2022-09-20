@@ -3,12 +3,13 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { ERC20Mock, PriceProviderMock, MocRC20, MocCore } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
 import { MINTER_ROLE, BURNER_ROLE } from "../../scripts/utils";
-import { tpParams } from "../../deploy-config/config";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
 export const GAS_LIMIT_PATCH = 30000000;
+const PCT_BASE = BigNumber.from((1e18).toString());
+const DAY_BLOCK_SPAN = 2880;
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -22,21 +23,65 @@ export async function deployPeggedToken(): Promise<MocRC20> {
   return factory.deploy("PeggedToken", "PeggedToken");
 }
 
+export const tpParamsDefault = {
+  price: PCT_BASE, // 1
+  ctarg: PCT_BASE.mul(4), // 4
+  r: 0,
+  bmin: DAY_BLOCK_SPAN,
+  mintFee: PCT_BASE.mul(5).div(100), // 5%
+  redeemFee: PCT_BASE.mul(5).div(100), // 5%
+  initialEma: PCT_BASE, // 1
+  smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
+  tils: PCT_BASE.mul(1).div(100), // 1%
+  tiMin: PCT_BASE.mul(1).div(1000), // 0.1%
+  tiMax: PCT_BASE.mul(10).div(100), // 10%
+  abeq: PCT_BASE.mul(25).div(100), // 0.25
+  facMin: PCT_BASE.mul(1).div(10), // 0.1
+  facMax: PCT_BASE.mul(5).div(1), // 5
+};
+
+export const tpParams = [
+  {
+    price: pEth(235),
+    ctarg: pEth(5),
+    initialEma: pEth(212.04),
+    smoothingFactor: pEth(0.05),
+  },
+  {
+    price: pEth(5.25),
+    ctarg: pEth(4),
+    initialEma: pEth(5.04),
+    smoothingFactor: pEth(0.05),
+  },
+  {
+    price: pEth(934.58),
+    ctarg: pEth(3.5),
+    initialEma: pEth(837.33),
+    smoothingFactor: pEth(0.01),
+  },
+  {
+    price: pEth(20.1),
+    ctarg: pEth(3),
+    initialEma: pEth(20.23),
+    smoothingFactor: pEth(0.01),
+  },
+];
+
 const getTPparams = ({
-  price = tpParams.price,
-  ctarg = tpParams.ctarg,
-  r = tpParams.r,
-  bmin = tpParams.bmin,
-  mintFee = tpParams.mintFee,
-  redeemFee = tpParams.redeemFee,
-  initialEma = tpParams.initialEma,
-  smoothingFactor = tpParams.smoothingFactor,
-  tils = tpParams.tils,
-  tiMin = tpParams.tiMin,
-  tiMax = tpParams.tiMax,
-  abeq = tpParams.abeq,
-  facMin = tpParams.facMin,
-  facMax = tpParams.facMax,
+  price = tpParamsDefault.price,
+  ctarg = tpParamsDefault.ctarg,
+  r = tpParamsDefault.r,
+  bmin = tpParamsDefault.bmin,
+  mintFee = tpParamsDefault.mintFee,
+  redeemFee = tpParamsDefault.redeemFee,
+  initialEma = tpParamsDefault.initialEma,
+  smoothingFactor = tpParamsDefault.smoothingFactor,
+  tils = tpParamsDefault.tils,
+  tiMin = tpParamsDefault.tiMin,
+  tiMax = tpParamsDefault.tiMax,
+  abeq = tpParamsDefault.abeq,
+  facMin = tpParamsDefault.facMin,
+  facMax = tpParamsDefault.facMax,
 }) => {
   return {
     price,

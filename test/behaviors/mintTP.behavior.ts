@@ -54,15 +54,16 @@ const mintTPBehavior = function () {
           ).to.be.revertedWith(ERRORS.MINT_TO_ZERO_ADDRESS);
         });
       });
-      describe("WHEN alice sends 10 Asset to mint 100 TP", function () {
+      describe("WHEN alice sends 0.4 Asset to mint 100 TP", function () {
+        // TP price: 235 => 100TP = 0.4255 Assets
         it("THEN tx reverts because the amount of AC is insufficient", async function () {
-          await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 100, qACmax: 10 })).to.be.revertedWithCustomError(
+          await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 100, qACmax: 0.4 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
             ERRORS.INSUFFICIENT_QAC_SENT,
           );
         });
       });
-      describe("WHEN alice sends 105(exactly amount) Asset to mint 100 TP", function () {
+      describe("WHEN alice sends 105(exactly amount) Asset to mint 23500 TP", function () {
         let tx: ContractTransaction;
         let alicePrevACBalance: Balance;
         let mocPrevACBalance: Balance;
@@ -71,10 +72,10 @@ const mintTPBehavior = function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
-          tx = await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100, qACmax: 105 });
+          tx = await mocFunctions.mintTP({ i: 0, from: alice, qTP: 23500, qACmax: 105 });
         });
-        it("THEN alice receives 100 TP", async function () {
-          assertPrec(100, await mocFunctions.tpBalanceOf(0, alice));
+        it("THEN alice receives 23500 TP", async function () {
+          assertPrec(23500, await mocFunctions.tpBalanceOf(0, alice));
         });
         it("THEN Moc balance increase 100 AC", async function () {
           const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
@@ -94,7 +95,7 @@ const mintTPBehavior = function () {
         it("THEN a TPMinted event is emitted", async function () {
           // sender: alice || mocWrapper
           // receiver: alice
-          // qTP: 100 TP
+          // qTP: 23500 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
           // qACfee: 5% AC
           await expect(tx)
@@ -103,7 +104,7 @@ const mintTPBehavior = function () {
               0,
               mocContracts.mocWrapper?.address || alice,
               alice,
-              pEth(100),
+              pEth(23500),
               pEth(100 * 1.05),
               pEth(100 * 0.05),
             );
@@ -111,33 +112,33 @@ const mintTPBehavior = function () {
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: Zero Address
           // to: alice
-          // amount: 100 TP
+          // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[0], "Transfer")
-            .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(100));
+            .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(23500));
         });
-        describe("AND alice tries to mint 901 TP more", function () {
+        describe("AND alice tries to mint 131739 TP more", function () {
           /*  
             nAC = 3100    
-            nTP = 100
+            nTP = 23500
             lckAC = 100
-            ctarg = 4
-            => TP available to mint = 900
+            ctarg = 5.54
+            => TP available to mint = 131738.2238
         */
           it("THEN tx reverts because there is not enough TP to mint", async function () {
-            await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 901 })).to.be.revertedWithCustomError(
+            await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 131738.23 })).to.be.revertedWithCustomError(
               mocContracts.mocImpl,
               ERRORS.INSUFFICIENT_TP_TO_MINT,
             );
           });
         });
-        describe("AND alice sends 1000(exceeded amount) Asset to mint 100 TP", function () {
+        describe("AND alice sends 2350000(exceeded amount) Asset to mint 23500 TP", function () {
           /*  
             nAC = 3100    
-            nTP = 100
+            nTP = 23500
             lckAC = 100
-            ctarg = 4
-            => TP available to mint = 900
+            ctarg = 5.54
+            => TP available to mint = 131738.2238
         */
           let alicePrevACBalance: Balance;
           let alicePrevTPBalance: Balance;
@@ -148,12 +149,12 @@ const mintTPBehavior = function () {
             alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);
             mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
             mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
-            await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
+            await mocFunctions.mintTP({ i: 0, from: alice, qTP: 23500 });
           });
-          it("THEN alice receives 100 TP", async function () {
+          it("THEN alice receives 23500 TP", async function () {
             const aliceActualTPBalance = await mocFunctions.tpBalanceOf(0, alice);
             const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
-            assertPrec(100, diff);
+            assertPrec(23500, diff);
           });
           it("THEN Moc balance increase 100 AC", async function () {
             const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
@@ -172,7 +173,7 @@ const mintTPBehavior = function () {
           });
         });
       });
-      describe("WHEN alice sends 105 Asset to mint 100 TP to bob", function () {
+      describe("WHEN alice sends 105 Asset to mint 23500 TP to bob", function () {
         /*  
           nAC = 3000    
           nTP = 0
@@ -188,10 +189,10 @@ const mintTPBehavior = function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
-          tx = await mocFunctions.mintTPto({ i: 0, from: alice, to: bob, qTP: 100 });
+          tx = await mocFunctions.mintTPto({ i: 0, from: alice, to: bob, qTP: 23500 });
         });
-        it("THEN bob receives 100 TP", async function () {
-          assertPrec(100, await mocFunctions.tpBalanceOf(0, bob));
+        it("THEN bob receives 23500 TP", async function () {
+          assertPrec(23500, await mocFunctions.tpBalanceOf(0, bob));
         });
         it("THEN Moc balance increase 100 AC", async function () {
           const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
@@ -211,27 +212,34 @@ const mintTPBehavior = function () {
         it("THEN a TPMinted event is emitted", async function () {
           // sender: alice || mocWrapper
           // receiver: bob
-          // qTP: 100 TP
+          // qTP: 23500 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
           // qACfee: 5% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05));
+            .withArgs(
+              0,
+              mocContracts.mocWrapper?.address || alice,
+              bob,
+              pEth(23500),
+              pEth(100 * 1.05),
+              pEth(100 * 0.05),
+            );
         });
       });
-      describe("AND 100 TP are minted", function () {
+      describe("AND 23500 TP are minted", function () {
         beforeEach(async function () {
-          await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
+          await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 23500 });
         });
-        describe("AND Collateral Asset relation with Pegged Token price falls to 1/7.75", function () {
+        describe("AND Collateral Asset relation with Pegged Token price falls to 37.9", function () {
           /*  
             nAC = 3100    
-            nTP = 100
-            lckAC = 775
-            => coverage = 4 
+            nTP = 23500
+            lckAC = 620
+            => coverage = 5 
         */
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, "0.129032258064516129");
+            await mocFunctions.pokePrice(0, "37.9");
           });
           describe("WHEN Alice tries to mint 1 TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
@@ -242,67 +250,67 @@ const mintTPBehavior = function () {
             });
           });
         });
-        describe("AND Collateral Asset relation with Pegged Token price falls to 1/2, so there are 383.33 TP available to mint", function () {
+        describe("AND Collateral Asset relation with Pegged Token price falls to 38, so there are 75 TP available to mint", function () {
           /*  
             nAC = 3100    
-            nTP = 100
-            lckAC = 200
-            ctarg = 4
-            => TP available to mint = 383.33
+            nTP = 23500
+            lckAC = 618
+            ctarg = 5
+            => TP available to mint = 75
         */
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, 0.5);
+            await mocFunctions.pokePrice(0, 38);
           });
-          describe("WHEN Alice tries to mint 383.34 TP", function () {
+          describe("WHEN Alice tries to mint 75.1 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
-              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 383.34 })).to.be.revertedWithCustomError(
+              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 75.1 })).to.be.revertedWithCustomError(
                 mocContracts.mocImpl,
                 ERRORS.INSUFFICIENT_TP_TO_MINT,
               );
             });
           });
-          describe("WHEN Alice mints 383.33 TP", function () {
+          describe("WHEN Alice mints 75 TP", function () {
             let alicePrevTPBalance: Balance;
             beforeEach(async function () {
               alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);
-              await mocFunctions.mintTP({ i: 0, from: alice, qTP: 383.33 });
+              await mocFunctions.mintTP({ i: 0, from: alice, qTP: 75 });
             });
-            it("THEN alice receives 383.33 TP", async function () {
+            it("THEN alice receives 75 TP", async function () {
               const aliceActualTPBalance = await mocFunctions.tpBalanceOf(0, alice);
               const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
-              assertPrec(383.33, diff);
+              assertPrec(75, diff);
             });
           });
         });
-        describe("AND Collateral Asset relation with Pegged Token price raises to 2, so there are 771.428 TP available to mint", function () {
+        describe("AND Collateral Asset relation with Pegged Token price raises to 300, so there are 125739.3087 TP available to mint", function () {
           /*  
             nAC = 3100    
-            nTP = 100
-            lckAC = 50
-            ctarg = 8
-            => TP available to mint = 771.428
+            nTP = 23500
+            lckAC = 78.33
+            ctarg = 7.07
+            => TP available to mint = 125739.3087
         */
           beforeEach(async function () {
-            await mocFunctions.pokePrice(0, 2);
+            await mocFunctions.pokePrice(0, 300);
           });
-          describe("WHEN Alice tries to mint 771.429 TP", function () {
+          describe("WHEN Alice tries to mint 125739.31 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
-              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 771.429 })).to.be.revertedWithCustomError(
+              await expect(mocFunctions.mintTP({ i: 0, from: alice, qTP: 125739.31 })).to.be.revertedWithCustomError(
                 mocContracts.mocImpl,
                 ERRORS.INSUFFICIENT_TP_TO_MINT,
               );
             });
           });
-          describe("WHEN Alice mints 771.428 TP", function () {
+          describe("WHEN Alice mints 125739.3 TP", function () {
             let alicePrevTPBalance: Balance;
             beforeEach(async function () {
               alicePrevTPBalance = await mocFunctions.tpBalanceOf(0, alice);
-              await mocFunctions.mintTP({ i: 0, from: alice, qTP: 771.428 });
+              await mocFunctions.mintTP({ i: 0, from: alice, qTP: 125739.3 });
             });
-            it("THEN alice receives 771.428 TP", async function () {
+            it("THEN alice receives 125739.3 TP", async function () {
               const aliceActualTPBalance = await mocFunctions.tpBalanceOf(0, alice);
               const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
-              assertPrec(771.428, diff);
+              assertPrec(125739.3, diff);
             });
           });
         });

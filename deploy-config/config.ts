@@ -20,23 +20,6 @@ export const tcParams = {
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
 };
 
-export const tpParams = {
-  price: PCT_BASE, // 1
-  ctarg: PCT_BASE.mul(4), // 4
-  r: 0,
-  bmin: DAY_BLOCK_SPAN,
-  mintFee: PCT_BASE.mul(5).div(100), // 5%
-  redeemFee: PCT_BASE.mul(5).div(100), // 5%
-  initialEma: PCT_BASE, // 1
-  smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
-  tils: PCT_BASE.mul(1).div(100), // 1%
-  tiMin: PCT_BASE.mul(1).div(1000), // 0.1%
-  tiMax: PCT_BASE.mul(10).div(100), // 10%
-  abeq: PCT_BASE.mul(25).div(100), // 0.25
-  facMin: PCT_BASE.mul(1).div(10), // 0.1
-  facMax: PCT_BASE.mul(5).div(1), // 5
-};
-
 export const mocAddresses = {
   mainnet: {
     governorAddress: "",
