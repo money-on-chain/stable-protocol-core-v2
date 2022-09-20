@@ -244,6 +244,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 num = (lckACemaAdjusted * pACtpEmaAdjusted) / PRECISION;
         // [PREC] = [PREC] - [PREC]
         uint256 den = ctargemaCA_ - ONE;
+        // we must save the case where ctargemaCA == ONE
+        if (den == 0) den = 1;
         // [N] = [PREC] / [PREC]
         return num / den;
     }
