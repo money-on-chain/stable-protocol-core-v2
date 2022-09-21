@@ -12,6 +12,7 @@ const mintTCBehavior = function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
+  const TP_0 = 0;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
 
   describe("Feature: mint Collateral Token", function () {
@@ -151,11 +152,23 @@ const mintTCBehavior = function () {
     describe("GIVEN 3000 TC and 100 TP are minted", function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
-        await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
+        await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 100 });
+      });
+      describe("AND Collateral Asset relation with Pegged Token price falls to 1 making TC price falls too", function () {
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 1);
+        });
+        describe("WHEN alice tries to mint 1 wei TC", function () {
+          it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
+            await expect(
+              mocFunctions.mintTC({ from: alice, qTC: 1, applyPrecision: false }),
+            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
+          });
+        });
       });
       describe("AND Collateral Asset relation with Pegged Token price falls to 1/15.5", function () {
         beforeEach(async function () {
-          await mocFunctions.pokePrice(0, "0.064516129032258064");
+          await mocFunctions.pokePrice(TP_0, "0.064516129032258064");
         });
         describe("WHEN Alice tries to mint 100 TC", function () {
           /*  

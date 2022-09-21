@@ -9,16 +9,17 @@ import { expect } from "chai";
 const redeemTCBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
-  let deployer: Address;
   let alice: Address;
   let bob: Address;
+  const TP_0 = 0;
+  const TP_1 = 1;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
 
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
-      ({ deployer, alice, bob } = await getNamedAccounts());
+      ({ alice, bob } = await getNamedAccounts());
     });
     describe("GIVEN alice has 300 TC", function () {
       beforeEach(async function () {
@@ -159,40 +160,17 @@ const redeemTCBehavior = function () {
             );
         });
       });
-      describe("AND 10 TP are minted", function () {
+      describe("AND alice mints 2350 TP0, so there are 254.5859272 TC available to reedem", function () {
         beforeEach(async function () {
-          await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 10 });
+          await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
         });
         /*  
         nAC = 310   
-        nTP = 10
+        nTP0 = 2350
         lckAC = 10
-        ctarg = 4
-        => TC available to redeem = 270
+        ctarg = 5.54
+        => TC available to redeem = 254.5859272
         */
-        describe("WHEN alice tries to redeem 271 TC", function () {
-          it("THEN tx reverts because there is not enough TC available to redeem", async function () {
-            await expect(mocFunctions.redeemTC({ from: alice, qTC: 271 })).to.be.revertedWithCustomError(
-              mocContracts.mocImpl,
-              ERRORS.INSUFFICIENT_TC_TO_REDEEM,
-            );
-          });
-        });
-        describe("WHEN alice redeems 270 TC", function () {
-          let alicePrevACBalance: Balance;
-          beforeEach(async function () {
-            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-            await mocFunctions.redeemTC({ from: alice, qTC: 270 });
-          });
-          it("THEN alice balance decrease 270 TC", async function () {
-            assertPrec(30, await mocFunctions.tcBalanceOf(alice));
-          });
-          it("THEN alice balance increase 270 Asset - 5% for Moc Fee Flow", async function () {
-            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-            const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(270 * 0.95, diff);
-          });
-        });
         describe("AND Collateral Asset relation with Pegged Token price falls to 1/15.5", function () {
           beforeEach(async function () {
             await mocFunctions.pokePrice(0, "0.064516129032258064");
@@ -209,6 +187,78 @@ const redeemTCBehavior = function () {
                 mocContracts.mocImpl,
                 ERRORS.LOW_COVERAGE,
               );
+            });
+          });
+        });
+        describe("WHEN alice tries to redeem 254.59 TC", function () {
+          it("THEN tx reverts because there is not enough TC available to redeem", async function () {
+            await expect(mocFunctions.redeemTC({ from: alice, qTC: 254.59 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.INSUFFICIENT_TC_TO_REDEEM,
+            );
+          });
+        });
+        describe("WHEN alice redeems 254.58 TC", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            await mocFunctions.redeemTC({ from: alice, qTC: 254.58 });
+          });
+          it("THEN alice balance decrease 254.58 TC", async function () {
+            assertPrec(300 - 254.58, await mocFunctions.tcBalanceOf(alice));
+          });
+          it("THEN alice balance increase 254.58 Asset - 5% for Moc Fee Flow", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = aliceActualACBalance.sub(alicePrevACBalance);
+            assertPrec(254.58 * 0.95, diff);
+          });
+          describe("AND bob mints 10 TC and 10 TP1, making TC available to redeem go to 3.974", function () {
+            beforeEach(async function () {
+              await mocFunctions.mintTC({ from: bob, qTC: 10 });
+              await mocFunctions.mintTP({ i: TP_1, from: bob, qTP: 10 });
+            });
+            /*  
+            nAC = 67.32
+            nTP0 = 2350
+            nTP1 = 10
+            lckAC = 11.9
+            ctarg = 5.32
+            => TC available to redeem = 3.974
+            */
+            describe("WHEN alice tries to redeem 3.975 TC", function () {
+              it("THEN tx reverts because there is not enough TC available to redeem", async function () {
+                await expect(mocFunctions.redeemTC({ from: alice, qTC: 3.975 })).to.be.revertedWithCustomError(
+                  mocContracts.mocImpl,
+                  ERRORS.INSUFFICIENT_TC_TO_REDEEM,
+                );
+              });
+            });
+            describe("WHEN alice redeems 3.974 TC", function () {
+              let alicePrevACBalance: Balance;
+              beforeEach(async function () {
+                alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+                await mocFunctions.redeemTC({ from: alice, qTC: 3.974 });
+              });
+              it("THEN alice balance decrease 3.974 TC", async function () {
+                assertPrec(300 - 254.58 - 3.974, await mocFunctions.tcBalanceOf(alice));
+              });
+              it("THEN alice balance increase 3.974 Asset - 5% for Moc Fee Flow", async function () {
+                const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+                const diff = aliceActualACBalance.sub(alicePrevACBalance);
+                assertPrec("3.7753", diff);
+              });
+            });
+          });
+        });
+        describe("AND Collateral Asset relation with Pegged Token price falls to 100 making TC price falls too", function () {
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(TP_0, 100);
+          });
+          describe("WHEN alice tries to redeem 1 wei TC", function () {
+            it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
+              await expect(
+                mocFunctions.redeemTC({ from: alice, qTC: 1, applyPrecision: false }),
+              ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
             });
           });
         });

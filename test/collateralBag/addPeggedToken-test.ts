@@ -2,7 +2,7 @@ import { fixtureDeployedMocCABag } from "./fixture";
 import { MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { expect } from "chai";
 import { ERRORS, CONSTANTS, deployPeggedToken, deployPriceProvider, pEth } from "../helpers/utils";
-import { tpParams } from "../../deploy-config/config";
+import { tpParamsDefault } from "../helpers/utils";
 import { BigNumberish, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
@@ -15,19 +15,19 @@ describe("Feature: MocCABag add Pegged Token", function () {
     ({
       tpTokenAddress = mocPeggedToken.address,
       priceProviderAddress = priceProvider.address,
-      tpCtarg = tpParams.ctarg,
-      tpR = tpParams.r,
-      tpBmin = tpParams.bmin,
-      tpMintFee = tpParams.mintFee,
-      tpRedeemFee = tpParams.redeemFee,
-      tpEma = tpParams.initialEma,
-      tpEmaSf = tpParams.smoothingFactor,
-      tpTils = tpParams.tils,
-      tpTiMin = tpParams.tiMin,
-      tpTiMax = tpParams.tiMax,
-      tpAbeq = tpParams.abeq,
-      tpFacMin = tpParams.facMin,
-      tpFacMax = tpParams.facMax,
+      tpCtarg = tpParamsDefault.ctarg,
+      tpR = tpParamsDefault.r,
+      tpBmin = tpParamsDefault.bmin,
+      tpMintFee = tpParamsDefault.mintFee,
+      tpRedeemFee = tpParamsDefault.redeemFee,
+      tpEma = tpParamsDefault.initialEma,
+      tpEmaSf = tpParamsDefault.smoothingFactor,
+      tpTils = tpParamsDefault.tils,
+      tpTiMin = tpParamsDefault.tiMin,
+      tpTiMax = tpParamsDefault.tiMax,
+      tpAbeq = tpParamsDefault.abeq,
+      tpFacMin = tpParamsDefault.facMin,
+      tpFacMax = tpParamsDefault.facMax,
     }: {
       tpTokenAddress?: Address;
       priceProviderAddress?: Address;
@@ -175,19 +175,19 @@ describe("Feature: MocCABag add Pegged Token", function () {
           .withArgs(0, [
             mocPeggedToken.address,
             priceProvider.address,
-            tpParams.ctarg,
-            tpParams.r,
-            tpParams.bmin,
-            tpParams.mintFee,
-            tpParams.redeemFee,
-            tpParams.initialEma,
-            tpParams.smoothingFactor,
-            tpParams.tils,
-            tpParams.tiMin,
-            tpParams.tiMax,
-            tpParams.abeq,
-            tpParams.facMin,
-            tpParams.facMax,
+            tpParamsDefault.ctarg,
+            tpParamsDefault.r,
+            tpParamsDefault.bmin,
+            tpParamsDefault.mintFee,
+            tpParamsDefault.redeemFee,
+            tpParamsDefault.initialEma,
+            tpParamsDefault.smoothingFactor,
+            tpParamsDefault.tils,
+            tpParamsDefault.tiMin,
+            tpParamsDefault.tiMax,
+            tpParamsDefault.abeq,
+            tpParamsDefault.facMin,
+            tpParamsDefault.facMax,
           ]);
       });
       describe("AND try to add it again", () => {

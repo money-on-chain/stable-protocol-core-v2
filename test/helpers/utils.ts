@@ -52,6 +52,7 @@ export const tpParams = [
     ctarg: pEth(4),
     initialEma: pEth(5.04),
     smoothingFactor: pEth(0.05),
+    mintFee: PCT_BASE.mul(1).div(1000), // 0.1%
   },
   {
     price: pEth(934.58),
@@ -154,7 +155,7 @@ export async function deployAsset(): Promise<ERC20Mock> {
   const asset = await factory.deploy();
   // Fill users accounts with balance so that they can operate
   const { alice, bob, charlie } = await getNamedAccounts();
-  await Promise.all([alice, bob, charlie].map(address => asset.mint(address, pEth(100000))));
+  await Promise.all([alice, bob, charlie].map(address => asset.mint(address, pEth(10000000))));
   return asset;
 }
 
@@ -178,6 +179,7 @@ export const ERRORS = {
   LOW_COVERAGE: "LowCoverage",
   TRANSFER_FAIL: "TransferFailed",
   PEGGED_TOKEN_ALREADY_ADDED: "PeggedTokenAlreadyAdded",
+  QAC_NEEDED_MUST_BE_GREATER_ZERO: "QacNeededMustBeGreaterThanZero",
 };
 
 export const CONSTANTS = {

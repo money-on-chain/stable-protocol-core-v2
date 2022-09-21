@@ -8,6 +8,7 @@ import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
 import { ContractTransaction } from "ethers";
+import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCABag mint TC", function () {
   let mocWrapper: MocCAWrapper;
@@ -19,7 +20,7 @@ describe("Feature: MocCABag mint TC", function () {
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
       ({ alice, bob } = await getNamedAccounts());
-      this.mocContracts = await fixtureDeployedMocCABag(1)();
+      this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
       ({ assetDefault, mocWrapper } = this.mocContracts);

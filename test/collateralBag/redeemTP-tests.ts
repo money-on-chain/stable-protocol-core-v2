@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCABag } from "./fixture";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { ERC20Mock, MocCAWrapper, MocSettlement, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { redeemTPBehavior } from "../behaviors/redeemTP.behavior";
 import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth } from "../helpers/utils";
@@ -8,22 +8,27 @@ import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
 import { ContractTransaction } from "ethers";
+import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
+import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCABag redeem TP", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
+  let mocSettlement: MocSettlement;
   let mocFunctions: any;
   let deployer: Address;
   let alice: Address;
   let bob: Address;
+  const TP_0 = 0;
+  const fixedBlock = 85342;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
       ({ deployer, alice, bob } = await getNamedAccounts());
-      this.mocContracts = await fixtureDeployedMocCABag(1)();
+      this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ assetDefault, mocWrapper } = this.mocContracts);
+      ({ assetDefault, mocWrapper, mocSettlement } = this.mocContracts);
     });
     redeemTPBehavior();
 
@@ -40,57 +45,63 @@ describe("Feature: MocCABag redeem TP", function () {
       });
     });
 
-    describe("WHEN alice redeems 10 TP", () => {
+    describe("WHEN alice redeems 2350 TP", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: alice, qTC: 1000 });
         // mint TP to alice
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
-        tx = await mocFunctions.redeemTP({ i: 0, from: alice, qTP: 10 });
+        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        // go forward to a fixed block remaining for settlement to avoid unpredictability in the interest rate
+        const bns = await mocSettlement.bns();
+        await mineUpTo(bns.sub(fixedBlock));
+        tx = await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2350 });
       });
       it("THEN a TPRedeemed event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // i: 0
         // sender: alice
         // receiver: alice
-        // qTP: 10 TP
+        // qTP: 2350 TP
         // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
         await expect(tx)
           .to.emit(mocWrapper, "TPRedeemed")
-          .withArgs(assetDefault.address, 0, alice, alice, pEth(10), pEth("9.49000393518518519"));
+          .withArgs(assetDefault.address, 0, alice, alice, pEth(2350), pEth("9.49012268518518519"));
       });
     });
 
-    describe("WHEN alice redeems 10 TP to bob", () => {
+    describe("WHEN alice redeems 2350 TP to bob", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: alice, qTC: 1000 });
         // mint TP to alice
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
-        tx = await mocFunctions.redeemTPto({ i: 0, from: alice, to: bob, qTP: 10 });
+        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        // go forward to a fixed block remaining for settlement to avoid unpredictability in the interest rate
+        const bns = await mocSettlement.bns();
+        await mineUpTo(bns.sub(fixedBlock));
+        tx = await mocFunctions.redeemTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
       });
       it("THEN a TPRedeemed event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // i: 0
         // sender: alice
         // receiver: bob
-        // qTP: 10 TP
+        // qTP: 2350 TP
         // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
         await expect(tx)
           .to.emit(mocWrapper, "TPRedeemed")
-          .withArgs(assetDefault.address, 0, alice, bob, pEth(10), pEth("9.49000393518518519"));
+          .withArgs(assetDefault.address, 0, alice, bob, pEth(2350), pEth("9.49012268518518519"));
       });
     });
 
-    describe("GIVEN 100 TP minted with asset at 1:1 price", () => {
+    describe("GIVEN 23500 TP minted with asset at 1:1 price", () => {
       let newAsset: ERC20Mock;
       let newPriceProvider: PriceProviderMock;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
+        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
       });
       describe("WHEN add a new asset with price 0.9", () => {
         beforeEach(async () => {
@@ -100,17 +111,20 @@ describe("Feature: MocCABag redeem TP", function () {
           // add stock of the new asset to the collateral bag
           await mocFunctions.mintTC({ from: deployer, qTC: 1000, asset: newAsset });
         });
-        describe("AND redeem 100 TP in exchange of the new asset", () => {
+        describe("AND redeem 23500 TP in exchange of the new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
-            await mocFunctions.redeemTP({ i: 0, from: alice, qTP: 100, asset: newAsset });
+            // go forward to a fixed block remaining for settlement to avoid unpredictability in the interest rate
+            const bns = await mocSettlement.bns();
+            await mineUpTo(bns.sub(fixedBlock));
+            await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
-          it("THEN alice receives 102.72 of the new asset instead of 92.45", async () => {
-            //asset reward = 92.45 currency / 0.9 asset price
+          it("THEN alice receives 102.75 of the new asset instead of 92.45", async () => {
+            //asset reward = 92.47 currency / 0.9 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("102.723599537037037111", diff);
+            assertPrec("102.756983024691358111", diff);
           });
         });
       });
@@ -122,17 +136,20 @@ describe("Feature: MocCABag redeem TP", function () {
           // add stock of the new asset to the collateral bag
           await mocFunctions.mintTC({ from: deployer, qTC: 1000, asset: newAsset });
         });
-        describe("AND redeem 100 TP with new asset", () => {
+        describe("AND redeem 23500 TP with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
-            await mocFunctions.redeemTP({ i: 0, from: alice, qTP: 100, asset: newAsset });
+            // go forward to a fixed block remaining for settlement to avoid unpredictability in the interest rate
+            const bns = await mocSettlement.bns();
+            await mineUpTo(bns.sub(fixedBlock));
+            await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
-          it("THEN alice receives 84.04 of the new asset instead of 92.45", async () => {
-            //asset reward = 92.45 currency / 1.1 asset price
+          it("THEN alice receives 84.07 of the new asset instead of 92.45", async () => {
+            //asset reward = 92.47 currency / 1.1 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("84.046581439393939454", diff);
+            assertPrec("84.073895202020202090", diff);
           });
         });
       });
