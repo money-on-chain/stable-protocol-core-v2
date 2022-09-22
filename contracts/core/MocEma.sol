@@ -80,7 +80,7 @@ abstract contract MocEma is MocBaseBucket {
             den += currency;
         }
         // we must return a default value when all nTP are 0
-        if (den == 0) return ONE;
+        if (den == 0) return protThrld * 2;
         // [PREC] = ([PREC]^2) / [PREC]
         ctargemaCA = num / den;
     }
