@@ -155,6 +155,12 @@ const mintTCBehavior = function () {
         await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 100 });
       });
       describe("AND Collateral Asset relation with Pegged Token price falls to 1 making TC price falls too", function () {
+        /*  
+        nAC = 3000.4    
+        nTP = 100
+        lckAC = 100
+        => pTCac = 0.9668
+        */
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, 1);
         });
@@ -163,6 +169,41 @@ const mintTCBehavior = function () {
             await expect(
               mocFunctions.mintTC({ from: alice, qTC: 1, applyPrecision: false }),
             ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
+          });
+        });
+        describe("WHEN alice mints 100 TC", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            await mocFunctions.mintTC({ from: alice, qTC: 100 });
+          });
+          it("THEN alice spends 101.51 assets instead of 105", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec("101.51489361702127656", diff);
+          });
+        });
+      });
+      describe("AND Collateral Asset relation with Pegged Token price rices to 500 making TC price rices too", function () {
+        /*  
+        nAC = 3000.4    
+        nTP = 100
+        lckAC = 0.001
+        => pTCac = 1.00013
+        */
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 500);
+        });
+        describe("WHEN alice mints 100 TC", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            await mocFunctions.mintTC({ from: alice, qTC: 100 });
+          });
+          it("THEN alice spends 105.007 assets instead of 105", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec("105.007893617021276595", diff);
           });
         });
       });
