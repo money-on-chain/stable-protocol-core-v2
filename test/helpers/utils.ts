@@ -6,9 +6,11 @@ import { tpParams } from "../../deploy-config/config";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
+import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
 
 export const GAS_LIMIT_PATCH = 30000000;
 
+export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
 export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
 export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
 export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
@@ -33,7 +35,6 @@ export async function deployAndAddPeggedTokens(
   const priceProviders: Array<PriceProviderMock> = [];
   for (let i = 1; i <= amountPegTokens; i++) {
     const peggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
-
     const priceProvider = await deployPriceProvider(pEth(1));
     await mocImpl.addPeggedToken({
       tpTokenAddress: peggedToken.address,
@@ -111,3 +112,9 @@ export const CONSTANTS = {
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {
   return network.provider.send("hardhat_mine", ["0x" + blocks.toString(16), "0x" + secondsPerBlock.toString(16)]);
 }
+
+export function getBlock(block: any) {
+  return ethers.provider.getBlock(block);
+}
+
+export { mineUpTo };
