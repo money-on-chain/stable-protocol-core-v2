@@ -5,19 +5,24 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
 /**
  * @title MocTC
- * @notice Base Moc ERC20 Token: burn, mint. It can be both Pegs and Collateral Tokens.
+ * @notice Base Moc  ERC20 Collateral Tokens: Allows burn, mint and pause.
  * @dev ERC20 like token that allows roles allowed contracts to mint and burn (destroyed) any token.
  */
 contract MocTC is MocRC20, ERC20Pausable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     /**
-     * @dev Grants `DEFAULT_ADMIN_ROLE` to the account that deploys the contract.
+     * @dev Grants `PAUSER_ROLE` to `admin` address.
      *
      * See {MocRC20-constructor}.
      */
-    /* solhint-disable-next-line no-empty-blocks */
-    constructor(string memory name, string memory symbol) MocRC20(name, symbol) {}
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address admin_
+    ) MocRC20(name_, symbol_, admin_) {
+        _setupRole(PAUSER_ROLE, admin_);
+    }
 
     /**
      * @dev override only to satisfy compiler
