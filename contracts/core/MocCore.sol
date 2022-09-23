@@ -236,7 +236,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // add qTP and qAC to the Bucket
         _depositTP(i_, qTP_, qACNeededtoMint);
         // mint qTP to the recipient
-        tpToken[i_].mint(recipient_, qTP_);
+        tpTokens[i_].mint(recipient_, qTP_);
         // calculate how many qAC should be returned to the sender
         uint256 qACchg = qACmax_ - qACtotalNeeded;
         // transfer the qAC change to the sender
@@ -266,7 +266,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qACtotalToRedeem);
         // burn qTP from the sender
-        tpToken[i_].burn(sender_, qTP_);
+        tpTokens[i_].burn(sender_, qTP_);
         // transfer qAC to the recipient
         acTransfer(recipient_, qACtoRedeem);
         // transfer qAC fees to Fee Flow
@@ -291,14 +291,14 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal returns (uint256 qACRedeemed) {
         if (!liquidated) revert OnlyWhenLiquidated();
-        uint256 qTP = tpToken[i_].balanceOf(sender_);
+        uint256 qTP = tpTokens[i_].balanceOf(sender_);
         if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
         // [PREC]
         uint256 liqPACtp = tpLiqPrices[i_];
         // [PREC] = [N] * [PREC] / [PREC]
         qACRedeemed = (qTP * PRECISION) / liqPACtp;
         // burn qTP from the sender
-        tpToken[i_].burn(sender_, qTP);
+        tpTokens[i_].burn(sender_, qTP);
         // Given rounding errors, the last redeemer might receive a little less
         if (acBalanceOf(address(this)) < qACRedeemed) qACRedeemed = acBalanceOf(address(this));
         // transfer qAC to the recipient, reverts if fail
@@ -349,6 +349,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *      tpAbeq abundance of Pegged Token where it is desired that the model stabilizes
      *      tpFacMin Pegged Token minimum correction factor for interest rate
      *      tpFacMax Pegged Token maximum correction factor for interest rate
+     *
+     *  Requirements:
+     *
+     * - the caller must have governace authorization.
+     * - tpTokenAddress must be a MocRC20, with mint, burn roles already settled
+     *  for this contract
      */
     function addPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external {
         if (addPeggedTokenParams_.tpTokenAddress == address(0)) revert InvalidAddress();
@@ -363,13 +369,24 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (addPeggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
         if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
         if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
+
+        MocRC20 tpToken = MocRC20(addPeggedTokenParams_.tpTokenAddress);
+        // Verifies it has the right roles over this TP
+        if (
+            !tpToken.hasRole(tpToken.MINTER_ROLE(), address(this)) ||
+            !tpToken.hasRole(tpToken.BURNER_ROLE(), address(this)) ||
+            !tpToken.hasRole(tpToken.DEFAULT_ADMIN_ROLE(), address(this))
+        ) {
+            revert InvalidAddress();
+        }
+
         // TODO: this could be replaced by a "if exists modify it"
-        if (peggedTokenIndex[addPeggedTokenParams_.tpTokenAddress] != 0) revert PeggedTokenAlreadyAdded();
-        uint8 newTPindex = uint8(tpToken.length);
-        peggedTokenIndex[addPeggedTokenParams_.tpTokenAddress] = newTPindex;
+        if (peggedTokenIndex[address(tpToken)] != 0) revert PeggedTokenAlreadyAdded();
+        uint8 newTPindex = uint8(tpTokens.length);
+        peggedTokenIndex[address(tpToken)] = newTPindex;
 
         // set Pegged Token address
-        tpToken.push(IMocRC20(addPeggedTokenParams_.tpTokenAddress));
+        tpTokens.push(tpToken);
         // set peg container item
         pegContainer.push(
             PegContainerItem({

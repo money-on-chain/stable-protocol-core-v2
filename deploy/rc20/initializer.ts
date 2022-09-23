@@ -9,7 +9,7 @@ import {
   MocSettlement,
   MocSettlement__factory,
 } from "../../typechain";
-import { GAS_LIMIT_PATCH, MINTER_ROLE, BURNER_ROLE, waitForTxConfirmation, PAUSER_ROLE } from "../../scripts/utils";
+import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../scripts/utils";
 import { coreParams, settlementParams, tcParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -79,13 +79,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       mocCARC20.address,
       settlementParams.bes,
       settlementParams.bmulcdj,
-    ),
-  );
-
-  // set minter and burner roles
-  await Promise.all(
-    [MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE].map(role =>
-      waitForTxConfirmation(CollateralToken.grantRole(role, mocCARC20.address, { gasLimit: GAS_LIMIT_PATCH })),
     ),
   );
 
