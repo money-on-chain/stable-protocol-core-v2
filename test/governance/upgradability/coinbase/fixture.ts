@@ -25,6 +25,9 @@ export function fixtureDeployGovernance(): () => Promise<{
 
     const governor = await deployAeropagusGovernor(deployer);
 
+    const mocTCFactory = await ethers.getContractFactory("MocTC");
+    const mocTC = await mocTCFactory.deploy("mocCT", "CT", deployMocProxy.address);
+
     const mockAddress = deployer;
     // TODO: fix these mockAddresses
     // initializations
@@ -33,7 +36,7 @@ export function fixtureDeployGovernance(): () => Promise<{
         {
           governorAddress: governor.address,
           stopperAddress: mockAddress,
-          tcTokenAddress: mockAddress,
+          tcTokenAddress: mocTC.address,
           mocSettlementAddress: mockAddress,
           mocFeeFlowAddress: mocAddresses[networkName].mocFeeFlowAddress,
           mocInterestCollectorAddress: mockAddress,

@@ -14,12 +14,18 @@ contract MocRC20 is AccessControlEnumerable, ERC20, IMocRC20 {
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     /**
-     * @dev Grants `DEFAULT_ADMIN_ROLE` to the account that deploys the contract.
+     * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` & `BURNER_ROLE` to `admin` address.
      *
      * See {ERC20-constructor}.
      */
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address admin_
+    ) ERC20(name_, symbol_) {
+        _setupRole(DEFAULT_ADMIN_ROLE, admin_);
+        _setupRole(MINTER_ROLE, admin_);
+        _setupRole(BURNER_ROLE, admin_);
     }
 
     /**

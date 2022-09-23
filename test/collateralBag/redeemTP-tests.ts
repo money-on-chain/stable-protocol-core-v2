@@ -2,7 +2,7 @@ import { fixtureDeployedMocCABag } from "./fixture";
 import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { redeemTPBehavior } from "../behaviors/redeemTP.behavior";
-import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth } from "../helpers/utils";
+import { Balance, deployAsset, deployPriceProvider, ERRORS, mineUpTo, pEth } from "../helpers/utils";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
@@ -40,59 +40,53 @@ describe("Feature: MocCABag redeem TP", function () {
       });
     });
 
-    describe("WHEN alice redeems 10 TP", () => {
+    describe("AND alice has 100 TPs with asset price at 1:1", () => {
       let tx: ContractTransaction;
+      const fixedBlock = 52;
       beforeEach(async () => {
-        //add collateral
-        await mocFunctions.mintTC({ from: alice, qTC: 1000 });
+        // add collateral
+        await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
         // mint TP to alice
         await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
-        tx = await mocFunctions.redeemTP({ i: 0, from: alice, qTP: 10 });
+        // go forward to a fixed block remaining for settlement to avoid unpredictability
+        await mineUpTo(fixedBlock);
       });
-      it("THEN a TPRedeemed event is emitted by MocWrapper", async function () {
-        // asset: assetDefault
-        // i: 0
-        // sender: alice
-        // receiver: alice
-        // qTP: 10 TP
-        // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
-        await expect(tx)
-          .to.emit(mocWrapper, "TPRedeemed")
-          .withArgs(assetDefault.address, 0, alice, alice, pEth(10), pEth("9.49000393518518519"));
+      describe("WHEN alice redeems 10 TP", () => {
+        beforeEach(async () => {
+          tx = await mocFunctions.redeemTP({ i: 0, from: alice, qTP: 10 });
+        });
+        it("THEN a TPRedeemed event is emitted by MocWrapper", async function () {
+          // asset: assetDefault
+          // i: 0
+          // sender: alice
+          // receiver: alice
+          // qTP: 10 TP
+          // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
+          await expect(tx)
+            .to.emit(mocWrapper, "TPRedeemed")
+            .withArgs(assetDefault.address, 0, alice, alice, pEth(10), pEth("9.49000393518518519"));
+        });
       });
-    });
 
-    describe("WHEN alice redeems 10 TP to bob", () => {
-      let tx: ContractTransaction;
-      beforeEach(async () => {
-        //add collateral
-        await mocFunctions.mintTC({ from: alice, qTC: 1000 });
-        // mint TP to alice
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
-        tx = await mocFunctions.redeemTPto({ i: 0, from: alice, to: bob, qTP: 10 });
+      describe("WHEN alice redeems 10 TP to bob", () => {
+        beforeEach(async () => {
+          tx = await mocFunctions.redeemTPto({ i: 0, from: alice, to: bob, qTP: 10 });
+        });
+        it("THEN a TPRedeemed event is emitted by MocWrapper", async function () {
+          // asset: assetDefault
+          // i: 0
+          // sender: alice
+          // receiver: bob
+          // qTP: 10 TP
+          // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
+          await expect(tx)
+            .to.emit(mocWrapper, "TPRedeemed")
+            .withArgs(assetDefault.address, 0, alice, bob, pEth(10), pEth("9.49000393518518519"));
+        });
       });
-      it("THEN a TPRedeemed event is emitted by MocWrapper", async function () {
-        // asset: assetDefault
-        // i: 0
-        // sender: alice
-        // receiver: bob
-        // qTP: 10 TP
-        // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
-        await expect(tx)
-          .to.emit(mocWrapper, "TPRedeemed")
-          .withArgs(assetDefault.address, 0, alice, bob, pEth(10), pEth("9.49000393518518519"));
-      });
-    });
-
-    describe("GIVEN 100 TP minted with asset at 1:1 price", () => {
       let newAsset: ERC20Mock;
       let newPriceProvider: PriceProviderMock;
-      beforeEach(async () => {
-        //add collateral
-        await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
-      });
-      describe("WHEN add a new asset with price 0.9", () => {
+      describe("WHEN a new asset with price 0.9 is added", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(0.9));

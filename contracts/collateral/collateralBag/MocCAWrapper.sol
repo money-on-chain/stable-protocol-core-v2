@@ -285,7 +285,7 @@ contract MocCAWrapper is MocUpgradable {
         bool isLiqRedeem_
     ) internal validAsset(assetAddress_) {
         // get Pegged Token contract address
-        IERC20 tpToken = mocCore.tpToken(i_);
+        IERC20 tpToken = mocCore.tpTokens(i_);
         // When liquidating, we extract all the user's balance
         if (isLiqRedeem_) qTP_ = tpToken.balanceOf(sender_);
         // transfer Pegged Token from sender to this address
