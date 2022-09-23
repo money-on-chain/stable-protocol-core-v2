@@ -357,8 +357,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *  for this contract
      */
     function addPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external {
-        if (addPeggedTokenParams_.tpTokenAddress == address(0)) revert InvalidAddress();
-        if (addPeggedTokenParams_.priceProviderAddress == address(0)) revert InvalidAddress();
         if (addPeggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
         if (addPeggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
         if (addPeggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
@@ -379,6 +377,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         ) {
             revert InvalidAddress();
         }
+        IPriceProvider priceProvider = IPriceProvider(addPeggedTokenParams_.priceProviderAddress);
+        // verifies it is a valid priceProvider
+        (, bool has) = priceProvider.peek();
+        if (!has) revert InvalidAddress();
 
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[address(tpToken)] != 0) revert PeggedTokenAlreadyAdded();
@@ -388,13 +390,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // set Pegged Token address
         tpTokens.push(tpToken);
         // set peg container item
-        pegContainer.push(
-            PegContainerItem({
-                nTP: 0,
-                nTPXV: 0,
-                priceProvider: IPriceProvider(addPeggedTokenParams_.priceProviderAddress)
-            })
-        );
+        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, priceProvider: priceProvider }));
         // set target coverage
         tpCtarg.push(addPeggedTokenParams_.tpCtarg);
         // set reserve factor
