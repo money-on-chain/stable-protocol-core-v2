@@ -32,11 +32,21 @@ describe("Feature: MocCAWrapper", function () {
       });
     });
     describe("WHEN add an asset with invalid price provider address", () => {
+      // revert without reason tring to peek price to address zero
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(mocWrapper.addAsset(asset00.address, CONSTANTS.ZERO_ADDRESS)).to.be.revertedWithCustomError(
-          mocWrapper,
-          ERRORS.INVALID_ADDRESS,
-        );
+        await expect(mocWrapper.addAsset(asset00.address, CONSTANTS.ZERO_ADDRESS)).to.be.reverted;
+      });
+    });
+    describe("WHEN add an asset with a deprecated price provider", () => {
+      let deprecatedPriceProvider: PriceProviderMock;
+      before(async () => {
+        deprecatedPriceProvider = await deployPriceProvider(pEth(1));
+        await deprecatedPriceProvider.deprecatePriceProvider();
+      });
+      it("THEN tx fails because address is invalid", async () => {
+        await expect(
+          mocWrapper.addAsset(asset00.address, deprecatedPriceProvider.address),
+        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
   });

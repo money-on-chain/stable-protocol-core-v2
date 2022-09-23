@@ -340,11 +340,14 @@ contract MocCAWrapper is MocUpgradable {
      */
     function addAsset(address assetAddress_, address priceProviderAddress_) external {
         if (assetAddress_ == address(0)) revert InvalidAddress();
-        if (priceProviderAddress_ == address(0)) revert InvalidAddress();
         if (address(priceProviderMap[assetAddress_]) != address(0)) revert AssetAlreadyAdded();
+        IPriceProvider priceProvider = IPriceProvider(priceProviderAddress_);
+        // verifies it is a valid priceProvider
+        (, bool has) = priceProvider.peek();
+        if (!has) revert InvalidAddress();
 
-        assets.push(Asset({ asset: IERC20(assetAddress_), priceProvider: IPriceProvider(priceProviderAddress_) }));
-        priceProviderMap[assetAddress_] = IPriceProvider(priceProviderAddress_);
+        assets.push(Asset({ asset: IERC20(assetAddress_), priceProvider: priceProvider }));
+        priceProviderMap[assetAddress_] = priceProvider;
     }
 
     /**

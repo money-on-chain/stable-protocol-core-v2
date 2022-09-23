@@ -25,6 +25,7 @@ export function fixtureDeployedMocCABag(
   priceProviders: PriceProviderMock[];
   wcaToken: MocRC20;
   assetDefault: ERC20Mock;
+  assetPriceProvider: PriceProviderMock;
 }> {
   return deployments.createFixture(async ({ ethers }) => {
     await deployments.fixture();
@@ -68,6 +69,7 @@ export function fixtureDeployedMocCABag(
       priceProviders,
       wcaToken,
       assetDefault,
+      assetPriceProvider,
     };
   });
 }

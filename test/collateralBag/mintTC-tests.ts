@@ -13,6 +13,7 @@ import { tpParams } from "../helpers/utils";
 describe("Feature: MocCABag mint TC", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
+  let assetPriceProvider: PriceProviderMock;
   let mocFunctions: any;
   let alice: Address;
   let bob: Address;
@@ -23,7 +24,7 @@ describe("Feature: MocCABag mint TC", function () {
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ assetDefault, mocWrapper } = this.mocContracts);
+      ({ assetDefault, mocWrapper, assetPriceProvider } = this.mocContracts);
     });
     mintTCBehavior();
 
@@ -47,6 +48,20 @@ describe("Feature: MocCABag mint TC", function () {
           mocWrapper,
           ERRORS.INVALID_ADDRESS,
         );
+      });
+    });
+
+    describe("AND asset price provider is deprecated", () => {
+      beforeEach(async () => {
+        await assetPriceProvider.deprecatePriceProvider();
+      });
+      describe("WHEN alice tries to mint 10 TC", () => {
+        it("THEN tx fails because invalid price provider", async () => {
+          await expect(mocFunctions.mintTC({ from: alice, qTC: 10 })).to.be.revertedWithCustomError(
+            mocWrapper,
+            ERRORS.INVALID_PRICE_PROVIDER,
+          );
+        });
       });
     });
 
@@ -90,13 +105,13 @@ describe("Feature: MocCABag mint TC", function () {
       beforeEach(async () => {
         await mocFunctions.mintTC({ from: alice, qTC: 100 });
       });
-      describe("WHEN add a new assetDefault with price 0.9", () => {
+      describe("AND add a new assetDefault with price 0.9", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(0.9));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
-        describe("AND mint 100 TC with new asset", () => {
+        describe("WHEN mint 100 TC with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
@@ -110,13 +125,13 @@ describe("Feature: MocCABag mint TC", function () {
           });
         });
       });
-      describe("WHEN add a new assetDefault with price 1.1", () => {
+      describe("AND add a new assetDefault with price 1.1", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(1.1));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
-        describe("AND mint 100 TC with new asset", () => {
+        describe("WHEN mint 100 TC with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
