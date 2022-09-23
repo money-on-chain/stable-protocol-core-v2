@@ -70,8 +70,6 @@ export async function deployAndAddPeggedTokens(
   const priceProviders: Array<PriceProviderMock> = [];
   for (let i = 0; i < amountPegTokens; i++) {
     const peggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
-    await peggedToken.grantRole(MINTER_ROLE, mocImpl.address);
-    await peggedToken.grantRole(BURNER_ROLE, mocImpl.address);
     const params = tpParams ? getTPparams(tpParams[i]) : getTPparams({});
     const priceProvider = await deployPriceProvider(params.price);
     await mocImpl.addPeggedToken({
