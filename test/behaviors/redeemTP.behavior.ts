@@ -13,6 +13,7 @@ const redeemTPBehavior = function () {
   let alice: Address;
   let bob: Address;
   const TP_0 = 0;
+  const TP_2 = 2;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
@@ -24,10 +25,11 @@ const redeemTPBehavior = function () {
       ({ alice, bob } = await getNamedAccounts());
     });
 
-    describe("GIVEN alice has 3000 TC and 23500 TP 0", function () {
+    describe("GIVEN alice has 3000 TC, 23500 TP 0 and 93458 TP 2", function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: alice, qTC: 3000 });
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ i: TP_2, from: alice, qTP: 93458 });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
         it("THEN tx reverts because the amount of AC is invalid", async function () {
@@ -273,6 +275,42 @@ const redeemTPBehavior = function () {
                 pEth(0),
               );
           });
+        });
+      });
+      describe("WHEN alice redeems 9345.8 TP 2, which facMin is equal to 0", function () {
+        let tx: ContractTransaction;
+        let mocInterestCollectorPrevACBalance: Balance;
+        beforeEach(async function () {
+          // go forward to a a block near the settlement
+          const bns = await mocContracts.mocSettlement.bns();
+          await mineUpTo(bns.sub(fixedBlock));
+          mocInterestCollectorPrevACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
+          tx = await mocFunctions.redeemTP({ i: TP_2, from: alice, qTP: 9345.8 });
+        });
+        it("THEN Moc Interest Collector balance didn't increase AC", async function () {
+          const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
+          const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
+          assertPrec(0, diff);
+        });
+        it("THEN a TPRedeemed event is emitted", async function () {
+          // i: 2
+          // sender: alice || mocWrapper
+          // receiver: alice || mocWrapper
+          // qTP: 9345.8 TP
+          // qAC: 10 AC - 5% for Moc Fee Flow
+          // qACfee: 5% AC
+          // qACInterest: 0%
+          await expect(tx)
+            .to.emit(mocContracts.mocImpl, "TPRedeemed")
+            .withArgs(
+              TP_2,
+              mocContracts.mocWrapper?.address || alice,
+              mocContracts.mocWrapper?.address || alice,
+              pEth(9345.8),
+              pEth(10 * 0.95),
+              pEth(10 * 0.05),
+              pEth(0),
+            );
         });
       });
       describe("WHEN Collateral Asset relation with Pegged Token price falls to 15.1", function () {
