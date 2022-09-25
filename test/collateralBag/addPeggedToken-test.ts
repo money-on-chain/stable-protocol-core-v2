@@ -179,7 +179,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
       beforeEach(async () => {
         tx = await mocAddPeggedToken(mocImpl)();
       });
-      it("THEN a PeggedTokenAdded event is emmited", async () => {
+      it("THEN a PeggedTokenAdded event is emitted", async () => {
         await expect(tx)
           .to.emit(mocImpl, "PeggedTokenAdded")
           .withArgs(0, [
