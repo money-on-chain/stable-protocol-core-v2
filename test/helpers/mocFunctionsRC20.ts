@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
 import { GAS_LIMIT_PATCH, pEth } from "./utils";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 const mintTC =
   (mocImpl, collateralAsset) =>
@@ -82,6 +83,8 @@ const redeemTP =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
+    // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
+    await mine(1);
     return mocImpl.connect(signer).redeemTP(i, qTP, qACmin);
   };
 
@@ -93,6 +96,8 @@ const redeemTPto =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
+    // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
+    await mine(1);
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to);
   };
 

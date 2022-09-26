@@ -77,7 +77,7 @@ const redeemTP =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    // mine 1 so that it consumes the same number of blocks as the other flavors and makes the interest payment maths easier
+    // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
     await mine(1);
     return mocImpl.connect(signer).redeemTP(i, qTP, qACmin, { gasPrice: 0 });
   };
@@ -90,7 +90,7 @@ const redeemTPto =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    // mine 1 so that it consumes the same number of blocks as the other flavors and makes the interest payment maths easier
+    // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
     await mine(1);
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to, { gasPrice: 0 });
   };
