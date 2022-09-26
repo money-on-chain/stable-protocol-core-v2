@@ -1,6 +1,5 @@
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
 
@@ -35,17 +34,18 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
+    event AssetAddedOrModified(address indexed assetAddress_, address priceProviderAddress);
     // ------- Custom Errors -------
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     // ------- Structs -------
-    struct Asset {
-        // asset token
-        IERC20 asset;
-        // asset price provider
-        IPriceProvider priceProvider;
+    struct AssetIndex {
+        // asset index
+        uint8 index;
+        // true if Pegged Token exist
+        bool exist;
     }
 
     // ------- Storage -------
@@ -55,9 +55,11 @@ contract MocCAWrapper is MocUpgradable {
     // Moc Core protocol
     MocCARC20 internal mocCore;
     // array of valid assets in the bag
-    Asset[] internal assets;
-    // asset -> priceProvider, and is used to check if an asset is valid
+    IERC20[] internal assets;
+    // asset -> priceProvider
     mapping(address => IPriceProvider) internal priceProviderMap;
+    // asset indexes
+    mapping(address => AssetIndex) internal assetIndex;
 
     // ------- Modifiers -------
     modifier validAsset(address assetAddress_) {
@@ -101,7 +103,7 @@ contract MocCAWrapper is MocUpgradable {
      * @return true if it is valid
      */
     function _isValidAsset(address assetAddress_) internal view returns (bool) {
-        return address(priceProviderMap[assetAddress_]) != address(0);
+        return assetIndex[assetAddress_].exist;
     }
 
     /**
@@ -320,12 +322,12 @@ contract MocCAWrapper is MocUpgradable {
         uint256 totalCurrency;
         // loop through all assets to calculate the total amount of currency held
         for (uint256 i = 0; i < assetsLength; i++) {
-            Asset memory asset = assets[i];
+            IERC20 asset = assets[i];
             // get asset balance
-            uint256 assetBalance = asset.asset.balanceOf(address(this));
+            uint256 assetBalance = asset.balanceOf(address(this));
             // multiply by actual asset price and add to the accumulated total currency
             // [PREC] = [N] * [PREC]
-            totalCurrency += assetBalance * _getAssetPrice(asset.priceProvider);
+            totalCurrency += assetBalance * _getAssetPrice(priceProviderMap[address(asset)]);
         }
         // [PREC] = [PREC] / [N]
         return totalCurrency / tokenTotalSupply;
@@ -340,14 +342,19 @@ contract MocCAWrapper is MocUpgradable {
      */
     function addAsset(address assetAddress_, address priceProviderAddress_) external {
         if (assetAddress_ == address(0)) revert InvalidAddress();
-        if (address(priceProviderMap[assetAddress_]) != address(0)) revert AssetAlreadyAdded();
         IPriceProvider priceProvider = IPriceProvider(priceProviderAddress_);
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider.peek();
         if (!has) revert InvalidAddress();
 
-        assets.push(Asset({ asset: IERC20(assetAddress_), priceProvider: priceProvider }));
+        // TODO: this could be replaced by a "if exists modify it"
+        if (assetIndex[address(assetAddress_)].exist) revert AssetAlreadyAdded();
+        AssetIndex memory assetIndexAux = AssetIndex({ index: uint8(assets.length), exist: true });
+        assetIndex[address(assetAddress_)] = assetIndexAux;
+
+        assets.push(IERC20(assetAddress_));
         priceProviderMap[assetAddress_] = priceProvider;
+        emit AssetAddedOrModified(assetAddress_, priceProviderAddress_);
     }
 
     /**

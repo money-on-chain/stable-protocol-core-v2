@@ -31,6 +31,13 @@ abstract contract MocBaseBucket is MocUpgradable {
         IPriceProvider priceProvider;
     }
 
+    struct PeggedTokenIndex {
+        // Pegged Token index
+        uint8 index;
+        // true if Pegged Token exist
+        bool exist;
+    }
+
     // ------- Storage -------
 
     // total amount of Collateral Asset holded in the Collateral Bag
@@ -46,7 +53,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // Pegged Tokens MocRC20 addresses
     IMocRC20[] public tpTokens;
     // Pegged Token indexes
-    mapping(address => uint8) internal peggedTokenIndex;
+    mapping(address => PeggedTokenIndex) internal peggedTokenIndex;
     // peg container
     PegContainerItem[] internal pegContainer;
     // reserve factor

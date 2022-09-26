@@ -383,9 +383,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (!has) revert InvalidAddress();
 
         // TODO: this could be replaced by a "if exists modify it"
-        if (peggedTokenIndex[address(tpToken)] != 0) revert PeggedTokenAlreadyAdded();
-        uint8 newTPindex = uint8(tpTokens.length);
-        peggedTokenIndex[address(tpToken)] = newTPindex;
+        if (peggedTokenIndex[address(tpToken)].exist) revert PeggedTokenAlreadyAdded();
+        PeggedTokenIndex memory tpIndex = PeggedTokenIndex({ index: uint8(tpTokens.length), exist: true });
+        peggedTokenIndex[address(tpToken)] = tpIndex;
 
         // set Pegged Token address
         tpTokens.push(tpToken);
@@ -420,7 +420,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             })
         );
         // emit the event
-        emit PeggedTokenAdded(newTPindex, addPeggedTokenParams_);
+        emit PeggedTokenAdded(tpIndex.index, addPeggedTokenParams_);
     }
 
     /**

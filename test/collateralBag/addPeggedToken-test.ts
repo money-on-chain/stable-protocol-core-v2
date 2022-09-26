@@ -65,7 +65,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
     };
 
   describe("GIVEN a MocCABag implementation deployed", () => {
-    before(async () => {
+    beforeEach(async () => {
       ({ mocImpl } = await fixtureDeployedMocCABag(0)());
       mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
       priceProvider = await deployPriceProvider(pEth(1));
@@ -84,7 +84,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
     });
     describe("WHEN a Pegged Token is added with a deprecated price provider", () => {
       let deprecatedPriceProvider: PriceProviderMock;
-      before(async () => {
+      beforeEach(async () => {
         deprecatedPriceProvider = await deployPriceProvider(pEth(1));
         await deprecatedPriceProvider.deprecatePriceProvider();
       });
