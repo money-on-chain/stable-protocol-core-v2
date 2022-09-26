@@ -49,6 +49,19 @@ const mintTPBehavior = function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
       });
+      describe("AND TP price provider is deprecated", function () {
+        beforeEach(async function () {
+          await mocContracts.priceProviders[TP_0].deprecatePriceProvider();
+        });
+        describe("WHEN alice tries to mint 23500 TP", function () {
+          it("THEN tx reverts because invalid price provider", async function () {
+            await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.INVALID_PRICE_PROVIDER,
+            );
+          });
+        });
+      });
       describe("WHEN alice sends 100 Asset to mint 100 TP to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
           await expect(

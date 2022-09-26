@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCoinbase } from "./fixture";
-import { MocCACoinbase, MocRC20, NonPayableMock, PriceProviderMock, ReentrancyAttackerMock } from "../../typechain";
+import { MocCACoinbase, NonPayableMock, ReentrancyAttackerMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { ethers, getNamedAccounts } from "hardhat";
@@ -10,9 +10,6 @@ import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCoinbase mint TP", function () {
   let mocImpl: MocCACoinbase;
-  let mocCollateralToken: MocRC20;
-  let mocPeggedTokens: MocRC20[];
-  let priceProviders: PriceProviderMock[];
   let mocFunctions: any;
   let deployer: Address;
 
@@ -20,10 +17,10 @@ describe("Feature: MocCoinbase mint TP", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
-      ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
-      mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
+      this.mocContracts = await fixtureDeploy();
+      mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      this.mocContracts = { mocImpl, mocCollateralToken, mocPeggedTokens };
+      ({ mocImpl } = this.mocContracts);
     });
     mintTPBehavior();
 

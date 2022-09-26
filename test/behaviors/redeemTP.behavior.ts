@@ -31,6 +31,19 @@ const redeemTPBehavior = function () {
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
         await mocFunctions.mintTP({ i: TP_2, from: alice, qTP: 93458 });
       });
+      describe("AND TP price provider is deprecated", function () {
+        beforeEach(async function () {
+          await mocContracts.priceProviders[TP_0].deprecatePriceProvider();
+        });
+        describe("WHEN alice tries to redeem 23500 TP", function () {
+          it("THEN tx reverts because invalid price provider", async function () {
+            await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.INVALID_PRICE_PROVIDER,
+            );
+          });
+        });
+      });
       describe("WHEN alice tries to redeem 0 TP", function () {
         it("THEN tx reverts because the amount of AC is invalid", async function () {
           await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 0 })).to.be.revertedWithCustomError(
