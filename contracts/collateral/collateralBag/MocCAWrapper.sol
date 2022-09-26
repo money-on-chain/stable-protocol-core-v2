@@ -349,8 +349,7 @@ contract MocCAWrapper is MocUpgradable {
 
         // TODO: this could be replaced by a "if exists modify it"
         if (assetIndex[address(assetAddress_)].exist) revert AssetAlreadyAdded();
-        AssetIndex memory assetIndexAux = AssetIndex({ index: uint8(assets.length), exist: true });
-        assetIndex[address(assetAddress_)] = assetIndexAux;
+        assetIndex[address(assetAddress_)] = AssetIndex({ index: uint8(assets.length), exist: true });
 
         assets.push(IERC20(assetAddress_));
         priceProviderMap[assetAddress_] = priceProvider;
