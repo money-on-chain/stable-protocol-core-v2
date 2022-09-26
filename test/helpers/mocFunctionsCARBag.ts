@@ -82,7 +82,9 @@ const redeemTP =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+    }
     return mocWrapper.connect(signer).redeemTP(asset.address, i, qTP, qACmin);
   };
 
@@ -94,7 +96,9 @@ const redeemTPto =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+    }
     return mocWrapper.connect(signer).redeemTPto(asset.address, i, qTP, qACmin, to);
   };
 

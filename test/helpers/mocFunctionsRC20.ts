@@ -75,26 +75,24 @@ const mintTPto =
   };
 
 const redeemTP =
-  (mocImpl, mocPeggedTokens) =>
+  mocImpl =>
   async ({ i, from, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    await mocPeggedTokens[i].connect(signer).approve(mocImpl.address, qTP);
     return mocImpl.connect(signer).redeemTP(i, qTP, qACmin);
   };
 
 const redeemTPto =
-  (mocImpl, mocPeggedTokens) =>
+  mocImpl =>
   async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    await mocPeggedTokens[i].connect(signer).approve(mocImpl.address, qTP);
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to);
   };
 
@@ -148,8 +146,8 @@ export const mocFunctionsRC20 = async ({
   redeemTCto: redeemTCto(mocImpl, mocCollateralToken),
   mintTP: mintTP(mocImpl, collateralAsset),
   mintTPto: mintTPto(mocImpl, collateralAsset),
-  redeemTP: redeemTP(mocImpl, mocPeggedTokens),
-  redeemTPto: redeemTPto(mocImpl, mocPeggedTokens),
+  redeemTP: redeemTP(mocImpl),
+  redeemTPto: redeemTPto(mocImpl),
   liqRedeemTP: liqRedeemTP(mocImpl),
   liqRedeemTPto: liqRedeemTPto(mocImpl),
   assetBalanceOf: balanceOf(collateralAsset),

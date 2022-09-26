@@ -14,6 +14,7 @@ const redeemTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_2 = 2;
+  const TP_NON_EXISTENT = 4;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
@@ -42,6 +43,12 @@ const redeemTPBehavior = function () {
               ERRORS.INVALID_PRICE_PROVIDER,
             );
           });
+        });
+      });
+      describe("WHEN alice tries to redeem a non-existent TP", function () {
+        it("THEN tx reverts with panice code 0x32 array out of bounded", async function () {
+          // generic revert because on collateralbag implementation fail before accessing the tp array
+          await expect(mocFunctions.redeemTP({ i: TP_NON_EXISTENT, from: alice, qTP: 100 })).to.be.reverted;
         });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {

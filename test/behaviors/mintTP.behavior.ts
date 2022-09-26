@@ -14,6 +14,7 @@ const mintTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_1 = 1;
+  const TP_NON_EXISTENT = 4;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
 
   describe("Feature: mint Pegged Token", function () {
@@ -60,6 +61,13 @@ const mintTPBehavior = function () {
               ERRORS.INVALID_PRICE_PROVIDER,
             );
           });
+        });
+      });
+      describe("WHEN alice tries to mint a non-existent TP", function () {
+        it("THEN tx reverts with panice code 0x32 array out of bounded", async function () {
+          await expect(mocFunctions.mintTP({ i: TP_NON_EXISTENT, from: alice, qTP: 100 })).to.be.revertedWithPanic(
+            "0x32",
+          );
         });
       });
       describe("WHEN alice sends 100 Asset to mint 100 TP to the zero address", function () {
