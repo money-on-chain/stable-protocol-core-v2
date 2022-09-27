@@ -72,13 +72,13 @@ describe("Feature: MocCABag add Pegged Token", function () {
     });
     describe("WHEN a Pegged Token is added with invalid token address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        // revert without reason tring to ask roles to address zero
+        // revert without reason string trying to ask roles to address zero
         await expect(mocAddPeggedToken(mocImpl)({ tpTokenAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
       });
     });
     describe("WHEN a Pegged Token is added with invalid price provider address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        // revert without reason tring to peek price to address zero
+        // revert without reason string trying to peek price to address zero
         await expect(mocAddPeggedToken(mocImpl)({ priceProviderAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
       });
     });

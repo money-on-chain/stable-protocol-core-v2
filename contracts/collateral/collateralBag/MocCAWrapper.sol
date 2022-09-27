@@ -44,7 +44,7 @@ contract MocCAWrapper is MocUpgradable {
     struct AssetIndex {
         // asset index
         uint8 index;
-        // true if Pegged Token exist
+        // true if asset token exist
         bool exist;
     }
 
@@ -321,7 +321,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 assetsLength = assets.length;
         uint256 totalCurrency;
         // loop through all assets to calculate the total amount of currency held
-        for (uint256 i = 0; i < assetsLength; i++) {
+        for (uint8 i = 0; i < assetsLength; i = unchecked_inc(i)) {
             IERC20 asset = assets[i];
             // get asset balance
             uint256 assetBalance = asset.balanceOf(address(this));

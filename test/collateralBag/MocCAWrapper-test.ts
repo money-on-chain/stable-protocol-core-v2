@@ -33,7 +33,7 @@ describe("Feature: MocCAWrapper", function () {
       });
     });
     describe("WHEN add an asset with invalid price provider address", () => {
-      // revert without reason tring to peek price to address zero
+      // revert without reason string trying to peek price to address zero
       it("THEN tx fails because address is the zero address", async () => {
         await expect(mocWrapper.addAsset(asset00.address, CONSTANTS.ZERO_ADDRESS)).to.be.reverted;
       });

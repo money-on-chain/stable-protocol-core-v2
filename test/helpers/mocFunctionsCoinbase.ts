@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { pEth } from "./utils";
-import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import { pEth, mineNBlocks } from "./utils";
 
 const mintTC =
   mocImpl =>
@@ -78,7 +77,7 @@ const redeemTP =
       qACmin = pEth(qACmin);
     }
     // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mine(1);
+    await mineNBlocks(1);
     return mocImpl.connect(signer).redeemTP(i, qTP, qACmin, { gasPrice: 0 });
   };
 
@@ -91,7 +90,7 @@ const redeemTPto =
       qACmin = pEth(qACmin);
     }
     // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mine(1);
+    await mineNBlocks(1);
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to, { gasPrice: 0 });
   };
 
