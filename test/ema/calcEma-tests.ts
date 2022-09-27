@@ -100,10 +100,9 @@ describe("Feature: Ema Calculation", function () {
     describe("AND there are open positions", () => {
       beforeEach(async () => {
         await mocFunctions.mintTC({ from: deployer, qTC: 10000000000000 });
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 50000000 });
-        await mocFunctions.mintTP({ i: 1, from: alice, qTP: 500000 });
-        await mocFunctions.mintTP({ i: 2, from: alice, qTP: 100000000 });
-        await mocFunctions.mintTP({ i: 3, from: alice, qTP: 1000000 });
+        await Promise.all(
+          [50000000, 500000, 100000000, 1000000].map((qTP, i) => mocFunctions.mintTP({ i, from: alice, qTP })),
+        );
       });
       describe("WHEN get ctargemaCA", async () => {
         let ctargemaCA: BigNumber;
@@ -120,12 +119,9 @@ describe("Feature: Ema Calculation", function () {
           assertPrec(ctargemaCA, "4.611238561357574541");
         });
       });
-      describe("AND pegged prices has changed", () => {
+      describe("AND pegged prices have changed", () => {
         beforeEach(async () => {
-          await priceProviders[0].poke(pEth(250));
-          await priceProviders[1].poke(pEth(5.33));
-          await priceProviders[2].poke(pEth(925.93));
-          await priceProviders[3].poke(pEth(20.26));
+          await Promise.all([250, 5.33, 925.93, 20.26].map((price, i) => priceProviders[i].poke(pEth(price))));
           await mineNBlocks(coreParams.emaCalculationBlockSpan);
         });
         describe("WHEN get ctargemaCA", async () => {
