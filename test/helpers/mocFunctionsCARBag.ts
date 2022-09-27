@@ -10,7 +10,7 @@ const mintTC =
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    await asset.connect(signer).approve(mocWrapper.address, qACmax);
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
     return mocWrapper.connect(signer).mintTC(asset.address, qTC, qACmax);
   };
 
@@ -22,7 +22,7 @@ const mintTCto =
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    await asset.connect(signer).approve(mocWrapper.address, qACmax);
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
     return mocWrapper.connect(signer).mintTCto(asset.address, qTC, qACmax, to);
   };
 
@@ -34,7 +34,7 @@ const redeemTC =
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
-    await mocCollateralToken.connect(signer).approve(mocWrapper.address, qTC);
+    await mocCollateralToken.connect(signer).increaseAllowance(mocWrapper.address, qTC);
     return mocWrapper.connect(signer).redeemTC(asset.address, qTC, qACmin);
   };
 
@@ -46,7 +46,7 @@ const redeemTCto =
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
-    await mocCollateralToken.connect(signer).approve(mocWrapper.address, qTC);
+    await mocCollateralToken.connect(signer).increaseAllowance(mocWrapper.address, qTC);
     return mocWrapper.connect(signer).redeemTCto(asset.address, qTC, qACmin, to);
   };
 
@@ -58,7 +58,7 @@ const mintTP =
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
-    await asset.connect(signer).approve(mocWrapper.address, qACmax);
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
     return mocWrapper.connect(signer).mintTP(asset.address, i, qTP, qACmax);
   };
 
@@ -70,7 +70,7 @@ const mintTPto =
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
-    await asset.connect(signer).approve(mocWrapper.address, qACmax);
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
     return mocWrapper.connect(signer).mintTPto(asset.address, i, qTP, qACmax, to);
   };
 
@@ -83,7 +83,7 @@ const redeemTP =
       qACmin = pEth(qACmin);
     }
     if (mocPeggedTokens[i]) {
-      await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
     }
     return mocWrapper.connect(signer).redeemTP(asset.address, i, qTP, qACmin);
   };
@@ -97,7 +97,7 @@ const redeemTPto =
       qACmin = pEth(qACmin);
     }
     if (mocPeggedTokens[i]) {
-      await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, qTP);
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
     }
     return mocWrapper.connect(signer).redeemTPto(asset.address, i, qTP, qACmin, to);
   };
@@ -107,7 +107,7 @@ const liqRedeemTP =
   async ({ i, from, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
 
-    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, pEth(1e10));
+    await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, pEth(1e10));
     return mocWrapper.connect(signer).liqRedeemTP(asset.address, i, { gasLimit: GAS_LIMIT_PATCH });
   };
 
@@ -115,7 +115,7 @@ const liqRedeemTPto =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
   async ({ i, from, to, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
-    await mocPeggedTokens[i].connect(signer).approve(mocWrapper.address, pEth(1e10));
+    await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, pEth(1e10));
     return mocWrapper.connect(signer).liqRedeemTPto(asset.address, i, to, { gasLimit: GAS_LIMIT_PATCH });
   };
 
@@ -155,23 +155,23 @@ const tpTransfer =
 export const mocFunctionsCARBag = async ({
   mocWrapper,
   mocCollateralToken,
-  assetDefault,
+  assets,
   wcaToken,
   mocPeggedTokens,
   priceProviders,
 }) => {
   return {
-    mintTC: mintTC(mocWrapper, assetDefault),
-    mintTCto: mintTCto(mocWrapper, assetDefault),
-    redeemTC: redeemTC(mocWrapper, mocCollateralToken, assetDefault),
-    redeemTCto: redeemTCto(mocWrapper, mocCollateralToken, assetDefault),
-    mintTP: mintTP(mocWrapper, assetDefault),
-    mintTPto: mintTPto(mocWrapper, assetDefault),
-    redeemTP: redeemTP(mocWrapper, mocPeggedTokens, assetDefault),
-    redeemTPto: redeemTPto(mocWrapper, mocPeggedTokens, assetDefault),
-    liqRedeemTP: liqRedeemTP(mocWrapper, mocPeggedTokens, assetDefault),
-    liqRedeemTPto: liqRedeemTPto(mocWrapper, mocPeggedTokens, assetDefault),
-    assetBalanceOf: balanceOf(assetDefault),
+    mintTC: mintTC(mocWrapper, assets[0]),
+    mintTCto: mintTCto(mocWrapper, assets[0]),
+    redeemTC: redeemTC(mocWrapper, mocCollateralToken, assets[0]),
+    redeemTCto: redeemTCto(mocWrapper, mocCollateralToken, assets[0]),
+    mintTP: mintTP(mocWrapper, assets[0]),
+    mintTPto: mintTPto(mocWrapper, assets[0]),
+    redeemTP: redeemTP(mocWrapper, mocPeggedTokens, assets[0]),
+    redeemTPto: redeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
+    liqRedeemTP: liqRedeemTP(mocWrapper, mocPeggedTokens, assets[0]),
+    liqRedeemTPto: liqRedeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
+    assetBalanceOf: balanceOf(assets[0]),
     acBalanceOf: balanceOf(wcaToken),
     tcBalanceOf: balanceOf(mocCollateralToken),
     tcTransfer: tcTransfer(mocCollateralToken),
