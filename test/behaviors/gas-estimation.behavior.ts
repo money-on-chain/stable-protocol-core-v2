@@ -26,7 +26,7 @@ const gasEstimationBehavior = function () {
     Object.assign(gasSummaries, { [op]: gasData(gasUsed) });
   };
 
-  describe.only("Feature: gas estimation", function () {
+  describe("Feature: gas estimation", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
