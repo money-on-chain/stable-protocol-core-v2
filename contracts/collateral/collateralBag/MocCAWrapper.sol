@@ -34,7 +34,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
-    event AssetAddedOrModified(address indexed assetAddress_, address priceProviderAddress);
+    event AssetAdded(address indexed assetAddress_, address priceProviderAddress);
     // ------- Custom Errors -------
     error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
@@ -347,13 +347,12 @@ contract MocCAWrapper is MocUpgradable {
         (, bool has) = priceProvider.peek();
         if (!has) revert InvalidAddress();
 
-        // TODO: this could be replaced by a "if exists modify it"
         if (assetIndex[address(assetAddress_)].exist) revert AssetAlreadyAdded();
         assetIndex[address(assetAddress_)] = AssetIndex({ index: uint8(assets.length), exist: true });
 
         assets.push(IERC20(assetAddress_));
         priceProviderMap[assetAddress_] = priceProvider;
-        emit AssetAddedOrModified(assetAddress_, priceProviderAddress_);
+        emit AssetAdded(assetAddress_, priceProviderAddress_);
     }
 
     /**

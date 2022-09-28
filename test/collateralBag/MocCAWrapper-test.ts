@@ -58,7 +58,7 @@ describe("Feature: MocCAWrapper", function () {
       it("THEN an AssetAddedOrModified event is emitted", async () => {
         // asset: asset00
         // priceProvider: priceProvider00
-        await expect(tx).to.emit(mocWrapper, "AssetAddedOrModified").withArgs(asset00.address, priceProvider00.address);
+        await expect(tx).to.emit(mocWrapper, "AssetAdded").withArgs(asset00.address, priceProvider00.address);
       });
     });
   });

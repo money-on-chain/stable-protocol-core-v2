@@ -43,12 +43,12 @@ describe("Feature: MocCABag mint TP", function () {
       });
     });
 
-    describe("AND alice has 23500 TP with asset price at 1:1", () => {
+    describe("AND there are 23500 TP minted with asset price at 1:1", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 23500 });
       });
       describe("WHEN alice mints 2350 TP", () => {
         beforeEach(async () => {
