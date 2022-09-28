@@ -7,6 +7,7 @@ parserOptions:
   project: tsconfig.json
 plugins:
   - "@typescript-eslint"
+  - "no-only-tests"
 env:
   node: true
   mocha: true
@@ -21,3 +22,5 @@ rules:
     - error
     - argsIgnorePattern: _
       varsIgnorePattern: _
+  "no-only-tests/no-only-tests":
+    - error

@@ -115,11 +115,11 @@ describe("Feature: MocCABag redeem TP", function () {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
-          it("THEN alice receives 102.72 of the new asset instead of 92.45", async () => {
-            //asset reward = 92.47 currency / 0.9 asset price
+          it("THEN alice receives 105.44 of the new asset instead of 94.89", async () => {
+            //asset reward = 94.89 currency / 0.9 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("102.723599537037037111", diff);
+            assertPrec("105.444498456790123555", diff);
           });
         });
       });
@@ -137,11 +137,11 @@ describe("Feature: MocCABag redeem TP", function () {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
-          it("THEN alice receives 84.04 of the new asset instead of 92.45", async () => {
-            //asset reward = 92.47 currency / 1.1 asset price
+          it("THEN alice receives 86.27 of the new asset instead of 94.89", async () => {
+            //asset reward = 94.89 currency / 1.1 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("84.046581439393939454", diff);
+            assertPrec("86.272771464646464727", diff);
           });
         });
       });
