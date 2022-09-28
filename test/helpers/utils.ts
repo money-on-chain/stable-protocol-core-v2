@@ -64,6 +64,7 @@ export const tpParams = [
     ctarg: pEth(3.5),
     initialEma: pEth(837.33),
     smoothingFactor: pEth(0.01),
+    facMin: 0,
   },
   {
     price: pEth(20.1),
