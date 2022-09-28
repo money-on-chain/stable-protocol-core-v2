@@ -65,22 +65,32 @@ describe("Feature: MocCABag add Pegged Token", function () {
     };
 
   describe("GIVEN a MocCABag implementation deployed", () => {
-    before(async () => {
+    beforeEach(async () => {
       ({ mocImpl } = await fixtureDeployedMocCABag(0)());
       mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
       priceProvider = await deployPriceProvider(pEth(1));
     });
     describe("WHEN a Pegged Token is added with invalid token address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(
-          mocAddPeggedToken(mocImpl)({ tpTokenAddress: CONSTANTS.ZERO_ADDRESS }),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
+        // revert without reason string trying to ask roles to address zero
+        await expect(mocAddPeggedToken(mocImpl)({ tpTokenAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
       });
     });
     describe("WHEN a Pegged Token is added with invalid price provider address", () => {
       it("THEN tx fails because address is the zero address", async () => {
+        // revert without reason string trying to peek price to address zero
+        await expect(mocAddPeggedToken(mocImpl)({ priceProviderAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
+      });
+    });
+    describe("WHEN a Pegged Token is added with a deprecated price provider", () => {
+      let deprecatedPriceProvider: PriceProviderMock;
+      beforeEach(async () => {
+        deprecatedPriceProvider = await deployPriceProvider(pEth(1));
+        await deprecatedPriceProvider.deprecatePriceProvider();
+      });
+      it("THEN tx fails because address is invalid", async () => {
         await expect(
-          mocAddPeggedToken(mocImpl)({ priceProviderAddress: CONSTANTS.ZERO_ADDRESS }),
+          mocAddPeggedToken(mocImpl)({ priceProviderAddress: deprecatedPriceProvider.address }),
         ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
       });
     });

@@ -13,6 +13,7 @@ import { tpParams } from "../helpers/utils";
 describe("Feature: MocCABag redeem TP", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
+  let assetPriceProvider: PriceProviderMock;
   let mocFunctions: any;
   let deployer: Address;
   let alice: Address;
@@ -25,7 +26,7 @@ describe("Feature: MocCABag redeem TP", function () {
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ assetDefault, mocWrapper } = this.mocContracts);
+      ({ assetDefault, mocWrapper, assetPriceProvider } = this.mocContracts);
     });
     redeemTPBehavior();
 
@@ -85,9 +86,22 @@ describe("Feature: MocCABag redeem TP", function () {
             .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth("9.49000393518518519"));
         });
       });
+      describe("AND asset price provider is deprecated", () => {
+        beforeEach(async () => {
+          await assetPriceProvider.deprecatePriceProvider();
+        });
+        describe("WHEN alice tries to redeem 2350 TP", () => {
+          it("THEN tx fails because invalid price provider", async () => {
+            await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2350 })).to.be.revertedWithCustomError(
+              mocWrapper,
+              ERRORS.INVALID_PRICE_PROVIDER,
+            );
+          });
+        });
+      });
       let newAsset: ERC20Mock;
       let newPriceProvider: PriceProviderMock;
-      describe("WHEN a new asset with price 0.9 is added", () => {
+      describe("AND a new asset with price 0.9 is added", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(0.9));
@@ -95,7 +109,7 @@ describe("Feature: MocCABag redeem TP", function () {
           // add stock of the new asset to the collateral bag
           await mocFunctions.mintTC({ from: deployer, qTC: 1000, asset: newAsset });
         });
-        describe("AND redeem 23500 TP in exchange of the new asset", () => {
+        describe("WHEN redeem 23500 TP in exchange of the new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
@@ -109,7 +123,7 @@ describe("Feature: MocCABag redeem TP", function () {
           });
         });
       });
-      describe("WHEN add a new asset with price 1.1", () => {
+      describe("AND a new asset with price 1.1 is added", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(1.1));
@@ -117,7 +131,7 @@ describe("Feature: MocCABag redeem TP", function () {
           // add stock of the new asset to the collateral bag
           await mocFunctions.mintTC({ from: deployer, qTC: 1000, asset: newAsset });
         });
-        describe("AND redeem 23500 TP with new asset", () => {
+        describe("WHEN redeem 23500 TP with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);

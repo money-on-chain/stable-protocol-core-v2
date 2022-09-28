@@ -22,4 +22,8 @@ contract PriceProviderMock is IPriceProvider {
     function poke(uint256 price_) external {
         mocPrice = bytes32(price_);
     }
+
+    function deprecatePriceProvider() external {
+        has = false;
+    }
 }

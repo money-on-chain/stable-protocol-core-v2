@@ -2,6 +2,7 @@ import { fixtureDeployedMocCABag } from "./fixture";
 import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
 import { deployAsset, deployPriceProvider, pEth, CONSTANTS, ERRORS } from "../helpers/utils";
 import { expect } from "chai";
+import { ContractTransaction } from "ethers";
 
 describe("Feature: MocCAWrapper", function () {
   let mocWrapper: MocCAWrapper;
@@ -32,11 +33,32 @@ describe("Feature: MocCAWrapper", function () {
       });
     });
     describe("WHEN add an asset with invalid price provider address", () => {
+      // revert without reason string trying to peek price to address zero
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(mocWrapper.addAsset(asset00.address, CONSTANTS.ZERO_ADDRESS)).to.be.revertedWithCustomError(
-          mocWrapper,
-          ERRORS.INVALID_ADDRESS,
-        );
+        await expect(mocWrapper.addAsset(asset00.address, CONSTANTS.ZERO_ADDRESS)).to.be.reverted;
+      });
+    });
+    describe("WHEN add an asset with a deprecated price provider", () => {
+      let deprecatedPriceProvider: PriceProviderMock;
+      before(async () => {
+        deprecatedPriceProvider = await deployPriceProvider(pEth(1));
+        await deprecatedPriceProvider.deprecatePriceProvider();
+      });
+      it("THEN tx fails because address is invalid", async () => {
+        await expect(
+          mocWrapper.addAsset(asset00.address, deprecatedPriceProvider.address),
+        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
+      });
+    });
+    describe("WHEN an asset is added", () => {
+      let tx: ContractTransaction;
+      beforeEach(async () => {
+        tx = await mocWrapper.addAsset(asset00.address, priceProvider00.address);
+      });
+      it("THEN an AssetAddedOrModified event is emitted", async () => {
+        // asset: asset00
+        // priceProvider: priceProvider00
+        await expect(tx).to.emit(mocWrapper, "AssetAdded").withArgs(asset00.address, priceProvider00.address);
       });
     });
   });

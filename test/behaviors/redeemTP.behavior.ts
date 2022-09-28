@@ -14,6 +14,7 @@ const redeemTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_2 = 2;
+  const TP_NON_EXISTENT = 4;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
@@ -30,6 +31,25 @@ const redeemTPBehavior = function () {
         await mocFunctions.mintTC({ from: alice, qTC: 3000 });
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
         await mocFunctions.mintTP({ i: TP_2, from: alice, qTP: 93458 });
+      });
+      describe("AND TP price provider is deprecated", function () {
+        beforeEach(async function () {
+          await mocContracts.priceProviders[TP_0].deprecatePriceProvider();
+        });
+        describe("WHEN alice tries to redeem 23500 TP", function () {
+          it("THEN tx reverts because invalid price provider", async function () {
+            await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.INVALID_PRICE_PROVIDER,
+            );
+          });
+        });
+      });
+      describe("WHEN alice tries to redeem a non-existent TP", function () {
+        it("THEN tx reverts with panice code 0x32 array out of bounded", async function () {
+          // generic revert because on collateralbag implementation fail before accessing the tp array
+          await expect(mocFunctions.redeemTP({ i: TP_NON_EXISTENT, from: alice, qTP: 100 })).to.be.reverted;
+        });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
         it("THEN tx reverts because the amount of AC is invalid", async function () {

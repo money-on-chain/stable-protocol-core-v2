@@ -87,10 +87,8 @@ describe("Feature: MocCABag initialization", function () {
     });
     describe("WHEN it is initialized with invalid Collateral Token address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ mocTCAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
+        // revert without reason string trying to ask roles to address zero
+        await expect(newMocInit({ mocTCAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
       });
     });
     describe("WHEN it is initialized with invalid Moc Settlement address", () => {

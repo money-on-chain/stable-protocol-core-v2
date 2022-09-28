@@ -14,6 +14,7 @@ const mintTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_1 = 1;
+  const TP_NON_EXISTENT = 4;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
 
   describe("Feature: mint Pegged Token", function () {
@@ -48,6 +49,26 @@ const mintTPBehavior = function () {
         */
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+      });
+      describe("AND TP price provider is deprecated", function () {
+        beforeEach(async function () {
+          await mocContracts.priceProviders[TP_0].deprecatePriceProvider();
+        });
+        describe("WHEN alice tries to mint 23500 TP", function () {
+          it("THEN tx reverts because invalid price provider", async function () {
+            await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.INVALID_PRICE_PROVIDER,
+            );
+          });
+        });
+      });
+      describe("WHEN alice tries to mint a non-existent TP", function () {
+        it("THEN tx reverts with panice code 0x32 array out of bounded", async function () {
+          await expect(mocFunctions.mintTP({ i: TP_NON_EXISTENT, from: alice, qTP: 100 })).to.be.revertedWithPanic(
+            "0x32",
+          );
+        });
       });
       describe("WHEN alice sends 100 Asset to mint 100 TP to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {

@@ -13,6 +13,7 @@ import { tpParams } from "../helpers/utils";
 describe("Feature: MocCABag mint TP", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
+  let assetPriceProvider: PriceProviderMock;
   let mocFunctions: any;
   let deployer: Address;
   let alice: Address;
@@ -25,7 +26,7 @@ describe("Feature: MocCABag mint TP", function () {
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ assetDefault, mocWrapper } = this.mocContracts);
+      ({ assetDefault, mocWrapper, assetPriceProvider } = this.mocContracts);
     });
     mintTPBehavior();
 
@@ -42,61 +43,67 @@ describe("Feature: MocCABag mint TP", function () {
       });
     });
 
-    describe("WHEN alice mints 2350 TP", () => {
+    describe("AND there are 23500 TP minted with asset price at 1:1", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        tx = await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
+        await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 23500 });
       });
-      it("THEN a TPMinted event is emitted by MocWrapper", async function () {
-        // asset: assetDefault
-        // i: 0
-        // sender: alice
-        // receiver: alice
-        // qTP: 2350 TP
-        // qAC: 10AC + 5% for Moc Fee Flow
-        await expect(tx)
-          .to.emit(mocWrapper, "TPMinted")
-          .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10 * 1.05));
+      describe("WHEN alice mints 2350 TP", () => {
+        beforeEach(async () => {
+          tx = await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
+        });
+        it("THEN a TPMinted event is emitted by MocWrapper", async function () {
+          // asset: assetDefault
+          // i: 0
+          // sender: alice
+          // receiver: alice
+          // qTP: 2350 TP
+          // qAC: 10AC + 5% for Moc Fee Flow
+          await expect(tx)
+            .to.emit(mocWrapper, "TPMinted")
+            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10 * 1.05));
+        });
       });
-    });
-
-    describe("WHEN alice mints 2350 TP to bob", () => {
-      let tx: ContractTransaction;
-      beforeEach(async () => {
-        //add collateral
-        await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        tx = await mocFunctions.mintTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
+      describe("WHEN alice mints 2350 TP to bob", () => {
+        beforeEach(async () => {
+          tx = await mocFunctions.mintTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
+        });
+        it("THEN a TPMinted event is emitted by MocWrapper", async function () {
+          // asset: assetDefault
+          // i: 0
+          // sender: alice
+          // receiver: bob
+          // qTP: 2350 TP
+          // qAC: 10AC + 5% for Moc Fee Flow
+          await expect(tx)
+            .to.emit(mocWrapper, "TPMinted")
+            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10 * 1.05));
+        });
       });
-      it("THEN a TPMinted event is emitted by MocWrapper", async function () {
-        // asset: assetDefault
-        // i: 0
-        // sender: alice
-        // receiver: bob
-        // qTP: 2350 TP
-        // qAC: 10AC + 5% for Moc Fee Flow
-        await expect(tx)
-          .to.emit(mocWrapper, "TPMinted")
-          .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10 * 1.05));
+      describe("AND asset price provider is deprecated", () => {
+        beforeEach(async () => {
+          await assetPriceProvider.deprecatePriceProvider();
+        });
+        describe("WHEN alice tries to mint 2350 TP", () => {
+          it("THEN tx fails because invalid price provider", async () => {
+            await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 })).to.be.revertedWithCustomError(
+              mocWrapper,
+              ERRORS.INVALID_PRICE_PROVIDER,
+            );
+          });
+        });
       });
-    });
-
-    describe("GIVEN 23500 TP minted with asset at 1:1 price", () => {
       let newAsset: ERC20Mock;
       let newPriceProvider: PriceProviderMock;
-      beforeEach(async () => {
-        //add collateral
-        await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
-      });
-      describe("WHEN add a new asset with price 0.9", () => {
+      describe("AND a new asset with price 0.9 is added", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(0.9));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
-        describe("AND mint 23500 TP with new asset", () => {
+        describe("WHEN mint 23500 TP with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
@@ -110,13 +117,13 @@ describe("Feature: MocCABag mint TP", function () {
           });
         });
       });
-      describe("WHEN add a new asset with price 1.1", () => {
+      describe("AND a new asset with price 1.1 is added", () => {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(1.1));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
-        describe("AND mint 23500 TP with new asset", () => {
+        describe("WHEN mint 23500 TP with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);

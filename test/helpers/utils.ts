@@ -172,6 +172,7 @@ export const ERRORS = {
   LIQUIDATED: "Liquidated",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
+  INVALID_PRICE_PROVIDER: "InvalidPriceProvider",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
   INSUFFICIENT_TP_TO_REDEEM: "InsufficientTPtoRedeem",
