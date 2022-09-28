@@ -6,8 +6,16 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract ERC20Mock is ERC20Burnable {
     uint256 internal constant UINT256_MAX = ~uint256(0);
-    bool internal failWithFalse;
-    bool internal failWithRevert;
+
+    // There are existing ERC20 token deployments that reverts and others that return false
+    // This state is used to test both
+    enum FailType {
+        notFail,
+        failWithFalse, // always returns false in a transfer
+        failWithRevert // always reverts in a transfer
+    }
+
+    FailType internal failType;
 
     constructor() ERC20("ERC20Mock", "ERC20Mock") {
         _mint(msg.sender, UINT256_MAX / 10**10);
@@ -22,29 +30,17 @@ contract ERC20Mock is ERC20Burnable {
     }
 
     function transfer(address to, uint256 amount) public override returns (bool) {
-        if (failWithFalse) {
+        if (failType == FailType.failWithFalse) {
             return false;
         }
-        if (failWithRevert) {
+        if (failType == FailType.failWithRevert) {
             // solhint-disable-next-line reason-string
             require(false);
         }
         return super.transfer(to, amount);
     }
 
-    function forceTransferToFail(uint256 failType) external {
-        // failType: 0 disable, 1 false, 2 revert
-        if (failType == 0) {
-            failWithFalse = false;
-            failWithRevert = false;
-        }
-        if (failType == 1) {
-            failWithFalse = true;
-            failWithRevert = false;
-        }
-        if (failType == 2) {
-            failWithFalse = false;
-            failWithRevert = true;
-        }
+    function forceTransferToFail(FailType failType_) external {
+        failType = failType_;
     }
 }

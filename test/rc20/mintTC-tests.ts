@@ -34,9 +34,15 @@ describe("Feature: MocCARC20 mint TC", function () {
     });
 
     describe("WHEN alice tries to mint 10 TC", () => {
+      enum FailType {
+        notFail,
+        failWithFalse,
+        failWithRevert,
+      }
+
       describe("AND Collateral Asset transfer fails with false", () => {
         beforeEach(async () => {
-          await collateralAsset.forceTransferToFail(1);
+          await collateralAsset.forceTransferToFail(FailType.failWithFalse);
         });
         it("THEN tx reverts because transfer failed", async () => {
           await expect(mocFunctions.mintTC({ from: alice, qTC: 100 })).to.be.revertedWith(
@@ -46,7 +52,7 @@ describe("Feature: MocCARC20 mint TC", function () {
       });
       describe("AND Collateral Asset transfer fails with revert", () => {
         beforeEach(async () => {
-          await collateralAsset.forceTransferToFail(2);
+          await collateralAsset.forceTransferToFail(FailType.failWithRevert);
         });
         it("THEN tx reverts because transfer failed", async () => {
           await expect(mocFunctions.mintTC({ from: alice, qTC: 100 })).to.be.revertedWith(
