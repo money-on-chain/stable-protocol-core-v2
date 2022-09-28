@@ -74,7 +74,7 @@ const redeemTPBehavior = function () {
           ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_BELOW_MINIMUM);
         });
       });
-      describe("WHEN alice redeems 23500 TP within the minimum interest payment block", function () {
+      describe("WHEN alice redeems 23500 TP within the minimum interest payment block. nTP == qTP so, fct = facMin", function () {
         /*  
         nAC = 3100    
         nTP = 23500
@@ -83,10 +83,10 @@ const redeemTPBehavior = function () {
         => TP available to redeem = 23500
 
         arb = 1 => fctb = 0.1
-        arf = 0 => fctb = 5
-        => fctAvg = 2.55
+        arf = 1 => fctb = 0.1
+        => fctAvg = 0.1
         tils = 1%
-        => interest = 1% * 2.55 * (85340/86400) = 2.518%
+        => interest = 1% * 0.1 * (85340/86400) = 0.0987%
         */
         let tx: ContractTransaction;
         let alicePrevACBalance: Balance;
@@ -116,24 +116,24 @@ const redeemTPBehavior = function () {
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(100 * 0.05, diff);
         });
-        it("THEN Moc Interest Collector balance increase 2.518% of 100 AC", async function () {
+        it("THEN Moc Interest Collector balance increase 0.0987% of 100 AC", async function () {
           const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
           const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
-          assertPrec("2.5187152777777777", diff);
+          assertPrec("0.098773148148148100", diff);
         });
-        it("THEN alice balance increase 100 Asset - 5% for Moc Fee Flow - 2.518% for Moc Interest Collector", async function () {
+        it("THEN alice balance increase 100 Asset - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec("92.4812847222222223", diff);
+          assertPrec("94.901226851851851900", diff);
         });
         it("THEN a TPRedeemed event is emitted", async function () {
           // i: 0
           // sender: alice || mocWrapper
           // receiver: alice || mocWrapper
           // qTP: 23500 TP
-          // qAC: 100 AC - 5% for Moc Fee Flow - 2.518% for Moc Interest Collector
+          // qAC: 100 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
           // qACfee: 5% AC
-          // qACInterest: 2.518%
+          // qACInterest: 0.0987%
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPRedeemed")
             .withArgs(
@@ -141,9 +141,9 @@ const redeemTPBehavior = function () {
               mocContracts.mocWrapper?.address || alice,
               mocContracts.mocWrapper?.address || alice,
               pEth(23500),
-              pEth("92.4812847222222223"),
+              pEth("94.901226851851851900"),
               pEth(100 * 0.05),
-              pEth("2.5187152777777777"),
+              pEth("0.098773148148148100"),
             );
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
@@ -164,10 +164,10 @@ const redeemTPBehavior = function () {
         => TP available to redeem = 23500
 
         arb = 1 => fctb = 0.1
-        arf = 0 => fctb = 5
-        => fctAvg = 2.55
+        arf = 1 => fctb = 0.1
+        => fctAvg = 0.1
         tils = 1%
-        => interest = 1% * 2.55 * (85340/86400) = 2.518%
+        => interest = 1% * 0.1 * (85340/86400) = 0.0987%
         */
         let tx: ContractTransaction;
         let bobPrevACBalance: Balance;
@@ -197,24 +197,24 @@ const redeemTPBehavior = function () {
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(100 * 0.05, diff);
         });
-        it("THEN Moc Interest Collector balance increase 2.518% of 100 AC", async function () {
+        it("THEN Moc Interest Collector balance increase 0.0987% of 100 AC", async function () {
           const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
           const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
-          assertPrec("2.5187152777777777", diff);
+          assertPrec("0.098773148148148100", diff);
         });
-        it("THEN bob balance increase 100 Asset - 5% for Moc Fee Flow - 2.518% for Moc Interest Collector", async function () {
+        it("THEN bob balance increase 100 Asset - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector", async function () {
           const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);
           const diff = bobActualACBalance.sub(bobPrevACBalance);
-          assertPrec("92.4812847222222223", diff);
+          assertPrec("94.901226851851851900", diff);
         });
         it("THEN a TPRedeemed event is emitted", async function () {
           // i: 0
           // sender: alice || mocWrapper
           // receiver: bob || mocWrapper
           // qTP: 23500 TP
-          // qAC: 100 AC - 5% for Moc Fee Flow - 2.518% for Moc Interest Collector
+          // qAC: 100 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
           // qACfee: 5% AC
-          // qACInterest: 2.518%
+          // qACInterest: 0.0987%
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPRedeemed")
             .withArgs(
@@ -222,9 +222,52 @@ const redeemTPBehavior = function () {
               mocContracts.mocWrapper?.address || alice,
               mocContracts.mocWrapper?.address || bob,
               pEth(23500),
-              pEth("92.4812847222222223"),
+              pEth("94.901226851851851900"),
               pEth(100 * 0.05),
-              pEth("2.5187152777777777"),
+              pEth("0.098773148148148100"),
+            );
+        });
+      });
+      describe("WHEN alice redeems 2350 TP within the minimum interest payment block. nTP != qTP, so fct is calculated", function () {
+        /* 
+        arb = 1 => fctb = 0.1
+        arf = 1 => fctb = 0.1
+        => fctAvg = 0.1
+        tils = 1%
+        => interest = 1% * 0.1 * (85340/86400) = 0.0987%
+        */
+        let tx: ContractTransaction;
+        let mocInterestCollectorPrevACBalance: Balance;
+        beforeEach(async function () {
+          // go forward to a a block near the settlement
+          const bns = await mocContracts.mocSettlement.bns();
+          await mineUpTo(bns.sub(fixedBlock));
+          mocInterestCollectorPrevACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
+          tx = await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2350 });
+        });
+        it("THEN Moc Interest Collector balance increase 0.0987% of 10 AC", async function () {
+          const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
+          const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
+          assertPrec("0.009877314814814810", diff);
+        });
+        it("THEN a TPRedeemed event is emitted", async function () {
+          // i: 0
+          // sender: alice || mocWrapper
+          // receiver: alice || mocWrapper
+          // qTP: 2350 TP
+          // qAC: 10 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+          // qACfee: 5% AC
+          // qACInterest: 0%
+          await expect(tx)
+            .to.emit(mocContracts.mocImpl, "TPRedeemed")
+            .withArgs(
+              TP_0,
+              mocContracts.mocWrapper?.address || alice,
+              mocContracts.mocWrapper?.address || alice,
+              pEth(2350),
+              pEth("9.490122685185185190"),
+              pEth(10 * 0.05),
+              pEth("0.009877314814814810"),
             );
         });
       });
