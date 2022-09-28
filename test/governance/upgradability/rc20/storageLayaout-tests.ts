@@ -34,7 +34,6 @@ describe("Feature: Check MocRC20 storage layout compatibility using openzeppelin
         mocSettlementAddress: deployer,
         mocFeeFlowAddress: deployer,
         mocInterestCollectorAddress: deployer,
-        ctarg: coreParams.ctarg,
         protThrld: coreParams.protThrld,
         liqThrld: coreParams.liqThrld,
         tcMintFee: tcParams.mintFee,

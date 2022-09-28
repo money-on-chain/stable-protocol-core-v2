@@ -33,9 +33,9 @@ describe("Feature: MocCoinbase Upgradeability UUPS", () => {
         const newVariable = await mocProxyAsCoinbaseMock.newVariable();
         expect(newVariable).to.be.equal(42);
 
-        // This method returns the sum of and "old" state variable (ctar) and the newVariable
+        // This method returns the sum of and "old" state variable (protThrld) and the newVariable
         const newAndOldVariable = await mocProxyAsCoinbaseMock.getCustomMockValue();
-        expect(newAndOldVariable).to.be.equal(46);
+        expect(newAndOldVariable).to.be.equal(44);
       });
     });
   });

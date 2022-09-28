@@ -22,8 +22,6 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address mocFeeFlowAddress;
         // mocInterestCollector address
         address mocInterestCollectorAddress;
-        // global target coverage of the model [PREC]
-        uint256 ctarg;
         // protected state threshold [PREC]
         uint256 protThrld;
         // liquidation coverage threshold [PREC]
@@ -51,7 +49,6 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocInterestCollectorAddress mocInterestCollector address
-     *      ctarg global target coverage of the model [PREC]
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
      *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -66,7 +63,6 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             initializeParams_.mocSettlementAddress,
             initializeParams_.mocFeeFlowAddress,
             initializeParams_.mocInterestCollectorAddress,
-            initializeParams_.ctarg,
             initializeParams_.protThrld,
             initializeParams_.liqThrld,
             initializeParams_.tcMintFee,

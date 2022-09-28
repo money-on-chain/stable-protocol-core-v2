@@ -14,7 +14,6 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocSettlementAddress = mocSettlement,
     feeFlowAddress = mocFeeFlowAddress,
     interestCollectorAddress = mocInterestCollectorAddress,
-    ctarg = coreParams.ctarg,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
     tcMintFee = tcParams.mintFee,
@@ -28,7 +27,6 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocSettlementAddress?: Address;
     feeFlowAddress?: Address;
     interestCollectorAddress?: Address;
-    ctarg?: BigNumberish;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
     tcMintFee?: BigNumberish;
@@ -43,7 +41,6 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
       mocSettlementAddress,
       mocFeeFlowAddress: feeFlowAddress,
       mocInterestCollectorAddress: interestCollectorAddress,
-      ctarg,
       protThrld,
       liqThrld,
       tcMintFee,

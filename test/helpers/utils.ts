@@ -27,30 +27,67 @@ export async function deployPeggedToken({ mocImplAddress }: { mocImplAddress: Ad
   return factory.deploy("PeggedToken", "PeggedToken", mocImplAddress);
 }
 
+const getTPparams = ({
+  price = tpParams.price,
+  ctarg = tpParams.ctarg,
+  r = tpParams.r,
+  bmin = tpParams.bmin,
+  mintFee = tpParams.mintFee,
+  redeemFee = tpParams.redeemFee,
+  initialEma = tpParams.initialEma,
+  smoothingFactor = tpParams.smoothingFactor,
+  tils = tpParams.tils,
+  tiMin = tpParams.tiMin,
+  tiMax = tpParams.tiMax,
+  abeq = tpParams.abeq,
+  facMin = tpParams.facMin,
+  facMax = tpParams.facMax,
+}) => {
+  return {
+    price,
+    ctarg,
+    r,
+    bmin,
+    mintFee,
+    redeemFee,
+    initialEma,
+    smoothingFactor,
+    tils,
+    tiMin,
+    tiMax,
+    abeq,
+    facMin,
+    facMax,
+  };
+};
+
 export async function deployAndAddPeggedTokens(
   mocImpl: MocCore,
   amountPegTokens: number,
+  tpParams?: any[],
 ): Promise<{ mocPeggedTokens: MocRC20[]; priceProviders: PriceProviderMock[] }> {
   const mocPeggedTokens: Array<MocRC20> = [];
   const priceProviders: Array<PriceProviderMock> = [];
-  for (let i = 1; i <= amountPegTokens; i++) {
+  for (let i = 0; i < amountPegTokens; i++) {
     const peggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
-    const priceProvider = await deployPriceProvider(pEth(1));
+    const params = tpParams ? getTPparams(tpParams[i]) : getTPparams({});
+    const priceProvider = await deployPriceProvider(params.price);
     await mocImpl.addPeggedToken({
       tpTokenAddress: peggedToken.address,
       priceProviderAddress: priceProvider.address,
-      tpR: tpParams.r,
-      tpBmin: tpParams.bmin,
-      tpMintFee: tpParams.mintFee,
-      tpRedeemFee: tpParams.redeemFee,
-      tpEma: tpParams.initialEma,
-      tpEmaSf: tpParams.smoothingFactor,
-      tpTils: tpParams.tils,
-      tpTiMin: tpParams.tiMin,
-      tpTiMax: tpParams.tiMax,
-      tpAbeq: tpParams.abeq,
-      tpFacMin: tpParams.facMin,
-      tpFacMax: tpParams.facMax,
+      tpCtarg: params.ctarg,
+      tpR: params.r,
+      tpBmin: params.bmin,
+      tpMintFee: params.mintFee,
+      tpRedeemFee: params.redeemFee,
+      tpEma: params.initialEma,
+      tpEmaSf: params.smoothingFactor,
+      tpTils: params.tils,
+      tpTiMin: params.tiMin,
+      tpTiMax: params.tiMax,
+      tpAbeq: params.abeq,
+      tpFacMin: params.facMin,
+      tpFacMax: params.facMax,
     });
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);

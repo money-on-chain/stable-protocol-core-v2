@@ -40,7 +40,6 @@ export function fixtureDeployGovernance(): () => Promise<{
           mocSettlementAddress: mockAddress,
           mocFeeFlowAddress: mocAddresses[networkName].mocFeeFlowAddress,
           mocInterestCollectorAddress: mockAddress,
-          ctarg: coreParams.ctarg,
           protThrld: coreParams.protThrld,
           liqThrld: coreParams.liqThrld,
           tcMintFee: tcParams.mintFee,

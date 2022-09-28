@@ -28,7 +28,7 @@ abstract contract UpgradableMock {
  */
 contract MocCoinbaseMock is MocCACoinbase, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
-        return newVariable + (ctarg / PRECISION);
+        return newVariable + (protThrld / PRECISION);
     }
 }
 
@@ -38,7 +38,7 @@ contract MocCoinbaseMock is MocCACoinbase, UpgradableMock {
  */
 contract MocCARC20Mock is MocCARC20, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
-        return newVariable + (ctarg / PRECISION);
+        return newVariable + (protThrld / PRECISION);
     }
 }
 
@@ -48,7 +48,7 @@ contract MocCARC20Mock is MocCARC20, UpgradableMock {
  */
 contract MocCAWrapperMock is MocCAWrapper, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
-        return newVariable + (mocCore.ctarg() / PRECISION);
+        return newVariable + (mocCore.protThrld() / PRECISION);
     }
 }
 

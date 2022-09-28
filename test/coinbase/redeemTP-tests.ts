@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { ERRORS, pEth } from "../helpers/utils";
 import { Address } from "hardhat-deploy/types";
 
-describe("Feature: MocCoinbase redeem TC", function () {
+describe("Feature: MocCoinbase redeem TP", function () {
   let mocImpl: MocCACoinbase;
   let mocFunctions: any;
   let deployer: Address;
