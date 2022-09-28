@@ -8,6 +8,7 @@ import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { assertPrec } from "../helpers/assertHelper";
 import { ContractTransaction } from "ethers";
+import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCABag mint TP", function () {
   let mocWrapper: MocCAWrapper;
@@ -16,11 +17,12 @@ describe("Feature: MocCABag mint TP", function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
+  const TP_0 = 0;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
       ({ deployer, alice, bob } = await getNamedAccounts());
-      this.mocContracts = await fixtureDeployedMocCABag(5)();
+      this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
       ({ assetDefault, mocWrapper } = this.mocContracts);
@@ -40,53 +42,53 @@ describe("Feature: MocCABag mint TP", function () {
       });
     });
 
-    describe("WHEN alice mints 10 TP", () => {
+    describe("WHEN alice mints 2350 TP", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        tx = await mocFunctions.mintTP({ i: 0, from: alice, qTP: 10 });
+        tx = await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
       });
       it("THEN a TPMinted event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // i: 0
         // sender: alice
         // receiver: alice
-        // qTP: 10 TP
+        // qTP: 2350 TP
         // qAC: 10AC + 5% for Moc Fee Flow
         await expect(tx)
           .to.emit(mocWrapper, "TPMinted")
-          .withArgs(assetDefault.address, 0, alice, alice, pEth(10), pEth(10 * 1.05));
+          .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10 * 1.05));
       });
     });
 
-    describe("WHEN alice mints 10 TP to bob", () => {
+    describe("WHEN alice mints 2350 TP to bob", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        tx = await mocFunctions.mintTPto({ i: 0, from: alice, to: bob, qTP: 10 });
+        tx = await mocFunctions.mintTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
       });
       it("THEN a TPMinted event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // i: 0
         // sender: alice
         // receiver: bob
-        // qTP: 10 TP
+        // qTP: 2350 TP
         // qAC: 10AC + 5% for Moc Fee Flow
         await expect(tx)
           .to.emit(mocWrapper, "TPMinted")
-          .withArgs(assetDefault.address, 0, alice, bob, pEth(10), pEth(10 * 1.05));
+          .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10 * 1.05));
       });
     });
 
-    describe("GIVEN 100 TP minted with asset at 1:1 price", () => {
+    describe("GIVEN 23500 TP minted with asset at 1:1 price", () => {
       let newAsset: ERC20Mock;
       let newPriceProvider: PriceProviderMock;
       beforeEach(async () => {
         //add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100 });
+        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
       });
       describe("WHEN add a new asset with price 0.9", () => {
         beforeEach(async () => {
@@ -94,11 +96,11 @@ describe("Feature: MocCABag mint TP", function () {
           newPriceProvider = await deployPriceProvider(pEth(0.9));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
-        describe("AND mint 100 TP with new asset", () => {
+        describe("AND mint 23500 TP with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
-            await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100, asset: newAsset });
+            await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
           it("THEN alice spent 116.66 new asset instead of 105", async () => {
             //asset spent = 105 currency needed / 0.9 asset used price
@@ -114,11 +116,11 @@ describe("Feature: MocCABag mint TP", function () {
           newPriceProvider = await deployPriceProvider(pEth(1.1));
           await mocFunctions.addAsset(newAsset, newPriceProvider);
         });
-        describe("AND mint 100 TP with new asset", () => {
+        describe("AND mint 23500 TP with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
-            await mocFunctions.mintTP({ i: 0, from: alice, qTP: 100, asset: newAsset });
+            await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
           it("THEN alice spent 95.45 new asset instead of 105", async () => {
             //asset spent = 105 currency needed / 1.1 asset used price

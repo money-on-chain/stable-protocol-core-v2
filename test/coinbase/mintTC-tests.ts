@@ -5,6 +5,7 @@ import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { ERRORS, pEth } from "../helpers/utils";
+import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCoinbase mint TC", function () {
   let mocImpl: MocCACoinbase;
@@ -14,7 +15,7 @@ describe("Feature: MocCoinbase mint TC", function () {
 
   describe("GIVEN a MocCoinbase implementation deployed", function () {
     beforeEach(async function () {
-      const fixtureDeploy = fixtureDeployedMocCoinbase(1);
+      const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
       ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
       this.mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
       this.mocContracts = { mocImpl, mocCollateralToken };

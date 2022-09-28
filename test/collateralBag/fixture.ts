@@ -13,7 +13,10 @@ import {
 } from "../../typechain";
 import { pEth, deployAndAddPeggedTokens, deployPriceProvider, deployAsset } from "../helpers/utils";
 
-export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<{
+export function fixtureDeployedMocCABag(
+  amountPegTokens: number,
+  tpParams?: any,
+): () => Promise<{
   mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
   mocSettlement: MocSettlement;
@@ -50,7 +53,7 @@ export function fixtureDeployedMocCABag(amountPegTokens: number): () => Promise<
     if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
     const wcaToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
+    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
     const assetDefault = await deployAsset();
     const assetPriceProvider = await deployPriceProvider(pEth(1));

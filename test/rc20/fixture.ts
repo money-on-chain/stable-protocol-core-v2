@@ -12,7 +12,10 @@ import {
 } from "../../typechain";
 import { pEth, deployAndAddPeggedTokens } from "../helpers/utils";
 
-export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
+export function fixtureDeployedMocRC20(
+  amountPegTokens: number,
+  tpParams?: any,
+): () => Promise<{
   mocImpl: MocCARC20;
   mocSettlement: MocSettlement;
   mocCollateralToken: MocRC20;
@@ -45,9 +48,9 @@ export function fixtureDeployedMocRC20(amountPegTokens: number): () => Promise<{
 
     // Fill users accounts with balance so that they can operate
     const { alice, bob, charlie } = await getNamedAccounts();
-    await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(100000))));
+    await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(10000000))));
 
-    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens);
+    const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
     return {
       mocImpl,
