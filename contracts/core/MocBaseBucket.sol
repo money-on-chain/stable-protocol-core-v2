@@ -404,7 +404,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @dev sets the value of the liq threshold configuration param
      * @param liqThrld_ liquidation threshold
      */
-    function setLiqThrld(uint256 liqThrld_) public onlyAuthorizedChanger {
+    function setLiqThrld(uint256 liqThrld_) external onlyAuthorizedChanger {
         liqThrld = liqThrld_;
     }
 
@@ -412,7 +412,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @dev enables and disables the liquidation mechanism.
      * @param liqEnabled_ is liquidation enabled
      */
-    function setLiqEnabled(bool liqEnabled_) public onlyAuthorizedChanger {
+    function setLiqEnabled(bool liqEnabled_) external onlyAuthorizedChanger {
         liqEnabled = liqEnabled_;
     }
 
