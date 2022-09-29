@@ -29,8 +29,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 nTP;
         // amount of Pegged Token used by a Token X
         uint256 nTPXV;
-        // total supply of Pegged Token at last settlement
-        uint256 nTPLstset;
         // PegToken PriceFeed address
         IPriceProvider priceProvider;
     }
@@ -132,6 +130,10 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 internal nTCcbLstset;
     // amount of collateral asset locked by Pegged Token at last settlement
     uint256 internal lckACLstset;
+    // total supply of Pegged Token at last settlement
+    uint256[] internal nTPLstset;
+    // Pegged Token price at last settlement
+    uint256[] internal pACtpLstset;
 
     // ------- Modifiers -------
     /// @notice functions with this modifier reverts being in liquidated state
@@ -389,6 +391,26 @@ abstract contract MocBaseBucket is MocUpgradable {
         }
     }
 
+    /**
+     * @notice this function is executed during settlement and
+     * stores amount of tokens in the bucket at this moment:
+     *  - nACcbLstset
+     *  - nTCcbLstset
+     *  - lckACLstset
+     *  - pegContainer[i].nTPLstset
+     *  - pegContainer[i].pACtpLstset
+     */
+    function _updateBucketLstset() internal {
+        nACcbLstset = nACcb;
+        nTCcbLstset = nTCcb;
+        lckACLstset = _getLckAC();
+        uint256 pegAmount = pegContainer.length;
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            nTPLstset[i] = pegContainer[i].nTP;
+            pACtpLstset[i] = _getPACtp(i);
+        }
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -424,7 +446,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [N] = [N] * [PREC] / [PREC]
-            lckACLstsetActualPACtp += (pegContainer[i].nTPLstset * PRECISION) / _getPACtp(i);
+            lckACLstsetActualPACtp += (nTPLstset[i] * PRECISION) / _getPACtp(i);
         }
         // [PREC] = (([N] + [N] - [N]) * [PREC]) / [N]
         return ((nACcbLstset - nACtoMint - lckACLstsetActualPACtp) * PRECISION) / nTCcbLstset;
@@ -465,26 +487,6 @@ abstract contract MocBaseBucket is MocUpgradable {
             // Freeze current Peg Price given the AC available
             settleLiquidationPrices();
             emit ContractLiquidated();
-        }
-    }
-
-    // ------- Only Settlement Functions -------
-
-    /**
-     * @notice this function is executed during settlement and
-     * updates the following storages:
-     *  - nACcbLstset
-     *  - nTCcbLstset
-     *  - lckACLstset
-     *  - pegContainer[i].nTPLstset
-     */
-    function updateInSettlement() external onlySettlement {
-        nACcbLstset = nACcb;
-        nTCcbLstset = nTCcb;
-        lckACLstset = _getLckAC();
-        uint256 pegAmount = pegContainer.length;
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            pegContainer[i].nTPLstset = pegContainer[i].nTP;
         }
     }
 

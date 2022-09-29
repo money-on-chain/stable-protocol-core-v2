@@ -46,7 +46,7 @@ contract MocSettlement is MocUpgradable {
         // check if it is in the corresponding block to execute the settlement
         if (block.number >= bns) {
             bns = block.number + bes;
-            mocCore.updateInSettlement();
+            mocCore.execSettlement();
         }
     }
 

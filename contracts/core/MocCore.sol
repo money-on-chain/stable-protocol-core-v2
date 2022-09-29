@@ -445,6 +445,27 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
+    function _distributeSuccessFee() internal {
+        //uint256 acDuetoFlow;
+        uint256 pegAmount = pegContainer.length;
+        //solhint-disable-next-line no-empty-blocks
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            //uint256 eqTPac = pegContainer[i].nTP;
+            //ACduetoFlow +=
+        }
+    }
+
+    // ------- Only Settlement Functions -------
+
+    /**
+     * @notice this function is executed during settlement.
+     *  stores amount of tokens in the bucket at this moment and distribute success fee
+     */
+    function execSettlement() external onlySettlement {
+        _distributeSuccessFee();
+        _updateBucketLstset();
+    }
+
     // ------- Only Authorized Changer Functions -------
 
     /**
@@ -495,10 +516,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
             revert InvalidAddress();
         }
         IPriceProvider priceProvider = IPriceProvider(addPeggedTokenParams_.priceProviderAddress);
-        // verifies it is a valid priceProvider
-        (, bool has) = priceProvider.peek();
-        if (!has) revert InvalidAddress();
-
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[address(tpToken)].exist) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpTokens.length);
@@ -507,7 +524,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // set Pegged Token address
         tpTokens.push(tpToken);
         // set peg container item
-        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, nTPLstset: 0, priceProvider: priceProvider }));
+        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, priceProvider: priceProvider }));
         // set target coverage
         tpCtarg.push(addPeggedTokenParams_.tpCtarg);
         // set reserve factor
@@ -536,6 +553,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
                 facMax: addPeggedTokenParams_.tpFacMax
             })
         );
+        nTPLstset.push();
+        pACtpLstset.push(_getPACtp(newTPindex));
         // emit the event
         emit PeggedTokenAdded(newTPindex, addPeggedTokenParams_);
     }
