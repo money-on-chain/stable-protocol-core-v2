@@ -21,6 +21,6 @@
     "avoid-low-level-calls": "warn",
     "avoid-call-value": "warn",
     "func-name-mixedcase": "off",
-    "max-states-count": ["warn", 25]
+    "max-states-count": ["warn", 30]
   }
 }

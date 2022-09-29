@@ -41,6 +41,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error QacNeededMustBeGreaterThanZero();
 
     // ------- Structs -------
+
+    struct InitializeCoreParams {
+        InitializeBaseBucketParams initializeBaseBucketParams;
+        // The address that will define when a change contract is authorized
+        address governorAddress;
+        // The address that is authorized to pause this contract
+        address stopperAddress;
+        // amount of blocks to wait between Pegged ema calculation
+        uint256 emaCalculationBlockSpan;
+    }
     struct AddPeggedTokenParams {
         // Pegged Token contract address to add
         address tpTokenAddress;
@@ -78,43 +88,25 @@ abstract contract MocCore is MocEma, MocInterestRate {
     /**
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
-     * @param governorAddress_ The address that will define when a change contract is authorized
-     * @param stopperAddress_ The address that is authorized to pause this contract
-     * @param tcTokenAddress_ Collateral Token contract address
-     * @param mocSettlementAddress_ MocSettlement contract address
-     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
-     * @param mocInterestCollectorAddress_ mocInterestCollector address
-     * @param protThrld_ protected state threshold [PREC]
-     * @param liqThrld_ liquidation coverage threshold [PREC]
-     * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-     * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
+     * @param initializeCoreParams_ contract initializer params
+     * @dev   governorAddress The address that will define when a change contract is authorized
+     *        stopperAddress The address that is authorized to pause this contract
+     *        tcTokenAddress Collateral Token contract address
+     *        mocSettlementAddress MocSettlement contract address
+     *        mocFeeFlowAddress Moc Fee Flow contract address
+     *        mocInterestCollectorAddress mocInterestCollector address
+     *        protThrld protected state threshold [PREC]
+     *        liqThrld liquidation coverage threshold [PREC]
+     *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+     *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *        sf proportion of the devaluation that is transferred to MoC Fee Flow during the settlement [PREC]
+     *        fa proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+     *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
-    function __MocCore_init(
-        address governorAddress_,
-        address stopperAddress_,
-        address tcTokenAddress_,
-        address mocSettlementAddress_,
-        address mocFeeFlowAddress_,
-        address mocInterestCollectorAddress_,
-        uint256 protThrld_,
-        uint256 liqThrld_,
-        uint256 tcMintFee_,
-        uint256 tcRedeemFee_,
-        uint256 emaCalculationBlockSpan_
-    ) internal onlyInitializing {
-        __MocUpgradable_init(governorAddress_, stopperAddress_);
-        __MocBaseBucket_init_unchained(
-            tcTokenAddress_,
-            mocFeeFlowAddress_,
-            mocInterestCollectorAddress_,
-            protThrld_,
-            liqThrld_,
-            tcMintFee_,
-            tcRedeemFee_
-        );
-        __MocEma_init_unchained(emaCalculationBlockSpan_);
-        __MocInterestRate_init_unchained(mocSettlementAddress_);
+    function __MocCore_init(InitializeCoreParams calldata initializeCoreParams_) internal onlyInitializing {
+        __MocUpgradable_init(initializeCoreParams_.governorAddress, initializeCoreParams_.stopperAddress);
+        __MocBaseBucket_init_unchained(initializeCoreParams_.initializeBaseBucketParams);
+        __MocEma_init_unchained(initializeCoreParams_.emaCalculationBlockSpan);
     }
 
     // ------- Internal Functions -------
@@ -515,7 +507,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // set Pegged Token address
         tpTokens.push(tpToken);
         // set peg container item
-        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, priceProvider: priceProvider }));
+        pegContainer.push(PegContainerItem({ nTP: 0, nTPXV: 0, nTPLstset: 0, priceProvider: priceProvider }));
         // set target coverage
         tpCtarg.push(addPeggedTokenParams_.tpCtarg);
         // set reserve factor

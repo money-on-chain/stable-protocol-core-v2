@@ -4,6 +4,7 @@ import "../interfaces/IMocRC20.sol";
 import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
+import "../MocSettlement.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
@@ -20,6 +21,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     error Liquidated();
     error OnlyWhenLiquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
+    error OnlySettlement();
 
     // ------- Structs -------
     struct PegContainerItem {
@@ -27,6 +29,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 nTP;
         // amount of Pegged Token used by a Token X
         uint256 nTPXV;
+        // total supply of Pegged Token at last settlement
+        uint256 nTPLstset;
         // PegToken PriceFeed address
         IPriceProvider priceProvider;
     }
@@ -36,6 +40,29 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint8 index;
         // true if Pegged Token exist
         bool exist;
+    }
+
+    struct InitializeBaseBucketParams {
+        // Collateral Token contract address
+        address tcTokenAddress;
+        // MocSettlement contract address
+        address mocSettlementAddress;
+        // Moc Fee Flow contract address
+        address mocFeeFlowAddress;
+        // mocInterestCollector address
+        address mocInterestCollectorAddress;
+        // protected state threshold [PREC]
+        uint256 protThrld;
+        // liquidation coverage threshold [PREC]
+        uint256 liqThrld;
+        // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+        uint256 tcMintFee;
+        // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+        uint256 tcRedeemFee;
+        // success fee: proportion of the devaluation that is transferred to Moc Fee Flow during the settlement [PREC]
+        uint256 sf;
+        // appreciation factor: proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+        uint256 fa;
     }
 
     // ------- Storage -------
@@ -60,6 +87,10 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpR;
     // prices for each TP, at wich they can be redeem after liquidation event
     uint256[] internal tpLiqPrices;
+    // success fee: proportion of the devaluation that is transferred to Moc Fee Flow during the settlement [PREC]
+    uint256 internal sf;
+    // appreciation factor: proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+    uint256 internal fa;
 
     // ------- Storage Fees -------
 
@@ -77,6 +108,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     address internal mocFeeFlowAddress;
     // Moc Interest Collector address
     address internal mocInterestCollectorAddress;
+    // MocSettlement contract
+    MocSettlement internal mocSettlement;
 
     // ------- Storage Coverage Tracking -------
 
@@ -91,38 +124,56 @@ abstract contract MocBaseBucket is MocUpgradable {
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
 
+    // ------- Storage Last Settlement Tracking -------
+
+    // total amount of Collateral Asset holded in the Collateral Bag at last settlement
+    uint256 internal nACcbLstset;
+    // total supply of Collateral Token at last settlement
+    uint256 internal nTCcbLstset;
+    // amount of collateral asset locked by Pegged Token at last settlement
+    uint256 internal lckACLstset;
+
     // ------- Modifiers -------
+    /// @notice functions with this modifier reverts being in liquidated state
     modifier notLiquidated() {
         if (liquidated) revert Liquidated();
+        _;
+    }
+
+    /// @notice functions with this modifier only can be called by settlement contract
+    modifier onlySettlement() {
+        if (msg.sender != address(mocSettlement)) revert OnlySettlement();
         _;
     }
 
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param tcTokenAddress_ Collateral Token contract address
-     * @param mocFeeFlowAddress_ Moc Fee Flow contract address
-     * @param mocInterestCollectorAddress_ mocInterestCollector address
-     * @param protThrld_ protected coverage threshold [PREC]
-     * @param liqThrld_ liquidation coverage threshold [PREC]
-     * @param tcMintFee_ fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-     * @param tcRedeemFee_ fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     * @param initializeBaseBucketParams_ contract initializer params
+     * @dev   tcTokenAddress Collateral Token contract address
+     *        mocSettlementAddress MocSettlement contract address
+     *        mocFeeFlowAddress Moc Fee Flow contract address
+     *        mocInterestCollectorAddress mocInterestCollector address
+     *        protThrld protected coverage threshold [PREC]
+     *        liqThrld liquidation coverage threshold [PREC]
+     *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+     *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *        sf proportion of the devaluation that is transferred to MoC Fee Flow during the settlement [PREC]
+     *        fa proportion of the devaluation that is returned to Turbo during the settlement [PREC]
      */
-    function __MocBaseBucket_init_unchained(
-        address tcTokenAddress_,
-        address mocFeeFlowAddress_,
-        address mocInterestCollectorAddress_,
-        uint256 protThrld_,
-        uint256 liqThrld_,
-        uint256 tcMintFee_,
-        uint256 tcRedeemFee_
-    ) internal onlyInitializing {
-        if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
-        if (mocInterestCollectorAddress_ == address(0)) revert InvalidAddress();
-        if (protThrld_ < PRECISION) revert InvalidValue();
-        if (tcMintFee_ > PRECISION) revert InvalidValue();
-        if (tcRedeemFee_ > PRECISION) revert InvalidValue();
-        tcToken = MocTC(tcTokenAddress_);
+    function __MocBaseBucket_init_unchained(InitializeBaseBucketParams calldata initializeBaseBucketParams_)
+        internal
+        onlyInitializing
+    {
+        if (initializeBaseBucketParams_.mocFeeFlowAddress == address(0)) revert InvalidAddress();
+        if (initializeBaseBucketParams_.mocInterestCollectorAddress == address(0)) revert InvalidAddress();
+        if (initializeBaseBucketParams_.mocSettlementAddress == address(0)) revert InvalidAddress();
+        if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.sf > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.fa > PRECISION) revert InvalidValue();
+        tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
         if (
             !tcToken.hasRole(tcToken.PAUSER_ROLE(), address(this)) ||
@@ -132,12 +183,15 @@ abstract contract MocBaseBucket is MocUpgradable {
         ) {
             revert InvalidAddress();
         }
-        mocFeeFlowAddress = mocFeeFlowAddress_;
-        mocInterestCollectorAddress = mocInterestCollectorAddress_;
-        protThrld = protThrld_;
-        liqThrld = liqThrld_;
-        tcMintFee = tcMintFee_;
-        tcRedeemFee = tcRedeemFee_;
+        mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
+        mocInterestCollectorAddress = initializeBaseBucketParams_.mocInterestCollectorAddress;
+        mocSettlement = MocSettlement(initializeBaseBucketParams_.mocSettlementAddress);
+        protThrld = initializeBaseBucketParams_.protThrld;
+        liqThrld = initializeBaseBucketParams_.liqThrld;
+        tcMintFee = initializeBaseBucketParams_.tcMintFee;
+        tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
+        sf = initializeBaseBucketParams_.sf;
+        fa = initializeBaseBucketParams_.fa;
         liquidated = false;
         liqEnabled = false;
     }
@@ -356,8 +410,24 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _getPTCac(uint256 lckAC_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
+        if (nTCcbLstset == 0 || nACcbLstset == 0) {
+            // [PREC] = (([N] + [N] - [N]) * [PREC]) / [N]
+            return ((nACcb + nACioucb - lckAC_) * PRECISION) / nTCcb;
+        }
+        uint256 nACtoMint;
+        if (lckAC_ > lckACLstset) {
+            // [N] = ([N] - [N]) * ([PREC] + [PPREC]) / [PREC]
+            nACtoMint = ((lckACLstset - lckAC_) * (fa + sf)) / PRECISION;
+        }
+        uint256 lckACLstsetActualPACtp;
+        //TODO: this could be calculated with _getLckAC and pass by parameter to this function to do not iterate twice
+        uint256 pegAmount = pegContainer.length;
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            // [N] = [N] * [PREC] / [PREC]
+            lckACLstsetActualPACtp += (pegContainer[i].nTPLstset * PRECISION) / _getPACtp(i);
+        }
         // [PREC] = (([N] + [N] - [N]) * [PREC]) / [N]
-        return ((nACcb + nACioucb - lckAC_) * PRECISION) / nTCcb;
+        return ((nACcbLstset - nACtoMint - lckACLstsetActualPACtp) * PRECISION) / nTCcbLstset;
     }
 
     /**
@@ -395,6 +465,26 @@ abstract contract MocBaseBucket is MocUpgradable {
             // Freeze current Peg Price given the AC available
             settleLiquidationPrices();
             emit ContractLiquidated();
+        }
+    }
+
+    // ------- Only Settlement Functions -------
+
+    /**
+     * @notice this function is executed during settlement and
+     * updates the following storages:
+     *  - nACcbLstset
+     *  - nTCcbLstset
+     *  - lckACLstset
+     *  - pegContainer[i].nTPLstset
+     */
+    function updateInSettlement() external onlySettlement {
+        nACcbLstset = nACcb;
+        nTCcbLstset = nTCcb;
+        lckACLstset = _getLckAC();
+        uint256 pegAmount = pegContainer.length;
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            pegContainer[i].nTPLstset = pegContainer[i].nTP;
         }
     }
 

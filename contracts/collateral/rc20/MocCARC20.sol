@@ -9,30 +9,9 @@ import "../../core/MocCore.sol";
 contract MocCARC20 is MocCore {
     // ------- Structs -------
     struct InitializeParams {
-        // The address that will define when a change contract is authorized
-        address governorAddress;
-        // The address that is authorized to pause this contract
-        address stopperAddress;
+        InitializeCoreParams initializeCoreParams;
         // Collateral Asset Token contract address
         address acTokenAddress;
-        // Collateral Token contract address
-        address tcTokenAddress;
-        // MocSettlement contract address
-        address mocSettlementAddress;
-        // Moc Fee Flow contract address
-        address mocFeeFlowAddress;
-        // mocInterestCollector address
-        address mocInterestCollectorAddress;
-        // protected state threshold [PREC]
-        uint256 protThrld;
-        // liquidation coverage threshold [PREC]
-        uint256 liqThrld;
-        // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-        uint256 tcMintFee;
-        // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-        uint256 tcRedeemFee;
-        // amount of blocks to wait between Pegged ema calculation
-        uint256 emaCalculationBlockSpan;
     }
 
     // ------- Storage -------
@@ -59,24 +38,14 @@ contract MocCARC20 is MocCore {
      *      liqThrld liquidation coverage threshold [PREC]
      *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *      tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *      sf proportion of the devaluation that is transferred to MoC Fee Flow during the settlement [PREC]
+     *      fa proportion of the devaluation that is returned to Turbo during the settlement [PREC]
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
         if (initializeParams_.acTokenAddress == address(0)) revert InvalidAddress();
         acToken = IMocRC20(initializeParams_.acTokenAddress);
-        __MocCore_init(
-            initializeParams_.governorAddress,
-            initializeParams_.stopperAddress,
-            initializeParams_.tcTokenAddress,
-            initializeParams_.mocSettlementAddress,
-            initializeParams_.mocFeeFlowAddress,
-            initializeParams_.mocInterestCollectorAddress,
-            initializeParams_.protThrld,
-            initializeParams_.liqThrld,
-            initializeParams_.tcMintFee,
-            initializeParams_.tcRedeemFee,
-            initializeParams_.emaCalculationBlockSpan
-        );
+        __MocCore_init(initializeParams_.initializeCoreParams);
     }
 
     // ------- Internal Functions -------

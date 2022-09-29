@@ -1,7 +1,6 @@
 pragma solidity ^0.8.16;
 
 import "./MocBaseBucket.sol";
-import "../MocSettlement.sol";
 
 /**
  * @title MocInterestRate
@@ -35,18 +34,6 @@ abstract contract MocInterestRate is MocBaseBucket {
     FACitem[] internal tpFAC;
     // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
     uint256[] public tpBmin;
-    // MocSettlement contract
-    MocSettlement internal mocSettlement;
-
-    // ------- Initializer -------
-    /**
-     * @notice contract initializer
-     * @param mocSettlementAddress_ MocSettlement contract address
-     */
-    function __MocInterestRate_init_unchained(address mocSettlementAddress_) internal onlyInitializing {
-        if (mocSettlementAddress_ == address(0)) revert InvalidAddress();
-        mocSettlement = MocSettlement(mocSettlementAddress_);
-    }
 
     // ------- Internal Functions -------
 

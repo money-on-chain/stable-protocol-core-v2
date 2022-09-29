@@ -42,9 +42,12 @@ contract MocSettlement is MocUpgradable {
 
     // ------- External Functions -------
 
-    // solhint-disable-next-line no-empty-blocks
-    function execInt() external {
-        //TODO: call interestRate interest adjustment
+    function execSettlement() external {
+        // check if it is in the corresponding block to execute the settlement
+        if (block.number >= bns) {
+            bns = block.number + bes;
+            mocCore.updateInSettlement();
+        }
     }
 
     /**

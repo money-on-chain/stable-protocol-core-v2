@@ -44,16 +44,20 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
       {
+        initializeBaseBucketParams: {
+          tcTokenAddress: CollateralToken.address,
+          mocSettlementAddress: MocSettlement.address,
+          mocFeeFlowAddress,
+          mocInterestCollectorAddress,
+          protThrld: coreParams.protThrld,
+          liqThrld: coreParams.liqThrld,
+          tcMintFee: tcParams.mintFee,
+          tcRedeemFee: tcParams.redeemFee,
+          sf: coreParams.sf,
+          fa: coreParams.fa,
+        },
         governorAddress,
         stopperAddress,
-        tcTokenAddress: CollateralToken.address,
-        mocSettlementAddress: MocSettlement.address,
-        mocFeeFlowAddress,
-        mocInterestCollectorAddress,
-        protThrld: coreParams.protThrld,
-        liqThrld: coreParams.liqThrld,
-        tcMintFee: tcParams.mintFee,
-        tcRedeemFee: tcParams.redeemFee,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
       },
       { gasLimit: GAS_LIMIT_PATCH },

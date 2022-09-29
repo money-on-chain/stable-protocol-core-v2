@@ -19,6 +19,8 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     tcMintFee = tcParams.mintFee,
     tcRedeemFee = tcParams.redeemFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
+    sf = coreParams.sf,
+    fa = coreParams.fa,
   }: {
     mocGovernorAddress?: Address;
     mocStopperAddress?: Address;
@@ -32,20 +34,28 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     tcMintFee?: BigNumberish;
     tcRedeemFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
+    sf?: BigNumberish;
+    fa?: BigNumberish;
   } = {}) => {
     return mocCARC20.initialize({
-      governorAddress: mocGovernorAddress,
-      stopperAddress: mocStopperAddress,
+      initializeCoreParams: {
+        initializeBaseBucketParams: {
+          tcTokenAddress: mocTCAddress,
+          mocSettlementAddress,
+          mocFeeFlowAddress: feeFlowAddress,
+          mocInterestCollectorAddress: interestCollectorAddress,
+          protThrld,
+          liqThrld,
+          tcMintFee,
+          tcRedeemFee,
+          sf,
+          fa,
+        },
+        governorAddress: mocGovernorAddress,
+        stopperAddress: mocStopperAddress,
+        emaCalculationBlockSpan,
+      },
       acTokenAddress: wcaTokenAddress,
-      tcTokenAddress: mocTCAddress,
-      mocSettlementAddress,
-      mocFeeFlowAddress: feeFlowAddress,
-      mocInterestCollectorAddress: interestCollectorAddress,
-      protThrld,
-      liqThrld,
-      tcMintFee,
-      tcRedeemFee,
-      emaCalculationBlockSpan,
     });
   };
 }

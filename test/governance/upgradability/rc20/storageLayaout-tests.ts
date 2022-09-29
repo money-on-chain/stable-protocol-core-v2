@@ -27,18 +27,24 @@ describe("Feature: Check MocRC20 storage layout compatibility using openzeppelin
       const mocTC = await mocTCFactory.deploy("mocCT", "CT", mocProxy.address);
 
       const initParams = {
-        governorAddress: governorMock.address,
-        stopperAddress: deployer,
+        initializeCoreParams: {
+          initializeBaseBucketParams: {
+            tcTokenAddress: mocTC.address,
+            mocSettlementAddress: deployer,
+            mocFeeFlowAddress: deployer,
+            mocInterestCollectorAddress: deployer,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            tcMintFee: tcParams.mintFee,
+            tcRedeemFee: tcParams.redeemFee,
+            sf: coreParams.sf,
+            fa: coreParams.fa,
+          },
+          governorAddress: governorMock.address,
+          stopperAddress: deployer,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+        },
         acTokenAddress: deployer,
-        tcTokenAddress: mocTC.address,
-        mocSettlementAddress: deployer,
-        mocFeeFlowAddress: deployer,
-        mocInterestCollectorAddress: deployer,
-        protThrld: coreParams.protThrld,
-        liqThrld: coreParams.liqThrld,
-        tcMintFee: tcParams.mintFee,
-        tcRedeemFee: tcParams.redeemFee,
-        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
       };
       const mocImpl = MocCARC20__factory.connect(mocProxy.address, ethers.provider.getSigner());
       await mocImpl.initialize(initParams, { gasLimit: GAS_LIMIT_PATCH });

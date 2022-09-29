@@ -34,16 +34,20 @@ export function fixtureDeployGovernance(): () => Promise<{
     await waitForTxConfirmation(
       mocCACoinbase.initialize(
         {
+          initializeBaseBucketParams: {
+            tcTokenAddress: mocTC.address,
+            mocSettlementAddress: mockAddress,
+            mocFeeFlowAddress: mocAddresses[networkName].mocFeeFlowAddress,
+            mocInterestCollectorAddress: mockAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            tcMintFee: tcParams.mintFee,
+            tcRedeemFee: tcParams.redeemFee,
+            sf: coreParams.sf,
+            fa: coreParams.fa,
+          },
           governorAddress: governor.address,
           stopperAddress: mockAddress,
-          tcTokenAddress: mocTC.address,
-          mocSettlementAddress: mockAddress,
-          mocFeeFlowAddress: mocAddresses[networkName].mocFeeFlowAddress,
-          mocInterestCollectorAddress: mockAddress,
-          protThrld: coreParams.protThrld,
-          liqThrld: coreParams.liqThrld,
-          tcMintFee: tcParams.mintFee,
-          tcRedeemFee: tcParams.redeemFee,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
         { gasLimit: GAS_LIMIT_PATCH },
