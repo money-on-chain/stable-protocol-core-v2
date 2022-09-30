@@ -377,6 +377,10 @@ abstract contract MocBaseBucket is MocUpgradable {
      * and the amount of Asset Collateral available to distribute
      */
     function settleLiquidationPrices() internal {
+        // Total amount of AC available to be redeemed
+        // TODO: check if should be totalACavailable =  nACcb + nACioucb - nACtoMint;
+        uint256 totalACAvailable = nACcb + nACioucb;
+        if (totalACAvailable == 0) return;
         uint256 pegAmount = pegContainer.length;
         // this could be get by getLckAC(), but given the prices are needed after,
         // it's better to cache them here.
@@ -390,10 +394,6 @@ abstract contract MocBaseBucket is MocUpgradable {
             // [N] = [N] * [PREC] / [PREC]
             lckAC += (pegContainer[i].nTP * PRECISION) / pACtps[i];
         }
-        // Total amount of AC available to be redeemed
-        // TODO: check if totalACavailable =  nACcb + nACioucb - nACtoMint;
-        uint256 totalACAvailable = _getTotalACavailable(_getACtoMint(lckAC));
-        if (totalACAvailable == 0) return;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [PREC] = [PREC] * [N] / [N];
             tpLiqPrices.push((pACtps[i] * lckAC) / totalACAvailable);
@@ -438,7 +438,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return nACtoMint [N]
      */
     function _getACtoMint(uint256 lckAC_) internal view returns (uint256 nACtoMint) {
-        if (lckAC_ > lckACLstset) {
+        if (lckACLstset > lckAC_) {
             // [N] = ([N] - [N]) * ([PREC] + [PPREC]) / [PREC]
             return ((lckACLstset - lckAC_) * (fa + sf)) / PRECISION;
         }
