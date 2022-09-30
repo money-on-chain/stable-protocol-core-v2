@@ -95,6 +95,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocInterestCollectorAddress mocInterestCollector address
+     *        mocturboAddress mocTurbo address
      *        protThrld protected state threshold [PREC]
      *        liqThrld liquidation coverage threshold [PREC]
      *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -454,13 +455,23 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     function _distributeSuccessFee() internal {
-        //uint256 acDuetoFlow;
+        uint256 acDuetoFlow;
         uint256 pegAmount = pegContainer.length;
-        //solhint-disable-next-line no-empty-blocks
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            //uint256 eqTPac = pegContainer[i].nTP;
-            //ACduetoFlow +=
+            // [N] = ([N] * [PREC] / [PREC]) - ([N] * [PREC] / [PREC])
+            uint256 eqTPac = ((pegContainer[i].nTP * PRECISION) / _getPACtp(i)) -
+                ((nTPLstset[i] * PRECISION) / pACtpLstset[i]);
+            acDuetoFlow += eqTPac;
+            // [N] = [N] * [PREC] / [PREC]
+            uint256 tpDueToDif = (eqTPac * fa) / PRECISION;
+            // mint TP to Turbo
+            pegContainer[i].nTP += tpDueToDif;
+            tpTokens[i].mint(mocTurboAddress, tpDueToDif);
         }
+        // [N] = [N] * [PREC] / [PREC]
+        acDuetoFlow = (acDuetoFlow * sf) / PRECISION;
+        // transfer the qAC to Moc Fee Flow
+        acTransfer(mocFeeFlowAddress, acDuetoFlow);
     }
 
     // ------- Only Settlement Functions -------

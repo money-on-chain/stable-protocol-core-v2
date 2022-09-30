@@ -3,7 +3,8 @@ import { Address } from "hardhat-deploy/types";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 
-const { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
+const { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } =
+  mocAddresses["hardhat"];
 
 export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocSettlement: Address) {
   return ({
@@ -14,6 +15,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocSettlementAddress = mocSettlement,
     feeFlowAddress = mocFeeFlowAddress,
     interestCollectorAddress = mocInterestCollectorAddress,
+    turboAddress = mocTurboAddress,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
     tcMintFee = tcParams.mintFee,
@@ -29,6 +31,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocSettlementAddress?: Address;
     feeFlowAddress?: Address;
     interestCollectorAddress?: Address;
+    turboAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
     tcMintFee?: BigNumberish;
@@ -44,6 +47,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           mocSettlementAddress,
           mocFeeFlowAddress: feeFlowAddress,
           mocInterestCollectorAddress: interestCollectorAddress,
+          mocTurboAddress: turboAddress,
           protThrld,
           liqThrld,
           tcMintFee,

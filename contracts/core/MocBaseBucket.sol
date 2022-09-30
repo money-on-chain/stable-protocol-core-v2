@@ -49,6 +49,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         address mocFeeFlowAddress;
         // mocInterestCollector address
         address mocInterestCollectorAddress;
+        // mocTurbo Address
+        address mocTurboAddress;
         // protected state threshold [PREC]
         uint256 protThrld;
         // liquidation coverage threshold [PREC]
@@ -106,6 +108,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     address internal mocFeeFlowAddress;
     // Moc Interest Collector address
     address internal mocInterestCollectorAddress;
+    // Moc Turbo address
+    address internal mocTurboAddress;
     // MocSettlement contract
     MocSettlement internal mocSettlement;
 
@@ -156,6 +160,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocInterestCollectorAddress mocInterestCollector address
+     *        mocTurboAddress mocTurbo address
      *        protThrld protected coverage threshold [PREC]
      *        liqThrld liquidation coverage threshold [PREC]
      *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
@@ -169,6 +174,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     {
         if (initializeBaseBucketParams_.mocFeeFlowAddress == address(0)) revert InvalidAddress();
         if (initializeBaseBucketParams_.mocInterestCollectorAddress == address(0)) revert InvalidAddress();
+        if (initializeBaseBucketParams_.mocTurboAddress == address(0)) revert InvalidAddress();
         if (initializeBaseBucketParams_.mocSettlementAddress == address(0)) revert InvalidAddress();
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
@@ -187,6 +193,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         }
         mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
         mocInterestCollectorAddress = initializeBaseBucketParams_.mocInterestCollectorAddress;
+        mocTurboAddress = initializeBaseBucketParams_.mocTurboAddress;
         mocSettlement = MocSettlement(initializeBaseBucketParams_.mocSettlementAddress);
         protThrld = initializeBaseBucketParams_.protThrld;
         liqThrld = initializeBaseBucketParams_.liqThrld;

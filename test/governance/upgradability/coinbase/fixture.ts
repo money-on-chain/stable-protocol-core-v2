@@ -29,6 +29,7 @@ export function fixtureDeployGovernance(): () => Promise<{
     const mocTC = await mocTCFactory.deploy("mocCT", "CT", deployMocProxy.address);
 
     const mockAddress = deployer;
+    let { stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } = mocAddresses[networkName];
     // TODO: fix these mockAddresses
     // initializations
     await waitForTxConfirmation(
@@ -37,8 +38,9 @@ export function fixtureDeployGovernance(): () => Promise<{
           initializeBaseBucketParams: {
             tcTokenAddress: mocTC.address,
             mocSettlementAddress: mockAddress,
-            mocFeeFlowAddress: mocAddresses[networkName].mocFeeFlowAddress,
-            mocInterestCollectorAddress: mockAddress,
+            mocFeeFlowAddress: mocFeeFlowAddress,
+            mocInterestCollectorAddress: mocInterestCollectorAddress,
+            mocTurboAddress: mocTurboAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
             tcMintFee: tcParams.mintFee,
@@ -47,7 +49,7 @@ export function fixtureDeployGovernance(): () => Promise<{
             fa: coreParams.fa,
           },
           governorAddress: governor.address,
-          stopperAddress: mockAddress,
+          stopperAddress: stopperAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
         { gasLimit: GAS_LIMIT_PATCH },

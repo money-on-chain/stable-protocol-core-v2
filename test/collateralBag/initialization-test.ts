@@ -115,6 +115,14 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
+    describe("WHEN it is initialized with invalid Moc Turbo address", () => {
+      it("THEN tx fails because address is the zero address", async () => {
+        await expect(newMocInit({ turboAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_ADDRESS,
+        );
+      });
+    });
     describe("WHEN it is initialized with invalid protThrld value", () => {
       it("THEN tx fails because protThrld is below ONE", async () => {
         await expect(newMocInit({ protThrld: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
@@ -134,6 +142,22 @@ describe("Feature: MocCABag initialization", function () {
     describe("WHEN it is initialized with invalid TCredeemFee value", () => {
       it("THEN tx fails because TCredeemFee is above ONE", async () => {
         await expect(newMocInit({ tcRedeemFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN it is initialized with invalid success fee value", () => {
+      it("THEN tx fails because sf is above ONE", async () => {
+        await expect(newMocInit({ sf: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN it is initialized with invalid appreciation factor value", () => {
+      it("THEN tx fails because fa is above ONE", async () => {
+        await expect(newMocInit({ fa: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );

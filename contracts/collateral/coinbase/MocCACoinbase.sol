@@ -23,6 +23,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocInterestCollectorAddress mocInterestCollector address
+     *      mocTurboAddress mocTurbo address
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
      *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
