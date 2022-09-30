@@ -458,15 +458,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 acDuetoFlow;
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            // [N] = ([N] * [PREC] / [PREC]) - ([N] * [PREC] / [PREC])
-            uint256 eqTPac = ((pegContainer[i].nTP * PRECISION) / _getPACtp(i)) -
-                ((nTPLstset[i] * PRECISION) / pACtpLstset[i]);
-            acDuetoFlow += eqTPac;
-            // [N] = [N] * [PREC] / [PREC]
-            uint256 tpDueToDif = (eqTPac * fa) / PRECISION;
-            // mint TP to Turbo
-            pegContainer[i].nTP += tpDueToDif;
-            tpTokens[i].mint(mocTurboAddress, tpDueToDif);
+            // [N] = ([N] * [PREC] / [PREC])
+            uint256 acLstset = (nTPLstset[i] * PRECISION) / pACtpLstset[i];
+            // [N] = ([N] * [PREC] / [PREC])
+            uint256 acSpot = (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
+            if (acLstset > acSpot) {
+                // [N] = [N] - [N]
+                uint256 eqTPac = acLstset - acSpot;
+                acDuetoFlow += eqTPac;
+                // [N] = [N] * [PREC] / [PREC]
+                uint256 tpDueToDif = (eqTPac * fa) / PRECISION;
+                // mint TP to Turbo, is not neccesary to check coverage
+                pegContainer[i].nTP += tpDueToDif;
+                tpTokens[i].mint(mocTurboAddress, tpDueToDif);
+            }
         }
         // [N] = [N] * [PREC] / [PREC]
         acDuetoFlow = (acDuetoFlow * sf) / PRECISION;

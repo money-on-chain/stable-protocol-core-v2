@@ -128,10 +128,6 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage Last Settlement Tracking -------
 
-    // total amount of Collateral Asset holded in the Collateral Bag at last settlement
-    uint256 internal nACcbLstset;
-    // total supply of Collateral Token at last settlement
-    uint256 internal nTCcbLstset;
     // amount of collateral asset locked by Pegged Token at last settlement
     uint256 internal lckACLstset;
     // total supply of Pegged Token at last settlement
@@ -410,15 +406,11 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice this function is executed during settlement and
      * stores amount of tokens in the bucket at this moment:
-     *  - nACcbLstset
-     *  - nTCcbLstset
      *  - lckACLstset
      *  - pegContainer[i].nTPLstset
      *  - pegContainer[i].pACtpLstset
      */
     function _updateBucketLstset() internal {
-        nACcbLstset = nACcb;
-        nTCcbLstset = nTCcb;
         lckACLstset = _getLckAC();
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
@@ -489,6 +481,16 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     // ------- Public Functions -------
+
+    /**
+     * @notice get Collateral Token price
+     * @return pTCac [PREC]
+     */
+    function getPTCac() public view returns (uint256 pTCac) {
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        return _getPTCac(lckAC, nACtoMint);
+    }
 
     /**
      * @notice If liquidation is enabled, verifies if forced liquidation has been

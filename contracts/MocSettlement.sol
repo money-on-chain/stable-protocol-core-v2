@@ -33,6 +33,7 @@ contract MocSettlement is MocUpgradable {
         uint256 bmulcdj_
     ) external initializer {
         if (mocCoreAddress_ == address(0)) revert InvalidAddress();
+        mocCore = MocCore(mocCoreAddress_);
         bes = bes_;
         bmulcdj = bmulcdj_;
         bns = block.number + bes_;
