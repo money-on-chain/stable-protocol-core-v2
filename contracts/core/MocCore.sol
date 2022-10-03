@@ -458,23 +458,29 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 acDuetoFlow;
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            uint256 pACtp = _getPACtp(i);
             // [N] = ([N] * [PREC] / [PREC])
             uint256 acLstset = (nTPLstset[i] * PRECISION) / pACtpLstset[i];
             // [N] = ([N] * [PREC] / [PREC])
-            uint256 acSpot = (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
+            uint256 acSpot = (pegContainer[i].nTP * PRECISION) / pACtp;
             if (acLstset > acSpot) {
                 // [N] = [N] - [N]
                 uint256 eqTPac = acLstset - acSpot;
                 acDuetoFlow += eqTPac;
                 // [N] = [N] * [PREC] / [PREC]
                 uint256 tpDueToDif = (eqTPac * fa) / PRECISION;
+                // [N] = [N] * [PREC] / [PREC]
+                uint256 tpToMint = (tpDueToDif * pACtp) / PRECISION;
+                // add qTP to the Bucket
+                pegContainer[i].nTP += tpToMint;
                 // mint TP to Turbo, is not neccesary to check coverage
-                pegContainer[i].nTP += tpDueToDif;
-                tpTokens[i].mint(mocTurboAddress, tpDueToDif);
+                tpTokens[i].mint(mocTurboAddress, tpToMint);
             }
         }
         // [N] = [N] * [PREC] / [PREC]
         acDuetoFlow = (acDuetoFlow * sf) / PRECISION;
+        // sub qAC from the Bucket
+        nACcb -= acDuetoFlow;
         // transfer the qAC to Moc Fee Flow
         acTransfer(mocFeeFlowAddress, acDuetoFlow);
     }
