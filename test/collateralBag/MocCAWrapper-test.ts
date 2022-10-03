@@ -13,7 +13,10 @@ describe("Feature: MocCAWrapper", function () {
   describe("GIVEN a MocCAWrapper implementation deployed", function () {
     before(async function () {
       const fixtureDeploy = fixtureDeployedMocCABag(0);
-      ({ mocWrapper, assetDefault } = await fixtureDeploy());
+      ({
+        mocWrapper,
+        assets: [assetDefault],
+      } = await fixtureDeploy());
       asset00 = await deployAsset();
       priceProvider00 = await deployPriceProvider(pEth(1));
     });

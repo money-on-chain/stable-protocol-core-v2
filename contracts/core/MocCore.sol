@@ -115,6 +115,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     /**
      * @notice transfer Collateral Asset
      * @dev this function must be overriden by the AC implementation
+     *  and revert if transfer fails.
      * @param to_ address who receives the Collateral Asset
      * @param amount_ amount of Collateral Asset to transfer
      */
@@ -240,6 +241,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return qACtotalNeeded;
     }
 
+    /**
+     * @notice redeem Collateral Asset in exchange for Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param sender_ address who sends the Pegged Token
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to `recipient_`
+     */
     function _redeemTPto(
         uint8 i_,
         uint256 qTP_,

@@ -25,7 +25,11 @@ describe("Feature: MocCABag redeem TC", function () {
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       mocFunctions = await mocFunctionsCARBag(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ assetDefault, mocWrapper, assetPriceProvider } = this.mocContracts);
+      ({
+        assets: [assetDefault],
+        mocWrapper,
+        assetPriceProviders: [assetPriceProvider],
+      } = this.mocContracts);
     });
     redeemTCBehavior();
 

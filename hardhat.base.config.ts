@@ -126,6 +126,9 @@ const config: HardhatUserConfig = {
     runOnCompile: true,
     disambiguatePaths: false,
   },
+  mocha: {
+    timeout: 100000,
+  },
 };
 
 export default config;

@@ -10,7 +10,7 @@ const mintTC =
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    await collateralAsset.connect(signer).approve(mocImpl.address, qACmax);
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     return mocImpl.connect(signer).mintTC(qTC, qACmax);
   };
 
@@ -22,7 +22,7 @@ const mintTCto =
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    await collateralAsset.connect(signer).approve(mocImpl.address, qACmax);
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     return mocImpl.connect(signer).mintTCto(qTC, qACmax, to);
   };
 
@@ -34,7 +34,7 @@ const redeemTC =
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
-    await mocCollateralToken.connect(signer).approve(mocImpl.address, qTC);
+    await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
     return mocImpl.connect(signer).redeemTC(qTC, qACmin);
   };
 
@@ -46,7 +46,7 @@ const redeemTCto =
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
-    await mocCollateralToken.connect(signer).approve(mocImpl.address, qTC);
+    await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
     return mocImpl.connect(signer).redeemTCto(qTC, qACmin, to);
   };
 
@@ -58,7 +58,7 @@ const mintTP =
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
-    await collateralAsset.connect(signer).approve(mocImpl.address, qACmax);
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     return mocImpl.connect(signer).mintTP(i, qTP, qACmax);
   };
 
@@ -70,7 +70,7 @@ const mintTPto =
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
-    await collateralAsset.connect(signer).approve(mocImpl.address, qACmax);
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     return mocImpl.connect(signer).mintTPto(i, qTP, qACmax, to);
   };
 

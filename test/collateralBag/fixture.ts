@@ -11,11 +11,12 @@ import {
   MocSettlement__factory,
   PriceProviderMock,
 } from "../../typechain";
-import { pEth, deployAndAddPeggedTokens, deployPriceProvider, deployAsset } from "../helpers/utils";
+import { deployAndAddPeggedTokens, deployAndAddAssets } from "../helpers/utils";
 
 export function fixtureDeployedMocCABag(
   amountPegTokens: number,
   tpParams?: any,
+  amountAssets = 1,
 ): () => Promise<{
   mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
@@ -24,8 +25,8 @@ export function fixtureDeployedMocCABag(
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
   wcaToken: MocRC20;
-  assetDefault: ERC20Mock;
-  assetPriceProvider: PriceProviderMock;
+  assets: ERC20Mock[];
+  assetPriceProviders: PriceProviderMock[];
 }> {
   return deployments.createFixture(async ({ ethers }) => {
     await deployments.fixture();
@@ -56,9 +57,7 @@ export function fixtureDeployedMocCABag(
 
     const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
-    const assetDefault = await deployAsset();
-    const assetPriceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addAsset(assetDefault.address, assetPriceProvider.address);
+    const { assets, assetPriceProviders } = await deployAndAddAssets(mocWrapper, amountAssets);
 
     return {
       mocImpl,
@@ -68,8 +67,8 @@ export function fixtureDeployedMocCABag(
       mocPeggedTokens,
       priceProviders,
       wcaToken,
-      assetDefault,
-      assetPriceProvider,
+      assets,
+      assetPriceProviders,
     };
   });
 }

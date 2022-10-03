@@ -1,6 +1,6 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ERC20Mock, PriceProviderMock, MocRC20, MocCore } from "../../typechain";
+import { ERC20Mock, PriceProviderMock, MocRC20, MocCore, MocCAWrapper } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
@@ -161,6 +161,22 @@ export async function deployAsset(): Promise<ERC20Mock> {
   const { alice, bob, charlie } = await getNamedAccounts();
   await Promise.all([alice, bob, charlie].map(address => asset.mint(address, pEth(10000000))));
   return asset;
+}
+
+export async function deployAndAddAssets(
+  mocWrapper: MocCAWrapper,
+  amountAsset: number,
+): Promise<{ assets: ERC20Mock[]; assetPriceProviders: PriceProviderMock[] }> {
+  const assets: Array<ERC20Mock> = [];
+  const assetPriceProviders: Array<PriceProviderMock> = [];
+  for (let i = 0; i < amountAsset; i++) {
+    const asset = await deployAsset();
+    const priceProvider = await deployPriceProvider(pEth(1));
+    await mocWrapper.addAsset(asset.address, priceProvider.address);
+    assets.push(asset);
+    assetPriceProviders.push(priceProvider);
+  }
+  return { assets, assetPriceProviders };
 }
 
 export type Balance = BigNumber;
