@@ -125,7 +125,7 @@ const successFeeBehavior = function () {
               const diff = mocPrevACBalance.sub(mocActualACBalance);
               assertPrec("5.866666666666666666", diff);
             });
-            it("THEN Moc Turbo TP balance increase for each TP", async function () {
+            it("THEN Moc Turbo TP balance increase 50% for each TP devaluation", async function () {
               const mocTurboActualTPsBalance = await Promise.all(
                 [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocTurboAddress)),
               );
