@@ -409,6 +409,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         lckACLstset = _getLckAC();
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            // [N] = ([N] * [PREC] / [PREC])
             nACLstset[i] = (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
         }
     }
