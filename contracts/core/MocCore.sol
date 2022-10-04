@@ -599,6 +599,19 @@ abstract contract MocCore is MocEma, MocInterestRate {
         emit PeggedTokenAdded(newTPindex, addPeggedTokenParams_);
     }
 
+    // ------- Getters Functions -------
+
+    /**
+     * @notice get amount of Collateral Token available to redeem
+     * @return tcAvailableToRedeem [N]
+     */
+    function getTCAvailableToRedeem() external view returns (uint256 tcAvailableToRedeem) {
+        uint256 ctargemaCA = _getCtargemaCA();
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        return _getTCAvailableToRedeem(ctargemaCA, lckAC, nACtoMint);
+    }
+
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.

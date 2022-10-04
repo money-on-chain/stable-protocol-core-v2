@@ -243,6 +243,9 @@ const mintTCBehavior = function () {
             beforeEach(async function () {
               await mocFunctions.pokePrice(TP_0, 1000);
             });
+            it("THEN the coverage is 30003.65", async function () {
+              assertPrec("30003.655319148936170210", await mocContracts.mocImpl.getCglb());
+            });
             describe("WHEN alice mints 100 TC", function () {
               let alicePrevACBalance: Balance;
               beforeEach(async function () {
