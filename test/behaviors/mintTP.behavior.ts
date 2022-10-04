@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -313,7 +313,7 @@ const mintTPBehavior = function () {
             });
           });
         });
-        describe("AND Collateral Asset relation with Pegged Token price raises to 300, so there are 125739.3087 TP0 available to mint", function () {
+        describe("AND Pegged Token has been devaluated to 300, so there are 125739.3087 TP0 available to mint", function () {
           /*  
             nAC = 3100    
             nTP = 23500
@@ -342,6 +342,35 @@ const mintTPBehavior = function () {
               const aliceActualTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
               const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
               assertPrec(125739.3, diff);
+            });
+          });
+          describe("AND the settlement is executed", function () {
+            beforeEach(async function () {
+              const nextBlockSettlement = await mocContracts.mocSettlement.bns();
+              await mineUpTo(nextBlockSettlement);
+              await mocContracts.mocSettlement.execSettlement();
+            });
+            describe("AND Pegged Token has been devaluated to 1000", function () {
+              /*  
+                  nAC = 3100    
+                  nTP = 23500
+                  lckACLstset = 78.33
+                  lckAC = 23.5
+                  ACtoMint = 32.89
+                  ctarg = 19.8856
+                  => TP available to mint = 137659.67
+              */
+              beforeEach(async function () {
+                await mocFunctions.pokePrice(TP_0, 1000);
+              });
+              it("THEN there are 137659.67 TP available to mint", async function () {
+                // we must update ema to match the real TP available, otherwise it is just an approximation
+                await mocContracts.mocImpl.updateEmas();
+                assertPrec("137659.672507171644807722", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+              });
+              it("THEN the coverage is 130.51", async function () {
+                assertPrec("130.514893617021276595", await mocContracts.mocImpl.getCglb());
+              });
             });
           });
         });

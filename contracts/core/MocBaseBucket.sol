@@ -480,28 +480,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         return (_getTotalACavailable(nACtoMint_) * PRECISION) / lckAC_;
     }
 
-    // ------- Public Functions -------
-
-    /**
-     * @notice get Collateral Token price
-     * @return pTCac [PREC]
-     */
-    function getPTCac() public view returns (uint256 pTCac) {
-        uint256 lckAC = _getLckAC();
-        uint256 nACtoMint = _getACtoMint(lckAC);
-        return _getPTCac(lckAC, nACtoMint);
-    }
-
-    /**
-     * @notice get bucket global coverage
-     * @return cglob [PREC]
-     */
-    function getCglb() public view returns (uint256 cglob) {
-        uint256 lckAC = _getLckAC();
-        uint256 nACtoMint = _getACtoMint(lckAC);
-        return _getCglb(lckAC, nACtoMint);
-    }
-
     /**
      * @notice If liquidation is enabled, verifies if forced liquidation has been
      * reached, checking if globalCoverage <= liquidation

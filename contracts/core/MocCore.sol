@@ -602,7 +602,30 @@ abstract contract MocCore is MocEma, MocInterestRate {
     // ------- Getters Functions -------
 
     /**
+     * @notice get Collateral Token price
+     * @return pTCac [PREC]
+     */
+    function getPTCac() external view returns (uint256 pTCac) {
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        return _getPTCac(lckAC, nACtoMint);
+    }
+
+    /**
+     * @notice get bucket global coverage
+     * @return cglob [PREC]
+     */
+    function getCglb() external view returns (uint256 cglob) {
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        return _getCglb(lckAC, nACtoMint);
+    }
+
+    /**
      * @notice get amount of Collateral Token available to redeem
+     * @dev because it is a view function we are not calculating the new ema,
+     *  since we are using the last ema calculation, this may differ a little from the real amount
+     *  of TC available to redeem. Consider it an approximation.
      * @return tcAvailableToRedeem [N]
      */
     function getTCAvailableToRedeem() external view returns (uint256 tcAvailableToRedeem) {
@@ -610,6 +633,23 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 lckAC = _getLckAC();
         uint256 nACtoMint = _getACtoMint(lckAC);
         return _getTCAvailableToRedeem(ctargemaCA, lckAC, nACtoMint);
+    }
+
+    /**
+     * @notice get amount of Pegged Token available to mint
+     * @dev because it is a view function we are not calculating the new ema,
+     *  since we are using the last ema calculation, this may differ a little from the real amount
+     *  of TP available to mint. Consider it an approximation.
+     * @param i_ Pegged Token index
+     * @return tpAvailableToMint [N]
+     */
+    function getTPAvailableToMint(uint8 i_) external view returns (uint256 tpAvailableToMint) {
+        uint256 pACtp = _getPACtp(i_);
+        uint256 ctargemaCA = _getCtargemaCA();
+        uint256 ctargemaTP = _getCtargemaTP(i_, pACtp);
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        return _getTPAvailableToMint(ctargemaCA, ctargemaTP, pACtp, lckAC, nACtoMint);
     }
 
     /**

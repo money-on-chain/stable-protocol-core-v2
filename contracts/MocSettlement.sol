@@ -4,6 +4,8 @@ import "./governance/MocUpgradable.sol";
 import "./core/MocCore.sol";
 
 contract MocSettlement is MocUpgradable {
+    // ------- Events -------
+    event SettlementExecuted();
     // ------- Storage -------
     // MocCore contract
     MocCore internal mocCore;
@@ -48,6 +50,7 @@ contract MocSettlement is MocUpgradable {
         if (block.number >= bns) {
             bns = block.number + bes;
             mocCore.execSettlement();
+            emit SettlementExecuted();
         }
     }
 
