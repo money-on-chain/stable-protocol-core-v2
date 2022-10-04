@@ -320,7 +320,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         // [PREC] = [PREC] * [PREC] / [PREC]
         uint256 pACtpEmaAdjusted = (ctargemaCA_ * pACtp_) / ctargemaTP_;
         // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 num = (lckACemaAdjusted * pACtpEmaAdjusted) / PRECISION;
+        uint256 num = _mulPrec(lckACemaAdjusted, pACtpEmaAdjusted);
         // [PREC] = [PREC] - [PREC]
         uint256 den = ctargemaCA_ - ONE;
         // [N] = [PREC] / [PREC]
@@ -335,7 +335,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _getArb(uint256 tpAvailableToRedeem_, uint256 nTP_) internal pure returns (uint256 arb) {
         // [PREC] = [N] * [PREC] / [N]
-        return (tpAvailableToRedeem_ * PRECISION) / nTP_;
+        return _divPrec(tpAvailableToRedeem_, nTP_);
     }
 
     /**
@@ -354,7 +354,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 den = nTP_ - qTP_;
         if (den == 0) return ONE;
         // [PREC] = [N] * [PREC] / [N]
-        return ((tpAvailableToRedeem_ - qTP_) * PRECISION) / den;
+        return _divPrec(tpAvailableToRedeem_ - qTP_, den);
     }
 
     /**
@@ -393,7 +393,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             pACtps[i] = _getPACtp(i);
             // [N] = [N] * [PREC] / [PREC]
-            lckAC += (pegContainer[i].nTP * PRECISION) / pACtps[i];
+            lckAC += _divPrec(pegContainer[i].nTP, pACtps[i]);
         }
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [PREC] = [PREC] * [N] / [N];
@@ -410,7 +410,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [N] = ([N] * [PREC] / [PREC])
-            nACLstset[i] = (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
+            nACLstset[i] = _divPrec(pegContainer[i].nTP, _getPACtp(i));
         }
     }
 
@@ -422,7 +422,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [N] = [N] * [PREC] / [PREC]
-            lckAC += (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
+            lckAC += _divPrec(pegContainer[i].nTP, _getPACtp(i));
         }
     }
 
@@ -434,7 +434,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _getACtoMint(uint256 lckAC_) internal view returns (uint256 nACtoMint) {
         if (lckACLstset > lckAC_) {
             // [N] = ([N] - [N]) * ([PREC] + [PPREC]) / [PREC]
-            return ((lckACLstset - lckAC_) * (fa + sf)) / PRECISION;
+            return _mulPrec(lckACLstset - lckAC_, fa + sf);
         }
     }
 
@@ -459,7 +459,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _getPTCac(uint256 lckAC_, uint256 nACtoMint_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
         // [PREC] = ([N] - [N]) * [PREC]) / [N]
-        return ((_getTotalACavailable(nACtoMint_) - lckAC_) * PRECISION) / nTCcb;
+        return _divPrec((_getTotalACavailable(nACtoMint_) - lckAC_), nTCcb);
     }
 
     /**
@@ -472,7 +472,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _getCglb(uint256 lckAC_, uint256 nACtoMint_) internal view returns (uint256 cglob) {
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = [N] * [PREC] / [N]
-        return (_getTotalACavailable(nACtoMint_) * PRECISION) / lckAC_;
+        return _divPrec(_getTotalACavailable(nACtoMint_), lckAC_);
     }
 
     /**

@@ -299,7 +299,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // [PREC]
         uint256 liqPACtp = tpLiqPrices[i_];
         // [PREC] = [N] * [PREC] / [PREC]
-        qACRedeemed = (qTP * PRECISION) / liqPACtp;
+        qACRedeemed = _divPrec(qTP, liqPACtp);
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP);
         // Given rounding errors, the last redeemer might receive a little less
@@ -349,10 +349,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTC_ == 0) revert InvalidValue();
         // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTC_ * _getPTCac(lckAC_, nACtoMint_)) / PRECISION;
+        qACNeededtoMint = _mulPrec(qTC_, _getPTCac(lckAC_, nACtoMint_));
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        qACfee = (qACNeededtoMint * tcMintFee) / PRECISION;
+        qACfee = _mulPrec(qACNeededtoMint, tcMintFee);
 
         return (qACNeededtoMint, qACfee);
     }
@@ -381,10 +381,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = (qTC_ * _getPTCac(lckAC_, nACtoMint_)) / PRECISION;
+        qACtotalToRedeem = _mulPrec(qTC_, _getPTCac(lckAC_, nACtoMint_));
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        qACfee = (qACtotalToRedeem * tcRedeemFee) / PRECISION;
+        qACfee = _mulPrec(qACtotalToRedeem, tcRedeemFee);
         return (qACtotalToRedeem, qACfee);
     }
 
@@ -416,10 +416,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = (qTP_ * PRECISION) / pACtp;
+        qACNeededtoMint = _divPrec(qTP_, pACtp);
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        qACfee = (qACNeededtoMint * tpMintFee[i_]) / PRECISION;
+        qACfee = _mulPrec(qACNeededtoMint, tpMintFee[i_]);
         return (qACNeededtoMint, qACfee);
     }
 
@@ -454,13 +454,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = (qTP_ * PRECISION) / pACtp;
+        qACtotalToRedeem = _divPrec(qTP_, pACtp);
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        qACfee = (qACtotalToRedeem * tpRedeemFee[i_]) / PRECISION;
+        qACfee = _mulPrec(qACtotalToRedeem, tpRedeemFee[i_]);
         // calculate how many qAC to transfer to interest collector
         // [N] = [N] * [PREC] / [PREC]
-        qACinterest = (qACtotalToRedeem * interestRate) / PRECISION;
+        qACinterest = _mulPrec(qACtotalToRedeem, interestRate);
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
@@ -471,15 +471,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint256 pACtp = _getPACtp(i);
             uint256 acLstset = nACLstset[i];
             // [N] = ([N] * [PREC] / [PREC])
-            uint256 acSpot = (pegContainer[i].nTP * PRECISION) / pACtp;
+            uint256 acSpot = _divPrec(pegContainer[i].nTP, pACtp);
             if (acLstset > acSpot) {
                 // [N] = [N] - [N]
                 uint256 eqTPac = acLstset - acSpot;
                 acDuetoFlow += eqTPac;
                 // [N] = [N] * [PREC] / [PREC]
-                uint256 tpDueToDif = (eqTPac * fa) / PRECISION;
+                uint256 tpDueToDif = _mulPrec(eqTPac, fa);
                 // [N] = [N] * [PREC] / [PREC]
-                uint256 tpToMint = (tpDueToDif * pACtp) / PRECISION;
+                uint256 tpToMint = _mulPrec(tpDueToDif, pACtp);
                 // add qTP to the Bucket
                 pegContainer[i].nTP += tpToMint;
                 // mint TP to Turbo, is not neccesary to check coverage
@@ -487,7 +487,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             }
         }
         // [N] = [N] * [PREC] / [PREC]
-        acDuetoFlow = (acDuetoFlow * sf) / PRECISION;
+        acDuetoFlow = _mulPrec(acDuetoFlow, sf);
         // sub qAC from the Bucket
         nACcb -= acDuetoFlow;
         // transfer the qAC to Moc Fee Flow
