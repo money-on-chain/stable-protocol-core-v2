@@ -91,7 +91,7 @@ describe("Feature: MocCABag add Pegged Token", function () {
       it("THEN tx fails because address is invalid", async () => {
         await expect(
           mocAddPeggedToken(mocImpl)({ priceProviderAddress: deprecatedPriceProvider.address }),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_PRICE_PROVIDER);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN a Pegged Token is added with invalid target coverage value", () => {

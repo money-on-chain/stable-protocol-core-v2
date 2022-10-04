@@ -469,8 +469,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
-            // [N] = ([N] * [PREC] / [PREC])
-            uint256 acLstset = (nTPLstset[i] * PRECISION) / pACtpLstset[i];
+            uint256 acLstset = nACLstset[i];
             // [N] = ([N] * [PREC] / [PREC])
             uint256 acSpot = (pegContainer[i].nTP * PRECISION) / pACtp;
             if (acLstset > acSpot) {
@@ -556,6 +555,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
             revert InvalidAddress();
         }
         IPriceProvider priceProvider = IPriceProvider(addPeggedTokenParams_.priceProviderAddress);
+        // verifies it is a valid priceProvider
+        (, bool has) = priceProvider.peek();
+        if (!has) revert InvalidAddress();
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[address(tpToken)].exist) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpTokens.length);
@@ -593,8 +595,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
                 facMax: addPeggedTokenParams_.tpFacMax
             })
         );
-        nTPLstset.push();
-        pACtpLstset.push(_getPACtp(newTPindex));
+        nACLstset.push();
         // emit the event
         emit PeggedTokenAdded(newTPindex, addPeggedTokenParams_);
     }

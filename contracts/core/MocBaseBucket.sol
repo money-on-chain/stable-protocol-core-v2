@@ -130,10 +130,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // amount of collateral asset locked by Pegged Token at last settlement
     uint256 internal lckACLstset;
-    // total supply of Pegged Token at last settlement
-    uint256[] internal nTPLstset;
-    // Pegged Token price at last settlement
-    uint256[] internal pACtpLstset;
+    // amount of collateral asset locked by each Pegged Token at last settlement
+    uint256[] internal nACLstset;
 
     // ------- Modifiers -------
     /// @notice functions with this modifier reverts being in liquidated state
@@ -414,8 +412,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         lckACLstset = _getLckAC();
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            nTPLstset[i] = pegContainer[i].nTP;
-            pACtpLstset[i] = _getPACtp(i);
+            nACLstset[i] = (pegContainer[i].nTP * PRECISION) / _getPACtp(i);
         }
     }
 
