@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCoinbase } from "./fixture";
-import { MocCACoinbase, MocRC20, NonPayableMock, PriceProviderMock, ReentrancyAttackerMock } from "../../typechain";
+import { MocCACoinbase, NonPayableMock, ReentrancyAttackerMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 import { ethers } from "hardhat";
@@ -9,16 +9,13 @@ import { tpParams } from "../helpers/utils";
 
 describe("Feature: MocCoinbase mint TC", function () {
   let mocImpl: MocCACoinbase;
-  let mocCollateralToken: MocRC20;
-  let mocPeggedTokens: MocRC20[];
-  let priceProviders: PriceProviderMock[];
 
   describe("GIVEN a MocCoinbase implementation deployed", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
-      ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
-      this.mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
-      this.mocContracts = { mocImpl, mocCollateralToken };
+      this.mocContracts = await fixtureDeploy();
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
+      ({ mocImpl } = this.mocContracts);
     });
     mintTCBehavior();
 

@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -184,29 +184,6 @@ const mintTCBehavior = function () {
           });
         });
       });
-      describe("AND Collateral Asset relation with Pegged Token price rices to 500 making TC price rices too", function () {
-        /*  
-        nAC = 3000.4    
-        nTP = 100
-        lckAC = 0.001
-        => pTCac = 1.00013
-        */
-        beforeEach(async function () {
-          await mocFunctions.pokePrice(TP_0, 500);
-        });
-        describe("WHEN alice mints 100 TC", function () {
-          let alicePrevACBalance: Balance;
-          beforeEach(async function () {
-            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-            await mocFunctions.mintTC({ from: alice, qTC: 100 });
-          });
-          it("THEN alice spends 105.007 assets instead of 105", async function () {
-            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-            const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("105.007893617021276595", diff);
-          });
-        });
-      });
       describe("AND Collateral Asset relation with Pegged Token price falls to 1/15.5", function () {
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, "0.064516129032258064");
@@ -223,6 +200,61 @@ const mintTCBehavior = function () {
               mocContracts.mocImpl,
               ERRORS.LOW_COVERAGE,
             );
+          });
+        });
+      });
+      describe("AND Pegged Token has been devaluated to 500 making TC price rices", function () {
+        /*  
+        nAC = 3000.4    
+        nTP = 100
+        lckAC = 0.2
+        => pTCac = 1.00006
+        */
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 500);
+        });
+        describe("WHEN alice mints 100 TC", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            await mocFunctions.mintTC({ from: alice, qTC: 100 });
+          });
+          it("THEN alice spends 105.007 assets instead of 105", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec("105.007893617021276595", diff);
+          });
+        });
+        describe("AND the settlement is executed", function () {
+          beforeEach(async function () {
+            const nextBlockSettlement = await mocContracts.mocSettlement.bns();
+            await mineUpTo(nextBlockSettlement);
+            await mocContracts.mocSettlement.execSettlement();
+          });
+          describe("AND Pegged Token has been devaluated to 1000", function () {
+            /*  
+            nAC = 3000.4    
+            nTP = 100
+            lckACLstset = 0.2
+            lckAC = 0.1
+            ACtoMint = 0.06
+            => pTCac = 1.00008
+            */
+            beforeEach(async function () {
+              await mocFunctions.pokePrice(TP_0, 1000);
+            });
+            describe("WHEN alice mints 100 TC", function () {
+              let alicePrevACBalance: Balance;
+              beforeEach(async function () {
+                alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+                await mocFunctions.mintTC({ from: alice, qTC: 100 });
+              });
+              it("THEN alice spends 105.009 assets instead of 105", async function () {
+                const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+                const diff = alicePrevACBalance.sub(aliceActualACBalance);
+                assertPrec("105.009293617021276560", diff);
+              });
+            });
           });
         });
       });
