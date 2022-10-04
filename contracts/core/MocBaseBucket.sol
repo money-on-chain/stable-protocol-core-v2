@@ -403,10 +403,7 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     /**
      * @notice this function is executed during settlement and
-     * stores amount of tokens in the bucket at this moment:
-     *  - lckACLstset
-     *  - pegContainer[i].nTPLstset
-     *  - pegContainer[i].pACtpLstset
+     * stores amount of locked AC by Pegged Tokens at this moment
      */
     function _updateBucketLstset() internal {
         lckACLstset = _getLckAC();

@@ -498,7 +498,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
     /**
      * @notice this function is executed during settlement.
-     *  stores amount of tokens in the bucket at this moment and distribute success fee
+     *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
     function execSettlement() external onlySettlement {
         _distributeSuccessFee();
