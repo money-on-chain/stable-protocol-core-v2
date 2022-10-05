@@ -70,7 +70,7 @@ abstract contract MocEma is MocBaseBucket {
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
             // [PREC] = [N] * [PREC] * [PREC]  / [PREC]
-            uint256 qAC = (pegContainer[i].nTP * PRECISION * PRECISION) / pACtp;
+            uint256 qAC = _divPrec(pegContainer[i].nTP * PRECISION, pACtp);
             // [PREC]^2 = [PREC] * [PREC]
             num += _getCtargemaTP(i, pACtp) * qAC;
             // [PREC] = [PREC]
