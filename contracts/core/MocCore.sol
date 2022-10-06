@@ -464,6 +464,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
+    /**
+     * @notice distribute appreciation factor to Turbo and success fee to Moc Fee Flow
+     */
     function _distributeSuccessFee() internal {
         uint256 acDuetoFlow;
         uint256 pegAmount = pegContainer.length;
