@@ -50,6 +50,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
+    error QTPtoMintMustBeGreaterThanZero();
 
     // ------- Structs -------
 
@@ -299,6 +300,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
      */
     function _swapTPforTPto(
         uint8 iFrom_,
@@ -308,12 +310,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated {
+    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         if (iFrom_ == iTo_) revert InvalidValue();
         (uint256 qTPtoMint, uint256 qACfee, uint256 qACinterest) = _calcTPforSwapTP(iFrom_, iTo_, qTP_);
-        uint256 qACtotalNedeed = qACfee + qACinterest;
+        qACtotalNeeded = qACfee + qACinterest;
         if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
-        if (qACtotalNedeed > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNedeed);
+        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // subtract qTP from the Bucket
         pegContainer[iFrom_].nTP -= qTP_;
         // add qTP to the Bucket
@@ -321,12 +323,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // burn qTP from the sender
         tpTokens[iFrom_].burn(sender_, qTP_);
         // burn qTP to the recipient
-        tpTokens[iTo_].mint(recipient_, qTP_);
+        tpTokens[iTo_].mint(recipient_, qTPtoMint);
+        // calculate how many qAC should be returned to the sender
+        uint256 qACchg = qACmax_ - qACtotalNeeded;
+        // transfer the qAC change to the sender
+        acTransfer(sender_, qACchg);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
         // transfer qAC for interest
         acTransfer(mocInterestCollectorAddress, qACinterest);
         emit TPSwapped(iFrom_, iTo_, sender_, recipient_, qTP_, qTPtoMint, qACfee, qACinterest);
+        return qACtotalNeeded;
     }
 
     /**
@@ -535,13 +542,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
-        (uint256 qACtoRedeem, uint256 qACfeeToRedeem, uint256 qACinterest) = _calcQACforRedeemTP(iFrom_, qTP_);
+        (uint256 qACtotalToRedeem, uint256 qACfeeToRedeem, uint256 qACinterest) = _calcQACforRedeemTP(iFrom_, qTP_);
+        // if is 0 reverts because it is triyng to redeem an amount below precision
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // get the swapped TP price
         uint256 pACtpTo = _getPACtp(iTo_);
         uint256 lckAC = _getLckAC();
         // calculate how many qTP can mint with the given qAC
         // [N] = [N] * [PREC] / [PREC]
-        qTPtoMint = _mulPrec(qACtoRedeem, pACtpTo);
+        qTPtoMint = _mulPrec(qACtotalToRedeem, pACtpTo);
+        // if is 0 reverts because the TP sent is not enough to swap even a target TP
+        if (qTPtoMint == 0) revert QTPtoMintMustBeGreaterThanZero();
 
         uint256 ctargemaTP = _getCtargemaTP(iTo_, pACtpTo);
         uint256 tpAvailableToMint = _getTPAvailableToMint(
@@ -554,7 +565,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTPtoMint) revert InsufficientTPtoMint(qTPtoMint, tpAvailableToMint);
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACfeeToMint = _mulPrec(qACtoRedeem, tpMintFee[iTo_]);
+        uint256 qACfeeToMint = _mulPrec(qACtotalToRedeem, tpMintFee[iTo_]);
         return (qTPtoMint, qACfeeToRedeem + qACfeeToMint, qACinterest);
     }
 

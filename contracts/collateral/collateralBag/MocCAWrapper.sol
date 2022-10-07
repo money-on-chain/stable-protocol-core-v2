@@ -309,6 +309,38 @@ contract MocCAWrapper is MocUpgradable {
         emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetAmount);
     }
 
+    function _swapTPforTPto(
+        address assetAddress_,
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qAssetMax_);
+        wcaToken.mint(address(this), tokenToMint);
+
+        // transfer asset from sender to this contract
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAssetMax_);
+
+        // get Pegged Token contract address
+        IERC20 tpToken = mocCore.tpTokens(iFrom_);
+        // transfer Pegged Token from sender to this address
+        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        uint256 tokenUsed = mocCore.swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, tokenToMint, recipient_);
+        uint256 tokenUnused = tokenToMint - tokenUsed;
+
+        // calculates the equivalent value in the given asset
+        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
+        wcaToken.burn(address(this), tokenUnused);
+
+        // transfer back to sender the unused asset
+        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+        //TODO: emit event
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -516,6 +548,29 @@ contract MocCAWrapper is MocUpgradable {
     ) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
+    }
+
+    function swapTPforTP(
+        address assetAddress_,
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_
+    ) external {
+        _swapTPforTPto(assetAddress_, iFrom_, iTo_, qTP_, qTPmin_, qAssetMax_, msg.sender, msg.sender);
+    }
+
+    function swapTPforTPto(
+        address assetAddress_,
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address recipient_
+    ) external {
+        _swapTPforTPto(assetAddress_, iFrom_, iTo_, qTP_, qTPmin_, qAssetMax_, msg.sender, recipient_);
     }
 
     /*

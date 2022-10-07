@@ -170,14 +170,15 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
      */
     function swapTPforTP(
         uint8 iFrom_,
         uint8 iTo_,
         uint256 qTP_,
         uint256 qTPmin_
-    ) external payable {
-        _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, msg.sender);
+    ) external payable returns (uint256 qACtotalNeeded) {
+        return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, msg.sender);
     }
 
     /**
@@ -187,6 +188,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param recipient_ address who receives the target Pegged Token
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
      */
     function swapTPforTPto(
         uint8 iFrom_,
@@ -194,8 +196,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         uint256 qTP_,
         uint256 qTPmin_,
         address recipient_
-    ) external payable {
-        _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, recipient_);
+    ) external payable returns (uint256 qACtotalNeeded) {
+        return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, recipient_);
     }
 
     /**
