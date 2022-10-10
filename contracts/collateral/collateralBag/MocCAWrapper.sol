@@ -177,22 +177,13 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qAssetMax_);
-        wcaToken.mint(address(this), tokenToMint);
-
-        // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAssetMax_);
+        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
 
         // mint TC to the recipient
-        uint256 tokenUsed = mocCore.mintTCto(qTC_, tokenToMint, recipient_);
-        uint256 tokenUnused = tokenToMint - tokenUsed;
+        uint256 wcaUsed = mocCore.mintTCto(qTC_, wcaMinted, recipient_);
+        uint256 wcaUnused = wcaMinted - wcaUsed;
 
-        // calculates the equivalent value in the given asset
-        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
-        wcaToken.burn(address(this), tokenUnused);
-
-        // transfer back to sender the unused asset
-        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), recipient_);
         emit TCMinted(assetAddress_, sender_, recipient_, qTC_, qAssetMax_ - assetUnused);
     }
 
@@ -220,14 +211,16 @@ contract MocCAWrapper is MocUpgradable {
         // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
-        // calculate the equivalent amount of Asset
-        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
-        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
-        // burn the wcaToken redeemed
-        wcaToken.burn(address(this), wcaTokenAmountRedeemed);
-        // transfer Asset to the recipient
-        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
-        emit TCRedeemed(assetAddress_, sender_, recipient_, qTC_, assetAmount);
+
+        uint256 assetRedeemed = _redeemWCAto(
+            assetAddress_,
+            wcaTokenAmountRedeemed,
+            qAssetMin_,
+            address(this),
+            recipient_
+        );
+
+        emit TCRedeemed(assetAddress_, sender_, recipient_, qTC_, assetRedeemed);
     }
 
     /**
@@ -248,22 +241,13 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qAssetMax_);
-        wcaToken.mint(address(this), tokenToMint);
-
-        // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAssetMax_);
+        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
 
         // mint TP to the recipient
-        uint256 tokenUsed = mocCore.mintTPto(i_, qTP_, tokenToMint, recipient_);
-        uint256 tokenUnused = tokenToMint - tokenUsed;
+        uint256 wcaUsed = mocCore.mintTPto(i_, qTP_, wcaMinted, recipient_);
+        uint256 wcaUnused = wcaMinted - wcaUsed;
 
-        // calculates the equivalent value in the given asset
-        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
-        wcaToken.burn(address(this), tokenUnused);
-
-        // transfer back to sender the unused asset
-        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), recipient_);
         emit TPMinted(assetAddress_, i_, sender_, recipient_, qTP_, qAssetMax_ - assetUnused);
     }
 
@@ -299,14 +283,16 @@ contract MocCAWrapper is MocUpgradable {
         uint256 wcaTokenAmountRedeemed;
         if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
         else wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
-        // calculate the equivalent amount of Asset
-        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmountRedeemed);
-        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
-        // burn the wcaToken redeemed
-        wcaToken.burn(address(this), wcaTokenAmountRedeemed);
-        // transfer Asset to the recipient
-        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
-        emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetAmount);
+
+        uint256 assetRedeemed = _redeemWCAto(
+            assetAddress_,
+            wcaTokenAmountRedeemed,
+            qAssetMin_,
+            address(this),
+            recipient_
+        );
+
+        emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetRedeemed);
     }
 
     /**
@@ -330,25 +316,47 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 tokenToMint = _convertAssetToToken(assetAddress_, qAssetMax_);
-        wcaToken.mint(address(this), tokenToMint);
-
-        // transfer asset from sender to this contract
-        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAssetMax_);
+        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
 
         // get Pegged Token contract address
         IERC20 tpToken = mocCore.tpTokens(iFrom_);
         // transfer Pegged Token from sender to this address
         SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
-        uint256 tokenUsed = mocCore.swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, tokenToMint, recipient_);
-        uint256 tokenUnused = tokenToMint - tokenUsed;
+        uint256 wcaUsed = mocCore.swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, wcaMinted, recipient_);
+        uint256 wcaUnused = wcaMinted - wcaUsed;
 
-        // calculates the equivalent value in the given asset
-        uint256 assetUnused = _convertTokenToAsset(assetAddress_, tokenUnused);
-        wcaToken.burn(address(this), tokenUnused);
+        _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), recipient_);
+    }
 
-        // transfer back to sender the unused asset
-        SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
+    function _mintWCAto(
+        address assetAddress_,
+        uint256 qAsset,
+        address sender_,
+        address recipient_
+    ) internal returns (uint256 wcaMinted) {
+        wcaMinted = _convertAssetToToken(assetAddress_, qAsset);
+        wcaToken.mint(recipient_, wcaMinted);
+
+        // transfer asset from sender to this contract
+        SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAsset);
+        return wcaMinted;
+    }
+
+    function _redeemWCAto(
+        address assetAddress_,
+        uint256 qWCA,
+        uint256 qAssetMin_,
+        address sender_,
+        address recipient_
+    ) internal returns (uint256 assetRedeemed) {
+        // calculate the equivalent amount of Asset
+        assetRedeemed = _convertTokenToAsset(assetAddress_, qWCA);
+        if (assetRedeemed < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetRedeemed);
+        // burn the wcaToken redeemed
+        wcaToken.burn(sender_, qWCA);
+        // transfer Asset to the recipient
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetRedeemed);
+        return assetRedeemed;
     }
 
     // ------- Public Functions -------
