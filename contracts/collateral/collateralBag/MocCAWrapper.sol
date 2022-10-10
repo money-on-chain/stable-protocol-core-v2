@@ -309,6 +309,17 @@ contract MocCAWrapper is MocUpgradable {
         emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetAmount);
     }
 
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param sender_ address who sends the Pegged Token
+     * @param recipient_ address who receives the target Pegged Token
+     */
     function _swapTPforTPto(
         address assetAddress_,
         uint8 iFrom_,
@@ -338,7 +349,6 @@ contract MocCAWrapper is MocUpgradable {
 
         // transfer back to sender the unused asset
         SafeERC20.safeTransfer(IERC20(assetAddress_), sender_, assetUnused);
-        //TODO: emit event
     }
 
     // ------- Public Functions -------
@@ -550,6 +560,16 @@ contract MocCAWrapper is MocUpgradable {
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
     }
 
+    /**
+     * @notice caller sends a Pegged Token and receives another one
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     */
     function swapTPforTP(
         address assetAddress_,
         uint8 iFrom_,
@@ -561,6 +581,17 @@ contract MocCAWrapper is MocUpgradable {
         _swapTPforTPto(assetAddress_, iFrom_, iTo_, qTP_, qTPmin_, qAssetMax_, msg.sender, msg.sender);
     }
 
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param recipient_ address who receives the target Pegged Token
+     */
     function swapTPforTPto(
         address assetAddress_,
         uint8 iFrom_,

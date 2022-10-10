@@ -198,7 +198,7 @@ contract MocCARC20 is MocCore {
      * @param iFrom_ owned Pegged Token index
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
-     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
      * @return qACtotalNeeded amount of AC used to pay fee and interest
      */
