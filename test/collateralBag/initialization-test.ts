@@ -11,7 +11,7 @@ import { expect } from "chai";
 import { ERRORS, CONSTANTS } from "../helpers/utils";
 import { mocInitialize } from "./initializers";
 import { mocAddresses } from "../../deploy-config/config";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 
 describe("Feature: MocCABag initialization", function () {
   let mocProxy: MocCARC20;
@@ -37,10 +37,34 @@ describe("Feature: MocCABag initialization", function () {
         await expect(mocInit()).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
+    describe("WHEN initialize the moc implementation", async () => {
+      let mocImplementation: MocCARC20;
+      it("THEN tx fails because contract is already initialized", async () => {
+        mocImplementation = MocCARC20__factory.connect(
+          (await deployments.get("MocCABagImpl")).address,
+          ethers.provider.getSigner(),
+        );
+        await expect(
+          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address, mocSettlement.address)(),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
     describe("WHEN initialize mocWrapper again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
         await expect(
           mocWrapper.initialize(governorAddress, stopperAddress, mocProxy.address, wcaToken.address),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+    describe("WHEN initialize the mocWrapper implementation", async () => {
+      let mocWrapperImplementation: MocCAWrapper;
+      it("THEN tx fails because contract is already initialized", async () => {
+        mocWrapperImplementation = MocCAWrapper__factory.connect(
+          (await deployments.get("MocCAWrapperImpl")).address,
+          ethers.provider.getSigner(),
+        );
+        await expect(
+          mocWrapperImplementation.initialize(governorAddress, stopperAddress, mocProxy.address, wcaToken.address),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
