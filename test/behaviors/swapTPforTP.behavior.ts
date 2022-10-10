@@ -339,7 +339,7 @@ const swapTPforTPBehavior = function () {
             // sender: alice || mocWrapper
             // receiver: alice
             // qTPfrom: 23500 TP 0
-            // qTPto: 23500 TP 1
+            // qTPto: 1175 TP 1
             // qACfee: 5.1% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
@@ -375,7 +375,7 @@ const swapTPforTPBehavior = function () {
             // sender: alice || mocWrapper
             // receiver: alice
             // qTPfrom: 23500 TP 0
-            // qTPto: 23500 TP 1
+            // qTPto: 2.625 TP 1
             // qACfee: 5.1% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
