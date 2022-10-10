@@ -94,7 +94,7 @@ const swapTPforTPBehavior = function () {
         it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {
           await expect(
             mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 1, applyPrecision: false }),
-          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
+          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_VALUE);
         });
       });
       describe("AND TP 1 revalues to 0.9", function () {
@@ -105,7 +105,7 @@ const swapTPforTPBehavior = function () {
           it("THEN tx reverts because the amount of TP is too low to swap for TP 1", async function () {
             await expect(
               mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 235, applyPrecision: false }),
-            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QTP_TP_MINT_MUST_BE_GREATER_ZERO);
+            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_VALUE);
           });
         });
       });
@@ -139,7 +139,7 @@ const swapTPforTPBehavior = function () {
             23500 TP 0 = 100 AC
             100 AC = 525 TP 1
 
-            fee = TP 0 redeem fee + TP 1 mint fee = 5% + 1%
+            fee = TP 0 redeem fee + TP 1 mint fee = 5% + 0.1%
 
             arb = 1 => fctb = 0.1
             arf = 1 => fctb = 0.1
@@ -198,8 +198,8 @@ const swapTPforTPBehavior = function () {
           // receiver: alice
           // qTPfrom: 23500 TP 0
           // qTPto: 525 TP 1
-          // qACfee: 5% AC
-          // qACInterest: 0.0987%
+          // qACfee: 5.1% AC
+          // qACInterest: 0.0987% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwapped")
             .withArgs(
@@ -235,7 +235,7 @@ const swapTPforTPBehavior = function () {
             2350 TP 0 = 10 AC
             10 AC = 52.5 TP 1
 
-            fee = TP 0 redeem fee + TP 1 mint fee = 5% + 1%
+            fee = TP 0 redeem fee + TP 1 mint fee = 5% + 0.1%
 
             arb = 1 => fctb = 0.1
             arf = 1 => fctb = 0.1
@@ -305,8 +305,8 @@ const swapTPforTPBehavior = function () {
           // receiver: bob
           // qTPfrom: 2350 TP 0
           // qTPto: 52.5 TP 1
-          // qACfee: 5% AC
-          // qACInterest: 0.0987%
+          // qACfee: 5.1% AC
+          // qACInterest: 0.0987% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwapped")
             .withArgs(
@@ -319,6 +319,78 @@ const swapTPforTPBehavior = function () {
               pEth(10 * 0.051),
               pEth("0.009877199074074070"),
             );
+        });
+      });
+      describe("AND TP 0 revalues to 105", function () {
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 105);
+        });
+        describe("WHEN alice swap 23500 TP 0 for TP 1", function () {
+          let tx: ContractTransaction;
+          beforeEach(async function () {
+            // go forward to a fixed block remaining for settlement to avoid unpredictability
+            const bns = await mocContracts.mocSettlement.bns();
+            await mineUpTo(bns.sub(fixedBlock));
+            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23500, qTPmin: 1175 });
+          });
+          it("THEN a TPSwapped event is emitted", async function () {
+            // iFrom: 0
+            // iTo: 1
+            // sender: alice || mocWrapper
+            // receiver: alice
+            // qTPfrom: 23500 TP 0
+            // qTPto: 23500 TP 1
+            // qACfee: 5.1% AC
+            // qACInterest: 0.0987% AC
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TPSwapped")
+              .withArgs(
+                TP_0,
+                TP_1,
+                mocContracts.mocWrapper?.address || alice,
+                alice,
+                pEth(23500),
+                pEth(1175),
+                pEth("11.414285714285714285"),
+                pEth("0.221061122134038709"),
+              );
+          });
+        });
+      });
+      describe("AND TP 0 devalues to 47000", function () {
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 47000);
+        });
+        describe("WHEN alice swap 23500 TP 0 for TP 1", function () {
+          let tx: ContractTransaction;
+          beforeEach(async function () {
+            // go forward to a fixed block remaining for settlement to avoid unpredictability
+            const bns = await mocContracts.mocSettlement.bns();
+            await mineUpTo(bns.sub(fixedBlock));
+            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23500, qTPmin: 2.625 });
+          });
+          it("THEN a TPSwapped event is emitted", async function () {
+            // iFrom: 0
+            // iTo: 1
+            // sender: alice || mocWrapper
+            // receiver: alice
+            // qTPfrom: 23500 TP 0
+            // qTPto: 23500 TP 1
+            // qACfee: 5.1% AC
+            // qACInterest: 0.0987% AC
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TPSwapped")
+              .withArgs(
+                TP_0,
+                TP_1,
+                mocContracts.mocWrapper?.address || alice,
+                alice,
+                pEth(23500),
+                pEth(2.625),
+                pEth("0.0255"),
+                pEth("0.000493859953703703"),
+              );
+          });
         });
       });
     });

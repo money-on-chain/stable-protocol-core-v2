@@ -50,8 +50,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
-    error QTPtoMintMustBeGreaterThanZero();
-
     // ------- Structs -------
 
     struct InitializeCoreParams {
@@ -542,30 +540,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
-        (uint256 qACtotalToRedeem, uint256 qACfeeToRedeem, uint256 qACinterest) = _calcQACforRedeemTP(iFrom_, qTP_);
-        // if is 0 reverts because it is triyng to redeem an amount below precision
-        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
-        // get the swapped TP price
-        uint256 pACtpTo = _getPACtp(iTo_);
+        (, uint256 qACfeeToRedeem, uint256 qACinterest) = _calcQACforRedeemTP(iFrom_, qTP_);
         uint256 lckAC = _getLckAC();
         // calculate how many qTP can mint with the given qAC
         // [N] = [N] * [PREC] / [PREC]
-        qTPtoMint = _mulPrec(qACtotalToRedeem, pACtpTo);
-        // if is 0 reverts because the TP sent is not enough to swap even a target TP
-        if (qTPtoMint == 0) revert QTPtoMintMustBeGreaterThanZero();
-
-        uint256 ctargemaTP = _getCtargemaTP(iTo_, pACtpTo);
-        uint256 tpAvailableToMint = _getTPAvailableToMint(
-            calcCtargemaCA(),
-            ctargemaTP,
-            pACtpTo,
-            lckAC,
-            _getACtoMint(lckAC)
-        );
-        // check if there are enough TP available to mint
-        if (tpAvailableToMint < qTPtoMint) revert InsufficientTPtoMint(qTPtoMint, tpAvailableToMint);
-        // [N] = [N] * [PREC] / [PREC]
-        uint256 qACfeeToMint = _mulPrec(qACtotalToRedeem, tpMintFee[iTo_]);
+        qTPtoMint = (qTP_ * _getPACtp(iTo_)) / _getPACtp(iFrom_);
+        (, uint256 qACfeeToMint) = _calcQACforMintTP(iTo_, qTPtoMint, calcCtargemaCA(), lckAC, _getACtoMint(lckAC));
         return (qTPtoMint, qACfeeToRedeem + qACfeeToMint, qACinterest);
     }
 

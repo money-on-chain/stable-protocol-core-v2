@@ -11,6 +11,7 @@ const gasEstimationBehavior = function () {
   const gasPrice = 65164000;
   const blockGasLimit = 6800000;
   const TP_0 = 0;
+  const TP_1 = 1;
 
   const gasData = (estimatedGas: number) => ({
     blockGasLimit,
@@ -47,6 +48,7 @@ const gasEstimationBehavior = function () {
             redeemTC: () => mocFunctions.redeemTC({ from: deployer, qTC: 100 }),
             mintTP: () => mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 100 }),
             redeemTP: () => mocFunctions.redeemTP({ i: TP_0, from: deployer, qTP: 100 }),
+            swapTPforTP: () => mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: deployer, qTP: 100 }),
             //TODO: add settlement
           };
 

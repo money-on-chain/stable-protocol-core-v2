@@ -8,7 +8,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
     beforeEach(async function () {
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
       this.mocFunctions = await mocFunctionsCARBag(this.mocContracts);
-      swapTPforTPBehavior();
     });
+    swapTPforTPBehavior();
   });
 });
