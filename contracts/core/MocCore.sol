@@ -657,6 +657,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
+     * @notice get total Collateral Asset available
+     * @return totalACavailable [N]
+     */
+    function getTotalACavailable() external view returns (uint256 totalACavailable) {
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        // [N] = [N] + [N] - [N]
+        return nACcb + nACioucb - nACtoMint;
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
