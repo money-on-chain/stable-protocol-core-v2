@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 import "../interfaces/IMocRC20.sol";
 import "./MocEma.sol";
 import "./MocInterestRate.sol";
+import "hardhat/console.sol";
 
 /**
  * @title MocCore
@@ -141,10 +142,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTC_,
         uint256 qACmax_,
         address sender_,
-        address recipient_
+        address recipient_,
+        bool checkCoverage_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        (uint256 lckAC, uint256 nACtoMint) = _evalCoverage(protThrld);
+        if (checkCoverage_) _evalCoverage(protThrld, lckAC, nACtoMint);
         // calculates how many qAC are needed to mint TC and the qAC fee
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC, nACtoMint);
         qACtotalNeeded = qACNeededtoMint + qACfee;
@@ -177,14 +181,23 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTC_,
         uint256 qACmin_,
         address sender_,
-        address recipient_
+        address recipient_,
+        bool checkCoverage_
     ) internal notLiquidated returns (uint256 qACtoRedeem) {
         uint256 ctargemaCA = calcCtargemaCA();
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
-        (uint256 lckAC, uint256 nACtoMint) = _evalCoverage(ctargemaCA);
+        if (checkCoverage_) _evalCoverage(ctargemaCA, lckAC, nACtoMint);
         // calculate how many total qAC are redemeed and how many correspond for fee
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargemaCA, lckAC, nACtoMint);
+        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(
+            qTC_,
+            ctargemaCA,
+            lckAC,
+            nACtoMint,
+            checkCoverage_
+        );
         // if is 0 reverts because it is triyng to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
@@ -215,12 +228,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 qACmax_,
         address sender_,
-        address recipient_
+        address recipient_,
+        bool checkCoverage_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         uint256 ctargemaCA = calcCtargemaCA();
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
-        (uint256 lckAC, uint256 nACtoMint) = _evalCoverage(ctargemaCA);
+        if (checkCoverage_) _evalCoverage(ctargemaCA, lckAC, nACtoMint);
         // calculate how many qAC are needed to mint TP and the qAC fee
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargemaCA, lckAC, nACtoMint);
         qACtotalNeeded = qACNeededtoMint + qACfee;
@@ -255,10 +271,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 qACmin_,
         address sender_,
-        address recipient_
+        address recipient_,
+        bool checkCoverage_
     ) internal notLiquidated returns (uint256 qACtoRedeem) {
-        // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        _evalCoverage(protThrld);
+        uint256 lckAC = _getLckAC();
+        // evaluates whether or not the system coverage is healthy enough to redeem TP, reverts if it's not
+        if (checkCoverage_) _evalCoverage(protThrld, lckAC, _getACtoMint(lckAC));
         // calculate how many qAC are needed to mint TP and the qAC fee
         // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTP(i_, qTP_);
@@ -278,6 +296,35 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(mocInterestCollectorAddress, qACinterest);
         emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee, qACinterest);
         return qACtoRedeem;
+    }
+
+    function _redeemTCandTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address sender_,
+        address recipient_
+    ) internal notLiquidated {
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        uint256 pTCac = _getPTCac(lckAC, nACtoMint);
+        uint256 pACtp = _getPACtp(i_);
+        uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
+        // calculate how many qAC are redeemed
+        // [PREC] = [N] * [PREC] / ([PREC] - [PREC])
+        uint256 qTPtoRedeem = ((qTC_ * pTCac * pACtp) / cglbMinusOne) / PRECISION;
+        if (qTPtoRedeem > qTP_) {
+            qTPtoRedeem = qTP_;
+            // [N] = [N] * ([PREC] - [PREC]) / [PREC]
+            qTC_ = (qTPtoRedeem * cglbMinusOne) / pACtp;
+            console.log("aca");
+        }
+        console.log(cglbMinusOne);
+        console.log(qTPtoRedeem);
+        uint256 qACtotalRedeemed = _redeemTCto(qTC_, qACmin_, sender_, recipient_, false);
+        qACtotalRedeemed += _redeemTPto(i_, qTPtoRedeem, qACmin_, sender_, recipient_, false);
+        if (qACtotalRedeemed < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtotalRedeemed);
     }
 
     /**
@@ -371,13 +418,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTC_,
         uint256 ctargemaCA_,
         uint256 lckAC_,
-        uint256 nACtoMint_
+        uint256 nACtoMint_,
+        bool checkCoverage_
     ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACtoMint_);
+        if (checkCoverage_) {
+            uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACtoMint_);
 
-        // check if there are enough TC available to redeem
-        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+            // check if there are enough TC available to redeem
+            if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+        }
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
