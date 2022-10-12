@@ -42,14 +42,69 @@ const redeemTCandTPBehavior = function () {
           });
         });
       });
-      describe("WHEN alice redeems 100 TC and 2350 TP", function () {
+      describe("WHEN alice redeems 100 TC and 23500 TP", function () {
+        /*
+            nAC = 3100
+            lckAC = 100
+            coverage = 31
+            pTCac = 1
+            => to redeem 100 TC we use 783.3 TP
+            => AC redemeed = 100 AC - 5% + 3.33AC - 5% - 0.0987% = 98.16
+        */
+        let tx: ContractTransaction;
         let coverageBefore: BigNumber;
+        let tcPriceBefore: BigNumber;
+        let tcLeverageBefore: BigNumber;
+        let alicePrevTCBalance: Balance;
+        let alicePrevTPBalance: Balance;
+        let alicePrevACBalance: Balance;
+        let mocPrevACBalance: Balance;
+        let mocFeeFlowPrevACBalance: Balance;
+        let mocInterestCollectorPrevACBalance: Balance;
         beforeEach(async function () {
-          coverageBefore = await mocContracts.mocImpl.getCglb();
-          await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
+          [
+            coverageBefore,
+            tcPriceBefore,
+            tcLeverageBefore,
+            alicePrevTCBalance,
+            alicePrevTPBalance,
+            alicePrevACBalance,
+          ] = await Promise.all([
+            mocContracts.mocImpl.getCglb(),
+            mocContracts.mocImpl.getPTCac(),
+            mocContracts.mocImpl.getLeverageTC(),
+            mocFunctions.tcBalanceOf(alice),
+            mocFunctions.tpBalanceOf(TP_0, alice),
+            mocFunctions.acBalanceOf(alice),
+          ]);
+          // go forward to a fixed block remaining for settlement to avoid unpredictability
+          const bns = await mocContracts.mocSettlement.bns();
+          await mineUpTo(bns.sub(fixedBlock));
+          tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
         });
         it("THEN coverage did not change", async function () {
           assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
+        });
+        it("THEN TC price did not change", async function () {
+          assertPrec(tcPriceBefore, await mocContracts.mocImpl.getPTCac());
+        });
+        it("THEN TC leverage did not change", async function () {
+          assertPrec(tcLeverageBefore, await mocContracts.mocImpl.getLeverageTC());
+        });
+        it("THEN alice TC balance decrease 100 TC", async function () {
+          const aliceActualTCBalance = await mocFunctions.tcBalanceOf(alice);
+          const diff = alicePrevTCBalance.sub(aliceActualTCBalance);
+          assertPrec(100, diff);
+        });
+        it("THEN alice TP balance decrease 783.33 TP", async function () {
+          const aliceActualTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
+          const diff = alicePrevTPBalance.sub(aliceActualTPBalance);
+          assertPrec("783.333333333333333333", diff);
+        });
+        it("THEN alice AC balance increase 98.16 AC", async function () {
+          const aliceActualACBalance = await mocFunctions.acBalanceOf(alice);
+          const diff = aliceActualACBalance.sub(alicePrevACBalance);
+          assertPrec("98.163374266975308644", diff);
         });
       });
     });

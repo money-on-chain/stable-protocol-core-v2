@@ -465,6 +465,24 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice get Collateral Token leverage
+     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
+     *         settlement because Pegged Token devaluation [N]
+     * @return leverageTC [PREC]
+     */
+    function _getLeverageTC(uint256 nACtoMint_) internal view returns (uint256 leverageTC) {
+        uint256 totalACavailable = _getTotalACavailable(nACtoMint_);
+        uint256 lckAClev;
+        uint256 pegAmount = pegContainer.length;
+        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            // [N] = ([N] - [N]) * [PREC] / [PREC]
+            lckAClev += _divPrec(pegContainer[i].nTP - pegContainer[i].nTPXV, _getPACtp(i));
+        }
+        // [PREC] = [N] * [PREC] / ([N] - [N])
+        return _divPrec(totalACavailable, totalACavailable - lckAClev);
+    }
+
+    /**
      * @notice get bucket global coverage
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @param nACtoMint_ amount of Collateral Asset that will be distributed at

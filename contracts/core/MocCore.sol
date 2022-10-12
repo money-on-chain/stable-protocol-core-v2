@@ -311,12 +311,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pTCac = _getPTCac(lckAC, nACtoMint);
         uint256 pACtp = _getPACtp(i_);
         uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
-        // calculate how many qAC are redeemed
-        // [PREC] = [N] * [PREC] / ([PREC] - [PREC])
+        // calculate how many TP are needed tp redeem TC and not change coverage
+        // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
         uint256 qTPtoRedeem = ((qTC_ * pTCac * pACtp) / cglbMinusOne) / PRECISION;
         if (qTPtoRedeem > qTP_) {
+            // if TP are not enough we redeem the TC that reach
             qTPtoRedeem = qTP_;
-            // [N] = [N] * ([PREC] - [PREC]) / [PREC]
+            // [N] = [N] * [PREC] / [PREC]
             qTC_ = (qTPtoRedeem * cglbMinusOne) / pACtp;
             console.log("aca");
         }
@@ -704,6 +705,14 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 lckAC = _getLckAC();
         uint256 nACtoMint = _getACtoMint(lckAC);
         return _getTPAvailableToMint(ctargemaCA, ctargemaTP, pACtp, lckAC, nACtoMint);
+    }
+
+    /**
+     * @notice get Collateral Token leverage
+     * @return leverageTC [PREC]
+     */
+    function getLeverageTC() external view returns (uint256 leverageTC) {
+        return _getLeverageTC(_getACtoMint(_getLckAC()));
     }
 
     /**
