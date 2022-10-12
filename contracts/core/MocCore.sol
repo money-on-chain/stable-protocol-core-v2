@@ -30,16 +30,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
-    event TPSwapped(
-        uint8 indexed iFrom_,
-        uint8 iTo_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTPfrom_,
-        uint256 qTPto_,
-        uint256 qACfee_,
-        uint256 qACinterest_
-    );
     event PeggedTokenAdded(uint8 indexed i_, AddPeggedTokenParams addPeggedTokenParams_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
@@ -310,27 +300,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         if (iFrom_ == iTo_) revert InvalidValue();
-        (uint256 qTPtoMint, uint256 qACfee, uint256 qACinterest) = _calcTPforSwapTP(iFrom_, iTo_, qTP_);
-        qACtotalNeeded = qACfee + qACinterest;
+        // calculate how many qTP can mint with the given qAC
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qTPtoMint = (qTP_ * _getPACtp(iTo_)) / _getPACtp(iFrom_);
         if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
+
+        uint256 qACfromRedeem = _redeemTPto(iFrom_, qTP_, 0, sender_, address(this));
+        uint256 qACtoMint = _mintTPto(iTo_, qTPtoMint, UINT256_MAX, address(this), recipient_);
+
+        qACtotalNeeded = qACtoMint - qACfromRedeem;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
-        // subtract qTP from the Bucket
-        pegContainer[iFrom_].nTP -= qTP_;
-        // add qTP to the Bucket
-        pegContainer[iTo_].nTP += qTPtoMint;
-        // burn qTP from the sender
-        tpTokens[iFrom_].burn(sender_, qTP_);
-        // burn qTP to the recipient
-        tpTokens[iTo_].mint(recipient_, qTPtoMint);
         // calculate how many qAC should be returned to the sender
         uint256 qACchg = qACmax_ - qACtotalNeeded;
         // transfer the qAC change to the sender
         acTransfer(sender_, qACchg);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
-        emit TPSwapped(iFrom_, iTo_, sender_, recipient_, qTP_, qTPtoMint, qACfee, qACinterest);
         return qACtotalNeeded;
     }
 
@@ -516,37 +499,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // [N] = [N] * [PREC] / [PREC]
         qACinterest = _mulPrec(qACtotalToRedeem, interestRate);
         return (qACtotalToRedeem, qACfee, qACinterest);
-    }
-
-    /**
-     * @notice calculate how many Pegged Token are minted in exchange of another one
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
-     * @param qTP_ amount of owned Pegged Token to swap
-     * @return qTPtoMint amount of Pegged Token to mint [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
-     * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
-     */
-    function _calcTPforSwapTP(
-        uint8 iFrom_,
-        uint8 iTo_,
-        uint256 qTP_
-    )
-        internal
-        returns (
-            uint256 qTPtoMint,
-            uint256,
-            uint256
-        )
-    {
-        // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
-        (, uint256 qACfeeToRedeem, uint256 qACinterest) = _calcQACforRedeemTP(iFrom_, qTP_);
-        uint256 lckAC = _getLckAC();
-        // calculate how many qTP can mint with the given qAC
-        // [N] = [N] * [PREC] / [PREC]
-        qTPtoMint = (qTP_ * _getPACtp(iTo_)) / _getPACtp(iFrom_);
-        (, uint256 qACfeeToMint) = _calcQACforMintTP(iTo_, qTPtoMint, calcCtargemaCA(), lckAC, _getACtoMint(lckAC));
-        return (qTPtoMint, qACfeeToRedeem + qACfeeToMint, qACinterest);
     }
 
     /**
