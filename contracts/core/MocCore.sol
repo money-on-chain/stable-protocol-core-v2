@@ -437,30 +437,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
-     * @notice evaluates if there are enough Pegged Token availabie to mint, reverts if it`s not
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint [N]
-     * @param pACtp_ Pegged Token price [PREC]
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
-     */
-    function _evalTPavailableToMint(
-        uint8 i_,
-        uint256 qTP_,
-        uint256 pACtp_,
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACtoMint_
-    ) internal view {
-        uint256 ctargemaTP = _getCtargemaTP(i_, pACtp_);
-        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, ctargemaTP, pACtp_, lckAC_, nACtoMint_);
-        // check if there are enough TP available to mint
-        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
-    }
-
-    /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint [N]
@@ -520,6 +496,66 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // [N] = [N] * [PREC] / [PREC]
         qACinterest = _mulPrec(qACtotalToRedeem, interestRate);
         return (qACtotalToRedeem, qACfee, qACinterest);
+    }
+
+    /**
+     * @notice evaluates if there are enough Pegged Token availabie to mint, reverts if it`s not
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint [N]
+     * @param pACtp_ Pegged Token price [PREC]
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
+     *         settlement because Pegged Token devaluation [N]
+     */
+    function _evalTPavailableToMint(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 pACtp_,
+        uint256 ctargemaCA_,
+        uint256 lckAC_,
+        uint256 nACtoMint_
+    ) internal view {
+        uint256 ctargemaTP = _getCtargemaTP(i_, pACtp_);
+        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, ctargemaTP, pACtp_, lckAC_, nACtoMint_);
+        // check if there are enough TP available to mint
+        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
+    }
+
+    /**
+     * @notice get how many Pegged Token are redeemed and how many target Pegged Token are mint in exchange
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @return qTPtoRedeem amount of owned Pegged Token to redeem [N]
+     * @return qTPtoMint amount of target Pegged Token to mint [N]
+     */
+    function _getTPavailableToSwap(
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_
+    ) internal returns (uint256 qTPtoRedeem, uint256 qTPtoMint) {
+        if (iFrom_ == iTo_) revert InvalidValue();
+        qTPtoRedeem = qTP_;
+        uint256 pACtpFrom = _getPACtp(iFrom_);
+        uint256 pACtpTo = _getPACtp(iTo_);
+        // calculate how many qTP can mint with the given qAC
+        // [N] = [N] * [PREC] / [PREC]
+        qTPtoMint = (qTPtoRedeem * pACtpTo) / pACtpFrom;
+        uint256 lckAC = _getLckAC();
+        uint256 ctargTPfrom;
+        uint256 ctargTPto;
+        // we can only swap an amount of TP that does not make ctargemaCA go down
+        if (
+            lckAC * calcCtargemaCA() > _getTotalACavailable(_getACtoMint(lckAC)) * PRECISION &&
+            (ctargTPto = tpCtarg[iTo_]) > (ctargTPfrom = tpCtarg[iFrom_])
+        ) {
+            // [N] = [N] * [PREC] / [PREC]
+            qTPtoMint = (qTPtoMint * ctargTPfrom) / ctargTPto;
+            // [N] = [N] * [PREC] / [PREC]
+            qTPtoRedeem = (qTPtoMint * pACtpFrom) / pACtpTo;
+        }
+        return (qTPtoRedeem, qTPtoMint);
     }
 
     /**
