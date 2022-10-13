@@ -72,6 +72,12 @@ export const tpParams = [
     initialEma: pEth(20.23),
     smoothingFactor: pEth(0.01),
   },
+  {
+    price: pEth(5.25),
+    ctarg: pEth(6),
+    initialEma: pEth(5.04),
+    smoothingFactor: pEth(0.05),
+  },
 ];
 
 const getTPparams = ({

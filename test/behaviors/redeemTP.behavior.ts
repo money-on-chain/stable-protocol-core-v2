@@ -13,7 +13,7 @@ const redeemTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_2 = 2;
-  const TP_NON_EXISTENT = 4;
+  const TP_NON_EXISTENT = 5;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
