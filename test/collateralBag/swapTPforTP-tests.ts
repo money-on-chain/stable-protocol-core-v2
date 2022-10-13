@@ -47,7 +47,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
     });
     describe("AND alice has 23500 TP 0", () => {
       let tx: ContractTransaction;
-      const fixedBlock = 52;
+      const fixedBlock = 200;
       beforeEach(async () => {
         // add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
