@@ -315,19 +315,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
-        if (iFrom_ == iTo_) revert InvalidValue();
-        // calculate how many qTP can mint with the given qAC
-        // [N] = [N] * [PREC] / [PREC]
-        uint256 qTPtoMint = (qTP_ * _getPACtp(iTo_)) / _getPACtp(iFrom_);
+        (uint256 qTPtoRedeem, uint256 qTPtoMint) = _getTPavailableToSwap(iFrom_, iTo_, qTP_);
         if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
-        // we can only mint an amount of TP that does not make ctargemaCA go down
-        // FIXME: we only should do this if lckaAC + ctargemaCA is > totalACavailable
-        uint256 tpAvailableToMint = (qTPtoMint * tpCtarg[iFrom_]) / tpCtarg[iTo_];
-        // check if there are enough TP available to mint
-        if (tpAvailableToMint < qTPtoMint) revert InsufficientTPtoMint(qTPtoMint, tpAvailableToMint);
-
-        uint256 qACfromRedeem = _redeemTPto(iFrom_, qTP_, 0, sender_, address(this), false);
+        uint256 qACfromRedeem = _redeemTPto(iFrom_, qTPtoRedeem, 0, sender_, address(this), false);
         uint256 qACtoMint = _mintTPto(iTo_, qTPtoMint, UINT256_MAX, address(this), recipient_, false);
         qACtotalNeeded = qACtoMint - qACfromRedeem;
 

@@ -77,6 +77,7 @@ export const tpParams = [
     ctarg: pEth(6),
     initialEma: pEth(5.04),
     smoothingFactor: pEth(0.05),
+    mintFee: PCT_BASE.mul(1).div(1000), // 0.1%
   },
 ];
 

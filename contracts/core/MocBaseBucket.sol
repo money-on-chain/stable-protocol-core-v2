@@ -328,6 +328,42 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice get how many Pegged Token are redeemed and how many target Pegged Token are mint in exchange
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @return qTPtoRedeem amount of owned Pegged Token to redeem [N]
+     * @return qTPtoMint amount of target Pegged Token to mint [N]
+     */
+    function _getTPavailableToSwap(
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_
+    ) internal returns (uint256 qTPtoRedeem, uint256 qTPtoMint) {
+        if (iFrom_ == iTo_) revert InvalidValue();
+        qTPtoRedeem = qTP_;
+        uint256 pACtpFrom = _getPACtp(iFrom_);
+        uint256 pACtpTo = _getPACtp(iTo_);
+        // calculate how many qTP can mint with the given qAC
+        // [N] = [N] * [PREC] / [PREC]
+        qTPtoMint = (qTPtoRedeem * pACtpTo) / pACtpFrom;
+        uint256 lckAC = _getLckAC();
+        uint256 ctargTPfrom;
+        uint256 ctargTPto;
+        // we can only swap an amount of TP that does not make ctargemaCA go down
+        if (
+            lckAC * calcCtargemaCA() > _getTotalACavailable(_getACtoMint(lckAC)) * PRECISION &&
+            (ctargTPto = tpCtarg[iTo_]) > (ctargTPfrom = tpCtarg[iFrom_])
+        ) {
+            // [N] = [N] * [PREC] / [PREC]
+            qTPtoMint = (qTPtoMint * ctargTPfrom) / ctargTPto;
+            // [N] = [N] * [PREC] / [PREC]
+            qTPtoRedeem = (qTPtoMint * pACtpFrom) / pACtpTo;
+        }
+        return (qTPtoRedeem, qTPtoMint);
+    }
+
+    /**
      * @notice get abundance ratio (beginning) of Pegged Token
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
      * @param nTP_ amount Pegged Token in the bucket [N]
