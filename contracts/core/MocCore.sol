@@ -315,11 +315,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
-        (uint256 qTPtoRedeem, uint256 qTPtoMint) = _getTPavailableToSwap(iFrom_, iTo_, qTP_);
+        if (iFrom_ == iTo_) revert InvalidValue();
+        // calculate how many qTP can mint with the given qAC
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qTPtoMint = (qTP_ * _getPACtp(iTo_)) / _getPACtp(iFrom_);
         if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
-        uint256 qACfromRedeem = _redeemTPto(iFrom_, qTPtoRedeem, 0, sender_, address(this), false);
-        uint256 qACtoMint = _mintTPto(iTo_, qTPtoMint, UINT256_MAX, address(this), recipient_, false);
+        uint256 qACfromRedeem = _redeemTPto(iFrom_, qTP_, 0, sender_, address(this), false);
+        // if ctargemaTPto > ctargemaTPfrom we need to check coverage
+        bool checkCoverage = tpCtarg[iTo_] > tpCtarg[iFrom_];
+        uint256 qACtoMint = _mintTPto(iTo_, qTPtoMint, UINT256_MAX, address(this), recipient_, checkCoverage);
         qACtotalNeeded = qACtoMint - qACfromRedeem;
 
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
@@ -520,42 +525,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, ctargemaTP, pACtp_, lckAC_, nACtoMint_);
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
-    }
-
-    /**
-     * @notice get how many Pegged Token are redeemed and how many target Pegged Token are mint in exchange
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
-     * @param qTP_ amount of owned Pegged Token to swap
-     * @return qTPtoRedeem amount of owned Pegged Token to redeem [N]
-     * @return qTPtoMint amount of target Pegged Token to mint [N]
-     */
-    function _getTPavailableToSwap(
-        uint8 iFrom_,
-        uint8 iTo_,
-        uint256 qTP_
-    ) internal returns (uint256 qTPtoRedeem, uint256 qTPtoMint) {
-        if (iFrom_ == iTo_) revert InvalidValue();
-        qTPtoRedeem = qTP_;
-        uint256 pACtpFrom = _getPACtp(iFrom_);
-        uint256 pACtpTo = _getPACtp(iTo_);
-        // calculate how many qTP can mint with the given qAC
-        // [N] = [N] * [PREC] / [PREC]
-        qTPtoMint = (qTPtoRedeem * pACtpTo) / pACtpFrom;
-        uint256 lckAC = _getLckAC();
-        uint256 ctargTPfrom;
-        uint256 ctargTPto;
-        // we can only swap an amount of TP that does not make ctargemaCA go down
-        if (
-            lckAC * calcCtargemaCA() > _getTotalACavailable(_getACtoMint(lckAC)) * PRECISION &&
-            (ctargTPto = tpCtarg[iTo_]) > (ctargTPfrom = tpCtarg[iFrom_])
-        ) {
-            // [N] = [N] * [PREC] / [PREC]
-            qTPtoMint = (qTPtoMint * ctargTPfrom) / ctargTPto;
-            // [N] = [N] * [PREC] / [PREC]
-            qTPtoRedeem = (qTPtoMint * pACtpFrom) / pACtpTo;
-        }
-        return (qTPtoRedeem, qTPtoMint);
     }
 
     /**
