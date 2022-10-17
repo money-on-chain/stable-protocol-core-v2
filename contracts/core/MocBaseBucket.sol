@@ -59,10 +59,12 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 tcMintFee;
         // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
         uint256 tcRedeemFee;
-        // success fee: proportion of the devaluation that is transferred to Moc Fee Flow during the settlement [PREC]
+        // proportion of gains because Pegged Tokens devaluation that are transferred during settlement [PREC]
+        // example: fasf = 60%, sf = 16.667%, fa = 83.333% =>
+        // Moc Fee Flow receives 10%(60% * 16.667%) and Turbo 50%(60% * 83.333%)
+        uint256 fasf;
+        // success fee: proportion of the fasf that is transferred to Moc Fee Flow during the settlement [PREC]
         uint256 sf;
-        // appreciation factor: proportion of the devaluation that is returned to Turbo during the settlement [PREC]
-        uint256 fa;
     }
 
     // ------- Storage -------
@@ -87,9 +89,13 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpR;
     // prices for each TP, at wich they can be redeem after liquidation event
     uint256[] internal tpLiqPrices;
-    // success fee: proportion of the devaluation that is transferred to Moc Fee Flow during the settlement [PREC]
+    // proportion of gains because Pegged Tokens devaluation that are transferred during settlement [PREC]
+    // example: fasf = 60%, sf = 16.667%, fa = 83.333% =>
+    // Moc Fee Flow receives 10%(60% * 16.667%) and Turbo 50%(60% * 83.333%)
+    uint256 internal fasf;
+    // success fee: proportion of the fasf that is transferred to Moc Fee Flow during the settlement [PREC]
     uint256 internal sf;
-    // appreciation factor: proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+    // appreciation factor: proportion of the fasf that is returned to Turbo during the settlement [PREC]
     uint256 internal fa;
 
     // ------- Storage Fees -------
@@ -126,12 +132,15 @@ abstract contract MocBaseBucket is MocUpgradable {
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
 
-    // ------- Storage Last Settlement Tracking -------
+    // ------- Storage Success Fee Tracking -------
 
-    // amount of collateral asset locked by Pegged Token at last settlement
-    uint256 internal lckACLstset;
-    // amount of collateral asset locked by each Pegged Token at last settlement
-    uint256[] internal nACLstset;
+    // total amount of collateral asset to be distributed during settlement [N]
+    uint256 internal nACgain;
+    // profit and loss in collateral asset for each Pegged Token because its devaluation [N]
+    // if it is positive it is a profit that will be distributed and reset during settlement
+    int256[] internal tpiou;
+    // Pegged Token price used at last operation(redeem or mint) [PREC]
+    uint256[] internal pACtpLstop;
 
     // ------- Modifiers -------
     /// @notice functions with this modifier reverts being in liquidated state
@@ -173,8 +182,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.sf > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.fa > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.fasf > PRECISION) revert InvalidValue();
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
         if (
@@ -193,8 +201,10 @@ abstract contract MocBaseBucket is MocUpgradable {
         liqThrld = initializeBaseBucketParams_.liqThrld;
         tcMintFee = initializeBaseBucketParams_.tcMintFee;
         tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
+        fasf = initializeBaseBucketParams_.fasf;
         sf = initializeBaseBucketParams_.sf;
-        fa = initializeBaseBucketParams_.fa;
+        // sf + fa must be 100%
+        fa = PRECISION - initializeBaseBucketParams_.sf;
         liquidated = false;
         liqEnabled = false;
     }
@@ -267,36 +277,32 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @notice get amount of Collateral Asset locked by Pegged Token adjusted by EMA
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      * @return lckACemaAdjusted [PREC]
      */
-    function _getLckACemaAdjusted(
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACtoMint_
-    ) internal view returns (uint256 lckACemaAdjusted) {
+    function _getLckACemaAdjusted(uint256 ctargemaCA_, uint256 lckAC_)
+        internal
+        view
+        returns (uint256 lckACemaAdjusted)
+    {
         // [PREC] = [N] * [PREC] - [PREC] * [N]
-        return _getTotalACavailable(nACtoMint_) * PRECISION - ctargemaCA_ * lckAC_;
+        return _getTotalACavailable() * PRECISION - ctargemaCA_ * lckAC_;
     }
 
     /**
      * @notice get amount of Collateral Token available to redeem
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      * @return tcAvailableToRedeem [N]
      */
-    function _getTCAvailableToRedeem(
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACtoMint_
-    ) internal view returns (uint256 tcAvailableToRedeem) {
+    function _getTCAvailableToRedeem(uint256 ctargemaCA_, uint256 lckAC_)
+        internal
+        view
+        returns (uint256 tcAvailableToRedeem)
+    {
         // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACtoMint_);
+        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_);
         // [N] = [PREC] / [PREC]
-        return lckACemaAdjusted / _getPTCac(lckAC_, nACtoMint_);
+        return lckACemaAdjusted / _getPTCac(lckAC_);
     }
 
     /**
@@ -304,19 +310,16 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset
      * @param pACtp_ Collateral Asset price in amount of Pegged Token [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      * @return tpAvailableToMint [N]
      */
     function _getTPAvailableToMint(
         uint256 ctargemaCA_,
         uint256 ctargemaTP_,
         uint256 pACtp_,
-        uint256 lckAC_,
-        uint256 nACtoMint_
+        uint256 lckAC_
     ) internal view returns (uint256 tpAvailableToMint) {
         // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACtoMint_);
+        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_);
         // [PREC] = [PREC] * [PREC] / [PREC]
         uint256 pACtpEmaAdjusted = (ctargemaCA_ * pACtp_) / ctargemaTP_;
         // [PREC] = [PREC] * [PREC] / [PREC]
@@ -361,14 +364,10 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
      * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
-     * @return nACtoMint amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      */
-    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC, uint256 nACtoMint) {
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC) {
         lckAC = _getLckAC();
-        nACtoMint = _getACtoMint(lckAC);
-        uint256 cglb = _getCglb(lckAC, nACtoMint);
-
+        uint256 cglb = _getCglb(lckAC);
         // check if coverage is above the given threshold
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
     }
@@ -379,7 +378,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function settleLiquidationPrices() internal {
         // Total amount of AC available to be redeemed
-        // TODO: check if should be totalACavailable =  nACcb + nACioucb - nACtoMint;
+        // TODO: check if should be totalACavailable =  nACcb + nACioucb - nACgain;
         uint256 totalACAvailable = nACcb + nACioucb;
         if (totalACAvailable == 0) return;
         uint256 pegAmount = pegContainer.length;
@@ -402,77 +401,62 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice this function is executed during settlement and
-     * stores amount of locked AC by Pegged Tokens at this moment
+     * @notice update Pegged Token profit and last operation price
+     * @param i_ Pegged Token index
+     * @param pACtp_ Pegged Token price [PREC]
      */
-    function _updateBucketLstset() internal {
-        lckACLstset = _getLckAC();
-        uint256 pegAmount = pegContainer.length;
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            // [N] = ([N] * [PREC] / [PREC])
-            nACLstset[i] = _divPrec(pegContainer[i].nTP, _getPACtp(i));
-        }
+    function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
+        // [PREC] = ([N] - [N]) * [PREC]
+        uint256 tpAvailableToRedeem = (pegContainer[i_].nTP - pegContainer[i_].nTPXV) * PRECISION;
+        // [N] = [PREC] / [PREC] - [PREC] / [PREC]
+        int256 iou = int256(tpAvailableToRedeem / pACtpLstop[i_] - tpAvailableToRedeem / pACtp_);
+        tpiou[i_] += iou;
+        // [N] = [N] * [PREC] / [PREC]
+        if (iou > 0) nACgain += _mulPrec(uint256(iou), fasf);
+        pACtpLstop[i_] = pACtp_;
     }
 
     /**
-     * @notice get amount of Collateral Asset locked by Pegged Token
+     * @notice get amount of Collateral Asset locked by Pegged Token and
      * @return lckAC [N]
      */
     function _getLckAC() internal view returns (uint256 lckAC) {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            // [N] = [N] * [PREC] / [PREC]
-            lckAC += _divPrec(pegContainer[i].nTP, _getPACtp(i));
-        }
-    }
-
-    /**
-     * @notice get amount of Collateral Asset that will be distributed at settlement because Pegged Token devaluation
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @return nACtoMint [N]
-     */
-    function _getACtoMint(uint256 lckAC_) internal view returns (uint256 nACtoMint) {
-        if (lckACLstset > lckAC_) {
-            // [N] = ([N] - [N]) * ([PREC] + [PPREC]) / [PREC]
-            return _mulPrec(lckACLstset - lckAC_, fa + sf);
+            // [N] = ([N] - [N]) * [PREC] / [PREC]
+            lckAC += _divPrec(pegContainer[i].nTP - pegContainer[i].nTPXV, _getPACtp(i));
         }
     }
 
     /**
      * @notice get total Collateral Asset available
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      * @return totalACavailable [N]
      */
-    function _getTotalACavailable(uint256 nACtoMint_) internal view returns (uint256 totalACavailable) {
+    function _getTotalACavailable() internal view returns (uint256 totalACavailable) {
         // [N] = [N] + [N] - [N]
-        return nACcb + nACioucb - nACtoMint_;
+        return nACcb + nACioucb - nACgain;
     }
 
     /**
      * @notice get Collateral Token price
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      * @return pTCac [PREC]
      */
-    function _getPTCac(uint256 lckAC_, uint256 nACtoMint_) internal view returns (uint256 pTCac) {
+    function _getPTCac(uint256 lckAC_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
         // [PREC] = ([N] - [N]) * [PREC]) / [N]
-        return _divPrec((_getTotalACavailable(nACtoMint_) - lckAC_), nTCcb);
+        return _divPrec((_getTotalACavailable() - lckAC_), nTCcb);
     }
 
     /**
      * @notice get bucket global coverage
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
      * @return cglob [PREC]
      */
-    function _getCglb(uint256 lckAC_, uint256 nACtoMint_) internal view returns (uint256 cglob) {
+    function _getCglb(uint256 lckAC_) internal view returns (uint256 cglob) {
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = [N] * [PREC] / [N]
-        return _divPrec(_getTotalACavailable(nACtoMint_), lckAC_);
+        return _divPrec(_getTotalACavailable(), lckAC_);
     }
 
     /**
@@ -481,9 +465,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return true if liquidation state is reached, false otherwise
      */
     function isLiquidationReached() public view returns (bool) {
-        uint256 lckAC = _getLckAC();
-        uint256 nACtoMint = _getACtoMint(lckAC);
-        uint256 cglb = _getCglb(lckAC, nACtoMint);
+        uint256 cglb = _getCglb(_getLckAC());
         return cglb <= liqThrld;
     }
 

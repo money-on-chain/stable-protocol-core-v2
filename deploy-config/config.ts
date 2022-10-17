@@ -8,8 +8,8 @@ export const coreParams = {
   protThrld: PCT_BASE.mul(2), // 2
   liqThrld: PCT_BASE.mul(104).div(100), // 1.04
   emaCalculationBlockSpan: DAY_BLOCK_SPAN,
-  sf: PCT_BASE.mul(10).div(100), // 10%
-  fa: PCT_BASE.mul(50).div(100), // 50%
+  fasf: PCT_BASE.mul(60).div(100), // 60%
+  sf: PCT_BASE.mul(1).div(6), // 16.667%
 };
 
 export const settlementParams = {
