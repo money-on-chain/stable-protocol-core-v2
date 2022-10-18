@@ -42,7 +42,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @inheritdoc MocCore
      */
     function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
-        if (amount_ > 0) {
+        if (amount_ > 0 && address(this) != to_) {
             if (to_ == address(0)) revert InvalidAddress();
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = to_.call{ value: amount_ }("");
@@ -181,6 +181,42 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address recipient_
     ) external {
         _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and receives another one
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     */
+    function swapTPforTP(
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_
+    ) external payable returns (uint256 qACtotalNeeded) {
+        return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param recipient_ address who receives the target Pegged Token
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     */
+    function swapTPforTPto(
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        address recipient_
+    ) external payable returns (uint256 qACtotalNeeded) {
+        return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, recipient_);
     }
 
     /**
