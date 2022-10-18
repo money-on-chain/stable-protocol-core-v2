@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";

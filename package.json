@@ -10,7 +10,7 @@
     "hardhat": "2.11.1",
     "hardhat-deploy": "0.11.14",
     "hardhat-storage-layout": "0.1.6",
-    "solc": "0.8.16"
+    "solc": "0.8.17"
   },
   "devDependencies": {
     "@commitlint/cli": "17.1.2",
@@ -78,7 +78,7 @@
     "prettier:check": "prettier --config .prettierrc --check \"**/*.{js,json,md,sol,ts}\"",
     "release": "standard-version",
     "security": "docker run -it -v $(pwd):/home/ethsec/project trailofbits/eth-security-toolbox",
-    "security-default": "echo \"solc-select use 0.8.16 && cd project && slither --exclude-dependencies --exclude pragma,low-level-calls .\" | sudo docker run -i -v $(pwd):/home/ethsec/project trailofbits/eth-security-toolbox",
+    "security-default": "echo \"solc-select use 0.8.17 && cd project && slither --exclude-dependencies --exclude pragma,low-level-calls .\" | sudo docker run -i -v $(pwd):/home/ethsec/project trailofbits/eth-security-toolbox",
     "echidna": "echo \"cd project && echidna-test . --contract $npm_config_contract --config contracts/echidna/default.yaml\" | sudo docker run -i -v $(pwd):/home/ethsec/project trailofbits/eth-security-toolbox",
     "size-contracts": "hardhat size-contracts",
     "docgen": "hardhat docgen",
