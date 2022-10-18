@@ -1,4 +1,4 @@
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 // This contract is not intended to be used in a production system
 // It was designed to be using in a testing environment only
