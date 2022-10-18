@@ -102,6 +102,38 @@ const redeemTPto =
     return mocWrapper.connect(signer).redeemTPto(asset.address, i, qTP, qACmin, to);
   };
 
+const redeemTCandTP =
+  (mocWrapper, mocCollateralToken, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTC = pEth(qTC);
+      qACmin = pEth(qACmin);
+    }
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await mocCollateralToken.connect(signer).increaseAllowance(mocWrapper.address, qTC);
+    return mocWrapper.connect(signer).redeemTCandTP(asset.address, i, qTC, qTP, qACmin);
+  };
+
+const redeemTCandTPto =
+  (mocWrapper, mocCollateralToken, mocPeggedTokens, assetDefault, asset = assetDefault) =>
+  async ({ i, from, to, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTC = pEth(qTC);
+      qACmin = pEth(qACmin);
+    }
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await mocCollateralToken.connect(signer).increaseAllowance(mocWrapper.address, qTC);
+    return mocWrapper.connect(signer).redeemTCandTPto(asset.address, i, qTC, qTP, qACmin, to);
+  };
+
 const liqRedeemTP =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
   async ({ i, from, asset = assetDefault }) => {
@@ -205,6 +237,8 @@ export const mocFunctionsCARBag = async ({
     mintTPto: mintTPto(mocWrapper, assets[0]),
     redeemTP: redeemTP(mocWrapper, mocPeggedTokens, assets[0]),
     redeemTPto: redeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
+    redeemTCandTP: redeemTCandTP(mocWrapper, mocCollateralToken, mocPeggedTokens, assets[0]),
+    redeemTCandTPto: redeemTCandTPto(mocWrapper, mocCollateralToken, mocPeggedTokens, assets[0]),
     liqRedeemTP: liqRedeemTP(mocWrapper, mocPeggedTokens, assets[0]),
     liqRedeemTPto: liqRedeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
     swapTPforTP: swapTPforTP(mocWrapper, mocPeggedTokens, assets[0]),

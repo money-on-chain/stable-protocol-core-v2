@@ -291,7 +291,6 @@ contract MocCAWrapper is MocUpgradable {
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
         // checking it after with qAssetMin
-
         uint256 wcaTokenAmountRedeemed;
         if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
         else wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
@@ -303,8 +302,56 @@ contract MocCAWrapper is MocUpgradable {
             address(this),
             recipient_
         );
-
         emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetRedeemed);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without check coverage
+     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param sender_ address who sends Collateral Token and Pegged Token
+     * @param recipient_ address who receives the Collateral Asset
+     */
+    function _redeemTCandTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        // get Collateral Token contract address
+        IERC20 tcToken = mocCore.tcToken();
+        // get Pegged Token contract address
+        IERC20 tpToken = mocCore.tpTokens(i_);
+        // transfer Collateral Token from sender to this address
+        SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        // transfer Pegged Token from sender to this address
+        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // checking it after with qAssetMin
+        (uint256 wcaTokenAmountRedeemed, uint256 qTCtoRedeem, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(
+            i_,
+            qTC_,
+            qTP_,
+            0
+        );
+        // send Asset to the recipient
+        _redeemWCAto(assetAddress_, wcaTokenAmountRedeemed, qAssetMin_, address(this), recipient_);
+        // transfer unused Collateral Token to the sender
+        SafeERC20.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
+        // transfer unused Pegged Token to the sender
+        SafeERC20.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
+        // TODO: emit event?
     }
 
     /**
@@ -599,6 +646,52 @@ contract MocCAWrapper is MocUpgradable {
     ) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and receives Assets
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without check coverage
+     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
+     */
+    function redeemTCandTP(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_
+    ) external {
+        _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without check coverage
+     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     */
+    function redeemTCandTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address recipient_
+    ) external {
+        _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, recipient_);
     }
 
     /**

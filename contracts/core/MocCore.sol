@@ -302,6 +302,21 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return qACtoRedeem;
     }
 
+    /**
+     * @notice redeem Collateral Asset in exchange for Collateral Token and Pegged Token
+     *  This operation is done without check coverage
+     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param sender_ address who sends Collateral Token and Pegged Token
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to `recipient_`
+     * @return qTCtoRedeem amount of Collateral Token redeemed
+     * @return qTPtoRedeem amount of Pegged Token redeemed
+     */
     function _redeemTCandTPto(
         uint8 i_,
         uint256 qTC_,
@@ -309,7 +324,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated {
+    )
+        internal
+        notLiquidated
+        returns (
+            uint256 qACtoRedeem,
+            uint256 qTCtoRedeem,
+            uint256 qTPtoRedeem
+        )
+    {
+        qTCtoRedeem = qTC_;
         uint256 lckAC = _getLckAC();
         uint256 nACtoMint = _getACtoMint(lckAC);
         uint256 pTCac = _getPTCac(lckAC, nACtoMint);
@@ -317,16 +341,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
         // calculate how many TP are needed tp redeem TC and not change coverage
         // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
-        uint256 qTPtoRedeem = ((qTC_ * pTCac * pACtp) / cglbMinusOne) / PRECISION;
+        qTPtoRedeem = ((qTCtoRedeem * pTCac * pACtp) / cglbMinusOne) / PRECISION;
         if (qTPtoRedeem > qTP_) {
             // if TP are not enough we redeem the TC that reach
             qTPtoRedeem = qTP_;
             // [N] = [N] * [PREC] / [PREC]
-            qTC_ = (qTPtoRedeem * cglbMinusOne) / pACtp;
+            qTCtoRedeem = (qTPtoRedeem * cglbMinusOne) / pACtp;
         }
-        uint256 qACtotalRedeemed = _redeemTCto(qTC_, qACmin_, sender_, recipient_, false);
-        qACtotalRedeemed += _redeemTPto(i_, qTPtoRedeem, qACmin_, sender_, recipient_, false);
-        if (qACtotalRedeemed < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtotalRedeemed);
+        qACtoRedeem = _redeemTCto(qTCtoRedeem, qACmin_, sender_, recipient_, false);
+        qACtoRedeem += _redeemTPto(i_, qTPtoRedeem, qACmin_, sender_, recipient_, false);
+        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        return (qACtoRedeem, qTCtoRedeem, qTPtoRedeem);
     }
 
     /**
