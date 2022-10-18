@@ -503,15 +503,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
         if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
 
-        MocRC20 tpToken = MocRC20(addPeggedTokenParams_.tpTokenAddress);
+        IMocRC20 tpToken = IMocRC20(addPeggedTokenParams_.tpTokenAddress);
         // Verifies it has the right roles over this TP
-        if (
-            !tpToken.hasRole(tpToken.MINTER_ROLE(), address(this)) ||
-            !tpToken.hasRole(tpToken.BURNER_ROLE(), address(this)) ||
-            !tpToken.hasRole(tpToken.DEFAULT_ADMIN_ROLE(), address(this))
-        ) {
-            revert InvalidAddress();
-        }
+        if (!tpToken.hasFullRoles(address(this))) revert InvalidAddress();
+
         IPriceProvider priceProvider = IPriceProvider(addPeggedTokenParams_.priceProviderAddress);
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider.peek();
