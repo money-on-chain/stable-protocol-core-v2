@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import { Contract } from "ethers";
 
 import { fixtureDeployGovernance } from "./fixture";
@@ -12,6 +12,7 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
   let mocProxyAsRC20Mock: MocCARC20Mock;
   let governor: Contract;
   let changeContract: Contract;
+  let wrongChangeContract: Contract;
 
   before(async () => {
     ({ mocCARC20: mocProxy, governor } = await fixtureDeploy());
@@ -21,9 +22,23 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
 
     const changerFactory = await ethers.getContractFactory("MocUpgradeChangerMock");
     changeContract = await changerFactory.deploy(mocProxy.address, mocRC20MockImpl.address);
+
+    wrongChangeContract = await changerFactory.deploy(
+      (
+        await deployments.get("MocCARC20Impl")
+      ).address,
+      mocRC20MockImpl.address,
+    );
   });
 
   describe("GIVEN a Changer contract is set up to upgrade MocRC20", () => {
+    describe("WHEN update the contract calling the implementation", () => {
+      it("THEN tx reverts because update only can be called by a proxy", async () => {
+        await expect(governor.executeChange(wrongChangeContract.address)).to.be.revertedWith(
+          "Function must be called through delegatecall",
+        );
+      });
+    });
     describe("WHEN the owner updates the contract through governance", () => {
       before(async function () {
         await governor.executeChange(changeContract.address);
