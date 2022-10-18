@@ -313,7 +313,7 @@ contract MocCAWrapper is MocUpgradable {
      *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that expect to be received
      * @param sender_ address who sends Collateral Token and Pegged Token
@@ -656,7 +656,7 @@ contract MocCAWrapper is MocUpgradable {
      *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
      */
@@ -678,7 +678,7 @@ contract MocCAWrapper is MocUpgradable {
      *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset

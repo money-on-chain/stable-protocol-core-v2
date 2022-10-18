@@ -307,7 +307,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
      *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
      * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param sender_ address who sends Collateral Token and Pegged Token
