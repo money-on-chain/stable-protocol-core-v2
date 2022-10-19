@@ -7,8 +7,8 @@ import "../governance/MocUpgradable.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
- * @notice MocBaseBucket holds Bucket Zero state, both for the Callateral Bag and PegggedTokens Items.
- * @dev Abstracts all rw opeartions on the main bucket and expose all calculations relative to its state.
+ * @notice MocBaseBucket holds Bucket Zero state, both for the Collateral Bag and PeggedTokens Items.
+ * @dev Abstracts all rw operations on the main bucket and expose all calculations relative to its state.
  */
 abstract contract MocBaseBucket is MocUpgradable {
     // ------- Events -------
@@ -40,14 +40,14 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage -------
 
-    // total amount of Collateral Asset holded in the Collateral Bag
+    // total amount of Collateral Asset held in the Collateral Bag
     uint256 internal nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     uint256 internal nACioucb;
 
     // Collateral Token
     MocTC public tcToken;
-    // total supply of Collateral Token
+    // Collateral Token total supply
     uint256 internal nTCcb;
 
     // Pegged Tokens MocRC20 addresses
@@ -58,19 +58,19 @@ abstract contract MocBaseBucket is MocUpgradable {
     PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
-    // prices for each TP, at wich they can be redeem after liquidation event
+    // Pegged Token prices, at which they can be redeemed after liquidation event
     uint256[] internal tpLiqPrices;
 
     // ------- Storage Fees -------
 
-    // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+    // fee pct sent to Fee Flow on Collateral Tokens mint [PREC]
     uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+    // fee pct sent to Fee Flow on Collateral Tokens redeem [PREC]
     uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
-    // fee pct sent to Fee Flow for mint Pegged Tokens [PREC]
+    // fee pct sent to Fee Flow on Pegged Tokens mint [PREC]
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Pegged Tokens [PREC]
+    // fee pct sent to Fee Flow on Pegged Tokens redeem [PREC]
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
@@ -80,13 +80,13 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage Coverage Tracking -------
 
-    // target coverage for each Pegged Token [PREC]
+    // Target coverage for each Pegged Token [PREC]
     uint256[] public tpCtarg;
-    // coverage protected state threshold [PREC]
+    // Coverage protected state threshold [PREC]
     uint256 public protThrld;
-    // coverage liquidation threshold [PREC]
+    // Coverage liquidation threshold [PREC]
     uint256 public liqThrld;
-    // liquidation enabled
+    // Liquidation enabled
     bool public liqEnabled;
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
