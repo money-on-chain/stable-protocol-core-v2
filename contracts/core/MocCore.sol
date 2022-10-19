@@ -79,7 +79,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
      * @param governorAddress_ The address that will define when a change contract is authorized
-     * @param stopperAddress_ The address that is authorized to pause this contract
+     * @param pauserAddress_ The address that is authorized to pause this contract
      * @param tcTokenAddress_ Collateral Token contract address
      * @param mocSettlementAddress_ MocSettlement contract address
      * @param mocFeeFlowAddress_ Moc Fee Flow contract address
@@ -92,7 +92,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function __MocCore_init(
         address governorAddress_,
-        address stopperAddress_,
+        address pauserAddress_,
         address tcTokenAddress_,
         address mocSettlementAddress_,
         address mocFeeFlowAddress_,
@@ -103,7 +103,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tcRedeemFee_,
         uint256 emaCalculationBlockSpan_
     ) internal onlyInitializing {
-        __MocUpgradable_init(governorAddress_, stopperAddress_);
+        __MocUpgradable_init(governorAddress_, pauserAddress_);
         __MocBaseBucket_init_unchained(
             tcTokenAddress_,
             mocFeeFlowAddress_,

@@ -10,12 +10,12 @@ abstract contract MocUpgradable is UUPSUpgradeable, Stoppable {
     /**
      * @notice contract initializer
      * @param governorAddress_ The address that will define when a change contract is authorized
-     * @param stopperAddress_ The address that is authorized to stop this contract
+     * @param pauserAddress_ The address that is authorized to pause this contract
      */
-    function __MocUpgradable_init(address governorAddress_, address stopperAddress_) internal onlyInitializing {
+    function __MocUpgradable_init(address governorAddress_, address pauserAddress_) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Governed_init(governorAddress_);
-        __Stoppable_init_unchained(stopperAddress_, true);
+        __Stoppable_init_unchained(pauserAddress_, true);
     }
 
     /* solhint-disable-next-line no-empty-blocks */

@@ -60,7 +60,10 @@ abstract contract Governed is Initializable, MocHelper {
         if (!governor.isAuthorizedChanger(msg.sender)) revert NotAuthorizedChanger();
     }
 
-    // Leave a gap betweeen inherited contracts variables in order to be
-    // able to add more variables in them later
-    uint256[50] private upgradeGap;
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }
