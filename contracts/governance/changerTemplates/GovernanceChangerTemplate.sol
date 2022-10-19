@@ -15,7 +15,7 @@ contract GovernanceChangerTemplate is IChangeContract {
 
     /** 
     @notice Constructor
-    @param governed_ Address of the contract whos Governor we want to change
+    @param governed_ Address of the contract who's Governor we want to change
     @param newGovernor_ Address of the new Governor
   */
     constructor(Governed governed_, IGovernor newGovernor_) {
@@ -26,8 +26,8 @@ contract GovernanceChangerTemplate is IChangeContract {
     /**
     @notice Execute the changes.
     @dev Should be called by the governor, but this contract does not check that explicitly
-    because it is not its responsability in the current architecture
-    IMPORTANT: This function should not be overriden, you should only redefine
+    because it is not its responsibility in the current architecture
+    IMPORTANT: This function should not be overridden, you should only redefine
     _beforeUpgrade and _afterUpgrade methods to use this template
    */
     function execute() external {

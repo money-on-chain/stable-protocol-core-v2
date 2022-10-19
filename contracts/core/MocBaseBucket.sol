@@ -288,7 +288,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
+     * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
      * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
      */
@@ -313,7 +313,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         // this could be get by getLckAC(), but given the prices are needed after,
         // it's better to cache them here.
         uint256 lckAC;
-        // Auxiliar cache of pegs pACtp
+        // Auxiliary cache of pegs pACtp
         uint256[] memory pACtps = new uint256[](pegAmount);
         // for each peg, calculates the proportion of AC reserves it's locked
 

@@ -5,7 +5,7 @@ import "../../interfaces/IChangeContract.sol";
 
 /**
   @title GovernorMock
-  @dev Test only contract to mock Governor behaviour 
+  @dev Test only contract to mock Governor behavior 
 */
 contract GovernorMock is IGovernor {
     /**

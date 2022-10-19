@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /**
   @title Governed
   @notice Base contract to be inherited by governed contracts
-  @dev This contract is not usable on its own since it does not have any _productive useful_ behaviour
+  @dev This contract is not usable on its own since it does not have any _productive useful_ behavior
   The only purpose of this contract is to define some useful modifiers and functions to be used on the
   governance aspect of the child contract
   */
