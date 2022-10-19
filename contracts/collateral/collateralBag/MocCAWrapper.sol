@@ -40,7 +40,8 @@ contract MocCAWrapper is MocUpgradable {
         uint8 iTo_,
         address indexed sender_,
         address indexed recipient_,
-        uint256 qTP_
+        uint256 qTP_,
+        uint256 qAsset_
     );
     event AssetAdded(address indexed assetAddress_, address priceProviderAddress);
     // ------- Custom Errors -------
@@ -338,8 +339,16 @@ contract MocCAWrapper is MocUpgradable {
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
-        emit TPSwapped(assetAddress_, iFrom_, iTo_, sender_, recipient_, qTP_);
+        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        // inside a block to avoid stack too deep error
+        {
+            address assetAddress = assetAddress_;
+            uint8 iFrom = iFrom_;
+            uint8 iTo = iTo_;
+            uint256 qTP = qTP_;
+            uint256 qAssetUsed = qAssetMax_ - assetUnused;
+            emit TPSwapped(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qAssetUsed);
+        }
     }
 
     /**
