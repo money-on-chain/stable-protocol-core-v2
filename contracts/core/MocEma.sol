@@ -90,7 +90,7 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice true if the necessiry span has pass since last ema update
+     * @notice true if the necessary span has pass since last ema update
      */
     function shouldCalculateEma() public view returns (bool) {
         unchecked {
