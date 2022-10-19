@@ -72,6 +72,13 @@ export const tpParams = [
     initialEma: pEth(20.23),
     smoothingFactor: pEth(0.01),
   },
+  {
+    price: pEth(5.25),
+    ctarg: pEth(6),
+    initialEma: pEth(5.04),
+    smoothingFactor: pEth(0.05),
+    mintFee: PCT_BASE.mul(1).div(1000), // 0.1%
+  },
 ];
 
 const getTPparams = ({
@@ -201,6 +208,8 @@ export const ERRORS = {
   TRANSFER_FAIL: "TransferFailed",
   PEGGED_TOKEN_ALREADY_ADDED: "PeggedTokenAlreadyAdded",
   QAC_NEEDED_MUST_BE_GREATER_ZERO: "QacNeededMustBeGreaterThanZero",
+  QTP_TP_MINT_MUST_BE_GREATER_ZERO: "QTPtoMintMustBeGreaterThanZero",
+  QTP_BELOW_MINIMUM: "QtpBelowMinimumRequired",
   ONLY_SETTLEMENT: "OnlySettlement",
 };
 

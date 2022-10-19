@@ -102,6 +102,38 @@ const redeemTPto =
     return mocWrapper.connect(signer).redeemTPto(asset.address, i, qTP, qACmin, to);
   };
 
+const redeemTCandTP =
+  (mocWrapper, mocCollateralToken, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTC = pEth(qTC);
+      qACmin = pEth(qACmin);
+    }
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await mocCollateralToken.connect(signer).increaseAllowance(mocWrapper.address, qTC);
+    return mocWrapper.connect(signer).redeemTCandTP(asset.address, i, qTC, qTP, qACmin);
+  };
+
+const redeemTCandTPto =
+  (mocWrapper, mocCollateralToken, mocPeggedTokens, assetDefault, asset = assetDefault) =>
+  async ({ i, from, to, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTC = pEth(qTC);
+      qACmin = pEth(qACmin);
+    }
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await mocCollateralToken.connect(signer).increaseAllowance(mocWrapper.address, qTC);
+    return mocWrapper.connect(signer).redeemTCandTPto(asset.address, i, qTC, qTP, qACmin, to);
+  };
+
 const liqRedeemTP =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
   async ({ i, from, asset = assetDefault }) => {
@@ -117,6 +149,42 @@ const liqRedeemTPto =
     const signer = await ethers.getSigner(from);
     await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, pEth(1e10));
     return mocWrapper.connect(signer).liqRedeemTPto(asset.address, i, to, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
+const swapTPforTP =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ iFrom, iTo, from, qTP, qTPmin = 0, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTPmin = pEth(qTPmin);
+      qACmax = pEth(qACmax);
+    }
+    if (mocPeggedTokens[iFrom]) {
+      await mocPeggedTokens[iFrom].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
+    return mocWrapper
+      .connect(signer)
+      .swapTPforTP(asset.address, iFrom, iTo, qTP, qTPmin, qACmax, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
+const swapTPforTPto =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ iFrom, iTo, from, to, qTP, qTPmin = 0, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTPmin = pEth(qTPmin);
+      qACmax = pEth(qACmax);
+    }
+    if (mocPeggedTokens[iFrom]) {
+      await mocPeggedTokens[iFrom].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
+    return mocWrapper
+      .connect(signer)
+      .swapTPforTPto(asset.address, iFrom, iTo, qTP, qTPmin, qACmax, to, { gasLimit: GAS_LIMIT_PATCH });
   };
 
 const balanceOf =
@@ -169,8 +237,12 @@ export const mocFunctionsCARBag = async ({
     mintTPto: mintTPto(mocWrapper, assets[0]),
     redeemTP: redeemTP(mocWrapper, mocPeggedTokens, assets[0]),
     redeemTPto: redeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
+    redeemTCandTP: redeemTCandTP(mocWrapper, mocCollateralToken, mocPeggedTokens, assets[0]),
+    redeemTCandTPto: redeemTCandTPto(mocWrapper, mocCollateralToken, mocPeggedTokens, assets[0]),
     liqRedeemTP: liqRedeemTP(mocWrapper, mocPeggedTokens, assets[0]),
     liqRedeemTPto: liqRedeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
+    swapTPforTP: swapTPforTP(mocWrapper, mocPeggedTokens, assets[0]),
+    swapTPforTPto: swapTPforTPto(mocWrapper, mocPeggedTokens, assets[0]),
     assetBalanceOf: balanceOf(assets[0]),
     acBalanceOf: balanceOf(wcaToken),
     tcBalanceOf: balanceOf(mocCollateralToken),

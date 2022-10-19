@@ -14,7 +14,7 @@ const mintTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_1 = 1;
-  const TP_NON_EXISTENT = 4;
+  const TP_NON_EXISTENT = 5;
   const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
 
   describe("Feature: mint Pegged Token", function () {

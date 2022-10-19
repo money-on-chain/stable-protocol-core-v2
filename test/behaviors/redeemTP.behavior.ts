@@ -5,7 +5,6 @@ import { Address } from "hardhat-deploy/dist/types";
 import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
-import { beforeEach } from "mocha";
 
 const redeemTPBehavior = function () {
   let mocContracts: any;
@@ -14,7 +13,7 @@ const redeemTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_2 = 2;
-  const TP_NON_EXISTENT = 4;
+  const TP_NON_EXISTENT = 5;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
@@ -52,7 +51,7 @@ const redeemTPBehavior = function () {
         });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
-        it("THEN tx reverts because the amount of AC is invalid", async function () {
+        it("THEN tx reverts because the amount of TP is invalid", async function () {
           await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
             ERRORS.INVALID_VALUE,
@@ -378,7 +377,7 @@ const redeemTPBehavior = function () {
       });
       describe("WHEN Collateral Asset relation with Pegged Token price falls to 15.1", function () {
         beforeEach(async function () {
-          await mocFunctions.pokePrice(0, "15.1");
+          await mocFunctions.pokePrice(TP_0, "15.1");
         });
         describe("WHEN Alice tries to redeem 100 TP", function () {
           /*  
