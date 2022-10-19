@@ -34,6 +34,15 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
+    event TCandTPMinted(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
     event TCandTPRedeemed(
         address asset_,
         uint8 indexed i_,
@@ -315,6 +324,52 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
+     * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to mint
+     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     */
+    function _mintTCandTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
+
+        // mint TC and TP to the recipient
+        (uint256 wcaUsed, uint256 qTCminted, uint256 qTPminted) = mocCore.mintTCandTPto(
+            i_,
+            qTC_,
+            qTP_,
+            wcaMinted,
+            recipient_
+        );
+        uint256 wcaUnused = wcaMinted - wcaUsed;
+        // send back Asset unused to the sender
+        // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
+        // that can be spent
+        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        // inside a block to avoid stack too deep error
+        {
+            address assetAddress = assetAddress_;
+            uint8 i = i_;
+            uint256 qAssetUsed = qAssetMax_ - assetUnused;
+            emit TCandTPMinted(assetAddress, i, sender_, recipient_, qTCminted, qTPminted, qAssetUsed);
+        }
+    }
+
+    /**
      * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
@@ -326,7 +381,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that expect to be received
      * @param sender_ address who sends Collateral Token and Pegged Token
-     * @param recipient_ address who receives the Collateral Asset
+     * @param recipient_ address who receives the Asset
      */
     function _redeemTCandTPto(
         address assetAddress_,
@@ -375,7 +430,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param sender_ address who sends Collateral Token and Pegged Token
-     * @param recipient_ address who receives the Collateral Asset
+     * @param recipient_ address who receives the Asset
      * @param qTCredeemed_ amount of Collateral Token redeemed
      * @param qTPredeemed_ amount of Pegged Token redeemed
      * @param assetRedeemed_ amount of Assets that `recipient_` received
@@ -687,6 +742,52 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
+     * @notice caller sends Asset and receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to mint
+     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     */
+    function mintTCandTP(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMax_
+    ) external {
+        _mintTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to mint
+     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     */
+    function mintTCandTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address recipient_
+    ) external {
+        _mintTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMax_, msg.sender, recipient_);
+    }
+
+    /**
      * @notice caller sends Collateral Token and Pegged Token and receives Assets
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
@@ -719,7 +820,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
-     * @param recipient_ address who receives the Collateral Asset
+     * @param recipient_ address who receives the Asset
      */
     function redeemTCandTPto(
         address assetAddress_,

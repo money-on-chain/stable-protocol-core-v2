@@ -307,8 +307,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *  Mint Collateral Token and Pegged Token in equal proportions so that its price
      *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
      * @param i_ Pegged Token index
-     * @param qTC_ minimum amount of Collateral Token to mint
-     * @param qTP_ minimum amount of Pegged Token to mint
+     * @param qTC_ maximum amount of Collateral Token to mint
+     * @param qTP_ maximum amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends Collateral Aseet
      * @param recipient_ address who receives the Collateral Token and Pegged Token
@@ -332,24 +332,28 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint256 qTPtoMint
         )
     {
-        qTCtoMint = qTC_;
+        qTPtoMint = qTP_;
         uint256 lckAC = _getLckAC();
         uint256 nACtoMint = _getACtoMint(lckAC);
         uint256 pTCac = _getPTCac(lckAC, nACtoMint);
         uint256 pACtp = _getPACtp(i_);
         uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
+        // PREC^2] = [PREC] * [PREC]
+        uint256 pTCacMulPTCac = pTCac * pACtp;
         // calculate how many TC are needed to mint TP and not change coverage
-        // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
-        qTPtoMint = ((qTCtoMint * pTCac * pACtp) / cglbMinusOne) / PRECISION;
-        if (qTPtoMint > qTP_) {
+        // [N] = ([N] * [PREC] * [PREC]) / ([PREC^2])
+        qTCtoMint = _divPrec(qTPtoMint * cglbMinusOne, pTCacMulPTCac);
+        if (qTCtoMint > qTC_) {
             // if TC are not enough we mint the TP that reach
-            qTPtoMint = qTP_;
-            // [N] = [N] * [PREC] / [PREC]
-            qTCtoMint = (qTPtoMint * cglbMinusOne) / pACtp;
+            qTCtoMint = qTC_;
+            // [N] = ([N] * [PREC^2] / [PREC]) / [PREC]
+            qTPtoMint = ((qTCtoMint * pTCacMulPTCac) / cglbMinusOne) / PRECISION;
         }
         qACtotalNeeded = _mintTCto(qTCtoMint, qACmax_, sender_, recipient_, false);
         qACtotalNeeded += _mintTPto(i_, qTPtoMint, qACmax_, sender_, recipient_, false);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        // transfer the qAC change to the sender
+        acTransfer(sender_, qACmax_ - qACtotalNeeded);
         return (qACtotalNeeded, qACtotalNeeded, qTPtoMint);
     }
 

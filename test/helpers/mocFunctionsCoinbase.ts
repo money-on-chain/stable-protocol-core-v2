@@ -94,6 +94,30 @@ const redeemTPto =
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to, { gasPrice: 0 });
   };
 
+const mintTCandTP =
+  mocImpl =>
+  async ({ i, from, qTC, qTP, qACmax = qTC * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qTP = pEth(qTP);
+      qACmax = pEth(qACmax);
+    }
+    return mocImpl.connect(signer).mintTCandTP(i, qTC, qTP, { value: qACmax, gasPrice: 0 });
+  };
+
+const mintTCandTPto =
+  mocImpl =>
+  async ({ i, from, to, qTC, qTP, qACmax = qTC * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qTP = pEth(qTP);
+      qACmax = pEth(qACmax);
+    }
+    return mocImpl.connect(signer).mintTCandTPto(i, qTC, qTP, to, { value: qACmax, gasPrice: 0 });
+  };
+
 const redeemTCandTP =
   mocImpl =>
   async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
@@ -200,6 +224,8 @@ export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeg
     mintTPto: mintTPto(mocImpl),
     redeemTP: redeemTP(mocImpl),
     redeemTPto: redeemTPto(mocImpl),
+    mintTCandTP: mintTCandTP(mocImpl),
+    mintTCandTPto: mintTCandTPto(mocImpl),
     redeemTCandTP: redeemTCandTP(mocImpl),
     redeemTCandTPto: redeemTCandTPto(mocImpl),
     liqRedeemTP: liqRedeemTP(mocImpl),

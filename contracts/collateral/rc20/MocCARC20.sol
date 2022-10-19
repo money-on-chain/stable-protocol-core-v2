@@ -194,6 +194,72 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to mint
+     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTPtoMint amount of Pegged Token minted
+     */
+    function mintTCandTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmax_
+    )
+        external
+        payable
+        returns (
+            uint256 qACtotalNeeded,
+            uint256 qTCtoMint,
+            uint256 qTPtoMint
+        )
+    {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _mintTCandTPto(i_, qTC_, qTP_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to mint
+     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTPtoMint amount of Pegged Token minted
+     */
+    function mintTCandTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    )
+        external
+        payable
+        returns (
+            uint256 qACtotalNeeded,
+            uint256 qTCtoMint,
+            uint256 qTPtoMint
+        )
+    {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _mintTCandTPto(i_, qTC_, qTP_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
      * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
