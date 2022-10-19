@@ -302,8 +302,60 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
+     * @notice mint Collateral Token and Pegged Token in exchange for Collateral Asset
+     *  This operation is done without checking coverage
+     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
+     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     * @param i_ Pegged Token index
+     * @param qTC_ minimum amount of Collateral Token to mint
+     * @param qTP_ minimum amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param sender_ address who sends Collateral Aseet
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTPtoMint amount of Pegged Token minted
+     */
+    function _mintTCandTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address sender_,
+        address recipient_
+    )
+        internal
+        notLiquidated
+        returns (
+            uint256 qACtotalNeeded,
+            uint256 qTCtoMint,
+            uint256 qTPtoMint
+        )
+    {
+        qTCtoMint = qTC_;
+        uint256 lckAC = _getLckAC();
+        uint256 nACtoMint = _getACtoMint(lckAC);
+        uint256 pTCac = _getPTCac(lckAC, nACtoMint);
+        uint256 pACtp = _getPACtp(i_);
+        uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
+        // calculate how many TC are needed to mint TP and not change coverage
+        // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
+        qTPtoMint = ((qTCtoMint * pTCac * pACtp) / cglbMinusOne) / PRECISION;
+        if (qTPtoMint > qTP_) {
+            // if TC are not enough we mint the TP that reach
+            qTPtoMint = qTP_;
+            // [N] = [N] * [PREC] / [PREC]
+            qTCtoMint = (qTPtoMint * cglbMinusOne) / pACtp;
+        }
+        qACtotalNeeded = _mintTCto(qTCtoMint, qACmax_, sender_, recipient_, false);
+        qACtotalNeeded += _mintTPto(i_, qTPtoMint, qACmax_, sender_, recipient_, false);
+        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        return (qACtotalNeeded, qACtotalNeeded, qTPtoMint);
+    }
+
+    /**
      * @notice redeem Collateral Asset in exchange for Collateral Token and Pegged Token
-     *  This operation is done without check coverage
+     *  This operation is done without checking coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
      *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
      * @param i_ Pegged Token index
@@ -338,7 +390,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pTCac = _getPTCac(lckAC, nACtoMint);
         uint256 pACtp = _getPACtp(i_);
         uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
-        // calculate how many TP are needed tp redeem TC and not change coverage
+        // calculate how many TP are needed to redeem TC and not change coverage
         // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
         qTPtoRedeem = ((qTCtoRedeem * pTCac * pACtp) / cglbMinusOne) / PRECISION;
         if (qTPtoRedeem > qTP_) {
@@ -355,6 +407,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
     /**
      * @notice swap Pegged Token to another one
+     *  This operation is done without checking coverage unless the target coverage for
+     *  received Pegged Token is greater than the Pegged Token sent
      * @param iFrom_ owned Pegged Token index
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
