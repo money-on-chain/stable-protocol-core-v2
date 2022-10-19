@@ -34,6 +34,15 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
+    event TCandTPRedeemed(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
     event TPSwapped(
         address asset_,
         uint8 indexed iFrom_,
@@ -346,12 +355,41 @@ contract MocCAWrapper is MocUpgradable {
             0
         );
         // send Asset to the recipient
-        _redeemWCAto(assetAddress_, wcaTokenAmountRedeemed, qAssetMin_, address(this), recipient_);
+        uint256 assetRedeemed = _redeemWCAto(
+            assetAddress_,
+            wcaTokenAmountRedeemed,
+            qAssetMin_,
+            address(this),
+            recipient_
+        );
         // transfer unused Collateral Token to the sender
         SafeERC20.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
         // transfer unused Pegged Token to the sender
         SafeERC20.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
-        // TODO: emit event?
+        // emit event
+        _emitTCandTPRedeemed(assetAddress_, i_, sender_, recipient_, qTCtoRedeem, qTPtoRedeem, assetRedeemed);
+    }
+
+    /**
+     * @notice emit TCandTPRedeemed event. Used to avoid stack to deep error
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param sender_ address who sends Collateral Token and Pegged Token
+     * @param recipient_ address who receives the Collateral Asset
+     * @param qTCredeemed_ amount of Collateral Token redeemed
+     * @param qTPredeemed_ amount of Pegged Token redeemed
+     * @param assetRedeemed_ amount of Assets that `recipient_` received
+     */
+    function _emitTCandTPRedeemed(
+        address assetAddress_,
+        uint8 i_,
+        address sender_,
+        address recipient_,
+        uint256 qTCredeemed_,
+        uint256 qTPredeemed_,
+        uint256 assetRedeemed_
+    ) internal {
+        emit TCandTPRedeemed(assetAddress_, i_, sender_, recipient_, qTCredeemed_, qTPredeemed_, assetRedeemed_);
     }
 
     /**
