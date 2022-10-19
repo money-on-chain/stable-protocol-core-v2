@@ -338,14 +338,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pTCac = _getPTCac(lckAC, nACtoMint);
         uint256 pACtp = _getPACtp(i_);
         uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
+        // PREC^2] = [PREC] * [PREC]
+        uint256 pTCacMulPTCac = pTCac * pACtp;
         // calculate how many TP are needed tp redeem TC and not change coverage
-        // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
-        qTPtoRedeem = ((qTCtoRedeem * pTCac * pACtp) / cglbMinusOne) / PRECISION;
+        // [N] = ([N] * [PREC^2] / [PREC]) / [PREC]
+        qTPtoRedeem = ((qTCtoRedeem * pTCacMulPTCac) / cglbMinusOne) / PRECISION;
         if (qTPtoRedeem > qTP_) {
             // if TP are not enough we redeem the TC that reach
             qTPtoRedeem = qTP_;
-            // [N] = [N] * [PREC] / [PREC]
-            qTCtoRedeem = (qTPtoRedeem * cglbMinusOne) / pACtp;
+            // [N] = ([N] * [PREC] * [PREC]) / ([PREC^2])
+            qTCtoRedeem = _divPrec(qTPtoRedeem * cglbMinusOne, pTCacMulPTCac);
         }
         qACtoRedeem = _redeemTCto(qTCtoRedeem, qACmin_, sender_, recipient_, false);
         qACtoRedeem += _redeemTPto(i_, qTPtoRedeem, qACmin_, sender_, recipient_, false);
