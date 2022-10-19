@@ -124,14 +124,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();
         tcToken = MocTC(tcTokenAddress_);
         // Verifies it has the right roles over this TC
-        if (
-            !tcToken.hasRole(tcToken.PAUSER_ROLE(), address(this)) ||
-            !tcToken.hasRole(tcToken.MINTER_ROLE(), address(this)) ||
-            !tcToken.hasRole(tcToken.BURNER_ROLE(), address(this)) ||
-            !tcToken.hasRole(tcToken.DEFAULT_ADMIN_ROLE(), address(this))
-        ) {
-            revert InvalidAddress();
-        }
+        if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
+
         mocFeeFlowAddress = mocFeeFlowAddress_;
         mocInterestCollectorAddress = mocInterestCollectorAddress_;
         protThrld = protThrld_;

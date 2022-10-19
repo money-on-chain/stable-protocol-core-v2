@@ -50,4 +50,12 @@ contract MocRC20 is AccessControlEnumerable, ERC20, IMocRC20 {
     function burn(address to, uint256 amount) public virtual onlyRole(BURNER_ROLE) {
         _burn(to, amount);
     }
+
+    /**
+     * @inheritdoc IMocRC20
+     */
+    function hasFullRoles(address _account) public view virtual override returns (bool) {
+        return
+            hasRole(MINTER_ROLE, _account) && hasRole(BURNER_ROLE, _account) && hasRole(DEFAULT_ADMIN_ROLE, _account);
+    }
 }
