@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../interfaces/IMocRC20.sol";
 import "../tokens/MocTC.sol";
@@ -8,8 +8,8 @@ import "../MocSettlement.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
- * @notice MocBaseBucket holds Bucket Zero state, both for the Callateral Bag and PegggedTokens Items.
- * @dev Abstracts all rw opeartions on the main bucket and expose all calculations relative to its state.
+ * @notice MocBaseBucket holds Bucket Zero state, both for the Collateral Bag and PeggedTokens Items.
+ * @dev Abstracts all rw operations on the main bucket and expose all calculations relative to its state.
  */
 abstract contract MocBaseBucket is MocUpgradable {
     // ------- Events -------
@@ -69,14 +69,14 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage -------
 
-    // total amount of Collateral Asset holded in the Collateral Bag
+    // total amount of Collateral Asset held in the Collateral Bag
     uint256 internal nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     uint256 internal nACioucb;
 
     // Collateral Token
     MocTC public tcToken;
-    // total supply of Collateral Token
+    // Collateral Token total supply
     uint256 internal nTCcb;
 
     // Pegged Tokens MocRC20 addresses
@@ -87,7 +87,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     PegContainerItem[] internal pegContainer;
     // reserve factor
     uint256[] internal tpR;
-    // prices for each TP, at wich they can be redeem after liquidation event
+    // Pegged Token prices, at which they can be redeemed after liquidation event
     uint256[] internal tpLiqPrices;
     // proportion of gains because Pegged Tokens devaluation that are transferred during settlement [PREC]
     // example: fasf = 60%, sf = 16.667%, fa = 83.333% =>
@@ -100,14 +100,14 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage Fees -------
 
-    // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
+    // fee pct sent to Fee Flow on Collateral Tokens mint [PREC]
     uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+    // fee pct sent to Fee Flow on Collateral Tokens redeem [PREC]
     uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
-    // fee pct sent to Fee Flow for mint Pegged Tokens [PREC]
+    // fee pct sent to Fee Flow on Pegged Tokens mint [PREC]
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // fee pct sent to Fee Flow for redeem Pegged Tokens [PREC]
+    // fee pct sent to Fee Flow on Pegged Tokens redeem [PREC]
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
@@ -121,13 +121,13 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage Coverage Tracking -------
 
-    // target coverage for each Pegged Token [PREC]
+    // Target coverage for each Pegged Token [PREC]
     uint256[] public tpCtarg;
-    // coverage protected state threshold [PREC]
+    // Coverage protected state threshold [PREC]
     uint256 public protThrld;
-    // coverage liquidation threshold [PREC]
+    // Coverage liquidation threshold [PREC]
     uint256 public liqThrld;
-    // liquidation enabled
+    // Liquidation enabled
     bool public liqEnabled;
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
@@ -185,14 +185,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (initializeBaseBucketParams_.fasf > PRECISION) revert InvalidValue();
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
-        if (
-            !tcToken.hasRole(tcToken.PAUSER_ROLE(), address(this)) ||
-            !tcToken.hasRole(tcToken.MINTER_ROLE(), address(this)) ||
-            !tcToken.hasRole(tcToken.BURNER_ROLE(), address(this)) ||
-            !tcToken.hasRole(tcToken.DEFAULT_ADMIN_ROLE(), address(this))
-        ) {
-            revert InvalidAddress();
-        }
+        if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
         mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
         mocInterestCollectorAddress = initializeBaseBucketParams_.mocInterestCollectorAddress;
         mocTurboAddress = initializeBaseBucketParams_.mocTurboAddress;
@@ -361,7 +354,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice evaluates wheather or not the coverage is over the cThrld_, reverts if below
+     * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
      * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
      */
@@ -385,7 +378,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         // this could be get by getLckAC(), but given the prices are needed after,
         // it's better to cache them here.
         uint256 lckAC;
-        // Auxiliar cache of pegs pACtp
+        // Auxiliary cache of pegs pACtp
         uint256[] memory pACtps = new uint256[](pegAmount);
         // for each peg, calculates the proportion of AC reserves it's locked
 

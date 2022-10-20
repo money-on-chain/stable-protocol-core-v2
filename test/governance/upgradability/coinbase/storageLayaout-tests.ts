@@ -39,7 +39,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
           sf: coreParams.sf,
         },
         governorAddress: governorMock.address,
-        stopperAddress: deployer,
+        pauserAddress: deployer,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
       };
       const mocImpl = MocCACoinbase__factory.connect(mocProxy.address, ethers.provider.getSigner());

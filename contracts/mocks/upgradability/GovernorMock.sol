@@ -1,11 +1,11 @@
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "../../interfaces/IGovernor.sol";
 import "../../interfaces/IChangeContract.sol";
 
 /**
   @title GovernorMock
-  @dev Test only contract to mock Governor behaviour 
+  @dev Test only contract to mock Governor behavior 
 */
 contract GovernorMock is IGovernor {
     /**

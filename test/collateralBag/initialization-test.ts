@@ -11,7 +11,7 @@ import { expect } from "chai";
 import { ERRORS, CONSTANTS } from "../helpers/utils";
 import { mocInitialize } from "./initializers";
 import { mocAddresses } from "../../deploy-config/config";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 
 describe("Feature: MocCABag initialization", function () {
   let mocProxy: MocCARC20;
@@ -20,7 +20,7 @@ describe("Feature: MocCABag initialization", function () {
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
-  const { governorAddress, stopperAddress } = mocAddresses["hardhat"];
+  const { governorAddress, pauserAddress } = mocAddresses["hardhat"];
   before(async () => {
     ({
       mocImpl: mocProxy,
@@ -37,10 +37,34 @@ describe("Feature: MocCABag initialization", function () {
         await expect(mocInit()).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
+    describe("WHEN initialize the moc implementation", async () => {
+      let mocImplementation: MocCARC20;
+      it("THEN tx fails because contract is already initialized", async () => {
+        mocImplementation = MocCARC20__factory.connect(
+          (await deployments.get("MocCABagImpl")).address,
+          ethers.provider.getSigner(),
+        );
+        await expect(
+          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address, mocSettlement.address)(),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
     describe("WHEN initialize mocWrapper again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
         await expect(
-          mocWrapper.initialize(governorAddress, stopperAddress, mocProxy.address, wcaToken.address),
+          mocWrapper.initialize(governorAddress, pauserAddress, mocProxy.address, wcaToken.address),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+    describe("WHEN initialize the mocWrapper implementation", async () => {
+      let mocWrapperImplementation: MocCAWrapper;
+      it("THEN tx fails because contract is already initialized", async () => {
+        mocWrapperImplementation = MocCAWrapper__factory.connect(
+          (await deployments.get("MocCAWrapperImpl")).address,
+          ethers.provider.getSigner(),
+        );
+        await expect(
+          mocWrapperImplementation.initialize(governorAddress, pauserAddress, mocProxy.address, wcaToken.address),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
@@ -69,9 +93,9 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
-    describe("WHEN it is initialized with invalid stopper address", () => {
+    describe("WHEN it is initialized with invalid pauser address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ mocStopperAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
+        await expect(newMocInit({ mocPauserAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_ADDRESS,
         );
@@ -186,14 +210,14 @@ describe("Feature: MocCABag initialization", function () {
     describe("WHEN it is initialized with invalid Moc Core address", () => {
       it("THEN tx fails because address is the zero address", async () => {
         await expect(
-          newMocWrapper.initialize(governorAddress, stopperAddress, CONSTANTS.ZERO_ADDRESS, wcaToken.address),
+          newMocWrapper.initialize(governorAddress, pauserAddress, CONSTANTS.ZERO_ADDRESS, wcaToken.address),
         ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN it is initialized with invalid Wrapped Collateral Asset address", () => {
       it("THEN tx fails because address is the zero address", async () => {
         await expect(
-          newMocWrapper.initialize(governorAddress, stopperAddress, mocProxy.address, CONSTANTS.ZERO_ADDRESS),
+          newMocWrapper.initialize(governorAddress, pauserAddress, mocProxy.address, CONSTANTS.ZERO_ADDRESS),
         ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });

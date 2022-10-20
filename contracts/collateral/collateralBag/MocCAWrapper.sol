@@ -1,11 +1,11 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
- * @notice Wrappes a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
+ * @notice Wraps a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
  *  Moc Collateral Asset Bag protocol implementation
  */
 contract MocCAWrapper is MocUpgradable {
@@ -76,19 +76,19 @@ contract MocCAWrapper is MocUpgradable {
     /**
      * @notice contract initializer
      * @param governorAddress_ The address that will define when a change contract is authorized
-     * @param stopperAddress_ The address that is authorized to pause this contract
+     * @param pauserAddress_ The address that is authorized to pause this contract
      * @param mocCoreAddress_ Moc Core contract address
      * @param wcaTokenAddress_ Wrapped Collateral Asset Token contract address
      */
     function initialize(
         address governorAddress_,
-        address stopperAddress_,
+        address pauserAddress_,
         address mocCoreAddress_,
         address wcaTokenAddress_
     ) external initializer {
         if (mocCoreAddress_ == address(0)) revert InvalidAddress();
         if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
-        __MocUpgradable_init(governorAddress_, stopperAddress_);
+        __MocUpgradable_init(governorAddress_, pauserAddress_);
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
@@ -153,10 +153,10 @@ contract MocCAWrapper is MocUpgradable {
         // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
         // [PREC]
         uint256 wcaTokenPrice = getTokenPrice();
-        // multply by wcaTokenAmount_ to get how many currency we need
+        // multiply by wcaTokenAmount_ to get how many currency we need
         // [PREC] = [PREC] * [N]
         uint256 currencyNeeded = wcaTokenPrice * wcaTokenAmount_;
-        // divide currencyNedded by asset price to get how many assets we need
+        // divide currencyNeeded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
         return currencyNeeded / _getAssetPrice(priceProviderMap[assetAddress_]);
     }
@@ -217,7 +217,7 @@ contract MocCAWrapper is MocUpgradable {
         // transfer Collateral Token from sender to this address
         SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
-        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
         // calculate the equivalent amount of Asset
@@ -293,7 +293,7 @@ contract MocCAWrapper is MocUpgradable {
         // transfer Pegged Token from sender to this address
         SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
-        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
 
         uint256 wcaTokenAmountRedeemed;

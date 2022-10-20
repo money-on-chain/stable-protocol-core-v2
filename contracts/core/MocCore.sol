@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../interfaces/IMocRC20.sol";
 import "./MocEma.sol";
@@ -6,7 +6,7 @@ import "./MocInterestRate.sol";
 
 /**
  * @title MocCore
- * @notice MocCore nucleats all the basic MoC functionality and toolset. It allows Collateral
+ * @notice MocCore nucleates all the basic MoC functionality and tool set. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
 abstract contract MocCore is MocEma, MocInterestRate {
@@ -47,7 +47,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // The address that will define when a change contract is authorized
         address governorAddress;
         // The address that is authorized to pause this contract
-        address stopperAddress;
+        address pauserAddress;
         // amount of blocks to wait between Pegged ema calculation
         uint256 emaCalculationBlockSpan;
     }
@@ -89,8 +89,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice contract initializer
      * @dev this function must be execute by the AC implementation at initialization
      * @param initializeCoreParams_ contract initializer params
-     * @dev   governorAddress The address that will define when a change contract is authorized
-     *        stopperAddress The address that is authorized to pause this contract
+     *        governorAddress The address that will define when a change contract is authorized
+     *        pauserAddress_ The address that is authorized to pause this contract
      *        tcTokenAddress Collateral Token contract address
      *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
@@ -105,7 +105,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function __MocCore_init(InitializeCoreParams calldata initializeCoreParams_) internal onlyInitializing {
-        __MocUpgradable_init(initializeCoreParams_.governorAddress, initializeCoreParams_.stopperAddress);
+        __MocUpgradable_init(initializeCoreParams_.governorAddress, initializeCoreParams_.pauserAddress);
         __MocBaseBucket_init_unchained(initializeCoreParams_.initializeBaseBucketParams);
         __MocEma_init_unchained(initializeCoreParams_.emaCalculationBlockSpan);
     }
@@ -114,7 +114,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
     /**
      * @notice transfer Collateral Asset
-     * @dev this function must be overriden by the AC implementation
+     * @dev this function must be overridden by the AC implementation
      *  and revert if transfer fails.
      * @param to_ address who receives the Collateral Asset
      * @param amount_ amount of Collateral Asset to transfer
@@ -123,9 +123,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
     /**
      * @notice Collateral Asset balance
-     * @dev this function must be overriden by the AC implementation
-     * @param account address whos Collateral Asset balance we want to know of
-     * @param balance `account`'s total amount of Colateral Asset
+     * @dev this function must be overridden by the AC implementation
+     * @param account address who's Collateral Asset balance we want to know of
+     * @param balance `account`'s total amount of Collateral Asset
      */
     function acBalanceOf(address account) internal view virtual returns (uint256 balance);
 
@@ -149,7 +149,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
-        // if is 0 reverts because it is triyng to redeem an amount below precision
+        // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         // add qTC and qAC to the Bucket
         _depositTC(qTC_, qACNeededtoMint);
@@ -185,7 +185,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 lckAC = _evalCoverage(ctargemaCA);
         // calculate how many total qAC are redemeed and how many correspond for fee
         (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargemaCA, lckAC);
-        // if is 0 reverts because it is triyng to redeem an amount below precision
+        // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
@@ -227,7 +227,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargemaCA, lckAC, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
-        // if is 0 reverts because it is triyng to mint an amount below precision
+        // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         // add qTP and qAC to the Bucket
         _depositTP(i_, qTP_, qACNeededtoMint);
@@ -263,10 +263,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         _evalCoverage(protThrld);
-        // calculate how many qAC are needed to mint TP and the qAC fee
-        // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
+        // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp);
-        // if is 0 reverts because it is triyng to redeem an amount below precision
+        // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
@@ -528,7 +527,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *
      *  Requirements:
      *
-     * - the caller must have governace authorization.
+     * - the caller must have governance authorization.
      * - tpTokenAddress must be a MocRC20, with mint, burn roles already settled
      *  for this contract
      */
@@ -544,15 +543,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
         if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
 
-        MocRC20 tpToken = MocRC20(addPeggedTokenParams_.tpTokenAddress);
+        IMocRC20 tpToken = IMocRC20(addPeggedTokenParams_.tpTokenAddress);
         // Verifies it has the right roles over this TP
-        if (
-            !tpToken.hasRole(tpToken.MINTER_ROLE(), address(this)) ||
-            !tpToken.hasRole(tpToken.BURNER_ROLE(), address(this)) ||
-            !tpToken.hasRole(tpToken.DEFAULT_ADMIN_ROLE(), address(this))
-        ) {
-            revert InvalidAddress();
-        }
+        if (!tpToken.hasFullRoles(address(this))) revert InvalidAddress();
+
         IPriceProvider priceProvider = IPriceProvider(addPeggedTokenParams_.priceProviderAddress);
         // TODO: this could be replaced by a "if exists modify it"
         if (peggedTokenIndex[address(tpToken)].exist) revert PeggedTokenAlreadyAdded();

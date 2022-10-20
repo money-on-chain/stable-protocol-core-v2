@@ -42,7 +42,7 @@ describe("Feature: Check MocRC20 storage layout compatibility using openzeppelin
             sf: coreParams.sf,
           },
           governorAddress: governorMock.address,
-          stopperAddress: deployer,
+          pauserAddress: deployer,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
         acTokenAddress: deployer,

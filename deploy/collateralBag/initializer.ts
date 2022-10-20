@@ -44,7 +44,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } =
+  let { governorAddress, pauserAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } =
     mocAddresses[network];
 
   // for tests only, we deploy a necessary Mocks
@@ -72,7 +72,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             sf: coreParams.sf,
           },
           governorAddress,
-          stopperAddress,
+          pauserAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
         acTokenAddress: WCAToken.address,
@@ -82,7 +82,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   await waitForTxConfirmation(
-    MocCAWrapper.initialize(governorAddress, stopperAddress, mocCARC20.address, WCAToken.address, {
+    MocCAWrapper.initialize(governorAddress, pauserAddress, mocCARC20.address, WCAToken.address, {
       gasLimit: GAS_LIMIT_PATCH,
     }),
   );
@@ -90,7 +90,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     MocSettlement.initialize(
       governorAddress,
-      stopperAddress,
+      pauserAddress,
       mocCARC20.address,
       settlementParams.bes,
       settlementParams.bmulcdj,

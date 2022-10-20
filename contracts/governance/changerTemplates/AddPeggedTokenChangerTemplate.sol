@@ -1,4 +1,4 @@
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "../../interfaces/IChangeContract.sol";
 import "../../core/MocCore.sol";
@@ -26,8 +26,8 @@ contract AddPeggedTokenChangerTemplate is IChangeContract {
     /**
     @notice Execute the changes.
     @dev Should be called by the governor, but this contract does not check that explicitly
-    because it is not its responsability in the current architecture
-    IMPORTANT: This function should not be overriden, you should only redefine
+    because it is not its responsibility in the current architecture
+    IMPORTANT: This function should not be overridden, you should only redefine
     _beforeUpgrade and _afterUpgrade methods to use this template
    */
     function execute() external {

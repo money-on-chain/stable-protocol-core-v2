@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../interfaces/IMocRC20.sol";
 import "./MocBaseBucket.sol";
@@ -101,7 +101,7 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice true if the necessiry span has pass since last ema update
+     * @notice true if the necessary span has pass since last ema update
      */
     function shouldCalculateEma() public view returns (bool) {
         unchecked {

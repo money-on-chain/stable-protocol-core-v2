@@ -1,4 +1,4 @@
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "../interfaces/IGovernor.sol";
 import "../utils/MocHelper.sol";
@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /**
   @title Governed
   @notice Base contract to be inherited by governed contracts
-  @dev This contract is not usable on its own since it does not have any _productive useful_ behaviour
+  @dev This contract is not usable on its own since it does not have any _productive useful_ behavior
   The only purpose of this contract is to define some useful modifiers and functions to be used on the
   governance aspect of the child contract
   */
@@ -60,7 +60,10 @@ abstract contract Governed is Initializable, MocHelper {
         if (!governor.isAuthorizedChanger(msg.sender)) revert NotAuthorizedChanger();
     }
 
-    // Leave a gap betweeen inherited contracts variables in order to be
-    // able to add more variables in them later
-    uint256[50] private upgradeGap;
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../../core/MocCore.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -18,7 +18,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @notice contract initializer
      * @param initializeCoreParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
-     *      stopperAddress The address that is authorized to pause this contract
+     *      pauserAddress The address that is authorized to pause this contract
      *      tcTokenAddress Collateral Token contract address
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address

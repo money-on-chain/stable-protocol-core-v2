@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../../core/MocCore.sol";
 
@@ -28,7 +28,7 @@ contract MocCARC20 is MocCore {
      * @notice contract initializer
      * @param initializeParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
-     *      stopperAddress The address that is authorized to pause this contract
+     *      pauserAddress The address that is authorized to pause this contract
      *      acTokenAddress Collateral Asset Token contract address
      *      tcTokenAddress Collateral Token contract address
      *      mocSettlementAddress MocSettlement contract address

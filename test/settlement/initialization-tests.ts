@@ -7,23 +7,23 @@ import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
-const { governorAddress, stopperAddress } = mocAddresses["hardhat"];
+const { governorAddress, pauserAddress } = mocAddresses["hardhat"];
 
 function mocSettlementInitialize(mocSettlement: MocSettlement, mocImpl: Address) {
   return ({
     mocGovernorAddress = governorAddress,
-    mocStopperAddress = stopperAddress,
+    mocPauserAddress = pauserAddress,
     mocImplAddress = mocImpl,
     bes = 0,
     bmulcdj = 0,
   }: {
     mocGovernorAddress?: Address;
-    mocStopperAddress?: Address;
+    mocPauserAddress?: Address;
     mocImplAddress?: Address;
     bes?: BigNumberish;
     bmulcdj?: BigNumberish;
   } = {}) => {
-    return mocSettlement.initialize(mocGovernorAddress, mocStopperAddress, mocImplAddress, bes, bmulcdj);
+    return mocSettlement.initialize(mocGovernorAddress, mocPauserAddress, mocImplAddress, bes, bmulcdj);
   };
 }
 
@@ -62,9 +62,9 @@ describe("Feature: MocSettlement initialization", function () {
         ).to.be.revertedWithCustomError(newMocImpl, ERRORS.INVALID_ADDRESS);
       });
     });
-    describe("WHEN it is initialized with invalid stopper address", () => {
+    describe("WHEN it is initialized with invalid pauser address", () => {
       it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocSettlementInit({ mocStopperAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
+        await expect(newMocSettlementInit({ mocPauserAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
           newMocImpl,
           ERRORS.INVALID_ADDRESS,
         );
