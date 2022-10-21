@@ -476,12 +476,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
             _updateTPtracking(i, pACtp);
-            uint256 iuo = uint256(tpiou[i]);
+            int256 iuo = tpiou[i];
             if (iuo > 0) {
+                // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
+                uint256 tpToMint = _mulPrec(uint256(iuo) * fa, pACtp) / PRECISION;
                 // [N] = [N] * [PREC] / [PREC]
-                uint256 tpToMint = (iuo * fa) / pACtp;
-                // [N] = [N] * [PREC] / [PREC]
-                mocGain = _mulPrec(iuo, sf);
+                mocGain += _mulPrec(uint256(iuo), sf);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket

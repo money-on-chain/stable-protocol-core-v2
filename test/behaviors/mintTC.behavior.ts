@@ -156,7 +156,7 @@ const mintTCBehavior = function () {
       });
       describe("AND Collateral Asset relation with Pegged Token price falls to 1 making TC price falls too", function () {
         /*  
-        nAC = 3000.4    
+        nAC = 3000.425    
         nTP = 100
         lckAC = 100
         => pTCac = 0.9668
@@ -205,13 +205,25 @@ const mintTCBehavior = function () {
       });
       describe("AND Pegged Token has been devaluated to 500 making TC price rices", function () {
         /*  
-        nAC = 3000.4    
+        nAC = 3000.425    
         nTP = 100
         lckAC = 0.2
-        => pTCac = 1.00006
+        nACgain = 0.1353
+        => pTCac = 1.00003
+        => coverage = 15001.45
         */
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, 500);
+        });
+        describe("WHEN ask for the TC price", function () {
+          it("THEN it is 1.00003", async function () {
+            assertPrec("1.000030070921985815", await mocContracts.mocImpl.getPTCac());
+          });
+        });
+        describe("WHEN ask for the coverage", function () {
+          it("THEN it is 15001.45", async function () {
+            assertPrec("15001.451063829787234045", await mocContracts.mocImpl.getCglb());
+          });
         });
         describe("WHEN alice mints 100 TC", function () {
           let alicePrevACBalance: Balance;
@@ -219,44 +231,82 @@ const mintTCBehavior = function () {
             alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
             await mocFunctions.mintTC({ from: alice, qTC: 100 });
           });
-          it("THEN alice spends 105.007 assets instead of 105", async function () {
+          it("THEN alice spends 105.003 assets instead of 105", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("105.007893617021276595", diff);
+            assertPrec("105.003157446808510575", diff);
           });
         });
         describe("AND the settlement is executed", function () {
+          /*  
+          nAC = 3000.4029    
+          nTP = 156.3829
+          lckAC = 0.3127
+          nACgain = 0
+          => pTCac = 1.00003
+          */
           beforeEach(async function () {
             const nextBlockSettlement = await mocContracts.mocSettlement.bns();
             await mineUpTo(nextBlockSettlement);
             await mocContracts.mocSettlement.execSettlement();
           });
-          describe("AND Pegged Token has been devaluated to 1000", function () {
-            /*  
-            nAC = 3000.4    
-            nTP = 100
-            lckACLstset = 0.2
-            lckAC = 0.1
-            ACtoMint = 0.06
-            => pTCac = 1.00008
-            */
-            beforeEach(async function () {
-              await mocFunctions.pokePrice(TP_0, 1000);
+          describe("WHEN ask for the TC price", function () {
+            it("THEN it didn´t change, it is 1.00003", async function () {
+              assertPrec("1.000030070921985815", await mocContracts.mocImpl.getPTCac());
             });
-            it("THEN the coverage is 30003.65", async function () {
-              assertPrec("30003.655319148936170210", await mocContracts.mocImpl.getCglb());
-            });
-            describe("WHEN alice mints 100 TC", function () {
-              let alicePrevACBalance: Balance;
-              beforeEach(async function () {
-                alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-                await mocFunctions.mintTC({ from: alice, qTC: 100 });
-              });
-              it("THEN alice spends 105.009 assets instead of 105", async function () {
-                const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-                const diff = alicePrevACBalance.sub(aliceActualACBalance);
-                assertPrec("105.009293617021276560", diff);
-              });
+          });
+        });
+      });
+      describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
+        /*  
+        nAC = 3000.425    
+        nTP = 100
+        lckAC = 1
+        nACgain = -0.5744
+        => pTCac = 0.9998
+        => coverage = 3000.425
+        */
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 100);
+        });
+        describe("WHEN ask for the TC price", function () {
+          it("THEN it is 0.9998", async function () {
+            assertPrec("0.999808510638297872", await mocContracts.mocImpl.getPTCac());
+          });
+        });
+        describe("WHEN ask for the coverage", function () {
+          it("THEN it is 3000.425", async function () {
+            assertPrec("3000.425531914893617021", await mocContracts.mocImpl.getCglb());
+          });
+        });
+        describe("WHEN alice mints 100 TC", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            await mocFunctions.mintTC({ from: alice, qTC: 100 });
+          });
+          it("THEN alice spends 104.979 assets instead of 105", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec("104.979893617021276560", diff);
+          });
+        });
+        describe("AND the settlement is executed", function () {
+          /*  
+          nAC = 3000.425    
+          nTP = 100
+          lckAC = 1
+          nACgain = -0.5744
+          => pTCac = 0.9998
+          */
+          beforeEach(async function () {
+            const nextBlockSettlement = await mocContracts.mocSettlement.bns();
+            await mineUpTo(nextBlockSettlement);
+            await mocContracts.mocSettlement.execSettlement();
+          });
+          describe("WHEN ask for the TC price", function () {
+            it("THEN it didn´t change, it is 0.9998", async function () {
+              assertPrec("0.999808510638297872", await mocContracts.mocImpl.getPTCac());
             });
           });
         });

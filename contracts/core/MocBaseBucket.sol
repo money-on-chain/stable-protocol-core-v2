@@ -5,6 +5,7 @@ import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
 import "../MocSettlement.sol";
+import "hardhat/console.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
@@ -412,9 +413,9 @@ abstract contract MocBaseBucket is MocUpgradable {
         // [PREC] = [N] * [PREC]
         tpAvailableToRedeem_ *= PRECISION;
         // [N] = [PREC] / [PREC] - [PREC] / [PREC]
-        uint256 tpPnlAux = tpAvailableToRedeem_ / pACtpLstop[i_] - tpAvailableToRedeem_ / pACtp_;
+        int256 tpPnlAux = int256(tpAvailableToRedeem_ / pACtpLstop[i_]) - int256(tpAvailableToRedeem_ / pACtp_);
         // [N] = [N] * [PREC] / [PREC]
-        return int256(_mulPrec(tpPnlAux, fasf));
+        return (tpPnlAux * int256(fasf)) / int256(PRECISION);
     }
 
     /**
