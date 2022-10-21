@@ -144,9 +144,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        uint256 lckAC = _evalCoverage(protThrld);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
         // calculates how many qAC are needed to mint TC and the qAC fee
-        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC);
+        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC, nACgain);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to redeem an amount below precision
@@ -155,10 +155,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _depositTC(qTC_, qACNeededtoMint);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTC_);
-        // calculate how many qAC should be returned to the sender
-        uint256 qACchg = qACmax_ - qACtotalNeeded;
         // transfer the qAC change to the sender
-        acTransfer(sender_, qACchg);
+        acTransfer(sender_, qACmax_ - qACtotalNeeded);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
@@ -182,9 +180,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
-        uint256 lckAC = _evalCoverage(ctargemaCA);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
         // calculate how many total qAC are redemeed and how many correspond for fee
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargemaCA, lckAC);
+        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargemaCA, lckAC, nACgain);
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
@@ -222,9 +220,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
-        uint256 lckAC = _evalCoverage(ctargemaCA);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
         // calculate how many qAC are needed to mint TP and the qAC fee
-        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargemaCA, lckAC, pACtp);
+        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargemaCA, lckAC, nACgain, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
@@ -233,10 +231,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _depositTP(i_, qTP_, qACNeededtoMint);
         // mint qTP to the recipient
         tpTokens[i_].mint(recipient_, qTP_);
-        // calculate how many qAC should be returned to the sender
-        uint256 qACchg = qACmax_ - qACtotalNeeded;
         // transfer the qAC change to the sender
-        acTransfer(sender_, qACchg);
+        acTransfer(sender_, qACmax_ - qACtotalNeeded);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
         emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
@@ -342,15 +338,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function _calcQACforMintTC(uint256 qTC_, uint256 lckAC_)
-        internal
-        view
-        returns (uint256 qACNeededtoMint, uint256 qACfee)
-    {
+    function _calcQACforMintTC(
+        uint256 qTC_,
+        uint256 lckAC_,
+        uint256 nACgain_
+    ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
         // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = _mulPrec(qTC_, _getPTCac(lckAC_));
+        qACNeededtoMint = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACNeededtoMint, tcMintFee);
@@ -369,17 +365,18 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function _calcQACforRedeemTC(
         uint256 qTC_,
         uint256 ctargemaCA_,
-        uint256 lckAC_
+        uint256 lckAC_,
+        uint256 nACgain_
     ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_);
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
 
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
 
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = _mulPrec(qTC_, _getPTCac(lckAC_));
+        qACtotalToRedeem = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACtotalToRedeem, tcRedeemFee);
@@ -401,11 +398,18 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 ctargemaCA_,
         uint256 lckAC_,
+        uint256 nACgain_,
         uint256 pACtp_
     ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
 
-        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, _getCtargemaTP(i_, pACtp_), pACtp_, lckAC_);
+        uint256 tpAvailableToMint = _getTPAvailableToMint(
+            ctargemaCA_,
+            _getCtargemaTP(i_, pACtp_),
+            pACtp_,
+            lckAC_,
+            nACgain_
+        );
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
 
@@ -467,6 +471,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice distribute appreciation factor to Turbo and success fee to Moc Fee Flow
      */
     function _distributeSuccessFee() internal {
+        uint256 mocGain;
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
@@ -475,18 +480,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
             if (iuo > 0) {
                 // [N] = [N] * [PREC] / [PREC]
                 uint256 tpToMint = (iuo * fa) / pACtp;
+                // [N] = [N] * [PREC] / [PREC]
+                mocGain = _mulPrec(iuo, sf);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket
                 pegContainer[i].nTP += tpToMint;
-                // mint TP to Turbo, is not neccesary to check coverage
+                // mint TP to Turbo, is not necessary to check coverage
                 tpTokens[i].mint(mocTurboAddress, tpToMint);
             }
         }
-        // [N] = [N] * [PREC] / [PREC]
-        uint256 mocGain = _mulPrec(nACgain, sf);
-        // reset AC profit
-        nACgain = 0;
         // sub qAC from the Bucket
         nACcb -= mocGain;
         // transfer the qAC to Moc Fee Flow
@@ -599,7 +602,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return pTCac [PREC]
      */
     function getPTCac() external view returns (uint256 pTCac) {
-        return _getPTCac(_getLckAC());
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        return _getPTCac(lckAC, nACgain);
     }
 
     /**
@@ -607,7 +611,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return cglob [PREC]
      */
     function getCglb() external view returns (uint256 cglob) {
-        return _getCglb(_getLckAC());
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        return _getCglb(lckAC, nACgain);
     }
 
     /**
@@ -618,7 +623,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return tcAvailableToRedeem [N]
      */
     function getTCAvailableToRedeem() external view returns (uint256 tcAvailableToRedeem) {
-        return _getTCAvailableToRedeem(_getCtargemaCA(), _getLckAC());
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        return _getTCAvailableToRedeem(_getCtargemaCA(), lckAC, nACgain);
     }
 
     /**
@@ -631,7 +637,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function getTPAvailableToMint(uint8 i_) external view returns (uint256 tpAvailableToMint) {
         uint256 pACtp = _getPACtp(i_);
-        return _getTPAvailableToMint(_getCtargemaCA(), _getCtargemaTP(i_, pACtp), pACtp, _getLckAC());
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        return _getTPAvailableToMint(_getCtargemaCA(), _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
     }
 
     /**
@@ -639,7 +646,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return totalACavailable [N]
      */
     function getTotalACavailable() external view returns (uint256 totalACavailable) {
-        return _getTotalACavailable();
+        (, uint256 nACgain) = _getLckACandACgain();
+        return _getTotalACavailable(nACgain);
     }
 
     /**
