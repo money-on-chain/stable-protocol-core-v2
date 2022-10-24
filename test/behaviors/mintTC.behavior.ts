@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -237,25 +237,6 @@ const mintTCBehavior = function () {
             assertPrec("105.003157446808510575", diff);
           });
         });
-        describe("AND the settlement is executed", function () {
-          /*  
-          nAC = 3000.4029    
-          nTP = 156.3829
-          lckAC = 0.3127
-          nACgain = 0
-          => pTCac = 1.00003
-          */
-          beforeEach(async function () {
-            const nextBlockSettlement = await mocContracts.mocSettlement.bns();
-            await mineUpTo(nextBlockSettlement);
-            await mocContracts.mocSettlement.execSettlement();
-          });
-          describe("WHEN ask for the TC price", function () {
-            it("THEN it didn´t change, it is 1.00003", async function () {
-              assertPrec("1.000030070921985815", await mocContracts.mocImpl.getPTCac());
-            });
-          });
-        });
       });
       describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
         /*  
@@ -289,25 +270,6 @@ const mintTCBehavior = function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
             assertPrec("104.979893617021276560", diff);
-          });
-        });
-        describe("AND the settlement is executed", function () {
-          /*  
-          nAC = 3000.425    
-          nTP = 100
-          lckAC = 1
-          nACgain = -0.3446
-          => pTCac = 0.9998
-          */
-          beforeEach(async function () {
-            const nextBlockSettlement = await mocContracts.mocSettlement.bns();
-            await mineUpTo(nextBlockSettlement);
-            await mocContracts.mocSettlement.execSettlement();
-          });
-          describe("WHEN ask for the TC price", function () {
-            it("THEN it didn´t change, it is 0.9998", async function () {
-              assertPrec("0.999808510638297872", await mocContracts.mocImpl.getPTCac());
-            });
           });
         });
       });

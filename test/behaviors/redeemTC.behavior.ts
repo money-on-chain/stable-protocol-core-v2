@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -319,26 +319,6 @@ const redeemTCBehavior = function () {
               assertPrec("95.671333333333333270", diff);
             });
           });
-          describe("AND the settlement is executed", function () {
-            /*  
-            nAC = 309.47    
-            nTP = 3675
-            lckAC = 7.35
-            nACgain = 0
-            => pTCac = 1.00706
-            => coverage = 65.2808
-            */
-            beforeEach(async function () {
-              const nextBlockSettlement = await mocContracts.mocSettlement.bns();
-              await mineUpTo(nextBlockSettlement);
-              await mocContracts.mocSettlement.execSettlement();
-            });
-            describe("WHEN ask for the TC price", function () {
-              it("THEN it didn´t change, it is 1.00706", async function () {
-                assertPrec("1.007066666666666666", await mocContracts.mocImpl.getPTCac());
-              });
-            });
-          });
           describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
             /*  
             nAC = 310  
@@ -371,26 +351,6 @@ const redeemTCBehavior = function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
                 assertPrec("90.725", diff);
-              });
-            });
-            describe("AND the settlement is executed", function () {
-              /*  
-              nAC = 310  
-              nTP = 2350
-              lckAC = 23.5
-              nACgain = -8.1
-              => pTCac = 0.955
-              => coverage = 3000.425
-              */
-              beforeEach(async function () {
-                const nextBlockSettlement = await mocContracts.mocSettlement.bns();
-                await mineUpTo(nextBlockSettlement);
-                await mocContracts.mocSettlement.execSettlement();
-              });
-              describe("WHEN ask for the TC price", function () {
-                it("THEN it didn´t change, it is 0.995", async function () {
-                  assertPrec("0.955", await mocContracts.mocImpl.getPTCac());
-                });
               });
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {

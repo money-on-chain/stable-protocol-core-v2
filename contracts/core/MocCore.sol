@@ -479,7 +479,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             int256 iuo = tpiou[i];
             if (iuo > 0) {
                 // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
-                uint256 tpToMint = _mulPrec(uint256(iuo) * fa, pACtp) / PRECISION;
+                uint256 tpToMint = _mulPrec(uint256(iuo) * pACtp, fa) / PRECISION;
                 // [N] = [N] + [N]
                 mocGain += uint256(iuo);
                 // reset TP profit
