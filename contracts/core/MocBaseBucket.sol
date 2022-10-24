@@ -428,13 +428,20 @@ abstract contract MocBaseBucket is MocUpgradable {
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
             uint256 pACtp = _getPACtp(i);
-            // [N] = ([N] - [N]) * [PREC] / [PREC]
-            lckAC += _divPrec(tpAvailableToRedeem, pACtp);
             // [N] = [N] + [N]
-            int256 nACgainAux = tpiou[i] + _getPnLTP(i, tpAvailableToRedeem, pACtp);
-            // [N] = [N] * [PREC] / [PREC]
-            if (nACgainAux > 0) nACgain += uint256(nACgainAux);
+            int256 adjPnLtpi = tpiou[i] + _getPnLTP(i, tpAvailableToRedeem, pACtp);
+            uint256 tpGain;
+            if (adjPnLtpi > 0) {
+                // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
+                tpGain = _mulPrec(uint256(adjPnLtpi) * pACtp, fa) / PRECISION;
+                // [N] = [N] + [N]
+                nACgain += uint256(adjPnLtpi);
+            }
+            // [N] = ([N] - [N]) * [PREC] / [PREC]
+            lckAC += _divPrec(tpAvailableToRedeem + tpGain, pACtp);
         }
+        // [N] = [N] * [PREC] / [PREC]
+        nACgain = _mulPrec(nACgain, sf);
         return (lckAC, nACgain);
     }
 

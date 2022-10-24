@@ -206,9 +206,9 @@ const mintTCBehavior = function () {
       describe("AND Pegged Token has been devaluated to 500 making TC price rices", function () {
         /*  
         nAC = 3000.425    
-        nTP = 100
-        lckAC = 0.2
-        nACgain = 0.1353
+        nTP = 100 + 56.3829
+        lckAC = 0.3127
+        nACgain = 0.02255
         => pTCac = 1.00003
         => coverage = 15001.45
         */
@@ -262,7 +262,7 @@ const mintTCBehavior = function () {
         nAC = 3000.425    
         nTP = 100
         lckAC = 1
-        nACgain = -0.5744
+        nACgain = -0.3446
         => pTCac = 0.9998
         => coverage = 3000.425
         */
@@ -296,7 +296,7 @@ const mintTCBehavior = function () {
           nAC = 3000.425    
           nTP = 100
           lckAC = 1
-          nACgain = -0.5744
+          nACgain = -0.3446
           => pTCac = 0.9998
           */
           beforeEach(async function () {

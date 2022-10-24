@@ -480,8 +480,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
             if (iuo > 0) {
                 // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
                 uint256 tpToMint = _mulPrec(uint256(iuo) * fa, pACtp) / PRECISION;
-                // [N] = [N] * [PREC] / [PREC]
-                mocGain += _mulPrec(uint256(iuo), sf);
+                // [N] = [N] + [N]
+                mocGain += uint256(iuo);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket
@@ -490,6 +490,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
                 tpTokens[i].mint(mocTurboAddress, tpToMint);
             }
         }
+        // [N] = [N] * [PREC] / [PREC]
+        mocGain = _mulPrec(mocGain, sf);
         // sub qAC from the Bucket
         nACcb -= mocGain;
         // transfer the qAC to Moc Fee Flow
