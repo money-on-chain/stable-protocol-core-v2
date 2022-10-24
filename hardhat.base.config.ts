@@ -10,6 +10,7 @@ import "hardhat-docgen";
 import "hardhat-gas-reporter";
 import "hardhat-preprocessor";
 import { removeConsoleLog } from "hardhat-preprocessor";
+import "hardhat-prettier";
 import { HardhatUserConfig } from "hardhat/config";
 import { NetworkUserConfig } from "hardhat/types";
 import { resolve } from "path";
