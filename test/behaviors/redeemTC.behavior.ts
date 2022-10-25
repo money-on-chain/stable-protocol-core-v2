@@ -288,8 +288,6 @@ const redeemTCBehavior = function () {
           nACgain = 0.53
           => pTCac = 1.00706
           => coverage = 42.104
-          ema = 251.438
-          ctarg = 19.8856
           => TC available to redeem = 221.24
           */
           beforeEach(async function () {
@@ -305,7 +303,7 @@ const redeemTCBehavior = function () {
               assertPrec("42.104761904761904761", await mocContracts.mocImpl.getCglb());
             });
           });
-          describe("WHEN ask for TC availables to redeem", function () {
+          describe("WHEN ask for TC available to redeem", function () {
             it("THEN there are 221.24 TC", async function () {
               // we must update ema to match the real TC available, otherwise it is just an approximation
               await mocContracts.mocImpl.updateEmas();
@@ -332,6 +330,7 @@ const redeemTCBehavior = function () {
             nACgain = -8.1
             => pTCac = 0.955
             => coverage = 13.19
+            => TC available to redeem = 201.57
             */
             beforeEach(async function () {
               await mocFunctions.pokePrice(TP_0, 100);
@@ -346,6 +345,13 @@ const redeemTCBehavior = function () {
                 assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
               });
             });
+            describe("WHEN ask for TC available to redeem", function () {
+              it("THEN there are 201.57 TC", async function () {
+                // we must update ema to match the real TC available, otherwise it is just an approximation
+                await mocContracts.mocImpl.updateEmas();
+                assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
+              });
+            });
             describe("WHEN alice redeems 100 TC", function () {
               let alicePrevACBalance: Balance;
               beforeEach(async function () {
@@ -356,22 +362,6 @@ const redeemTCBehavior = function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
                 assertPrec("90.725", diff);
-              });
-            });
-            describe("AND Pegged Token has been devaluated to 1000", function () {
-              /*  
-              nAC = 309.47    
-              nTP = 3675
-              lckAC = 7.35
-              nACgain = 0
-              => pTCac = 1.00706
-              => coverage = 65.2808
-              ema = 251.438
-              ctarg = 19.8856
-              => TC available to redeem = 256.52
-              */
-              beforeEach(async function () {
-                await mocFunctions.pokePrice(TP_0, 1000);
               });
             });
           });
