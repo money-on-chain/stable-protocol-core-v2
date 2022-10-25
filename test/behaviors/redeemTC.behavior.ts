@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -288,7 +288,8 @@ const redeemTCBehavior = function () {
           nACgain = 0.53
           => pTCac = 1.00706
           => coverage = 42.104
-          => TC available to redeem = 221.24
+          ctargemaCA = 11.04
+          => TC available to redeem = 226.71
           */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 500);
@@ -304,10 +305,11 @@ const redeemTCBehavior = function () {
             });
           });
           describe("WHEN ask for TC available to redeem", function () {
-            it("THEN there are 221.24 TC", async function () {
+            it("THEN there are 226.71 TC", async function () {
               // we must update ema to match the real TC available, otherwise it is just an approximation
+              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
               await mocContracts.mocImpl.updateEmas();
-              assertPrec("221.248334070249917149", await mocContracts.mocImpl.getTCAvailableToRedeem());
+              assertPrec("226.719806179762611513", await mocContracts.mocImpl.getTCAvailableToRedeem());
             });
           });
           describe("WHEN alice redeems 100 TC", function () {
@@ -330,6 +332,7 @@ const redeemTCBehavior = function () {
             nACgain = -8.1
             => pTCac = 0.955
             => coverage = 13.19
+            ctargemaCA = 5
             => TC available to redeem = 201.57
             */
             beforeEach(async function () {
@@ -348,6 +351,7 @@ const redeemTCBehavior = function () {
             describe("WHEN ask for TC available to redeem", function () {
               it("THEN there are 201.57 TC", async function () {
                 // we must update ema to match the real TC available, otherwise it is just an approximation
+                await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
                 await mocContracts.mocImpl.updateEmas();
                 assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
               });
