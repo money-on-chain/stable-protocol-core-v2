@@ -210,7 +210,7 @@ const mintTCBehavior = function () {
         lckAC = 0.3127
         nACgain = 0.02255
         => pTCac = 1.00003
-        => coverage = 15001.45
+        => coverage = 9593.12
         */
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, 500);
@@ -221,8 +221,8 @@ const mintTCBehavior = function () {
           });
         });
         describe("WHEN ask for the coverage", function () {
-          it("THEN it is 15001.45", async function () {
-            assertPrec("15001.451063829787234045", await mocContracts.mocImpl.getCglb());
+          it("THEN it is 9593.12", async function () {
+            assertPrec("9593.125170068027230461", await mocContracts.mocImpl.getCglb());
           });
         });
         describe("WHEN alice mints 100 TC", function () {

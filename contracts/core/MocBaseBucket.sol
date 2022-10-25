@@ -383,26 +383,31 @@ abstract contract MocBaseBucket is MocUpgradable {
         }
     }
 
-    /**
-     * @notice update Pegged Token profit and last operation price
-     * @param i_ Pegged Token index
-     * @param pACtp_ Pegged Token price [PREC]
-     */
-    function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
-        uint256 tpAvailableToRedeem = pegContainer[i_].nTP - pegContainer[i_].nTPXV;
-        tpiou[i_] += _getPnLTP(i_, tpAvailableToRedeem, pACtp_);
-        pACtpLstop[i_] = pACtp_;
+    function _getOtfPnLTP(
+        uint8 i_,
+        uint256 tpAvailableToRedeem_,
+        uint256 pACtp_
+    ) internal view returns (int256 otfPnLtp) {
+        // [PREC] = [N] * [PREC]
+        tpAvailableToRedeem_ *= PRECISION;
+        // [N] = [PREC] / [PREC] - [PREC] / [PREC]
+        return int256(tpAvailableToRedeem_ / pACtpLstop[i_]) - int256(tpAvailableToRedeem_ / pACtp_);
     }
 
     function _getPnLTP(
         uint8 i_,
         uint256 tpAvailableToRedeem_,
         uint256 pACtp_
-    ) internal view returns (int256 tpPnl) {
-        // [PREC] = [N] * [PREC]
-        tpAvailableToRedeem_ *= PRECISION;
-        // [N] = [PREC] / [PREC] - [PREC] / [PREC]
-        return int256(tpAvailableToRedeem_ / pACtpLstop[i_]) - int256(tpAvailableToRedeem_ / pACtp_);
+    ) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
+        // [N] = [N] + [N]
+        int256 adjPnLtpiAux = tpiou[i_] + _getOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
+        if (adjPnLtpiAux > 0) {
+            // [N] = [N] + [N]
+            adjPnLtpi = uint256(adjPnLtpi);
+            // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
+            tpGain = _mulPrec(adjPnLtpi * pACtp_, fa) / PRECISION;
+        }
+        return (tpGain, adjPnLtpi);
     }
 
     /**
@@ -415,17 +420,10 @@ abstract contract MocBaseBucket is MocUpgradable {
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
             uint256 pACtp = _getPACtp(i);
-            // [N] = [N] + [N]
-            int256 adjPnLtpi = tpiou[i] + _getPnLTP(i, tpAvailableToRedeem, pACtp);
-            uint256 tpGain;
-            if (adjPnLtpi > 0) {
-                // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
-                tpGain = _mulPrec(uint256(adjPnLtpi) * pACtp, fa) / PRECISION;
-                // [N] = [N] + [N]
-                nACgain += uint256(adjPnLtpi);
-            }
+            (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
             // [N] = ([N] - [N]) * [PREC] / [PREC]
             lckAC += _divPrec(tpAvailableToRedeem + tpGain, pACtp);
+            nACgain += adjPnLtpi;
         }
         // [N] = [N] * [PREC] / [PREC]
         nACgain = _mulPrec(nACgain, sf);

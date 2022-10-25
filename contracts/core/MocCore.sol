@@ -216,7 +216,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         uint256 pACtp = _getPACtp(i_);
-        _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
@@ -256,7 +255,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtoRedeem) {
         uint256 pACtp = _getPACtp(i_);
-        _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         _evalCoverage(protThrld);
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
@@ -445,16 +443,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         if (qTP_ == 0) revert InvalidValue();
-
-        // get amount of TP in the bucket
-        uint256 nTP = pegContainer[i_].nTP;
-        // [N] = [N] - [N]
-        uint256 tpAvailableToRedeem = nTP - pegContainer[i_].nTPXV;
-        // check if there are enough TP available to redeem
-        if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
-
-        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP);
-
+        uint256 interestRate = _calcTPinterestRate(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _divPrec(qTP_, pACtp_);
@@ -475,20 +464,21 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
-            _updateTPtracking(i, pACtp);
-            int256 iuo = tpiou[i];
-            if (iuo > 0) {
+            // [N] = [N] + [N]
+            int256 adjPnLtpi = tpiou[i] + _getOtfPnLTP(i, pegContainer[i].nTP - pegContainer[i].nTPXV, pACtp);
+            pACtpLstop[i] = pACtp;
+            if (adjPnLtpi > 0) {
                 // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
-                uint256 tpToMint = _mulPrec(uint256(iuo) * pACtp, fa) / PRECISION;
+                uint256 tpToMint = _mulPrec(uint256(adjPnLtpi) * pACtp, fa) / PRECISION;
                 // [N] = [N] + [N]
-                mocGain += uint256(iuo);
+                mocGain += uint256(adjPnLtpi);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket
                 pegContainer[i].nTP += tpToMint;
                 // mint TP to Turbo, is not necessary to check coverage
                 tpTokens[i].mint(mocTurboAddress, tpToMint);
-            }
+            } else tpiou[i] = adjPnLtpi;
         }
         // [N] = [N] * [PREC] / [PREC]
         mocGain = _mulPrec(mocGain, sf);

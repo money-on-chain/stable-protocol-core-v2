@@ -287,7 +287,10 @@ const redeemTCBehavior = function () {
           lckAC = 7.35
           nACgain = 0.53
           => pTCac = 1.00706
-          => coverage = 65.2808
+          => coverage = 42.104
+          ema = 251.438
+          ctarg = 19.8856
+          => TC available to redeem = 221.24
           */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 500);
@@ -298,14 +301,16 @@ const redeemTCBehavior = function () {
             });
           });
           describe("WHEN ask for the coverage", function () {
-            it("THEN it is 65.2808", async function () {
-              assertPrec("65.280851063829787234", await mocContracts.mocImpl.getCglb());
+            it("THEN it is 42.104", async function () {
+              assertPrec("42.104761904761904761", await mocContracts.mocImpl.getCglb());
             });
           });
-          it("THEN there are 256.52 TC available to redeem", async function () {
-            // we must update ema to match the real TC available, otherwise it is just an approximation
-            await mocContracts.mocImpl.updateEmas();
-            assertPrec("256.523117040189220320", await mocContracts.mocImpl.getTCAvailableToRedeem());
+          describe("WHEN ask for TC availables to redeem", function () {
+            it("THEN there are 221.24 TC", async function () {
+              // we must update ema to match the real TC available, otherwise it is just an approximation
+              await mocContracts.mocImpl.updateEmas();
+              assertPrec("221.248334070249917149", await mocContracts.mocImpl.getTCAvailableToRedeem());
+            });
           });
           describe("WHEN alice redeems 100 TC", function () {
             let alicePrevACBalance: Balance;
@@ -326,7 +331,7 @@ const redeemTCBehavior = function () {
             lckAC = 23.5
             nACgain = -8.1
             => pTCac = 0.955
-            => coverage = 3000.425
+            => coverage = 13.19
             */
             beforeEach(async function () {
               await mocFunctions.pokePrice(TP_0, 100);
@@ -337,8 +342,8 @@ const redeemTCBehavior = function () {
               });
             });
             describe("WHEN ask for the coverage", function () {
-              it("THEN it is 3000.425", async function () {
-                assertPrec("3000.425531914893617021", await mocContracts.mocImpl.getCglb());
+              it("THEN it is 13.19", async function () {
+                assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
               });
             });
             describe("WHEN alice redeems 100 TC", function () {
