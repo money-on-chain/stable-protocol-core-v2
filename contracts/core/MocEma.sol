@@ -56,6 +56,25 @@ abstract contract MocEma is MocBaseBucket {
         return (auxTPctarg * pACtp_) / auxTpEma;
     }
 
+    /**
+     * @notice update exponential moving average of the value of a Pegged Token
+     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
+     * @param i_ Pegged Token index
+     */
+    function updateTPema(uint8 i_) internal {
+        EmaItem memory currentTPema = tpEma[i_];
+        uint256 pACtp = _getPACtp(i_);
+        // [PREC²] = [PREC] * ([PREC] - [PREC])
+        uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
+        // [PREC²] = [PREC] * [PREC]
+        uint256 term2 = currentTPema.sf * pACtp;
+        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
+        uint256 newEma = (term1 + term2) / PRECISION;
+        // save new ema value to storage
+        tpEma[i_].ema = newEma;
+        emit TPemaUpdated(i_, currentTPema.ema, newEma);
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -113,22 +132,10 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice update exponential moving average of the value of a Pegged Token
-     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
-     * @param i_ Pegged Token index
-     */
-    function updateTPema(uint8 i_) internal {
-        EmaItem memory currentTPema = tpEma[i_];
-        uint256 pACtp = _getPACtp(i_);
-        // [PREC²] = [PREC] * ([PREC] - [PREC])
-        uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
-        // [PREC²] = [PREC] * [PREC]
-        uint256 term2 = currentTPema.sf * pACtp;
-        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
-        uint256 newEma = (term1 + term2) / PRECISION;
-        // save new ema value to storage
-        tpEma[i_].ema = newEma;
-        emit TPemaUpdated(i_, currentTPema.ema, newEma);
+     * @param blockSpan Defines how many blocks should pass between BMA calculations
+     **/
+    function setEmaCalculationBlockSpan(uint256 blockSpan) external onlyAuthorizedChanger {
+        emaCalculationBlockSpan = blockSpan;
     }
 
     /**

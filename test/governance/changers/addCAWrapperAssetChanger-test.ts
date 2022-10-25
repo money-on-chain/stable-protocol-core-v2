@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { fixtureDeployGovernance } from "../collateralBag/fixture";
-import { IChangeContract__factory, MocCAWrapper } from "../../../../typechain";
-import { deployAsset, deployPriceProvider, ERRORS, pEth } from "../../../helpers/utils";
+import { fixtureDeployGovernance } from "../upgradability/collateralBag/fixture";
+import { IChangeContract__factory, MocCAWrapper } from "../../../typechain";
+import { deployAsset, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { Contract } from "ethers";
 
 const fixtureDeploy = fixtureDeployGovernance();

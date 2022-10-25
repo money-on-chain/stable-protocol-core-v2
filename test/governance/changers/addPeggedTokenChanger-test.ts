@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { tpParamsDefault } from "../../../helpers/utils";
-import { fixtureDeployGovernance } from "../coinbase/fixture";
-import { IChangeContract__factory, MocCACoinbase } from "../../../../typechain";
-import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../../helpers/utils";
+import { tpParamsDefault } from "../../helpers/utils";
+import { fixtureDeployGovernance } from "../upgradability/coinbase/fixture";
+import { IChangeContract__factory, MocCACoinbase } from "../../../typechain";
+import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { Contract } from "ethers";
 
 const fixtureDeploy = fixtureDeployGovernance();
