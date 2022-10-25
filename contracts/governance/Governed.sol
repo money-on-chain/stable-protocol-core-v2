@@ -40,7 +40,6 @@ abstract contract Governed is Initializable, MocHelper {
     }
 
     function __Governed_init_unchained(address governorAddress_) internal onlyInitializing {
-        if (governorAddress_ == address(0)) revert InvalidAddress();
         governor = IGovernor(governorAddress_);
     }
 
@@ -49,7 +48,6 @@ abstract contract Governed is Initializable, MocHelper {
     @param newGovernor_ New governor address
    */
     function changeGovernor(IGovernor newGovernor_) public onlyAuthorizedChanger {
-        if (address(newGovernor_) == address(0)) revert InvalidAddress();
         governor = newGovernor_;
     }
 

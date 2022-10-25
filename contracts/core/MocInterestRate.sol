@@ -44,7 +44,6 @@ abstract contract MocInterestRate is MocBaseBucket {
      * @param mocSettlementAddress_ MocSettlement contract address
      */
     function __MocInterestRate_init_unchained(address mocSettlementAddress_) internal onlyInitializing {
-        if (mocSettlementAddress_ == address(0)) revert InvalidAddress();
         mocSettlement = MocSettlement(mocSettlementAddress_);
     }
 
