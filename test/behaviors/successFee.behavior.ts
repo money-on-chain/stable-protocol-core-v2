@@ -51,7 +51,7 @@ const successFeeBehavior = function () {
           );
         });
       });
-      describe("AND settlement is executed", function () {
+      describe("AND settlement is executed without TP price changes", function () {
         beforeEach(async function () {
           await initializeBeforeBalances();
           nextBlockSettlement = await mocContracts.mocSettlement.bns();
@@ -101,7 +101,7 @@ const successFeeBehavior = function () {
             assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
           });
         });
-        describe("AND settlement is executed", function () {
+        describe("AND settlement is executed having one TP price change", function () {
           /*
           nAC = 1130 - 5.66
           lckAC = 775 + 16.69 + 13.33

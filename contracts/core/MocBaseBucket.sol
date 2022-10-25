@@ -60,12 +60,10 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 tcMintFee;
         // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
         uint256 tcRedeemFee;
-        // proportion of gains because Pegged Tokens devaluation that are transferred during settlement [PREC]
-        // example: fasf = 60%, sf = 16.667%, fa = 83.333% =>
-        // Moc Fee Flow receives 10%(60% * 16.667%) and Turbo 50%(60% * 83.333%)
-        uint256 fasf;
-        // success fee: proportion of the fasf that is transferred to Moc Fee Flow during the settlement [PREC]
+        /// success fee: proportion of the devaluation that is transferred to Moc Fee Flow during the settlement [PREC]
         uint256 sf;
+        // appreciation factor: proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+        uint256 fa;
     }
 
     // ------- Storage -------
@@ -90,13 +88,9 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpR;
     // Pegged Token prices, at which they can be redeemed after liquidation event
     uint256[] internal tpLiqPrices;
-    // proportion of gains because Pegged Tokens devaluation that are transferred during settlement [PREC]
-    // example: fasf = 60%, sf = 16.667%, fa = 83.333% =>
-    // Moc Fee Flow receives 10%(60% * 16.667%) and Turbo 50%(60% * 83.333%)
-    uint256 internal fasf;
-    // success fee: proportion of the fasf that is transferred to Moc Fee Flow during the settlement [PREC]
+    // success fee: proportion of the devaluation that is transferred to Moc Fee Flow during the settlement [PREC]
     uint256 internal sf;
-    // appreciation factor: proportion of the fasf that is returned to Turbo during the settlement [PREC]
+    // appreciation factor: proportion of the devaluation that is returned to Turbo during the settlement [PREC]
     uint256 internal fa;
 
     // ------- Storage Fees -------
@@ -181,7 +175,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.fasf > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.sf > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.fa > PRECISION) revert InvalidValue();
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
         if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
@@ -193,10 +188,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         liqThrld = initializeBaseBucketParams_.liqThrld;
         tcMintFee = initializeBaseBucketParams_.tcMintFee;
         tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
-        fasf = initializeBaseBucketParams_.fasf;
         sf = initializeBaseBucketParams_.sf;
-        // sf + fa must be 100%
-        fa = PRECISION - initializeBaseBucketParams_.sf;
+        fa = initializeBaseBucketParams_.fa;
         liquidated = false;
         liqEnabled = false;
     }
@@ -413,9 +406,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         // [PREC] = [N] * [PREC]
         tpAvailableToRedeem_ *= PRECISION;
         // [N] = [PREC] / [PREC] - [PREC] / [PREC]
-        int256 tpPnlAux = int256(tpAvailableToRedeem_ / pACtpLstop[i_]) - int256(tpAvailableToRedeem_ / pACtp_);
-        // [N] = [N] * [PREC] / [PREC]
-        return (tpPnlAux * int256(fasf)) / int256(PRECISION);
+        return int256(tpAvailableToRedeem_ / pACtpLstop[i_]) - int256(tpAvailableToRedeem_ / pACtp_);
     }
 
     /**
