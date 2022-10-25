@@ -336,23 +336,21 @@ contract MocCAWrapper is MocUpgradable {
     // ------- External Functions -------
     /**
      * @notice add an asset to the whitelist
-     * TODO: this function should be called only through governance system
-     * @param assetAddress_ Asset contract address
-     * @param priceProviderAddress_ Asset Price Provider contract address
+     * @param asset_ Asset contract address
+     * @param priceProvider_ Asset Price Provider contract address
      */
-    function addAsset(address assetAddress_, address priceProviderAddress_) external {
-        if (assetAddress_ == address(0)) revert InvalidAddress();
-        IPriceProvider priceProvider = IPriceProvider(priceProviderAddress_);
+    function addAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
+        if (address(asset_) == address(0)) revert InvalidAddress();
         // verifies it is a valid priceProvider
-        (, bool has) = priceProvider.peek();
+        (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
 
-        if (assetIndex[address(assetAddress_)].exist) revert AssetAlreadyAdded();
-        assetIndex[address(assetAddress_)] = AssetIndex({ index: uint8(assets.length), exist: true });
+        if (assetIndex[address(asset_)].exist) revert AssetAlreadyAdded();
+        assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exist: true });
 
-        assets.push(IERC20(assetAddress_));
-        priceProviderMap[assetAddress_] = priceProvider;
-        emit AssetAdded(assetAddress_, priceProviderAddress_);
+        assets.push(asset_);
+        priceProviderMap[address(asset_)] = priceProvider_;
+        emit AssetAdded(address(asset_), address(priceProvider_));
     }
 
     /**

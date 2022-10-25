@@ -27,8 +27,6 @@ contract AddPeggedTokenChangerTemplate is IChangeContract {
     @notice Execute the changes.
     @dev Should be called by the governor, but this contract does not check that explicitly
     because it is not its responsibility in the current architecture
-    IMPORTANT: This function should not be overridden, you should only redefine
-    _beforeUpgrade and _afterUpgrade methods to use this template
    */
     function execute() external {
         mocCore.addPeggedToken(addPeggedTokenParams);
