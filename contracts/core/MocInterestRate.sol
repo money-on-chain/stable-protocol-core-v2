@@ -49,16 +49,16 @@ abstract contract MocInterestRate is MocBaseBucket {
         uint256 qTP_,
         uint256 pACtp_
     ) internal view returns (uint256 interestRate) {
-        // get amount of TP in the bucket
-        uint256 nTP = pegContainer[i_].nTP;
-        // [N] = [N] - [N]
-        uint256 tpAvailableToRedeem = nTP - pegContainer[i_].nTPXV;
-        (uint256 tpGain, ) = _getPnLTP(i_, tpAvailableToRedeem, pACtp_);
-        tpAvailableToRedeem += tpGain;
         // get the number of blocks remaining for settlement
         uint256 bts = mocSettlement.getBts();
         // check if it is within the block limit to charge interest
         if (bts > tpBmin[i_]) {
+            // get amount of TP in the bucket
+            uint256 nTP = pegContainer[i_].nTP;
+            // [N] = [N] - [N]
+            uint256 tpAvailableToRedeem = nTP - pegContainer[i_].nTPXV;
+            (uint256 tpGain, ) = _getPnLTP(i_, tpAvailableToRedeem, pACtp_);
+            tpAvailableToRedeem += tpGain;
             // get the initial abundance of TPi
             // [PREC]
             uint256 arb = _getArb(tpAvailableToRedeem, nTP);
