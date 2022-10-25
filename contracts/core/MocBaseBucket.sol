@@ -403,7 +403,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         int256 adjPnLtpiAux = tpiou[i_] + _getOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
         if (adjPnLtpiAux > 0) {
             // [N] = [N] + [N]
-            adjPnLtpi = uint256(adjPnLtpi);
+            adjPnLtpi = uint256(adjPnLtpiAux);
             // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
             tpGain = _mulPrec(adjPnLtpi * pACtp_, fa) / PRECISION;
         }
