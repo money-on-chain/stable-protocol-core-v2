@@ -96,9 +96,9 @@ abstract contract MocBaseBucket is MocUpgradable {
     // ------- Storage Fees -------
 
     // fee pct sent to Fee Flow on Collateral Tokens mint [PREC]
-    uint256 internal tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256 public tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow on Collateral Tokens redeem [PREC]
-    uint256 internal tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // fee pct sent to Fee Flow on Pegged Tokens mint [PREC]
     uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
@@ -106,9 +106,9 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
-    address internal mocFeeFlowAddress;
+    address public mocFeeFlowAddress;
     // Moc Interest Collector address
-    address internal mocInterestCollectorAddress;
+    address public mocInterestCollectorAddress;
     // Moc Turbo address
     address internal mocTurboAddress;
     // MocSettlement contract
@@ -168,10 +168,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         internal
         onlyInitializing
     {
-        if (initializeBaseBucketParams_.mocFeeFlowAddress == address(0)) revert InvalidAddress();
-        if (initializeBaseBucketParams_.mocInterestCollectorAddress == address(0)) revert InvalidAddress();
-        if (initializeBaseBucketParams_.mocTurboAddress == address(0)) revert InvalidAddress();
-        if (initializeBaseBucketParams_.mocSettlementAddress == address(0)) revert InvalidAddress();
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
@@ -498,6 +494,48 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     // ------- Only Authorized Changer Functions -------
+
+    /**
+     * @dev sets the fee charged on Token Collateral mint.
+     * @param tcMintFee_ fee pct sent to Fee Flow on Collateral Tokens mint [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setTcMintFee(uint256 tcMintFee_) external onlyAuthorizedChanger {
+        tcMintFee = tcMintFee_;
+    }
+
+    /**
+     * @dev sets the fee charged on Token Collateral redeem.
+     * @param tcRedeemFee_ fee pct sent to Fee Flow on Collateral Tokens redeem [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setTcRedeemFee(uint256 tcRedeemFee_) external onlyAuthorizedChanger {
+        tcRedeemFee = tcRedeemFee_;
+    }
+
+    /**
+     * @dev sets Moc Fee Flow contract address
+     * @param mocFeeFlowAddress_ moc Fee Flow new contract address
+     */
+    function setMocFeeFlowAddress(address mocFeeFlowAddress_) external onlyAuthorizedChanger {
+        mocFeeFlowAddress = mocFeeFlowAddress_;
+    }
+
+    /**
+     * @dev sets Moc Interest Collector address
+     * @param mocInterestCollectorAddress_ moc Interest Collector new address
+     */
+    function setMocInterestCollectorAddress(address mocInterestCollectorAddress_) external onlyAuthorizedChanger {
+        mocInterestCollectorAddress = mocInterestCollectorAddress_;
+    }
+
+    /**
+     * @dev sets the value of the protected threshold configuration param
+     * @param protThrld_ coverage protected state threshold [PREC]
+     */
+    function setProtThrld(uint256 protThrld_) external onlyAuthorizedChanger {
+        protThrld = protThrld_;
+    }
 
     /**
      * @dev sets the value of the liq threshold configuration param

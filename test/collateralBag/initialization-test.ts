@@ -85,68 +85,6 @@ describe("Feature: MocCABag initialization", function () {
       const newMocImpl = MocCARC20__factory.connect(proxy.address, ethers.provider.getSigner());
       newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address, mocSettlement.address);
     });
-    describe("WHEN it is initialized with invalid governor address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ mocGovernorAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid pauser address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ mocPauserAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid Collateral Asset address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ wcaTokenAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid Collateral Token address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        // revert without reason string trying to ask roles to address zero
-        await expect(newMocInit({ mocTCAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
-      });
-    });
-    describe("WHEN it is initialized with invalid Moc Settlement address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ mocSettlementAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid Moc Fee Flow address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ feeFlowAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid Moc interest collector address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ interestCollectorAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid Moc Turbo address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocInit({ turboAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
     describe("WHEN it is initialized with invalid protThrld value", () => {
       it("THEN tx fails because protThrld is below ONE", async () => {
         await expect(newMocInit({ protThrld: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(
@@ -193,32 +131,6 @@ describe("Feature: MocCABag initialization", function () {
           mocProxy,
           ERRORS.INVALID_VALUE,
         );
-      });
-    });
-  });
-
-  describe("GIVEN a new MocWrapper instance", () => {
-    let newMocWrapper: MocCAWrapper;
-    before(async () => {
-      const MocCAWrapperFactory = await ethers.getContractFactory("MocCAWrapper");
-      const MocCAWrapperImpl = await MocCAWrapperFactory.deploy();
-
-      const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
-      const proxy = await mocCARC20ProxyFactory.deploy(MocCAWrapperImpl.address, "0x");
-      newMocWrapper = MocCAWrapper__factory.connect(proxy.address, ethers.provider.getSigner());
-    });
-    describe("WHEN it is initialized with invalid Moc Core address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(
-          newMocWrapper.initialize(governorAddress, pauserAddress, CONSTANTS.ZERO_ADDRESS, wcaToken.address),
-        ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
-      });
-    });
-    describe("WHEN it is initialized with invalid Wrapped Collateral Asset address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(
-          newMocWrapper.initialize(governorAddress, pauserAddress, mocProxy.address, CONSTANTS.ZERO_ADDRESS),
-        ).to.be.revertedWithCustomError(newMocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
   });

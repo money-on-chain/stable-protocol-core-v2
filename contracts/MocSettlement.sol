@@ -23,19 +23,18 @@ contract MocSettlement is MocUpgradable {
      * @notice contract initializer
      * @param governorAddress_ The address that will define when a change contract is authorized
      * @param pauserAddress_ The address that is authorized to pause this contract
-     * @param mocCoreAddress_ MocCore contract address
+     * @param mocCore_ MocCore contract address
      * @param bes_ number of blocks between settlements
      * @param bmulcdj_ coverage adjustment block multiplier. How often the adjustment is made
      */
     function initialize(
         address governorAddress_,
         address pauserAddress_,
-        address mocCoreAddress_,
+        MocCore mocCore_,
         uint256 bes_,
         uint256 bmulcdj_
     ) external initializer {
-        if (mocCoreAddress_ == address(0)) revert InvalidAddress();
-        mocCore = MocCore(mocCoreAddress_);
+        mocCore = mocCore_;
         bes = bes_;
         bmulcdj = bmulcdj_;
         bns = block.number + bes_;

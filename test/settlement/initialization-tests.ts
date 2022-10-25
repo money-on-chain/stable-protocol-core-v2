@@ -1,9 +1,8 @@
 import { fixtureDeployedMocCABag } from "../collateralBag/fixture";
-import { MocCARC20, MocSettlement, MocSettlement__factory } from "../../typechain";
+import { MocCARC20, MocSettlement } from "../../typechain";
 import { expect } from "chai";
-import { ERRORS, CONSTANTS } from "../helpers/utils";
+import { ERRORS } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
-import { ethers } from "hardhat";
 import { BigNumberish } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
@@ -40,42 +39,6 @@ describe("Feature: MocSettlement initialization", function () {
     describe("WHEN initialize mocSettlementProxy again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
         await expect(mocSettlementInit()).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
-      });
-    });
-  });
-  describe("GIVEN a new MocSettlement instance", () => {
-    let newMocImpl: MocSettlement;
-    let newMocSettlementInit: any;
-    before(async () => {
-      const mocSettlementFactory = await ethers.getContractFactory("MocSettlement");
-      const mocSettlementImpl = await mocSettlementFactory.deploy();
-
-      const mocSettlementProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
-      const proxy = await mocSettlementProxyFactory.deploy(mocSettlementImpl.address, "0x");
-      newMocImpl = MocSettlement__factory.connect(proxy.address, ethers.provider.getSigner());
-      newMocSettlementInit = mocSettlementInitialize(newMocImpl, mocImpl.address);
-    });
-    describe("WHEN it is initialized with invalid governor address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(
-          newMocSettlementInit({ mocGovernorAddress: CONSTANTS.ZERO_ADDRESS }),
-        ).to.be.revertedWithCustomError(newMocImpl, ERRORS.INVALID_ADDRESS);
-      });
-    });
-    describe("WHEN it is initialized with invalid pauser address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocSettlementInit({ mocPauserAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          newMocImpl,
-          ERRORS.INVALID_ADDRESS,
-        );
-      });
-    });
-    describe("WHEN it is initialized with invalid Collateral Asset address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(newMocSettlementInit({ mocImplAddress: CONSTANTS.ZERO_ADDRESS })).to.be.revertedWithCustomError(
-          newMocImpl,
-          ERRORS.INVALID_ADDRESS,
-        );
       });
     });
   });

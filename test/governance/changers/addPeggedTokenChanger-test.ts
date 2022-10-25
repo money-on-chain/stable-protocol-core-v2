@@ -1,10 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { tpParamsDefault } from "../../../helpers/utils";
-import { fixtureDeployGovernance } from "../coinbase/fixture";
-import { MocCACoinbase } from "../../../../typechain";
-import { GovernanceChangerTemplate__factory } from "../../../../typechain/factories/contracts/governance/changerTemplates/GovernanceChangerTemplate__factory";
-import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../../helpers/utils";
+import { tpParamsDefault } from "../../helpers/utils";
+import { fixtureDeployGovernance } from "../upgradability/coinbase/fixture";
+import { IChangeContract__factory, MocCACoinbase } from "../../../typechain";
+import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { Contract } from "ethers";
 
 const fixtureDeploy = fixtureDeployGovernance();
@@ -47,14 +46,8 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   describe("GIVEN a Changer contract is set up to add a new Pegged Token", () => {
     describe("WHEN a unauthorized account executed the changer", () => {
       it("THEN it fails", async function () {
-        const governanceChangerTemplate = GovernanceChangerTemplate__factory.connect(
-          changeContract.address,
-          ethers.provider.getSigner(),
-        );
-        await expect(governanceChangerTemplate.execute()).to.be.revertedWithCustomError(
-          mocProxy,
-          ERRORS.NOT_AUTH_CHANGER,
-        );
+        const changerTemplate = IChangeContract__factory.connect(changeContract.address, ethers.provider.getSigner());
+        await expect(changerTemplate.execute()).to.be.revertedWithCustomError(mocProxy, ERRORS.NOT_AUTH_CHANGER);
       });
     });
     describe("WHEN a the governor executes the changer contract", () => {

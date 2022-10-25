@@ -2,10 +2,10 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract } from "ethers";
 
-import { fixtureDeployGovernance } from "../coinbase/fixture";
-import { MocCACoinbase } from "../../../../typechain";
-import { GovernanceChangerTemplate__factory } from "../../../../typechain/factories/contracts/governance/changerTemplates/GovernanceChangerTemplate__factory";
-import { ERRORS } from "../../../helpers/utils";
+import { fixtureDeployGovernance } from "../upgradability/coinbase/fixture";
+import { MocCACoinbase } from "../../../typechain";
+import { GovernanceChangerTemplate__factory } from "../../../typechain/factories/contracts/governance/changerTemplates/GovernanceChangerTemplate__factory";
+import { ERRORS } from "../../helpers/utils";
 
 const fixtureDeploy = fixtureDeployGovernance();
 
