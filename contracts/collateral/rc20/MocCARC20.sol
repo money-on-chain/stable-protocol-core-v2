@@ -62,7 +62,6 @@ contract MocCARC20 is MocCore {
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
-        if (initializeParams_.acTokenAddress == address(0)) revert InvalidAddress();
         acToken = IMocRC20(initializeParams_.acTokenAddress);
         __MocCore_init(
             initializeParams_.governorAddress,

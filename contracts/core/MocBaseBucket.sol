@@ -117,8 +117,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 tcMintFee_,
         uint256 tcRedeemFee_
     ) internal onlyInitializing {
-        if (mocFeeFlowAddress_ == address(0)) revert InvalidAddress();
-        if (mocInterestCollectorAddress_ == address(0)) revert InvalidAddress();
         if (protThrld_ < PRECISION) revert InvalidValue();
         if (tcMintFee_ > PRECISION) revert InvalidValue();
         if (tcRedeemFee_ > PRECISION) revert InvalidValue();

@@ -86,8 +86,6 @@ contract MocCAWrapper is MocUpgradable {
         address mocCoreAddress_,
         address wcaTokenAddress_
     ) external initializer {
-        if (mocCoreAddress_ == address(0)) revert InvalidAddress();
-        if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
         __MocUpgradable_init(governorAddress_, pauserAddress_);
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
@@ -340,7 +338,6 @@ contract MocCAWrapper is MocUpgradable {
      * @param priceProvider_ Asset Price Provider contract address
      */
     function addAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
-        if (address(asset_) == address(0)) revert InvalidAddress();
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();

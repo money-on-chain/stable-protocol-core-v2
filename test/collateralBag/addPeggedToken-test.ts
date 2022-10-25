@@ -70,18 +70,6 @@ describe("Feature: MocCABag add Pegged Token", function () {
       mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
       priceProvider = await deployPriceProvider(pEth(1));
     });
-    describe("WHEN a Pegged Token is added with invalid token address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        // revert without reason string trying to ask roles to address zero
-        await expect(mocAddPeggedToken(mocImpl)({ tpTokenAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
-      });
-    });
-    describe("WHEN a Pegged Token is added with invalid price provider address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        // revert without reason string trying to peek price to address zero
-        await expect(mocAddPeggedToken(mocImpl)({ priceProviderAddress: CONSTANTS.ZERO_ADDRESS })).to.be.reverted;
-      });
-    });
     describe("WHEN a Pegged Token is added with a deprecated price provider", () => {
       let deprecatedPriceProvider: PriceProviderMock;
       beforeEach(async () => {
