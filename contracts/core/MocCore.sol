@@ -30,7 +30,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
-    event PeggedTokenAdded(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
+    event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
@@ -538,7 +538,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             })
         );
         // emit the event
-        emit PeggedTokenAdded(newTPindex, peggedTokenParams_);
+        emit PeggedTokenChange(newTPindex, peggedTokenParams_);
     }
 
     /**
@@ -602,7 +602,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             facMax: peggedTokenParams_.tpFacMax
         });
         // emit the event
-        emit PeggedTokenAdded(i, peggedTokenParams_);
+        emit PeggedTokenChange(i, peggedTokenParams_);
     }
 
     /**

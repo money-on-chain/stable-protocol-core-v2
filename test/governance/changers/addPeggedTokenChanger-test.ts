@@ -170,7 +170,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
     describe("WHEN a the governor executes the changer contract", () => {
       it("THEN the new Pegged Token is added", async function () {
         await expect(governor.executeChange(changeContract.address))
-          .to.emit(mocProxy, "PeggedTokenAdded")
+          .to.emit(mocProxy, "PeggedTokenChange")
           .withArgs(0, [
             mocPeggedToken.address,
             priceProvider.address,

@@ -110,8 +110,8 @@ describe("Feature: MocCABag edit Pegged Token", function () {
         };
         tx = await mocEditPeggedToken(mocImpl)(editParams);
       });
-      it("THEN a PeggedTokenAdded event is emitted", async () => {
-        await expect(tx).to.emit(mocImpl, "PeggedTokenAdded").withArgs(0, [
+      it("THEN a PeggedTokenChange event is emitted", async () => {
+        await expect(tx).to.emit(mocImpl, "PeggedTokenChange").withArgs(0, [
           mocPeggedTokens[0].address,
           priceProviders[1].address,
           editParams.tpCtarg,
