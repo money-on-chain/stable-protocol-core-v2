@@ -383,6 +383,17 @@ abstract contract MocBaseBucket is MocUpgradable {
         }
     }
 
+    /**
+     * @notice update Pegged Token profit and last operation price
+     * @param i_ Pegged Token index
+     * @param pACtp_ Pegged Token price [PREC]
+     */
+    function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
+        uint256 tpAvailableToRedeem = pegContainer[i_].nTP - pegContainer[i_].nTPXV;
+        tpiou[i_] += _getOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
+        pACtpLstop[i_] = pACtp_;
+    }
+
     function _getOtfPnLTP(
         uint8 i_,
         uint256 tpAvailableToRedeem_,

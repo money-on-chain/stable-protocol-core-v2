@@ -216,6 +216,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         uint256 pACtp = _getPACtp(i_);
+        _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
@@ -255,6 +256,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtoRedeem) {
         uint256 pACtp = _getPACtp(i_);
+        _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         _evalCoverage(protThrld);
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
@@ -464,21 +466,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
-            // [N] = [N] + [N]
-            int256 adjPnLtpi = tpiou[i] + _getOtfPnLTP(i, pegContainer[i].nTP - pegContainer[i].nTPXV, pACtp);
-            pACtpLstop[i] = pACtp;
-            if (adjPnLtpi > 0) {
+            _updateTPtracking(i, pACtp);
+            int256 iou = tpiou[i];
+            if (iou > 0) {
                 // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
-                uint256 tpToMint = _mulPrec(uint256(adjPnLtpi) * pACtp, fa) / PRECISION;
+                uint256 tpToMint = _mulPrec(uint256(iou) * pACtp, fa) / PRECISION;
                 // [N] = [N] + [N]
-                mocGain += uint256(adjPnLtpi);
+                mocGain += uint256(iou);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket
                 pegContainer[i].nTP += tpToMint;
                 // mint TP to Turbo, is not necessary to check coverage
                 tpTokens[i].mint(mocTurboAddress, tpToMint);
-            } else tpiou[i] = adjPnLtpi;
+            }
         }
         // [N] = [N] * [PREC] / [PREC]
         mocGain = _mulPrec(mocGain, sf);
