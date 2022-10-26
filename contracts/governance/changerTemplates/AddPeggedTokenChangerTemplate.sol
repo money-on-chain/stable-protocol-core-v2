@@ -12,26 +12,26 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
     // ------- Storage -------
 
     MocCore public mocCore;
-    MocCore.AddPeggedTokenParams internal addPeggedTokenParams;
+    MocCore.PeggedTokenParams internal peggedTokenParams;
 
     /** 
     @notice Constructor
     @param mocCore_ Address of the contract to add Pegged Token to
   */
-    constructor(MocCore mocCore_, MocCore.AddPeggedTokenParams memory addPeggedTokenParams_) {
+    constructor(MocCore mocCore_, MocCore.PeggedTokenParams memory peggedTokenParams_) {
         mocCore = mocCore_;
-        addPeggedTokenParams = addPeggedTokenParams_;
+        peggedTokenParams = peggedTokenParams_;
 
-        if (addPeggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
-        if (addPeggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
-        if (addPeggedTokenParams_.tpTils > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpTiMin > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpTiMax > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
-        if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
-        if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
+        if (peggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
+        if (peggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
+        if (peggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
+        if (peggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
+        if (peggedTokenParams_.tpTils > PRECISION) revert InvalidValue();
+        if (peggedTokenParams_.tpTiMin > PRECISION) revert InvalidValue();
+        if (peggedTokenParams_.tpTiMax > PRECISION) revert InvalidValue();
+        if (peggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
+        if (peggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
+        if (peggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
     }
 
     /**
@@ -40,6 +40,6 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
     because it is not its responsibility in the current architecture
    */
     function execute() external {
-        mocCore.addPeggedToken(addPeggedTokenParams);
+        mocCore.addPeggedToken(peggedTokenParams);
     }
 }
