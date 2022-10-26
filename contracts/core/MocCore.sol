@@ -543,6 +543,70 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
+     * @notice modifies a Pegged Token of the protocol
+     * @dev Note that the ema value, should consider `nextEmaCalculation`
+     * @param addPeggedTokenParams_ params of Pegged Token to add
+     * @dev tpTokenAddress Pegged Token contract address to identify the token to edit
+     *      priceProviderAddress Pegged Token price provider contract address
+     *      tpCtarg Pegged Token target coverage [PREC]
+     *      tpR Pegged Token reserve factor [PREC]
+     *      tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
+     *      tpMintFee fee pct sent to Fee Flow for mint [PREC]
+     *      tpRedeemFee fee pct sent to Fee Flow for redeem [PREC]
+     *      tpEma initial Pegged Token exponential moving average [PREC]
+     *      tpEmaSf Pegged Token smoothing factor [PREC]
+     *      tpTils Pegged Token initial interest rate
+     *      tpTiMin Pegged Token minimum interest rate that can be charged
+     *      tpTiMax Pegged Token maximum interest rate that can be charged
+     *      tpAbeq abundance of Pegged Token where it is desired that the model stabilizes
+     *      tpFacMin Pegged Token minimum correction factor for interest rate
+     *      tpFacMax Pegged Token maximum correction factor for interest rate
+     *
+     *  Requirements:
+     *
+     * - the caller must have governance authorization.
+     * - the tpTokenAddress must exists
+     */
+    function editPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external onlyAuthorizedChanger {
+        PeggedTokenIndex storage ptIndex = peggedTokenIndex[addPeggedTokenParams_.tpTokenAddress];
+        if (!ptIndex.exist) revert InvalidAddress();
+        uint8 i = ptIndex.index;
+        // if being edited, verifies it is a valid priceProvider
+        if (addPeggedTokenParams_.priceProviderAddress != address(pegContainer[i].priceProvider)) {
+            IPriceProvider priceProvider = IPriceProvider(addPeggedTokenParams_.priceProviderAddress);
+            (, bool has) = priceProvider.peek();
+            if (!has) revert InvalidAddress();
+            pegContainer[i].priceProvider = priceProvider;
+        }
+        // set target coverage
+        tpCtarg[i] = addPeggedTokenParams_.tpCtarg;
+        // set reserve factor
+        tpR[i] = addPeggedTokenParams_.tpR;
+        // set minimum amount of blocks
+        tpBmin[i] = addPeggedTokenParams_.tpBmin;
+        // set mint fee pct
+        tpMintFee[i] = addPeggedTokenParams_.tpMintFee;
+        // set redeem fee pct
+        tpRedeemFee[i] = addPeggedTokenParams_.tpRedeemFee;
+        // set EMA initial value and smoothing factor
+        tpEma[i].sf = addPeggedTokenParams_.tpEmaSf;
+        // set interest rate item
+        tpInterestRate[i] = InterestRateItem({
+            tils: addPeggedTokenParams_.tpTils,
+            tiMin: addPeggedTokenParams_.tpTiMin,
+            tiMax: addPeggedTokenParams_.tpTiMax
+        });
+        // set FAC item
+        tpFAC[i] = FACitem({
+            abeq: addPeggedTokenParams_.tpAbeq,
+            facMinSubOne: addPeggedTokenParams_.tpFacMin - int256(ONE),
+            facMax: addPeggedTokenParams_.tpFacMax
+        });
+        // emit the event
+        emit PeggedTokenAdded(i, addPeggedTokenParams_);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
