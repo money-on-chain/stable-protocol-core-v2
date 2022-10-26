@@ -8,7 +8,7 @@ import "../../core/MocCore.sol";
   @notice This contract is a ChangeContract intended to be used with Moc Aeropulus 
   governance system. It allows the addition of a new Pegged Token to the system.
  */
-contract AddPeggedTokenChangerTemplate is IChangeContract {
+contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
     // ------- Storage -------
 
     MocCore public mocCore;
@@ -21,6 +21,17 @@ contract AddPeggedTokenChangerTemplate is IChangeContract {
     constructor(MocCore mocCore_, MocCore.AddPeggedTokenParams memory addPeggedTokenParams_) {
         mocCore = mocCore_;
         addPeggedTokenParams = addPeggedTokenParams_;
+
+        if (addPeggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
+        if (addPeggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
+        if (addPeggedTokenParams_.tpTils > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpTiMin > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpTiMax > PRECISION) revert InvalidValue();
+        if (addPeggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
+        if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
+        if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
     }
 
     /**
