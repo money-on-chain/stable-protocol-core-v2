@@ -291,7 +291,7 @@ const redeemTPBehavior = function () {
             );
         });
       });
-      describe("WHEN blocks remaning to settlement are less than minimum interest payment blocks", function () {
+      describe("WHEN blocks remaining to settlement are less than minimum interest payment blocks", function () {
         beforeEach(async function () {
           // go forward to a a block near the settlement
           const bns = await mocContracts.mocSettlement.bns();
@@ -376,22 +376,80 @@ const redeemTPBehavior = function () {
             );
         });
       });
-      describe("WHEN Collateral Asset relation with Pegged Token price falls to 15.1", function () {
+      describe("AND TP 0 has been revaluated to 15.1", function () {
+        /*  
+        nAC = 3200    
+        nTP0 = 23500
+        nTP1 = 93458
+        lckAC = 1556.29 + 100
+        => coverage = 1.93 
+        */
         beforeEach(async function () {
           await mocFunctions.pokePrice(0, "15.1");
         });
+        it("THEN the coverage is 1.93", async function () {
+          assertPrec("1.932027189124350259", await mocContracts.mocImpl.getCglb());
+        });
         describe("WHEN Alice tries to redeem 100 TP", function () {
-          /*  
-            nAC = 3100    
-            nTP = 23500
-            lckAC = 1556
-            => coverage = 2 
-        */
           it("THEN tx reverts because coverage is below the protected threshold", async function () {
-            await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
+            await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
               mocContracts.mocImpl,
               ERRORS.LOW_COVERAGE,
             );
+          });
+        });
+      });
+      describe("AND TP 0 has been devaluated to 300", function () {
+        /*  
+          nAC = 3200    
+          nTP0 = 23500 + 3250(tp gain)
+          nTP1 = 93458
+          lckAC = 78.33(tp 0) + 100(tp 1) + 10.835(tp gain)
+          nACgain = 2.1666
+          => coverage = 16.9
+          => pTCac = 1.002
+        */
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, 300);
+        });
+        it("THEN the coverage is 16.9", async function () {
+          assertPrec("16.904845814977973568", await mocContracts.mocImpl.getCglb());
+        });
+        it("THEN TC price is 1.002", async function () {
+          assertPrec("1.002888888888888888", await mocContracts.mocImpl.getPTCac());
+        });
+        describe("AND 3000 TP 0 are redeemed", function () {
+          /*  
+          nAC = 3200    
+          nTP = 23500 - 3000
+          iou = 21.66
+          */
+          let tx: ContractTransaction;
+          beforeEach(async function () {
+            // go forward to a fixed block remaining for settlement to avoid unpredictability
+            const bns = await mocContracts.mocSettlement.bns();
+            await mineUpTo(bns.sub(fixedBlock));
+            tx = await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 300 });
+          });
+          it("THEN a TPRedeemed event is emitted", async function () {
+            // i: 0
+            // sender: alice || mocWrapper
+            // receiver: alice || mocWrapper
+            // qTP: 3000 TP
+            // qAC: 10 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+            // qACfee: 5% AC
+            // qACInterest: 0.0987%
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TPRedeemed")
+              .withArgs(
+                TP_0,
+                mocContracts.mocWrapper?.address || alice,
+                mocContracts.mocWrapper?.address || alice,
+                pEth(3000),
+                pEth("9.490122685185185190"),
+                pEth(10 * 0.05),
+                pEth("0.009877314814814810"),
+              );
           });
         });
       });

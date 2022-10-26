@@ -288,27 +288,31 @@ const redeemTCBehavior = function () {
           nACgain = 0.53
           => pTCac = 1.00706
           => coverage = 42.104
-          ctargemaCA = 11.04
-          => TC available to redeem = 226.71
+          ctargemaCA = 11.79
+          => TC available to redeem = 221.24
           */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 500);
           });
-          describe("WHEN ask for the TC price", function () {
-            it("THEN it is 1.00706", async function () {
-              assertPrec("1.007066666666666666", await mocContracts.mocImpl.getPTCac());
-            });
+          it("THEN TC price is 1.00706", async function () {
+            assertPrec("1.007066666666666666", await mocContracts.mocImpl.getPTCac());
           });
-          describe("WHEN ask for the coverage", function () {
-            it("THEN it is 42.104", async function () {
-              assertPrec("42.104761904761904761", await mocContracts.mocImpl.getCglb());
-            });
+          it("THEN coverage is 42.104", async function () {
+            assertPrec("42.104761904761904761", await mocContracts.mocImpl.getCglb());
           });
-          describe("WHEN ask for TC available to redeem", function () {
-            it("THEN there are 226.71 TC", async function () {
-              // we must update ema to match the real TC available, otherwise it is just an approximation
+          it("THEN there are 221.24 TC available to redeem", async function () {
+            assertPrec("221.248334070249917149", await mocContracts.mocImpl.getTCAvailableToRedeem());
+          });
+          describe("AND EMA is updated", function () {
+            /*
+            ctargemaCA = 11.04
+            => TC available to redeem = 226.71
+            */
+            beforeEach(async function () {
               await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
               await mocContracts.mocImpl.updateEmas();
+            });
+            it("THEN there are 226.71 TC available to redeem", async function () {
               assertPrec("226.719806179762611513", await mocContracts.mocImpl.getTCAvailableToRedeem());
             });
           });
@@ -338,21 +342,25 @@ const redeemTCBehavior = function () {
             beforeEach(async function () {
               await mocFunctions.pokePrice(TP_0, 100);
             });
-            describe("WHEN ask for the TC price", function () {
-              it("THEN it is 0.955", async function () {
-                assertPrec("0.955", await mocContracts.mocImpl.getPTCac());
-              });
+            it("THEN TC price is 0.955", async function () {
+              assertPrec("0.955", await mocContracts.mocImpl.getPTCac());
             });
-            describe("WHEN ask for the coverage", function () {
-              it("THEN it is 13.19", async function () {
-                assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
-              });
+            it("THEN the coverage is 13.19", async function () {
+              assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
             });
-            describe("WHEN ask for TC available to redeem", function () {
-              it("THEN there are 201.57 TC", async function () {
-                // we must update ema to match the real TC available, otherwise it is just an approximation
+            it("THEN there are 201.57 TC available to redeem", async function () {
+              assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
+            });
+            describe("AND EMA is updated", function () {
+              /*
+              ctargemaCA = 5
+              => TC available to redeem = 201.57
+              */
+              beforeEach(async function () {
                 await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
                 await mocContracts.mocImpl.updateEmas();
+              });
+              it("THEN there are 201.57 TC available to redeem", async function () {
                 assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
               });
             });

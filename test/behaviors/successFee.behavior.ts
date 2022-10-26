@@ -58,10 +58,8 @@ const successFeeBehavior = function () {
           await mineUpTo(nextBlockSettlement);
           await mocContracts.mocSettlement.execSettlement();
         });
-        describe("WHEN ask for the TC price", function () {
-          it("THEN it is still 1 because the prices had not changed", async function () {
-            assertPrec(1, await mocContracts.mocImpl.getPTCac());
-          });
+        it("THEN TC price is still 1 because the TP prices had not changed", async function () {
+          assertPrec(1, await mocContracts.mocImpl.getPTCac());
         });
         it("THEN Moc balance AC balance didn't change", async function () {
           const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
@@ -97,15 +95,11 @@ const successFeeBehavior = function () {
         beforeEach(async function () {
           await Promise.all([470, 7.875, 700.935].map((price, i) => mocFunctions.pokePrice(i, price)));
         });
-        describe("WHEN ask for the TC price", function () {
-          it("THEN it is 1.019", async function () {
-            assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
-          });
+        it("THEN TC price is 1.019", async function () {
+          assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
         });
-        describe("WHEN ask for the coverage", function () {
-          it("THEN it is 10.707", async function () {
-            assertPrec("10.707936507936507936", await mocContracts.mocImpl.getCglb());
-          });
+        it("THEN coverage is 10.707", async function () {
+          assertPrec("10.707936507936507936", await mocContracts.mocImpl.getCglb());
         });
         describe("AND settlement is executed having one TP price variations", function () {
           /*
@@ -122,15 +116,11 @@ const successFeeBehavior = function () {
             await mineUpTo(nextBlockSettlement);
             await mocContracts.mocSettlement.execSettlement();
           });
-          describe("WHEN ask for the TC price", function () {
-            it("THEN it didn´t change, it is 1.019", async function () {
-              assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
-            });
+          it("THEN TC price didn´t change, it is 1.019", async function () {
+            assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
           });
-          describe("WHEN ask for the coverage", function () {
-            it("THEN it didn`t change, it is 10.707", async function () {
-              assertPrec("10.707936507936507936", await mocContracts.mocImpl.getCglb());
-            });
+          it("THEN coverage didn`t change, it is 10.707", async function () {
+            assertPrec("10.707936507936507936", await mocContracts.mocImpl.getCglb());
           });
           it("THEN Moc balance AC decrease 5.66 AC, 10% of mocGain", async function () {
             const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
@@ -164,10 +154,8 @@ const successFeeBehavior = function () {
             beforeEach(async function () {
               await Promise.all([705, "3.9375", 1401.87].map((price, i) => mocFunctions.pokePrice(i, price)));
             });
-            describe("WHEN ask for the TC price", function () {
-              it("THEN it is 1.0173", async function () {
-                assertPrec("1.017333333333333333", await mocContracts.mocImpl.getPTCac());
-              });
+            it("THEN TC price is 1.0173", async function () {
+              assertPrec("1.017333333333333333", await mocContracts.mocImpl.getPTCac());
             });
           });
         });
@@ -185,15 +173,11 @@ const successFeeBehavior = function () {
           beforeEach(async function () {
             await Promise.all([705, "3.9375", 1401.87].map((price, i) => mocFunctions.pokePrice(i, price)));
           });
-          describe("WHEN ask for the TC price", function () {
-            it("THEN it is 1.0213", async function () {
-              assertPrec("1.021333333333333333", await mocContracts.mocImpl.getPTCac());
-            });
+          it("THEN TC price is 1.0213", async function () {
+            assertPrec("1.021333333333333333", await mocContracts.mocImpl.getPTCac());
           });
-          describe("WHEN ask for the coverage", function () {
-            it("THEN it is 11.04", async function () {
-              assertPrec("11.045901639344262295", await mocContracts.mocImpl.getCglb());
-            });
+          it("THEN coverage is 11.04", async function () {
+            assertPrec("11.045901639344262295", await mocContracts.mocImpl.getCglb());
           });
           describe("AND settlement is executed having two TP price variations", function () {
             /*
@@ -210,15 +194,11 @@ const successFeeBehavior = function () {
               await mineUpTo(nextBlockSettlement);
               await mocContracts.mocSettlement.execSettlement();
             });
-            describe("WHEN ask for the TC price", function () {
-              it("THEN it didn´t change, it is 1.0213", async function () {
-                assertPrec("1.021333333333333333", await mocContracts.mocImpl.getPTCac());
-              });
+            it("THEN TC price didn´t change, it is 1.0213", async function () {
+              assertPrec("1.021333333333333333", await mocContracts.mocImpl.getPTCac());
             });
-            describe("WHEN ask for the coverage", function () {
-              it("THEN it didn´t change, it is 11.04", async function () {
-                assertPrec("11.045901639344262295", await mocContracts.mocImpl.getCglb());
-              });
+            it("THEN coverage didn´t change, it is 11.04", async function () {
+              assertPrec("11.045901639344262295", await mocContracts.mocImpl.getCglb());
             });
             it("THEN Moc balance AC decrease 7 AC, 10% of mocGain", async function () {
               const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);

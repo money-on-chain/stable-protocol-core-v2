@@ -215,15 +215,11 @@ const mintTCBehavior = function () {
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, 500);
         });
-        describe("WHEN ask for the TC price", function () {
-          it("THEN it is 1.00003", async function () {
-            assertPrec("1.000030070921985815", await mocContracts.mocImpl.getPTCac());
-          });
+        it("THEN TC price is 1.00003", async function () {
+          assertPrec("1.000030070921985815", await mocContracts.mocImpl.getPTCac());
         });
-        describe("WHEN ask for the coverage", function () {
-          it("THEN it is 9593.12", async function () {
-            assertPrec("9593.125170068027230461", await mocContracts.mocImpl.getCglb());
-          });
+        it("THEN coverage is 9593.12", async function () {
+          assertPrec("9593.125170068027230461", await mocContracts.mocImpl.getCglb());
         });
         describe("WHEN alice mints 100 TC", function () {
           let alicePrevACBalance: Balance;
@@ -250,15 +246,11 @@ const mintTCBehavior = function () {
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, 100);
         });
-        describe("WHEN ask for the TC price", function () {
-          it("THEN it is 0.9998", async function () {
-            assertPrec("0.999808510638297872", await mocContracts.mocImpl.getPTCac());
-          });
+        it("THEN TC price is 0.9998", async function () {
+          assertPrec("0.999808510638297872", await mocContracts.mocImpl.getPTCac());
         });
-        describe("WHEN ask for the coverage", function () {
-          it("THEN it is 3000.425", async function () {
-            assertPrec("3000.425531914893617021", await mocContracts.mocImpl.getCglb());
-          });
+        it("THEN coverage is 3000.425", async function () {
+          assertPrec("3000.425531914893617021", await mocContracts.mocImpl.getCglb());
         });
         describe("WHEN alice mints 100 TC", function () {
           let alicePrevACBalance: Balance;

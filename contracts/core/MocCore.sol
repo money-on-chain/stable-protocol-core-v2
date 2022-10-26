@@ -445,7 +445,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         if (qTP_ == 0) revert InvalidValue();
-        uint256 interestRate = _calcTPinterestRate(i_, qTP_, pACtp_);
+        // get amount of TP in the bucket
+        uint256 nTP = pegContainer[i_].nTP;
+        // [N] = [N] - [N]
+        uint256 tpAvailableToRedeem = nTP - pegContainer[i_].nTPXV;
+        (uint256 tpGain, ) = _getPnLTP(i_, tpAvailableToRedeem, pACtp_);
+        tpAvailableToRedeem += tpGain;
+        // check if there are enough TP available to redeem
+        if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
+        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP);
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _divPrec(qTP_, pACtp_);
