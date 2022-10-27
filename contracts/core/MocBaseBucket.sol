@@ -5,7 +5,6 @@ import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
 import "../MocSettlement.sol";
-import "hardhat/console.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
