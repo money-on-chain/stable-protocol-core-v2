@@ -42,14 +42,14 @@ abstract contract MocInterestRate is MocBaseBucket {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to redeem
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
-     * @param nTP_ amount Pegged Token in the bucket [N]
+     * @param nTPplusTPgain_ amount Pegged Token in the bucket + TP to be minted during settlement [N]
      * @return interestRate [PREC]
      */
     function _calcTPinterestRate(
         uint8 i_,
         uint256 qTP_,
         uint256 tpAvailableToRedeem_,
-        uint256 nTP_
+        uint256 nTPplusTPgain_
     ) internal view returns (uint256 interestRate) {
         // get the number of blocks remaining for settlement
         uint256 bts = mocSettlement.getBts();
@@ -57,10 +57,10 @@ abstract contract MocInterestRate is MocBaseBucket {
         if (bts > tpBmin[i_]) {
             // get the initial abundance of TPi
             // [PREC]
-            uint256 arb = _getArb(tpAvailableToRedeem_, nTP_);
+            uint256 arb = _getArb(tpAvailableToRedeem_, nTPplusTPgain_);
             // get the final abundance of TPi
             // [PREC]
-            uint256 arf = _getArf(tpAvailableToRedeem_, nTP_, qTP_);
+            uint256 arf = _getArf(tpAvailableToRedeem_, nTPplusTPgain_, qTP_);
             // calculate the initial correction factor
             // [PREC]
             uint256 fctb = _calcFAC(i_, arb);

@@ -453,7 +453,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         tpAvailableToRedeem += tpGain;
         // check if there are enough TP available to redeem
         if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
-        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP);
+        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP + tpGain);
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _divPrec(qTP_, pACtp_);

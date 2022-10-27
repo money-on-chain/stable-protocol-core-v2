@@ -274,6 +274,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @notice get amount of Collateral Token available to redeem
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
+     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return tcAvailableToRedeem [N]
      */
     function _getTCAvailableToRedeem(
@@ -292,6 +293,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset
      * @param pACtp_ Collateral Asset price in amount of Pegged Token [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
+     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return tpAvailableToMint [N]
      */
     function _getTPAvailableToMint(
@@ -316,29 +318,29 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice get abundance ratio (beginning) of Pegged Token
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
-     * @param nTP_ amount Pegged Token in the bucket [N]
+     * @param nTPplusTPgain_ amount Pegged Token in the bucket + TP to be minted during settlement [N]
      * @return arb [PREC]
      */
-    function _getArb(uint256 tpAvailableToRedeem_, uint256 nTP_) internal pure returns (uint256 arb) {
+    function _getArb(uint256 tpAvailableToRedeem_, uint256 nTPplusTPgain_) internal pure returns (uint256 arb) {
         // [PREC] = [N] * [PREC] / [N]
-        return _divPrec(tpAvailableToRedeem_, nTP_);
+        return _divPrec(tpAvailableToRedeem_, nTPplusTPgain_);
     }
 
     /**
      * @notice get abundance ratio (final) of Pegged Token
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
-     * @param nTP_ amount Pegged Token in the bucket [N]
+     * @param nTPplusTPgain_ amount Pegged Token in the bucket + TP to be minted during settlement [N]
      * @param qTP_ amount of Pegged Token to calculate the final abundance
      * @return arf [PREC]
      */
     function _getArf(
         uint256 tpAvailableToRedeem_,
-        uint256 nTP_,
+        uint256 nTPplusTPgain_,
         uint256 qTP_
     ) internal pure returns (uint256 arf) {
+        if (qTP_ >= nTPplusTPgain_) return ONE;
         // [N] = [N] - [N]
-        uint256 den = nTP_ - qTP_;
-        if (den == 0) return ONE;
+        uint256 den = nTPplusTPgain_ - qTP_;
         // [PREC] = [N] * [PREC] / [N]
         return _divPrec(tpAvailableToRedeem_ - qTP_, den);
     }
