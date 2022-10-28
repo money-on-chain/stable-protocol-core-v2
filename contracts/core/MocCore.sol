@@ -501,9 +501,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (, bool has) = priceProvider.peek();
         if (!has) revert InvalidAddress();
 
-        if (peggedTokenIndex[address(tpToken)].exist) revert PeggedTokenAlreadyAdded();
+        if (peggedTokenIndex[address(tpToken)].exists) revert PeggedTokenAlreadyAdded();
         uint8 newTPindex = uint8(tpTokens.length);
-        peggedTokenIndex[address(tpToken)] = PeggedTokenIndex({ index: newTPindex, exist: true });
+        peggedTokenIndex[address(tpToken)] = PeggedTokenIndex({ index: newTPindex, exists: true });
 
         // set Pegged Token address
         tpTokens.push(tpToken);
@@ -568,7 +568,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function editPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
         PeggedTokenIndex storage ptIndex = peggedTokenIndex[peggedTokenParams_.tpTokenAddress];
-        if (!ptIndex.exist) revert InvalidAddress();
+        if (!ptIndex.exists) revert InvalidAddress();
         uint8 i = ptIndex.index;
         // if being edited, verifies it is a valid priceProvider
         if (peggedTokenParams_.priceProviderAddress != address(pegContainer[i].priceProvider)) {

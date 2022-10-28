@@ -44,8 +44,8 @@ contract MocCAWrapper is MocUpgradable {
     struct AssetIndex {
         // asset index
         uint8 index;
-        // true if asset token exist
-        bool exist;
+        // true if asset token exists
+        bool exists;
     }
 
     // ------- Storage -------
@@ -101,7 +101,7 @@ contract MocCAWrapper is MocUpgradable {
      * @return true if it is valid
      */
     function _isValidAsset(address assetAddress_) internal view returns (bool) {
-        return assetIndex[assetAddress_].exist;
+        return assetIndex[assetAddress_].exists;
     }
 
     /**
@@ -342,8 +342,8 @@ contract MocCAWrapper is MocUpgradable {
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
 
-        if (assetIndex[address(asset_)].exist) revert AssetAlreadyAdded();
-        assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exist: true });
+        if (assetIndex[address(asset_)].exists) revert AssetAlreadyAdded();
+        assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exists: true });
 
         assets.push(asset_);
         priceProviderMap[address(asset_)] = priceProvider_;

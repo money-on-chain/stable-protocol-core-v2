@@ -34,8 +34,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     struct PeggedTokenIndex {
         // Pegged Token index
         uint8 index;
-        // true if Pegged Token exist
-        bool exist;
+        // true if Pegged Token exists
+        bool exists;
     }
 
     // ------- Storage -------
@@ -53,11 +53,11 @@ abstract contract MocBaseBucket is MocUpgradable {
     // Pegged Tokens MocRC20 addresses
     IMocRC20[] public tpTokens;
     // Pegged Token indexes
-    mapping(address => PeggedTokenIndex) internal peggedTokenIndex;
+    mapping(address => PeggedTokenIndex) public peggedTokenIndex;
     // peg container
-    PegContainerItem[] internal pegContainer;
+    PegContainerItem[] public pegContainer;
     // reserve factor
-    uint256[] internal tpR;
+    uint256[] public tpR;
     // Pegged Token prices, at which they can be redeemed after liquidation event
     uint256[] internal tpLiqPrices;
 
@@ -69,9 +69,9 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // fee pct sent to Fee Flow on Pegged Tokens mint [PREC]
-    uint256[] internal tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow on Pegged Tokens redeem [PREC]
-    uint256[] internal tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256[] public tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
     address public mocFeeFlowAddress;
