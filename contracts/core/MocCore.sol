@@ -492,17 +492,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *  for this contract
      */
     function addPeggedToken(AddPeggedTokenParams calldata addPeggedTokenParams_) external onlyAuthorizedChanger {
-        if (addPeggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
-        if (addPeggedTokenParams_.tpMintFee > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpRedeemFee > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
-        if (addPeggedTokenParams_.tpTils > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpTiMin > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpTiMax > PRECISION) revert InvalidValue();
-        if (addPeggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
-        if (addPeggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
-        if (addPeggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
-
         IMocRC20 tpToken = IMocRC20(addPeggedTokenParams_.tpTokenAddress);
         // Verifies it has the right roles over this TP
         if (!tpToken.hasFullRoles(address(this))) revert InvalidAddress();
