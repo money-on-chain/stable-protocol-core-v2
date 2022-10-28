@@ -101,7 +101,7 @@ describe("Feature: MocCABag edit Pegged Token", function () {
           tpRedeemFee: tpParamsDefault.redeemFee.add(5),
           tpEma: tpParamsDefault.initialEma.add(6), // -----> Note: Emma cannot be edited, intentionally added
           tpEmaSf: tpParamsDefault.smoothingFactor.add(7),
-          tpTils: tpParamsDefault.tils.add(8),
+          tpTils: tpParamsDefault.tils.add(8), // -----> Note: tils cannot be edited, intentionally added
           tpTiMin: tpParamsDefault.tiMin.add(9),
           tpTiMax: tpParamsDefault.tiMax.add(10),
           tpAbeq: tpParamsDefault.abeq.add(11),
@@ -121,7 +121,7 @@ describe("Feature: MocCABag edit Pegged Token", function () {
           editParams.tpRedeemFee,
           editParams.tpEma, // Note: ema should not be edited, although the event has the value it vas passed on
           editParams.tpEmaSf,
-          editParams.tpTils,
+          editParams.tpTils, // Note: tils should not be edited, although the event has the value it vas passed on
           editParams.tpTiMin,
           editParams.tpTiMax,
           editParams.tpAbeq,
@@ -133,6 +133,12 @@ describe("Feature: MocCABag edit Pegged Token", function () {
         const tpEma = await mocImpl.tpEma(0);
         expect(tpEma.ema).to.be.equal(tpParamsDefault.initialEma);
         expect(tpEma.sf).to.be.equal(editParams.tpEmaSf);
+      });
+      it("THEN tils value itself has not change, only min and max", async () => {
+        const tpInterestRate = await mocImpl.tpInterestRate(0);
+        expect(tpInterestRate.tils).to.be.equal(tpParamsDefault.tils);
+        expect(tpInterestRate.tiMin).to.be.equal(editParams.tpTiMin);
+        expect(tpInterestRate.tiMax).to.be.equal(editParams.tpTiMax);
       });
       it("THEN new Pegged token ctar has changed", async () => {
         const tpCtarg = await mocImpl.tpCtarg(0);

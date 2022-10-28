@@ -567,7 +567,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * - the tpTokenAddress must exists
      */
     function editPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
-        PeggedTokenIndex storage ptIndex = peggedTokenIndex[peggedTokenParams_.tpTokenAddress];
+        PeggedTokenIndex memory ptIndex = peggedTokenIndex[peggedTokenParams_.tpTokenAddress];
         if (!ptIndex.exists) revert InvalidAddress();
         uint8 i = ptIndex.index;
         // if being edited, verifies it is a valid priceProvider
@@ -590,11 +590,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // set EMA initial value and smoothing factor
         tpEma[i].sf = peggedTokenParams_.tpEmaSf;
         // set interest rate item
-        tpInterestRate[i] = InterestRateItem({
-            tils: peggedTokenParams_.tpTils,
-            tiMin: peggedTokenParams_.tpTiMin,
-            tiMax: peggedTokenParams_.tpTiMax
-        });
+        tpInterestRate[i].tiMin = peggedTokenParams_.tpTiMin;
+        tpInterestRate[i].tiMax = peggedTokenParams_.tpTiMax;
         // set FAC item
         tpFAC[i] = FACitem({
             abeq: peggedTokenParams_.tpAbeq,
