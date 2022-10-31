@@ -32,16 +32,16 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     signer,
   );
 
-  const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
-  if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
+  const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
   const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
   const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
   if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
   const MocCAWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
 
-  const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAsset");
-  if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
+  const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAssetProxy");
+  if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
   let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
@@ -53,6 +53,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   // initializations
+  await CollateralToken.initialize("CollateralToken", "CollateralToken", deployedMocContract.address, governorAddress);
+  await WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress);
+
   await waitForTxConfirmation(
     mocCARC20.initialize(
       {

@@ -28,8 +28,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     signer,
   );
 
-  const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
-  if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
+  const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbaseProxy");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
   const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
   let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
@@ -41,6 +41,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   // initializations
+  await CollateralToken.initialize("CollateralToken", "CollateralToken", MocCACoinbase.address, governorAddress);
+
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
       {

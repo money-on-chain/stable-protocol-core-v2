@@ -2,18 +2,18 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { CONSTANTS, tpParamsDefault } from "../../helpers/utils";
 import { fixtureDeployGovernance } from "../upgradability/coinbase/fixture";
-import { IChangeContract__factory, MocCACoinbase } from "../../../typechain";
+import { IChangeContract__factory, MocCACoinbase, MocCore } from "../../../typechain";
 import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { BigNumberish, Contract } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
 const fixtureDeploy = fixtureDeployGovernance();
 
-export function deployChangerClosure(mocProxyAddress: Address) {
+export function deployChangerClosure(mocProxy: MocCore) {
   return async () => {
     const changerFactory = await ethers.getContractFactory("AddPeggedTokenChangerTemplate");
-
-    const mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocProxyAddress });
+    const governorAddress = await mocProxy.governor();
+    const mocPeggedToken = await deployPeggedToken({ adminAddress: mocProxy.address, governorAddress });
     const priceProvider = await deployPriceProvider(pEth(1));
 
     const deployAddChanger = ({
@@ -49,7 +49,7 @@ export function deployChangerClosure(mocProxyAddress: Address) {
       tpFacMin?: BigNumberish;
       tpFacMax?: BigNumberish;
     } = {}) => {
-      return changerFactory.deploy(mocProxyAddress, {
+      return changerFactory.deploy(mocProxy.address, {
         tpTokenAddress,
         priceProviderAddress,
         tpCtarg,
@@ -82,11 +82,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   before(async () => {
     ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
 
-    ({
-      deployAddChanger: deployChanger,
-      mocPeggedToken,
-      priceProvider,
-    } = await deployChangerClosure(mocProxy.address)());
+    ({ deployAddChanger: deployChanger, mocPeggedToken, priceProvider } = await deployChangerClosure(mocProxy)());
   });
   describe("WHEN trying to setup a Changer with invalid target coverage value", () => {
     it("THEN tx fails because target coverage is below ONE", async () => {
