@@ -5,9 +5,9 @@ import { coreParams, tcParams } from "../../../../deploy-config/config";
 import { MocCARC20__factory } from "../../../../typechain";
 import { deployCollateralToken, GAS_LIMIT_PATCH } from "../../../helpers/utils";
 
-describe("Feature: Check MocRC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
+describe("Feature: Check MocCARC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
-  describe("GIVEN an Moc Proxy is deployed", () => {
+  describe("GIVEN a MocCARC20 Proxy is deployed", () => {
     before(async () => {
       const { deployer } = await getNamedAccounts();
 

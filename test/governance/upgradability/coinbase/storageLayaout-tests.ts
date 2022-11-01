@@ -7,7 +7,7 @@ import { deployCollateralToken, GAS_LIMIT_PATCH } from "../../../helpers/utils";
 
 describe("Feature: Check MocCoinbase storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
-  describe("GIVEN an Moc Proxy is deployed", () => {
+  describe("GIVEN a Moc Proxy is deployed", () => {
     before(async () => {
       const { deployer } = await getNamedAccounts();
 

@@ -10,7 +10,7 @@ import "../../collateral/collateralBag/MocCAWrapper.sol";
 
 /**
  * @title UpgradableMock
- * @dev Only for upgradability testing purpuses. Generic contract for initiliaze a mock and get a custom method.
+ * @dev Only for upgradeability testing purposes. Generic contract for initialize a mock and get a custom method.
  */
 abstract contract UpgradableMock {
     uint256 public newVariable;
