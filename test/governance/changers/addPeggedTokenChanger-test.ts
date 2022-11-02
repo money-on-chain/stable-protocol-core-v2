@@ -9,23 +9,14 @@ import { Address } from "hardhat-deploy/types";
 
 const fixtureDeploy = fixtureDeployGovernance();
 
-describe("Feature: Governance protected Pegged Token addition ", () => {
-  let mocProxy: MocCACoinbase;
-  let governor: Contract;
-  let changeContract: Contract;
-  let mocPeggedToken: Contract;
-  let priceProvider: Contract;
-  let deployChanger: any;
-
-  before(async () => {
-    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
-
+export function deployChangerClosure(mocProxyAddress: Address) {
+  return async () => {
     const changerFactory = await ethers.getContractFactory("AddPeggedTokenChangerTemplate");
 
-    mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocProxy.address });
-    priceProvider = await deployPriceProvider(pEth(1));
+    const mocPeggedToken = await deployPeggedToken({ mocImplAddress: mocProxyAddress });
+    const priceProvider = await deployPriceProvider(pEth(1));
 
-    deployChanger = ({
+    const deployAddChanger = ({
       tpTokenAddress = mocPeggedToken.address,
       priceProviderAddress = priceProvider.address,
       tpCtarg = tpParamsDefault.ctarg,
@@ -58,7 +49,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
       tpFacMin?: BigNumberish;
       tpFacMax?: BigNumberish;
     } = {}) => {
-      return changerFactory.deploy(mocProxy.address, {
+      return changerFactory.deploy(mocProxyAddress, {
         tpTokenAddress,
         priceProviderAddress,
         tpCtarg,
@@ -76,6 +67,26 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
         tpFacMax,
       });
     };
+    return { mocPeggedToken, priceProvider, deployAddChanger };
+  };
+}
+
+describe("Feature: Governance protected Pegged Token addition ", () => {
+  let mocProxy: MocCACoinbase;
+  let governor: Contract;
+  let changeContract: Contract;
+  let mocPeggedToken: Contract;
+  let priceProvider: Contract;
+  let deployChanger: any;
+
+  before(async () => {
+    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
+
+    ({
+      deployAddChanger: deployChanger,
+      mocPeggedToken,
+      priceProvider,
+    } = await deployChangerClosure(mocProxy.address)());
   });
   describe("WHEN trying to setup a Changer with invalid target coverage value", () => {
     it("THEN tx fails because target coverage is below ONE", async () => {
@@ -161,7 +172,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
     before(async () => {
       changeContract = await deployChanger(); // with default params
     });
-    describe("WHEN a unauthorized account executed the changer", () => {
+    describe("WHEN an unauthorized account executed the changer", () => {
       it("THEN it fails", async function () {
         const changerTemplate = IChangeContract__factory.connect(changeContract.address, ethers.provider.getSigner());
         await expect(changerTemplate.execute()).to.be.revertedWithCustomError(mocProxy, ERRORS.NOT_AUTH_CHANGER);
@@ -170,7 +181,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
     describe("WHEN a the governor executes the changer contract", () => {
       it("THEN the new Pegged Token is added", async function () {
         await expect(governor.executeChange(changeContract.address))
-          .to.emit(mocProxy, "PeggedTokenAdded")
+          .to.emit(mocProxy, "PeggedTokenChange")
           .withArgs(0, [
             mocPeggedToken.address,
             priceProvider.address,
