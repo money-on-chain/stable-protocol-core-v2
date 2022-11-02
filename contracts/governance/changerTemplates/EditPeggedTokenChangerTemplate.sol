@@ -14,6 +14,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
   but it's not intended to be use out of the box. Depending on the combination of params
   you need to edit, you'll need to generate new methods, disable others and adjust the 
   `PARAMS_CHANGED` config. In this example, only the priceProvider address is used as showcase.
+  Also please notice that params values, are not verify on the target contract, so it's desirable
+  that the changer itself do it. See `AditPeggedTokenChangerTemplate.sol` for reference.
  */
 contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
     error InvalidParamSetCount();
