@@ -1,4 +1,4 @@
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 // This contract is not intended to be used in a production system
 // It was designed to be using in a testing environment only
@@ -24,7 +24,7 @@ abstract contract UpgradableMock {
 
 /**
  * @title MocCoinbaseMock
- * @dev Only for upgradability testing purpuses. Extends MocCACoinbase adding a new variable.
+ * @dev Only for upgradeability testing purposes. Extends MocCACoinbase adding a new variable.
  */
 contract MocCoinbaseMock is MocCACoinbase, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
@@ -34,7 +34,7 @@ contract MocCoinbaseMock is MocCACoinbase, UpgradableMock {
 
 /**
  * @title MocCARC20Mock
- * @dev Only for upgradability testing purpuses. Extends MocCARC20Mock adding a new variable.
+ * @dev Only for upgradeability testing purposes. Extends MocCARC20Mock adding a new variable.
  */
 contract MocCARC20Mock is MocCARC20, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
@@ -44,7 +44,7 @@ contract MocCARC20Mock is MocCARC20, UpgradableMock {
 
 /**
  * @title MocCARC20Mock
- * @dev Only for upgradability testing purpuses. Extends MocCARC20Mock adding a new variable.
+ * @dev Only for upgradeability testing purposes. Extends MocCARC20Mock adding a new variable.
  */
 contract MocCAWrapperMock is MocCAWrapper, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
@@ -54,7 +54,7 @@ contract MocCAWrapperMock is MocCAWrapper, UpgradableMock {
 
 /**
  * @title MocUpgradeChangerMock
- * @dev Only for upgradability testing purpuses. Extends UpgraderUUPSTemplate so that it
+ * @dev Only for upgradeability testing purposes. Extends UpgraderUUPSTemplate so that it
  * can upgrade, via UUPS, the original Moc CA implementation
  */
 // solhint-disable no-empty-blocks

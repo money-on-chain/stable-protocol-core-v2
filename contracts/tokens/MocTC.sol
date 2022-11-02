@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "./MocRC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
@@ -46,5 +46,12 @@ contract MocTC is MocRC20, ERC20Pausable {
      */
     function pause() public virtual onlyRole(PAUSER_ROLE) {
         _pause();
+    }
+
+    /**
+     * @inheritdoc IMocRC20
+     */
+    function hasFullRoles(address _account) public view override returns (bool) {
+        return hasRole(PAUSER_ROLE, _account) && MocRC20.hasFullRoles(_account);
     }
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../interfaces/IMocRC20.sol";
 import "./MocBaseBucket.sol";
@@ -57,6 +57,27 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
+     * @notice update exponential moving average of the value of a Pegged Token
+     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
+     * @param i_ Pegged Token index
+     */
+    function updateTPema(uint8 i_) internal {
+        EmaItem memory currentTPema = tpEma[i_];
+        uint256 pACtp = _getPACtp(i_);
+        // [PREC²] = [PREC] * ([PREC] - [PREC])
+        uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
+        // [PREC²] = [PREC] * [PREC]
+        uint256 term2 = currentTPema.sf * pACtp;
+        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
+        uint256 newEma = (term1 + term2) / PRECISION;
+        // save new ema value to storage
+        tpEma[i_].ema = newEma;
+        emit TPemaUpdated(i_, currentTPema.ema, newEma);
+    }
+
+    // ------- Public Functions -------
+
+    /**
      * @notice get last calculated target coverage adjusted by all Pegged Token's to
      *  Collateral Asset rate moving average
      * @dev qAC = nTP / pACtp
@@ -69,8 +90,11 @@ abstract contract MocEma is MocBaseBucket {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
+            // [N] = [N] - [N]
+            uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
+            (uint256 tpGain, ) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
             // [PREC] = [N] * [PREC] * [PREC]  / [PREC]
-            uint256 qAC = _divPrec(pegContainer[i].nTP * PRECISION, pACtp);
+            uint256 qAC = _divPrec((tpAvailableToRedeem + tpGain) * PRECISION, pACtp);
             // [PREC]^2 = [PREC] * [PREC]
             num += _getCtargemaTP(i, pACtp) * qAC;
             // [PREC] = [PREC]
@@ -101,7 +125,7 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice true if the necessiry span has pass since last ema update
+     * @notice true if the necessary span has pass since last ema update
      */
     function shouldCalculateEma() public view returns (bool) {
         unchecked {
@@ -124,22 +148,10 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @notice update exponential moving average of the value of a Pegged Token
-     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
-     * @param i_ Pegged Token index
-     */
-    function updateTPema(uint8 i_) internal {
-        EmaItem memory currentTPema = tpEma[i_];
-        uint256 pACtp = _getPACtp(i_);
-        // [PREC²] = [PREC] * ([PREC] - [PREC])
-        uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
-        // [PREC²] = [PREC] * [PREC]
-        uint256 term2 = currentTPema.sf * pACtp;
-        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
-        uint256 newEma = (term1 + term2) / PRECISION;
-        // save new ema value to storage
-        tpEma[i_].ema = newEma;
-        emit TPemaUpdated(i_, currentTPema.ema, newEma);
+     * @param blockSpan Defines how many blocks should pass between BMA calculations
+     **/
+    function setEmaCalculationBlockSpan(uint256 blockSpan) external onlyAuthorizedChanger {
+        emaCalculationBlockSpan = blockSpan;
     }
 
     /**

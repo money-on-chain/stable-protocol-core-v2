@@ -44,8 +44,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } =
-    mocAddresses[network];
+  let {
+    governorAddress,
+    pauserAddress,
+    mocFeeFlowAddress,
+    mocInterestCollectorAddress,
+    mocAppreciationBeneficiaryAddress,
+  } = mocAddresses[network];
 
   // for tests only, we deploy a necessary Mocks
   if (network == "hardhat") {
@@ -63,16 +68,16 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             mocSettlementAddress: MocSettlement.address,
             mocFeeFlowAddress,
             mocInterestCollectorAddress,
-            mocTurboAddress,
+            mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
             tcMintFee: tcParams.mintFee,
             tcRedeemFee: tcParams.redeemFee,
-            sf: coreParams.sf,
-            fa: coreParams.fa,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
           },
           governorAddress,
-          stopperAddress,
+          pauserAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
         acTokenAddress: WCAToken.address,
@@ -82,7 +87,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   await waitForTxConfirmation(
-    MocCAWrapper.initialize(governorAddress, stopperAddress, mocCARC20.address, WCAToken.address, {
+    MocCAWrapper.initialize(governorAddress, pauserAddress, mocCARC20.address, WCAToken.address, {
       gasLimit: GAS_LIMIT_PATCH,
     }),
   );
@@ -90,7 +95,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     MocSettlement.initialize(
       governorAddress,
-      stopperAddress,
+      pauserAddress,
       mocCARC20.address,
       settlementParams.bes,
       settlementParams.bmulcdj,
