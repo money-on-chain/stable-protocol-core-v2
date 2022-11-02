@@ -28,6 +28,7 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
         IGovernor governor_
     ) external override initializer {
         __MocRC20_init(name_, symbol_, admin_, governor_);
+        __ERC20Pausable_init();
         _setupRole(PAUSER_ROLE, admin_);
     }
 

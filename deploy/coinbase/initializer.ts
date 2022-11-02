@@ -41,7 +41,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   // initializations
-  await CollateralToken.initialize("CollateralToken", "CollateralToken", MocCACoinbase.address, governorAddress);
+  await waitForTxConfirmation(
+    CollateralToken.initialize("CollateralToken", "CollateralToken", MocCACoinbase.address, governorAddress),
+  );
 
   await waitForTxConfirmation(
     MocCACoinbase.initialize(

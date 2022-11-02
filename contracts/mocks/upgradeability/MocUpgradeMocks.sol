@@ -1,7 +1,7 @@
 pragma solidity 0.8.17;
 
 // This contract is not intended to be used in a production system
-// It was designed to be using in a testing environment only
+// It was designed to be used in a testing environment only
 
 import "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
 import "../../collateral/coinbase/MocCACoinbase.sol";

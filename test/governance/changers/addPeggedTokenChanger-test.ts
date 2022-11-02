@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { CONSTANTS, tpParamsDefault } from "../../helpers/utils";
-import { fixtureDeployGovernance } from "../upgradability/coinbase/fixture";
+import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
 import { IChangeContract__factory, MocCACoinbase, MocCore } from "../../../typechain";
 import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { BigNumberish, Contract } from "ethers";

@@ -53,8 +53,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   // initializations
-  await CollateralToken.initialize("CollateralToken", "CollateralToken", deployedMocContract.address, governorAddress);
-  await WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress);
+  await waitForTxConfirmation(
+    CollateralToken.initialize("CollateralToken", "CollateralToken", deployedMocContract.address, governorAddress),
+  );
+  await waitForTxConfirmation(
+    WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress),
+  );
 
   await waitForTxConfirmation(
     mocCARC20.initialize(
