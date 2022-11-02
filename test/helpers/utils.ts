@@ -172,7 +172,7 @@ export async function deployAndAddAssets(
   for (let i = 0; i < amountAsset; i++) {
     const asset = await deployAsset();
     const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addAsset(asset.address, priceProvider.address);
+    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address);
     assets.push(asset);
     assetPriceProviders.push(priceProvider);
   }
@@ -182,7 +182,6 @@ export async function deployAndAddAssets(
 export type Balance = BigNumber;
 
 export const ERRORS = {
-  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
   BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   LIQUIDATED: "Liquidated",
