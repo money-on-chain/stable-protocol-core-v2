@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "../../core/MocCore.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -18,18 +18,20 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @notice contract initializer
      * @param initializeCoreParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
-     *      stopperAddress The address that is authorized to pause this contract
+     *      pauserAddress The address that is authorized to pause this contract
      *      tcTokenAddress Collateral Token contract address
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocInterestCollectorAddress mocInterestCollector address
-     *      mocTurboAddress mocTurbo address
+     *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
      *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *      tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     *      sf proportion of the devaluation that is transferred to MoC Fee Flow during the settlement [PREC]
-     *      fa proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+     *      successFee pct of the gain because Pegged Tokens devaluation that is transferred
+     *        in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
+     *        in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function initialize(InitializeCoreParams calldata initializeCoreParams_) external initializer {
@@ -198,6 +200,13 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address recipient_
     ) external payable returns (uint256 qACtotalNeeded) {
         return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, msg.value, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice allow to send Coinbase to increment the Collateral Asset in the protocol
+     */
+    receive() external payable {
+        nACcb += msg.value;
     }
 
     /**

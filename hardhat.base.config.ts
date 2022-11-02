@@ -10,7 +10,6 @@ import "hardhat-docgen";
 import "hardhat-gas-reporter";
 import "hardhat-preprocessor";
 import { removeConsoleLog } from "hardhat-preprocessor";
-import "hardhat-prettier";
 import { HardhatUserConfig } from "hardhat/config";
 import { NetworkUserConfig } from "hardhat/types";
 import { resolve } from "path";
@@ -89,13 +88,14 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.16",
+    version: "0.8.17",
     settings: {
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
         enabled: true,
         runs: 200,
       },
+      viaIR: process.env.VIA_IR ? true : false,
       outputSelection: {
         "*": {
           "*": ["storageLayout"],

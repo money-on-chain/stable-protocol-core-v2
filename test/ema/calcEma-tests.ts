@@ -120,6 +120,12 @@ describe("Feature: Ema Calculation", function () {
         });
       });
       describe("AND pegged prices have changed", () => {
+        /*
+        nTP0: 50000000 + 1595744.68(tpGain)
+        nTP1: 500000 + 3809.52(tpGain)
+        nTP2: 100000000 + 0(tpGain)
+        nTP3: 1000000 + 3980.09(tpGain)
+        */
         beforeEach(async () => {
           await Promise.all([250, 5.33, 925.93, 20.26].map((price, i) => priceProviders[i].poke(pEth(price))));
           await mineNBlocks(coreParams.emaCalculationBlockSpan);
@@ -127,16 +133,17 @@ describe("Feature: Ema Calculation", function () {
         describe("WHEN get ctargemaCA", async () => {
           let ctargemaCA: BigNumber;
           beforeEach(async () => {
+            // callStatic because it is not a view function
             ctargemaCA = await mocImpl.callStatic.calcCtargemaCA();
           });
-          it("THEN ctargemaCA is equal to 4.72", async () => {
+          it("THEN ctargemaCA is equal to 4.73", async () => {
             /*
-              ctargemaTP0: 5.85
-              ctargemaTP1: 4.22
-              ctargemaTP2: 3.87
+              ctargemaTP0: 5.54
+              ctargemaTP1: 4.17
+              ctargemaTP2: 3.91
               ctargemaTP3: 3
             */
-            assertPrec(ctargemaCA, "4.721307466577826196");
+            assertPrec(ctargemaCA, "4.735401485517017853");
           });
         });
       });

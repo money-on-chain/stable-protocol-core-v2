@@ -283,12 +283,38 @@ const redeemTCBehavior = function () {
         describe("AND Pegged Token has been devaluated to 500 making TC price rices", function () {
           /*  
           nAC = 310    
-          nTP = 2350
-          lckAC = 4.7
-          => pTCac = 1.0176
+          nTP = 2350 + 1325
+          lckAC = 7.35
+          nACgain = 0.53
+          => pTCac = 1.00706
+          => coverage = 42.104
+          ctargemaCA = 11.79
+          => TC available to redeem = 221.24
           */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 500);
+          });
+          it("THEN TC price is 1.00706", async function () {
+            assertPrec("1.007066666666666666", await mocContracts.mocImpl.getPTCac());
+          });
+          it("THEN coverage is 42.104", async function () {
+            assertPrec("42.104761904761904761", await mocContracts.mocImpl.getCglb());
+          });
+          it("THEN there are 221.24 TC available to redeem", async function () {
+            assertPrec("221.248334070249917149", await mocContracts.mocImpl.getTCAvailableToRedeem());
+          });
+          describe("AND EMA is updated", function () {
+            /*
+            ctargemaCA = 11.04
+            => TC available to redeem = 226.71
+            */
+            beforeEach(async function () {
+              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+              await mocContracts.mocImpl.updateEmas();
+            });
+            it("THEN there are 226.71 TC available to redeem", async function () {
+              assertPrec("226.719806179762611513", await mocContracts.mocImpl.getTCAvailableToRedeem());
+            });
           });
           describe("WHEN alice redeems 100 TC", function () {
             let alicePrevACBalance: Balance;
@@ -296,52 +322,58 @@ const redeemTCBehavior = function () {
               alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
               await mocFunctions.redeemTC({ from: alice, qTC: 100 });
             });
-            it("THEN alice receives 96.67 assets instead of 95", async function () {
+            it("THEN alice receives 95.67 assets instead of 95", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = aliceActualACBalance.sub(alicePrevACBalance);
-              assertPrec("96.678333333333333270", diff);
+              assertPrec("95.671333333333333270", diff);
             });
           });
-          describe("AND the settlement is executed", function () {
+          describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
+            /*  
+            nAC = 310  
+            nTP = 2350
+            lckAC = 23.5
+            nACgain = -8.1
+            => pTCac = 0.955
+            => coverage = 13.19
+            ctargemaCA = 5
+            => TC available to redeem = 201.57
+            */
             beforeEach(async function () {
-              const nextBlockSettlement = await mocContracts.mocSettlement.bns();
-              await mineUpTo(nextBlockSettlement);
-              await mocContracts.mocSettlement.execSettlement();
+              await mocFunctions.pokePrice(TP_0, 100);
             });
-            describe("AND Pegged Token has been devaluated to 1000", function () {
-              /*  
-              nAC = 310    
-              nTP = 2350
-              lckACLstset = 4.7
-              lckAC = 2.35
-              ACtoMint = 1.41
-              => pTCac = 1.0208
-              ema = 251.438
-              ctarg = 19.8856
-              => TC available to redeem = 256.52
+            it("THEN TC price is 0.955", async function () {
+              assertPrec("0.955", await mocContracts.mocImpl.getPTCac());
+            });
+            it("THEN the coverage is 13.19", async function () {
+              assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
+            });
+            it("THEN there are 201.57 TC available to redeem", async function () {
+              assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
+            });
+            describe("AND EMA is updated", function () {
+              /*
+              ctargemaCA = 5
+              => TC available to redeem = 201.57
               */
               beforeEach(async function () {
-                await mocFunctions.pokePrice(TP_0, 1000);
-              });
-              it("THEN there are 256.52 TC available to redeem", async function () {
-                // we must update ema to match the real TC available, otherwise it is just an approximation
+                await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
                 await mocContracts.mocImpl.updateEmas();
-                assertPrec("256.523117040189220320", await mocContracts.mocImpl.getTCAvailableToRedeem());
               });
-              it("THEN the coverage is 131.31", async function () {
-                assertPrec("131.314893617021276595", await mocContracts.mocImpl.getCglb());
+              it("THEN there are 201.57 TC available to redeem", async function () {
+                assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
               });
-              describe("WHEN alice redeems 100 TC", function () {
-                let alicePrevACBalance: Balance;
-                beforeEach(async function () {
-                  alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-                  await mocFunctions.redeemTC({ from: alice, qTC: 100 });
-                });
-                it("THEN alice receives 96.976 assets instead of 95", async function () {
-                  const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-                  const diff = aliceActualACBalance.sub(alicePrevACBalance);
-                  assertPrec(96.976, diff);
-                });
+            });
+            describe("WHEN alice redeems 100 TC", function () {
+              let alicePrevACBalance: Balance;
+              beforeEach(async function () {
+                alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+                await mocFunctions.redeemTC({ from: alice, qTC: 100 });
+              });
+              it("THEN alice receives 90.725 assets instead of 95", async function () {
+                const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+                const diff = aliceActualACBalance.sub(alicePrevACBalance);
+                assertPrec("90.725", diff);
               });
             });
           });

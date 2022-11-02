@@ -1,4 +1,4 @@
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -18,4 +18,10 @@ interface IMocRC20 is IERC20 {
      * * See {ERC20-_burn}.
      */
     function burn(address to, uint256 amount) external;
+
+    /**
+     * @dev returns true if the `_account` address has full control over this token
+     * @param _account the address you want to check all roles for
+     */
+    function hasFullRoles(address _account) external view returns (bool);
 }

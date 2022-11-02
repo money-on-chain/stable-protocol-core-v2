@@ -1,0 +1,28 @@
+import { fixtureDeployedMocCoinbase } from "./fixture";
+import { MocCACoinbase } from "../../typechain";
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { pEth } from "../helpers/utils";
+
+describe("Feature: MocCoinbase fallback", function () {
+  let mocImpl: MocCACoinbase;
+
+  describe("GIVEN a MocCoinbase implementation deployed", function () {
+    beforeEach(async function () {
+      const fixtureDeploy = fixtureDeployedMocCoinbase(1);
+      ({ mocImpl } = await fixtureDeploy());
+    });
+    describe("WHEN Coinbase is sent to the contract", () => {
+      beforeEach(async () => {
+        const [deployer] = await ethers.getSigners();
+        await deployer.sendTransaction({
+          to: mocImpl.address,
+          value: pEth(100),
+        });
+      });
+      it("THEN total AC available increase 100 AC", async () => {
+        expect(await mocImpl.getTotalACavailable()).to.be.equal(pEth(100));
+      });
+    });
+  });
+});
