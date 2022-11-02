@@ -232,7 +232,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             _evalTPavailableToMint(i_, qTP_, pACtp, ctargemaCA, lckAC, nACgain);
         }
         // calculate how many qAC are needed to mint TP and the qAC fee
-        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, ctargemaCA, lckAC, nACgain, pACtp);
+        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
@@ -441,32 +441,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint [N]
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @param pACtp_ Pegged Token price [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
     function _calcQACforMintTP(
         uint8 i_,
         uint256 qTP_,
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACgain_,
         uint256 pACtp_
     ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
         if (qTP_ == 0) revert InvalidValue();
-
-        uint256 tpAvailableToMint = _getTPAvailableToMint(
-            ctargemaCA_,
-            _getCtargemaTP(i_, pACtp_),
-            pACtp_,
-            lckAC_,
-            nACgain_
-        );
-        // check if there are enough TP available to mint
-        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
         qACNeededtoMint = _divPrec(qTP_, pACtp_);
