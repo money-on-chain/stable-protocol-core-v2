@@ -95,13 +95,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocInterestCollectorAddress mocInterestCollector address
-     *        mocturboAddress mocTurbo address
+     *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected state threshold [PREC]
      *        liqThrld liquidation coverage threshold [PREC]
      *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     *        sf proportion of the devaluation that is transferred to MoC Fee Flow during the settlement [PREC]
-     *        fa proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+     *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
+     *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
+     *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]]
      *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function __MocCore_init(InitializeCoreParams calldata initializeCoreParams_) internal onlyInitializing {
@@ -125,7 +127,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice Collateral Asset balance
      * @dev this function must be overridden by the AC implementation
      * @param account address who's Collateral Asset balance we want to know of
-     * @param balance `account`'s total amount of Collateral Asset
+     * @return balance `account`'s total amount of Collateral Asset
      */
     function acBalanceOf(address account) internal view virtual returns (uint256 balance);
 
@@ -467,7 +469,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
-     * @notice distribute appreciation factor to Turbo and success fee to Moc Fee Flow
+     * @notice distribute appreciation factor to beneficiary and success fee to Moc Fee Flow
      */
     function _distributeSuccessFee() internal {
         uint256 mocGain;
@@ -477,24 +479,26 @@ abstract contract MocCore is MocEma, MocInterestRate {
             _updateTPtracking(i, pACtp);
             int256 iou = tpiou[i];
             if (iou > 0) {
-                // [N] = [N] * [PREC] * [PREC] / [PREC] / [PREC]
-                uint256 tpToMint = _mulPrec(uint256(iou) * pACtp, fa) / PRECISION;
+                // [N] = (([PREC] * [PREC] / [PREC]) * [N]) / [PREC]
+                uint256 tpToMint = _mulPrec(_mulPrec(appreciationFactor, pACtp), uint256(iou));
                 // [N] = [N] + [N]
                 mocGain += uint256(iou);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket
-                pegContainer[i].nTP += tpToMint;
-                // mint TP to Turbo, is not necessary to check coverage
-                tpTokens[i].mint(mocTurboAddress, tpToMint);
+                _depositTP(i, tpToMint, 0);
+                // mint TP to appreciation beneficiary, is not necessary to check coverage
+                tpTokens[i].mint(mocAppreciationBeneficiaryAddress, tpToMint);
             }
         }
-        // [N] = [N] * [PREC] / [PREC]
-        mocGain = _mulPrec(mocGain, sf);
-        // sub qAC from the Bucket
-        nACcb -= mocGain;
-        // transfer the qAC to Moc Fee Flow
-        acTransfer(mocFeeFlowAddress, mocGain);
+        if (mocGain != 0) {
+            // [N] = [N] * [PREC] / [PREC]
+            mocGain = _mulPrec(mocGain, successFee);
+            // sub qAC from the Bucket
+            nACcb -= mocGain;
+            // transfer the qAC to Moc Fee Flow
+            acTransfer(mocFeeFlowAddress, mocGain);
+        }
     }
 
     // ------- Only Settlement Functions -------

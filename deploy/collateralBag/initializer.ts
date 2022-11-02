@@ -44,8 +44,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
   const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
-  let { governorAddress, pauserAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } =
-    mocAddresses[network];
+  let {
+    governorAddress,
+    pauserAddress,
+    mocFeeFlowAddress,
+    mocInterestCollectorAddress,
+    mocAppreciationBeneficiaryAddress,
+  } = mocAddresses[network];
 
   // for tests only, we deploy a necessary Mocks
   if (network == "hardhat") {
@@ -63,13 +68,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             mocSettlementAddress: MocSettlement.address,
             mocFeeFlowAddress,
             mocInterestCollectorAddress,
-            mocTurboAddress,
+            mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
             tcMintFee: tcParams.mintFee,
             tcRedeemFee: tcParams.redeemFee,
-            sf: coreParams.sf,
-            fa: coreParams.fa,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
           },
           governorAddress,
           pauserAddress,

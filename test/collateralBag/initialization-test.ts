@@ -111,7 +111,7 @@ describe("Feature: MocCABag initialization", function () {
     });
     describe("WHEN it is initialized with invalid success fee value", () => {
       it("THEN tx fails because sf is above ONE", async () => {
-        await expect(newMocInit({ sf: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+        await expect(newMocInit({ successFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );
@@ -119,7 +119,7 @@ describe("Feature: MocCABag initialization", function () {
     });
     describe("WHEN it is initialized with invalid appreciation factor value", () => {
       it("THEN tx fails because fa is above ONE", async () => {
-        await expect(newMocInit({ fa: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+        await expect(newMocInit({ appreciationFactor: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );

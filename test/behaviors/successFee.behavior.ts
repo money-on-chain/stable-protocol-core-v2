@@ -15,10 +15,10 @@ const successFeeBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_2 = 2;
-  const { mocFeeFlowAddress, mocTurboAddress } = mocAddresses["hardhat"];
+  const { mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses["hardhat"];
   let mocPrevACBalance: Balance;
   let mocFeeFlowPrevACBalance: Balance;
-  let mocTurboPrevTPsBalance: Balance[];
+  let mocApprecBenefPrevTPsBalance: Balance[];
   let initializeBeforeBalances: () => Promise<void>;
 
   describe("Feature: success fee distribution", function () {
@@ -27,10 +27,10 @@ const successFeeBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ alice } = await getNamedAccounts());
       initializeBeforeBalances = async function () {
-        [mocPrevACBalance, mocFeeFlowPrevACBalance, ...mocTurboPrevTPsBalance] = await Promise.all([
+        [mocPrevACBalance, mocFeeFlowPrevACBalance, ...mocApprecBenefPrevTPsBalance] = await Promise.all([
           mocFunctions.acBalanceOf(mocContracts.mocImpl.address),
           mocFunctions.acBalanceOf(mocFeeFlowAddress),
-          ...[TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocTurboAddress)),
+          ...[TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocAppreciationBeneficiaryAddress)),
         ]);
       };
     });
@@ -66,12 +66,12 @@ const successFeeBehavior = function () {
           const diff = mocActualACBalance.sub(mocPrevACBalance);
           assertPrec(0, diff);
         });
-        it("THEN Moc Turbo TP balance didn't change", async function () {
-          const mocTurboActualTPsBalance = await Promise.all(
-            [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocTurboAddress)),
+        it("THEN Moc appreciation beneficiary TP balance didn't change", async function () {
+          const mocApprecBenefActualTPsBalance = await Promise.all(
+            [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocAppreciationBeneficiaryAddress)),
           );
-          mocTurboActualTPsBalance.forEach((value, i) => {
-            const diff = value.sub(mocTurboPrevTPsBalance[i]);
+          mocApprecBenefActualTPsBalance.forEach((value, i) => {
+            const diff = value.sub(mocApprecBenefPrevTPsBalance[i]);
             assertPrec(0, diff);
           });
         });
@@ -107,9 +107,9 @@ const successFeeBehavior = function () {
           lckAC = 75 + 16.69 + 13.33
           nACgain = 0
           pTCac = 1124.34 - 105.02 - 0 / 1000 = 1.023
-          TP1 minted to Turbo = 11750
-          TP2 Minted to Turbo = 26.25
-          TP3 Minted to Turbo = 0 => remains iuo = -3.33
+          TP1 minted to appreciation beneficiary = 11750
+          TP2 Minted to appreciation beneficiary = 26.25
+          TP3 Minted to appreciation beneficiary = 0 => remains iuo = -3.33
           */
           beforeEach(async function () {
             nextBlockSettlement = await mocContracts.mocSettlement.bns();
@@ -127,12 +127,12 @@ const successFeeBehavior = function () {
             const diff = mocPrevACBalance.sub(mocActualACBalance);
             assertPrec("5.666666666666666666", diff);
           });
-          it("THEN Moc Turbo TP balance increase 50% for each TP devaluation", async function () {
-            const mocTurboActualTPsBalance = await Promise.all(
-              [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocTurboAddress)),
+          it("THEN Moc appreciation beneficiary TP balance increase 50% for each TP devaluation", async function () {
+            const mocApprecBenefActualTPsBalance = await Promise.all(
+              [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocAppreciationBeneficiaryAddress)),
             );
             [11750, "26.250000000000000001", 0].forEach((increment, i) => {
-              const diff = mocTurboActualTPsBalance[i].sub(mocTurboPrevTPsBalance[i]);
+              const diff = mocApprecBenefActualTPsBalance[i].sub(mocApprecBenefPrevTPsBalance[i]);
               assertPrec(increment, diff, `TP index ${i}`);
             });
           });
@@ -185,9 +185,9 @@ const successFeeBehavior = function () {
             lckAC = 66.66 + 26.66 + 8.29            
             nACgain = 0
             pTCac = 1123 - 101.66 - 0 / 1000 = 1.023
-            TP1 minted to Turbo = 23500
-            TP2 Minted to Turbo = 0 => remains iuo = -6.666
-            TP3 Minted to Turbo = 2336.45
+            TP1 minted to appreciation beneficiary = 23500
+            TP2 Minted to appreciation beneficiary = 0 => remains iuo = -6.666
+            TP3 Minted to appreciation beneficiary = 2336.45
             */
             beforeEach(async function () {
               nextBlockSettlement = await mocContracts.mocSettlement.bns();
@@ -205,12 +205,12 @@ const successFeeBehavior = function () {
               const diff = mocPrevACBalance.sub(mocActualACBalance);
               assertPrec(7, diff);
             });
-            it("THEN Moc Turbo TP balance increase 50% for each TP devaluation", async function () {
-              const mocTurboActualTPsBalance = await Promise.all(
-                [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocTurboAddress)),
+            it("THEN Moc appreciation beneficiary TP balance increase 50% for each TP devaluation", async function () {
+              const mocApprecBenefActualTPsBalance = await Promise.all(
+                [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocAppreciationBeneficiaryAddress)),
               );
               ["23500.000000000000000117", 0, "2336.450000000000000467"].forEach((increment, i) => {
-                const diff = mocTurboActualTPsBalance[i].sub(mocTurboPrevTPsBalance[i]);
+                const diff = mocApprecBenefActualTPsBalance[i].sub(mocApprecBenefPrevTPsBalance[i]);
                 assertPrec(increment, diff, `TP index ${i}`);
               });
             });
