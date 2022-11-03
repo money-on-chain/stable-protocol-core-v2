@@ -35,8 +35,8 @@ export function fixtureDeployedMocCoinbase(
       signer,
     );
 
-    const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbase");
-    if (!deployedTCContract) throw new Error("No CollateralTokenCoinbase deployed.");
+    const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbaseProxy");
+    if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
     const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
     const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);

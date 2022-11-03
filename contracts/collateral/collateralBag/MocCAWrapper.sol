@@ -2,6 +2,7 @@ pragma solidity ^0.8.17;
 
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
@@ -99,7 +100,7 @@ contract MocCAWrapper is MocUpgradable {
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
-        SafeERC20.safeApprove(wcaToken, mocCoreAddress_, UINT256_MAX);
+        SafeERC20Upgradeable.safeApprove(wcaToken, mocCoreAddress_, UINT256_MAX);
     }
 
     // ------- Internal Functions -------
@@ -213,9 +214,9 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) internal validAsset(assetAddress_) {
         // get Collateral Token contract address
-        IERC20 tcToken = mocCore.tcToken();
+        IERC20Upgradeable tcToken = mocCore.tcToken();
         // transfer Collateral Token from sender to this address
-        SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
@@ -282,11 +283,11 @@ contract MocCAWrapper is MocUpgradable {
         bool isLiqRedeem_
     ) internal validAsset(assetAddress_) {
         // get Pegged Token contract address
-        IERC20 tpToken = mocCore.tpTokens(i_);
+        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
         // When liquidating, we extract all the user's balance
         if (isLiqRedeem_) qTP_ = tpToken.balanceOf(sender_);
         // transfer Pegged Token from sender to this address
-        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin

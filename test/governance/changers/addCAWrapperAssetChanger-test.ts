@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { fixtureDeployGovernance } from "../upgradability/collateralBag/fixture";
+import { fixtureDeployGovernance } from "../upgradeability/collateralBag/fixture";
 import { IChangeContract__factory, MocCAWrapper } from "../../../typechain";
 import { deployAsset, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { Contract } from "ethers";
