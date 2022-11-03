@@ -163,8 +163,8 @@ const balanceOf =
 const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].balanceOf(account);
 
 // add an asset to the MocCABag whitelist with its respective price provider
-const addAsset = mocWrapper => async (asset, priceProvider) => {
-  return mocWrapper.addAsset(asset.address, priceProvider.address);
+const addOrEditAsset = mocWrapper => async (asset, priceProvider) => {
+  return mocWrapper.addOrEditAsset(asset.address, priceProvider.address);
 };
 const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
 
@@ -215,7 +215,7 @@ export const mocFunctionsCARBag = async ({
     tcTransfer: tcTransfer(mocCollateralToken),
     tpBalanceOf: tpBalanceOf(mocPeggedTokens),
     tpTransfer: tpTransfer(mocPeggedTokens),
-    addAsset: addAsset(mocWrapper),
+    addOrEditAsset: addOrEditAsset(mocWrapper),
     pokePrice: pokePrice(priceProviders),
   };
 };

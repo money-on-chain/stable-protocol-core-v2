@@ -113,7 +113,7 @@ describe("Feature: MocCABag mint TC", function () {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(0.9));
-          await mocFunctions.addAsset(newAsset, newPriceProvider);
+          await mocFunctions.addOrEditAsset(newAsset, newPriceProvider);
         });
         describe("WHEN mint 100 TC with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;
@@ -133,7 +133,7 @@ describe("Feature: MocCABag mint TC", function () {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(1.1));
-          await mocFunctions.addAsset(newAsset, newPriceProvider);
+          await mocFunctions.addOrEditAsset(newAsset, newPriceProvider);
         });
         describe("WHEN mint 100 TC with new asset", () => {
           let aliceNewAssetPrevBalance: Balance;

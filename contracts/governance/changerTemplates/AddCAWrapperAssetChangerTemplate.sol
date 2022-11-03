@@ -40,6 +40,6 @@ contract AddCAWrapperAssetChangerTemplate is IChangeContract {
     because it is not its responsability in the current architecture
    */
     function execute() external {
-        mocCAWrapper.addAsset(asset, priceProvider);
+        mocCAWrapper.addOrEditAsset(asset, priceProvider);
     }
 }

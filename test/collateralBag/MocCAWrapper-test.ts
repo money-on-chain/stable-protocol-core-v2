@@ -6,27 +6,15 @@ import { ContractTransaction } from "ethers";
 
 describe("Feature: MocCAWrapper", function () {
   let mocWrapper: MocCAWrapper;
-  let assetDefault: ERC20Mock;
   let asset00: ERC20Mock;
   let priceProvider00: PriceProviderMock;
 
   describe("GIVEN a MocCAWrapper implementation deployed", function () {
     before(async function () {
       const fixtureDeploy = fixtureDeployedMocCABag(0);
-      ({
-        mocWrapper,
-        assets: [assetDefault],
-      } = await fixtureDeploy());
+      ({ mocWrapper } = await fixtureDeploy());
       asset00 = await deployAsset();
       priceProvider00 = await deployPriceProvider(pEth(1));
-    });
-    describe("WHEN add an asset twice", () => {
-      it("THEN tx fails because asset is already added", async () => {
-        await expect(mocWrapper.addAsset(assetDefault.address, priceProvider00.address)).to.be.revertedWithCustomError(
-          mocWrapper,
-          ERRORS.ASSET_ALREADY_ADDED,
-        );
-      });
     });
     describe("WHEN add an asset with a deprecated price provider", () => {
       let deprecatedPriceProvider: PriceProviderMock;
@@ -36,19 +24,26 @@ describe("Feature: MocCAWrapper", function () {
       });
       it("THEN tx fails because address is invalid", async () => {
         await expect(
-          mocWrapper.addAsset(asset00.address, deprecatedPriceProvider.address),
+          mocWrapper.addOrEditAsset(asset00.address, deprecatedPriceProvider.address),
         ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
     describe("WHEN an asset is added", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
-        tx = await mocWrapper.addAsset(asset00.address, priceProvider00.address);
+        tx = await mocWrapper.addOrEditAsset(asset00.address, priceProvider00.address);
       });
       it("THEN an AssetAddedOrModified event is emitted", async () => {
         // asset: asset00
         // priceProvider: priceProvider00
-        await expect(tx).to.emit(mocWrapper, "AssetAdded").withArgs(asset00.address, priceProvider00.address);
+        await expect(tx).to.emit(mocWrapper, "AssetModified").withArgs(asset00.address, priceProvider00.address);
+      });
+      describe("WHEN the asset price Provider is edited", () => {
+        it("THEN a new AssetAddedOrModified event is emitted", async () => {
+          const priceProvider01 = await deployPriceProvider(pEth(1.1));
+          const editTx = await mocWrapper.addOrEditAsset(asset00.address, priceProvider01.address);
+          await expect(editTx).to.emit(mocWrapper, "AssetModified").withArgs(asset00.address, priceProvider01.address);
+        });
       });
     });
   });
