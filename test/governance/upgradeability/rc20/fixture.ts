@@ -1,7 +1,7 @@
 import { deployments, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 import { MocCARC20, MocCARC20__factory } from "../../../../typechain";
-import { deployAeropagusGovernor } from "../../../helpers/utils";
+import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 import { mocInitialize } from "../../../collateralBag/initializers";
 
 export function fixtureDeployGovernance(): () => Promise<{
@@ -24,8 +24,10 @@ export function fixtureDeployGovernance(): () => Promise<{
 
     const governor = await deployAeropagusGovernor(deployer);
 
-    const mocTCFactory = await ethers.getContractFactory("MocTC");
-    const mocTC = await mocTCFactory.deploy("mocCT", "CT", deployMocProxy.address);
+    const mocTC = await deployCollateralToken({
+      adminAddress: deployMocProxy.address,
+      governorAddress: governor.address,
+    });
 
     const mockAddress = deployer;
     // TODO: fix these mockAddresses

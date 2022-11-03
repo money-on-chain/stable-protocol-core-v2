@@ -1,6 +1,15 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ERC20Mock, PriceProviderMock, MocRC20, MocCore, MocCAWrapper } from "../../typechain";
+import {
+  ERC20Mock,
+  PriceProviderMock,
+  MocRC20,
+  MocCore,
+  MocCAWrapper,
+  MocRC20__factory,
+  MocTC__factory,
+  MocTC,
+} from "../../typechain";
 import { Address } from "hardhat-deploy/types";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
@@ -23,9 +32,37 @@ export function pEth(eth: string | number): BigNumber {
   return ethers.utils.parseEther(ethStr);
 }
 
-export async function deployPeggedToken({ mocImplAddress }: { mocImplAddress: Address }): Promise<MocRC20> {
+export async function deployPeggedToken({
+  adminAddress,
+  governorAddress,
+}: {
+  adminAddress: Address;
+  governorAddress: Address;
+}): Promise<MocRC20> {
   const factory = await ethers.getContractFactory("MocRC20");
-  return factory.deploy("PeggedToken", "PeggedToken", mocImplAddress);
+  const mocRC20Impl = await factory.deploy();
+  const erc1967ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+  const erc1967Proxy = await erc1967ProxyFactory.deploy(mocRC20Impl.address, "0x");
+
+  const mocRC20Proxy = MocRC20__factory.connect(erc1967Proxy.address, ethers.provider.getSigner());
+  await mocRC20Proxy.initialize("PeggedToken", "PeggedToken", adminAddress, governorAddress);
+  return mocRC20Proxy;
+}
+
+export async function deployCollateralToken({
+  adminAddress,
+  governorAddress,
+}: {
+  adminAddress: Address;
+  governorAddress: Address;
+}): Promise<MocTC> {
+  const mocTCFactory = await ethers.getContractFactory("MocTC");
+  const newMocTCImpl = await mocTCFactory.deploy();
+  const erc1967ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+  const erc1967Proxy = await erc1967ProxyFactory.deploy(newMocTCImpl.address, "0x");
+  const mocTCProxy = MocTC__factory.connect(erc1967Proxy.address, ethers.provider.getSigner());
+  await mocTCProxy.initialize("mocCT", "CT", adminAddress, governorAddress);
+  return mocTCProxy;
 }
 
 export const tpParamsDefault = {
@@ -122,8 +159,9 @@ export async function deployAndAddPeggedTokens(
 ): Promise<{ mocPeggedTokens: MocRC20[]; priceProviders: PriceProviderMock[] }> {
   const mocPeggedTokens: Array<MocRC20> = [];
   const priceProviders: Array<PriceProviderMock> = [];
+  const governorAddress = await mocImpl.governor();
   for (let i = 0; i < amountPegTokens; i++) {
-    const peggedToken = await deployPeggedToken({ mocImplAddress: mocImpl.address });
+    const peggedToken = await deployPeggedToken({ adminAddress: mocImpl.address, governorAddress });
     const params = tpParams ? getTPparams(tpParams[i]) : getTPparams({});
     const priceProvider = await deployPriceProvider(params.price);
     await mocImpl.addPeggedToken({
@@ -179,7 +217,7 @@ export async function deployAndAddAssets(
   for (let i = 0; i < amountAsset; i++) {
     const asset = await deployAsset();
     const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addAsset(asset.address, priceProvider.address);
+    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address);
     assets.push(asset);
     assetPriceProviders.push(priceProvider);
   }
@@ -189,7 +227,6 @@ export async function deployAndAddAssets(
 export type Balance = BigNumber;
 
 export const ERRORS = {
-  ASSET_ALREADY_ADDED: "AssetAlreadyAdded",
   BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   LIQUIDATED: "Liquidated",

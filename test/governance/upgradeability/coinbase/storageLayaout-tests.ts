@@ -3,11 +3,11 @@ import { Contract } from "ethers";
 
 import { coreParams, tcParams } from "../../../../deploy-config/config";
 import { MocCACoinbase__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH } from "../../../helpers/utils";
+import { deployCollateralToken, GAS_LIMIT_PATCH } from "../../../helpers/utils";
 
 describe("Feature: Check MocCoinbase storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
-  describe("GIVEN an Moc Proxy is deployed", () => {
+  describe("GIVEN a Moc Proxy is deployed", () => {
     before(async () => {
       const { deployer } = await getNamedAccounts();
 
@@ -21,8 +21,10 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
         initializer: false,
       });
 
-      const mocTCFactory = await ethers.getContractFactory("MocTC");
-      const mocTC = await mocTCFactory.deploy("mocCT", "CT", mocProxy.address);
+      const mocTC = await deployCollateralToken({
+        adminAddress: mocProxy.address,
+        governorAddress: governorMock.address,
+      });
 
       const initParams = {
         initializeBaseBucketParams: {

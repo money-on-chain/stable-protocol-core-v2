@@ -2,6 +2,7 @@ pragma solidity ^0.8.17;
 
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
@@ -52,9 +53,9 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
-    event AssetAdded(address indexed assetAddress_, address priceProviderAddress);
+    event AssetModified(address indexed assetAddress_, address priceProviderAddress);
+
     // ------- Custom Errors -------
-    error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
@@ -62,8 +63,8 @@ contract MocCAWrapper is MocUpgradable {
     struct AssetIndex {
         // asset index
         uint8 index;
-        // true if asset token exist
-        bool exist;
+        // true if asset token exists
+        bool exists;
     }
 
     // ------- Storage -------
@@ -108,7 +109,7 @@ contract MocCAWrapper is MocUpgradable {
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
-        SafeERC20.safeApprove(wcaToken, mocCoreAddress_, UINT256_MAX);
+        SafeERC20Upgradeable.safeApprove(wcaToken, mocCoreAddress_, UINT256_MAX);
     }
 
     // ------- Internal Functions -------
@@ -119,7 +120,7 @@ contract MocCAWrapper is MocUpgradable {
      * @return true if it is valid
      */
     function _isValidAsset(address assetAddress_) internal view returns (bool) {
-        return assetIndex[assetAddress_].exist;
+        return assetIndex[assetAddress_].exists;
     }
 
     /**
@@ -222,9 +223,9 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) internal validAsset(assetAddress_) {
         // get Collateral Token contract address
-        IERC20 tcToken = mocCore.tcToken();
+        IERC20Upgradeable tcToken = mocCore.tcToken();
         // transfer Collateral Token from sender to this address
-        SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
@@ -291,11 +292,11 @@ contract MocCAWrapper is MocUpgradable {
         bool isLiqRedeem_
     ) internal validAsset(assetAddress_) {
         // get Pegged Token contract address
-        IERC20 tpToken = mocCore.tpTokens(i_);
+        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
         // When liquidating, we extract all the user's balance
         if (isLiqRedeem_) qTP_ = tpToken.balanceOf(sender_);
         // transfer Pegged Token from sender to this address
-        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
@@ -491,21 +492,20 @@ contract MocCAWrapper is MocUpgradable {
 
     // ------- External Functions -------
     /**
-     * @notice add an asset to the whitelist
+     * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
      * @param priceProvider_ Asset Price Provider contract address
      */
-    function addAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
+    function addOrEditAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
-
-        if (assetIndex[address(asset_)].exist) revert AssetAlreadyAdded();
-        assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exist: true });
-
-        assets.push(asset_);
+        if (!assetIndex[address(asset_)].exists) {
+            assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exists: true });
+            assets.push(asset_);
+        }
         priceProviderMap[address(asset_)] = priceProvider_;
-        emit AssetAdded(address(asset_), address(priceProvider_));
+        emit AssetModified(address(asset_), address(priceProvider_));
     }
 
     /**
