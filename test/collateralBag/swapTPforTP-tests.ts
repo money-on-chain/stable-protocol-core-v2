@@ -67,9 +67,10 @@ describe("Feature: MocCABag swap TP for TP", function () {
           // sender: alice
           // receiver: alice
           // qTP: 2350 TP
+          // qAC: 5.1997% of 100 AC
           await expect(tx)
             .to.emit(mocWrapper, "TPSwapped")
-            .withArgs(assetDefault.address, TP_0, TP_1, alice, alice, pEth(2350));
+            .withArgs(assetDefault.address, TP_0, TP_1, alice, alice, pEth(2350), pEth("0.519978819444444440"));
         });
       });
       describe("WHEN alice swap 2350 TP 0 for TP 1 to bob", () => {
@@ -83,9 +84,10 @@ describe("Feature: MocCABag swap TP for TP", function () {
           // sender: alice
           // receiver: bob
           // qTP: 2350 TP
+          // qAC: 5.1997% of 100 AC
           await expect(tx)
             .to.emit(mocWrapper, "TPSwapped")
-            .withArgs(assetDefault.address, TP_0, TP_1, alice, bob, pEth(2350));
+            .withArgs(assetDefault.address, TP_0, TP_1, alice, bob, pEth(2350), pEth("0.519978819444444440"));
         });
       });
       describe("AND asset price provider is deprecated", () => {

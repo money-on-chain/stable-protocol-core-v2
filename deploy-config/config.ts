@@ -8,8 +8,8 @@ export const coreParams = {
   protThrld: PCT_BASE.mul(2), // 2
   liqThrld: PCT_BASE.mul(104).div(100), // 1.04
   emaCalculationBlockSpan: DAY_BLOCK_SPAN,
-  sf: PCT_BASE.mul(10).div(100), // 10%
-  fa: PCT_BASE.mul(50).div(100), // 50%
+  successFee: PCT_BASE.mul(10).div(100), // 10%
+  appreciationFactor: PCT_BASE.mul(50).div(100), // 50%
 };
 
 export const settlementParams = {
@@ -25,23 +25,23 @@ export const tcParams = {
 export const mocAddresses = {
   mainnet: {
     governorAddress: "",
-    stopperAddress: "",
+    pauserAddress: "",
     mocFeeFlowAddress: "",
     mocInterestCollectorAddress: "",
-    mocTurboAddress: "",
+    mocAppreciationBeneficiaryAddress: "",
   },
   rsktestnet: {
     governorAddress: "",
-    stopperAddress: "",
+    pauserAddress: "",
     mocFeeFlowAddress: "",
     mocInterestCollectorAddress: "",
-    mocTurboAddress: "",
+    mocAppreciationBeneficiaryAddress: "",
   },
   hardhat: {
     governorAddress: "0x26a00af444928d689dDEc7B4D17C0e4A8c9D407A",
-    stopperAddress: "0x26a00aF444928D689DDec7B4D17C0e4a8c9d407b",
+    pauserAddress: "0x26a00aF444928D689DDec7B4D17C0e4a8c9d407b",
     mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
     mocInterestCollectorAddress: "0x26a00AF444928D689DDeC7b4D17c0E4a8C9d407E",
-    mocTurboAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
+    mocAppreciationBeneficiaryAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
   },
 };

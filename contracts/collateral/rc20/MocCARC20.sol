@@ -28,23 +28,24 @@ contract MocCARC20 is MocCore {
      * @notice contract initializer
      * @param initializeParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
-     *      stopperAddress The address that is authorized to pause this contract
+     *      pauserAddress The address that is authorized to pause this contract
      *      acTokenAddress Collateral Asset Token contract address
      *      tcTokenAddress Collateral Token contract address
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocInterestCollectorAddress mocInterestCollector address
-     *      mocTurboAddress mocTurbo address
+     *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
      *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *      tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-     *      sf proportion of the devaluation that is transferred to MoC Fee Flow during the settlement [PREC]
-     *      fa proportion of the devaluation that is returned to Turbo during the settlement [PREC]
+     *      successFee pct of the gain because Pegged Tokens devaluation that is transferred
+     *        in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
+     *        in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
-        if (initializeParams_.acTokenAddress == address(0)) revert InvalidAddress();
         acToken = IMocRC20(initializeParams_.acTokenAddress);
         __MocCore_init(initializeParams_.initializeCoreParams);
     }

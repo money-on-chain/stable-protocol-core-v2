@@ -7,35 +7,27 @@ import "./Governed.sol";
   @notice Allow a contract to be paused through the stopper subsystem. This contracts
   is able to disable the stoppability feature through governance.
   @dev This contract was heavily based on the _Pausable_ contract of openzeppelin-eth but
-  it was modified in order to being able to turn on and off its stopability
+  it was modified in order to being able to turn on and off its stoppability
  */
-// TODO: review
 contract Stoppable is Governed {
     event Paused(address account);
     event Unpaused(address account);
 
     bool public stoppable;
     bool private _paused;
-    address public stopper;
-    string private constant UNSTOPPABLE = "unstoppable";
-    string private constant CONTRACT_IS_ACTIVE = "contract_is_active";
-    string private constant CONTRACT_IS_PAUSED = "contract_is_paused";
-    string private constant NOT_STOPPER = "not_stopper";
+    address public pauser;
 
-    /**
-    @notice Modifier to make a function callable only when the contract is enable
-    to be paused
-  */
-    modifier whenStoppable() {
-        require(stoppable, UNSTOPPABLE);
-        _;
-    }
+    // ------- Custom Errors -------
+    error Unstoppable();
+    error OnlyWhilePaused();
+    error NotAllowWhenPaused();
+    error OnlyPauser();
 
     /**
     @notice Modifier to make a function callable only when the contract is not paused
   */
     modifier whenNotPaused() {
-        require(!_paused, CONTRACT_IS_PAUSED);
+        if (_paused) revert NotAllowWhenPaused();
         _;
     }
 
@@ -43,15 +35,7 @@ contract Stoppable is Governed {
     @notice Modifier to make a function callable only when the contract is paused
     */
     modifier whenPaused() {
-        require(_paused, CONTRACT_IS_ACTIVE);
-        _;
-    }
-
-    /**
-    @notice  Modifier to make a function callable only by the pauser
-   */
-    modifier onlyPauser() {
-        require(stopper == msg.sender, NOT_STOPPER);
+        if (!_paused) revert OnlyWhilePaused();
         _;
     }
 
@@ -59,13 +43,12 @@ contract Stoppable is Governed {
     @notice Initialize the contract with the basic settings
     @dev This initialize replaces the constructor but it is not called automatically.
     It is necessary because of the upgradeability of the contracts. Either this function or the previous can be used
-    @param stopperAddress_ The address that is authorized to stop this contract
+    @param pauserAddress_ The address that is authorized to pause this contract
     @param stoppable_ Define if the contract starts being unstoppable or not
    */
-    function __Stoppable_init_unchained(address stopperAddress_, bool stoppable_) internal onlyInitializing {
-        if (stopperAddress_ == address(0)) revert InvalidAddress();
+    function __Stoppable_init_unchained(address pauserAddress_, bool stoppable_) internal onlyInitializing {
         stoppable = stoppable_;
-        stopper = stopperAddress_;
+        pauser = pauserAddress_;
     }
 
     /**
@@ -79,7 +62,9 @@ contract Stoppable is Governed {
     @notice Called by the owner to pause, triggers stopped state
     @dev Should only be called by the pauser and when it is stoppable
    */
-    function pause() public whenStoppable onlyPauser whenNotPaused {
+    function pause() public whenNotPaused {
+        if (msg.sender != pauser) revert OnlyPauser();
+        if (!stoppable) revert Unstoppable();
         _paused = true;
         emit Paused(msg.sender);
     }
@@ -87,7 +72,8 @@ contract Stoppable is Governed {
     /**
     @notice Called by the owner to unpause, returns to normal state
    */
-    function unpause() public onlyPauser whenPaused {
+    function unpause() public whenPaused {
+        if (msg.sender != pauser) revert OnlyPauser();
         _paused = false;
         emit Unpaused(msg.sender);
     }
@@ -111,16 +97,18 @@ contract Stoppable is Governed {
     }
 
     /**
-    @notice Changes the address which is enable to stop this contract
-    @param newStopper Address of the newStopper
+    @notice Changes the address which is enable to pause this contract
+    @param newPauser_ Address of the new pauser
     @dev Should be called through governance
    */
-    function setStopper(address newStopper) public onlyAuthorizedChanger {
-        if (newStopper == address(0)) revert InvalidAddress();
-        stopper = newStopper;
+    function setPauser(address newPauser_) public onlyAuthorizedChanger {
+        pauser = newPauser_;
     }
 
-    // Leave a gap betweeen inherited contracts variables in order to be
-    // able to add more variables in them later
-    uint256[50] private upgradeGap;
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

@@ -1,6 +1,6 @@
 import { fixtureDeployedMocCABag } from "./fixture";
 import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
-import { deployAsset, deployPriceProvider, pEth, CONSTANTS, ERRORS } from "../helpers/utils";
+import { deployAsset, deployPriceProvider, pEth, ERRORS } from "../helpers/utils";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
 
@@ -26,19 +26,6 @@ describe("Feature: MocCAWrapper", function () {
           mocWrapper,
           ERRORS.ASSET_ALREADY_ADDED,
         );
-      });
-    });
-    describe("WHEN add an asset with invalid asset address", () => {
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(
-          mocWrapper.addAsset(CONSTANTS.ZERO_ADDRESS, priceProvider00.address),
-        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
-      });
-    });
-    describe("WHEN add an asset with invalid price provider address", () => {
-      // revert without reason string trying to peek price to address zero
-      it("THEN tx fails because address is the zero address", async () => {
-        await expect(mocWrapper.addAsset(asset00.address, CONSTANTS.ZERO_ADDRESS)).to.be.reverted;
       });
     });
     describe("WHEN add an asset with a deprecated price provider", () => {

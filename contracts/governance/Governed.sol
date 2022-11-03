@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /**
   @title Governed
   @notice Base contract to be inherited by governed contracts
-  @dev This contract is not usable on its own since it does not have any _productive useful_ behaviour
+  @dev This contract is not usable on its own since it does not have any _productive useful_ behavior
   The only purpose of this contract is to define some useful modifiers and functions to be used on the
   governance aspect of the child contract
   */
@@ -40,7 +40,6 @@ abstract contract Governed is Initializable, MocHelper {
     }
 
     function __Governed_init_unchained(address governorAddress_) internal onlyInitializing {
-        if (governorAddress_ == address(0)) revert InvalidAddress();
         governor = IGovernor(governorAddress_);
     }
 
@@ -49,7 +48,6 @@ abstract contract Governed is Initializable, MocHelper {
     @param newGovernor_ New governor address
    */
     function changeGovernor(IGovernor newGovernor_) public onlyAuthorizedChanger {
-        if (address(newGovernor_) == address(0)) revert InvalidAddress();
         governor = newGovernor_;
     }
 
@@ -60,7 +58,10 @@ abstract contract Governed is Initializable, MocHelper {
         if (!governor.isAuthorizedChanger(msg.sender)) revert NotAuthorizedChanger();
     }
 
-    // Leave a gap betweeen inherited contracts variables in order to be
-    // able to add more variables in them later
-    uint256[50] private upgradeGap;
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

@@ -27,8 +27,8 @@ abstract contract UpgraderUUPSChangerTemplate is IChangeContract {
     /**
     @notice Execute the changes.
     @dev Should be called by the governor, but this contract does not check that explicitly
-    because it is not its responsability in the current architecture
-    IMPORTANT: This function should not be overriden, you should only redefine
+    because it is not its responsibility in the current architecture
+    IMPORTANT: This function should not be overridden, you should only redefine
     _beforeUpgrade and _afterUpgrade methods to use this template
    */
     function execute() external {
@@ -39,7 +39,7 @@ abstract contract UpgraderUUPSChangerTemplate is IChangeContract {
 
     /**
     @notice Upgrade the proxy to the newImplementation
-    @dev IMPORTANT: This function should not be overriden
+    @dev IMPORTANT: This function should not be overridden
    */
     function _upgrade() internal {
         proxy.upgradeTo(newImplementation);
@@ -47,14 +47,14 @@ abstract contract UpgraderUUPSChangerTemplate is IChangeContract {
 
     /**
     @notice Intended to prepare the system for the upgrade
-    @dev This function can be overriden by child changers to upgrade contracts that
+    @dev This function can be overridden by child changers to upgrade contracts that
     require some preparation before the upgrade
    */
     function _beforeUpgrade() internal virtual;
 
     /**
     @notice Intended to do the final tweaks after the upgrade, for example initialize the contract
-    @dev This function can be overriden by child changers to upgrade contracts that
+    @dev This function can be overridden by child changers to upgrade contracts that
     require some changes after the upgrade
    */
     function _afterUpgrade() internal virtual;

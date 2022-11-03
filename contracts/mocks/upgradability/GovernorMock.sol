@@ -5,9 +5,11 @@ import "../../interfaces/IChangeContract.sol";
 
 /**
   @title GovernorMock
-  @dev Test only contract to mock Governor behaviour 
+  @dev Test only contract to mock Governor behavior 
 */
 contract GovernorMock is IGovernor {
+    bool public isAuthorized = true;
+
     /**
     @notice Function to be called to make the changes in changeContract
     @param changeContract Address of the contract that will execute the changes
@@ -16,7 +18,11 @@ contract GovernorMock is IGovernor {
         changeContract.execute();
     }
 
-    function isAuthorizedChanger(address) external pure returns (bool) {
-        return true;
+    function isAuthorizedChanger(address) external view override returns (bool) {
+        return isAuthorized;
+    }
+
+    function setIsAuthorized(bool isAuthorized_) public {
+        isAuthorized = isAuthorized_;
     }
 }

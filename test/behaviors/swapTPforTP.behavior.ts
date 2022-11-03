@@ -421,17 +421,18 @@ const swapTPforTPBehavior = function () {
           });
         });
       });
-      describe("AND TP 0 devalues to 47000", function () {
+      describe("AND TP 0 devalues to 470", function () {
         /*
           nAC = 3100    
-          nTP = 23500
-          lckAC = 0.5
-          coverage = 6200
+          nTP = 23500 + 11750
+          lckAC = 50 + 25
+          nACgain = 5
+          coverage = 121.37
         */
         beforeEach(async function () {
-          await mocFunctions.pokePrice(TP_0, 47000);
+          await mocFunctions.pokePrice(TP_0, 470);
         });
-        describe("WHEN alice swap 23500 TP 0 for 2.625 TP 1", function () {
+        describe("WHEN alice swap 23500 TP 0 for 262.5 TP 1", function () {
           /*
             ctargemaTP0 = 5
             ctargemaTP1 = 4
@@ -443,15 +444,15 @@ const swapTPforTPBehavior = function () {
             // go forward to a fixed block remaining for settlement to avoid unpredictability
             const bns = await mocContracts.mocSettlement.bns();
             await mineUpTo(bns.sub(fixedBlock));
-            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23500, qTPmin: 2.625 });
+            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23500, qTPmin: 262.5 });
           });
           it("THEN coverage didn´t change", async function () {
             assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
           });
-          it("THEN alice balance decrease 5.1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 0.5 Asset", async function () {
+          it("THEN alice balance decrease 5.1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 50 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("0.025993859953703703", diff);
+            assertPrec("2.599385995370370350", diff);
           });
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
@@ -461,7 +462,7 @@ const swapTPforTPBehavior = function () {
             // sender: alice || mocWrapper
             // receiver: Moc
             // qTP: 23500 TP
-            // qAC: 0.5 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+            // qAC: 50 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
             // qACfee: 5% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
@@ -471,24 +472,24 @@ const swapTPforTPBehavior = function () {
                 mocContracts.mocWrapper?.address || alice,
                 mocContracts.mocImpl.address,
                 pEth(23500),
-                pEth("0.474506140046296297"),
-                pEth(0.5 * 0.05),
-                pEth("0.000493859953703703"),
+                pEth("47.450614004629629650"),
+                pEth(50 * 0.05),
+                pEth("0.049385995370370350"),
               );
           });
           it("THEN a TPMinted event is emitted", async function () {
             // i: 1
             // sender: Moc
             // receiver: alice
-            // qTP: 2.625 TP
-            // qAC: 0.5 AC + 0.1% for Moc Fee Flow
+            // qTP: 262.5 TP
+            // qAC: 50 AC + 0.1% for Moc Fee Flow
             // qACfee: 0.1% AC
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPMinted")
-              .withArgs(TP_1, mocContracts.mocImpl.address, alice, pEth(2.625), pEth("0.5005"), pEth("0.0005"));
+              .withArgs(TP_1, mocContracts.mocImpl.address, alice, pEth(262.5), pEth(50 * 1.001), pEth(50 * 0.001));
           });
         });
-        describe("WHEN alice swap 2350 TP 0 for 0.2625 TP 4", function () {
+        describe("WHEN alice swap 2350 TP 0 for 26.25 TP 4", function () {
           /*
             ctargemaTP0 = 5
             ctargemaTP4 = 6
@@ -500,15 +501,15 @@ const swapTPforTPBehavior = function () {
             // go forward to a fixed block remaining for settlement to avoid unpredictability
             const bns = await mocContracts.mocSettlement.bns();
             await mineUpTo(bns.sub(fixedBlock));
-            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_4, from: alice, qTP: 2350, qTPmin: "0.2625" });
+            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_4, from: alice, qTP: 2350, qTPmin: 26.25 });
           });
           it("THEN coverage didn´t change", async function () {
             assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
           });
-          it("THEN alice balance decrease 5.1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 0.05 Asset", async function () {
+          it("THEN alice balance decrease 5.1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 5 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("0.002599385995370370", diff);
+            assertPrec("0.259938599537037035", diff);
           });
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
@@ -518,7 +519,7 @@ const swapTPforTPBehavior = function () {
             // sender: alice || mocWrapper
             // receiver: Moc
             // qTP: 2350 TP
-            // qAC: 0.05 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+            // qAC: 5 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
             // qACfee: 5% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
@@ -528,21 +529,21 @@ const swapTPforTPBehavior = function () {
                 mocContracts.mocWrapper?.address || alice,
                 mocContracts.mocImpl.address,
                 pEth(2350),
-                pEth("0.047450614004629630"),
-                pEth("0.0025"),
-                pEth("0.000049385995370370"),
+                pEth("4.745061400462962965"),
+                pEth(5 * 0.05),
+                pEth("0.004938599537037035"),
               );
           });
           it("THEN a TPMinted event is emitted", async function () {
             // i: 4
             // sender: Moc
             // receiver: alice
-            // qTP: 0.2625 TP
-            // qAC: 0.05 AC + 0.1% for Moc Fee Flow
+            // qTP: 26.25 TP
+            // qAC: 5 AC + 0.1% for Moc Fee Flow
             // qACfee: 0.1% AC
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPMinted")
-              .withArgs(TP_4, mocContracts.mocImpl.address, alice, pEth("0.2625"), pEth("0.05005"), pEth("0.00005"));
+              .withArgs(TP_4, mocContracts.mocImpl.address, alice, pEth(26.25), pEth(5 * 1.001), pEth(5 * 0.001));
           });
         });
       });

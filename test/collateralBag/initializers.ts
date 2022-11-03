@@ -3,42 +3,47 @@ import { Address } from "hardhat-deploy/types";
 import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 
-const { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocTurboAddress } =
-  mocAddresses["hardhat"];
+const {
+  governorAddress,
+  pauserAddress,
+  mocFeeFlowAddress,
+  mocInterestCollectorAddress,
+  mocAppreciationBeneficiaryAddress,
+} = mocAddresses["hardhat"];
 
 export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocSettlement: Address) {
   return ({
     mocGovernorAddress = governorAddress,
-    mocStopperAddress = stopperAddress,
+    mocPauserAddress = pauserAddress,
     wcaTokenAddress = wcaToken,
     mocTCAddress = mocTC,
     mocSettlementAddress = mocSettlement,
     feeFlowAddress = mocFeeFlowAddress,
     interestCollectorAddress = mocInterestCollectorAddress,
-    turboAddress = mocTurboAddress,
+    appreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
     tcMintFee = tcParams.mintFee,
     tcRedeemFee = tcParams.redeemFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
-    sf = coreParams.sf,
-    fa = coreParams.fa,
+    successFee = coreParams.successFee,
+    appreciationFactor = coreParams.appreciationFactor,
   }: {
     mocGovernorAddress?: Address;
-    mocStopperAddress?: Address;
+    mocPauserAddress?: Address;
     wcaTokenAddress?: Address;
     mocTCAddress?: Address;
     mocSettlementAddress?: Address;
     feeFlowAddress?: Address;
     interestCollectorAddress?: Address;
-    turboAddress?: Address;
+    appreciationBeneficiaryAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
     tcMintFee?: BigNumberish;
     tcRedeemFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
-    sf?: BigNumberish;
-    fa?: BigNumberish;
+    successFee?: BigNumberish;
+    appreciationFactor?: BigNumberish;
   } = {}) => {
     return mocCARC20.initialize({
       initializeCoreParams: {
@@ -47,16 +52,16 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           mocSettlementAddress,
           mocFeeFlowAddress: feeFlowAddress,
           mocInterestCollectorAddress: interestCollectorAddress,
-          mocTurboAddress: turboAddress,
+          mocAppreciationBeneficiaryAddress: appreciationBeneficiaryAddress,
           protThrld,
           liqThrld,
           tcMintFee,
           tcRedeemFee,
-          sf,
-          fa,
+          successFee,
+          appreciationFactor,
         },
         governorAddress: mocGovernorAddress,
-        stopperAddress: mocStopperAddress,
+        pauserAddress: mocPauserAddress,
         emaCalculationBlockSpan,
       },
       acTokenAddress: wcaTokenAddress,

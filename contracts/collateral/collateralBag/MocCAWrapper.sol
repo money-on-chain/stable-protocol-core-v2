@@ -5,7 +5,7 @@ import "../rc20/MocCARC20.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
- * @notice Wrappes a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
+ * @notice Wraps a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
  *  Moc Collateral Asset Bag protocol implementation
  */
 contract MocCAWrapper is MocUpgradable {
@@ -58,7 +58,8 @@ contract MocCAWrapper is MocUpgradable {
         uint8 iTo_,
         address indexed sender_,
         address indexed recipient_,
-        uint256 qTP_
+        uint256 qTP_,
+        uint256 qAsset_
     );
     event AssetAdded(address indexed assetAddress_, address priceProviderAddress);
     // ------- Custom Errors -------
@@ -102,19 +103,17 @@ contract MocCAWrapper is MocUpgradable {
     /**
      * @notice contract initializer
      * @param governorAddress_ The address that will define when a change contract is authorized
-     * @param stopperAddress_ The address that is authorized to pause this contract
+     * @param pauserAddress_ The address that is authorized to pause this contract
      * @param mocCoreAddress_ Moc Core contract address
      * @param wcaTokenAddress_ Wrapped Collateral Asset Token contract address
      */
     function initialize(
         address governorAddress_,
-        address stopperAddress_,
+        address pauserAddress_,
         address mocCoreAddress_,
         address wcaTokenAddress_
     ) external initializer {
-        if (mocCoreAddress_ == address(0)) revert InvalidAddress();
-        if (wcaTokenAddress_ == address(0)) revert InvalidAddress();
-        __MocUpgradable_init(governorAddress_, stopperAddress_);
+        __MocUpgradable_init(governorAddress_, pauserAddress_);
         mocCore = MocCARC20(mocCoreAddress_);
         wcaToken = IMocRC20(wcaTokenAddress_);
         // infinite allowance to Moc Core
@@ -179,10 +178,10 @@ contract MocCAWrapper is MocUpgradable {
         // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
         // [PREC]
         uint256 wcaTokenPrice = getTokenPrice();
-        // multply by wcaTokenAmount_ to get how many currency we need
+        // multiply by wcaTokenAmount_ to get how many currency we need
         // [PREC] = [PREC] * [N]
         uint256 currencyNeeded = wcaTokenPrice * wcaTokenAmount_;
-        // divide currencyNedded by asset price to get how many assets we need
+        // divide currencyNeeded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
         return currencyNeeded / _getAssetPrice(priceProviderMap[assetAddress_]);
     }
@@ -236,7 +235,7 @@ contract MocCAWrapper is MocUpgradable {
         // transfer Collateral Token from sender to this address
         SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
-        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
         // send Asset to the recipient
@@ -307,7 +306,7 @@ contract MocCAWrapper is MocUpgradable {
         // transfer Pegged Token from sender to this address
         SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
-        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed;
         if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
@@ -421,30 +420,11 @@ contract MocCAWrapper is MocUpgradable {
         SafeERC20.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
         // transfer unused Pegged Token to the sender
         SafeERC20.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
-        // emit event
-        _emitTCandTPRedeemed(assetAddress_, i_, sender_, recipient_, qTCtoRedeem, qTPtoRedeem, assetRedeemed);
-    }
-
-    /**
-     * @notice emit TCandTPRedeemed event. Used to avoid stack to deep error
-     * @param assetAddress_ Asset contract address
-     * @param i_ Pegged Token index
-     * @param sender_ address who sends Collateral Token and Pegged Token
-     * @param recipient_ address who receives the Asset
-     * @param qTCredeemed_ amount of Collateral Token redeemed
-     * @param qTPredeemed_ amount of Pegged Token redeemed
-     * @param assetRedeemed_ amount of Assets that `recipient_` received
-     */
-    function _emitTCandTPRedeemed(
-        address assetAddress_,
-        uint8 i_,
-        address sender_,
-        address recipient_,
-        uint256 qTCredeemed_,
-        uint256 qTPredeemed_,
-        uint256 assetRedeemed_
-    ) internal {
-        emit TCandTPRedeemed(assetAddress_, i_, sender_, recipient_, qTCredeemed_, qTPredeemed_, assetRedeemed_);
+        // inside a block to avoid stack too deep error
+        {
+            address assetAddress = assetAddress_;
+            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTCtoRedeem, qTPtoRedeem, assetRedeemed);
+        }
     }
 
     /**
@@ -478,8 +458,16 @@ contract MocCAWrapper is MocUpgradable {
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
-        emit TPSwapped(assetAddress_, iFrom_, iTo_, sender_, recipient_, qTP_);
+        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        // inside a block to avoid stack too deep error
+        {
+            address assetAddress = assetAddress_;
+            uint8 iFrom = iFrom_;
+            uint8 iTo = iTo_;
+            uint256 qTP = qTP_;
+            uint256 qAssetUsed = qAssetMax_ - assetUnused;
+            emit TPSwapped(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qAssetUsed);
+        }
     }
 
     /**
@@ -559,23 +547,20 @@ contract MocCAWrapper is MocUpgradable {
     // ------- External Functions -------
     /**
      * @notice add an asset to the whitelist
-     * TODO: this function should be called only through governance system
-     * @param assetAddress_ Asset contract address
-     * @param priceProviderAddress_ Asset Price Provider contract address
+     * @param asset_ Asset contract address
+     * @param priceProvider_ Asset Price Provider contract address
      */
-    function addAsset(address assetAddress_, address priceProviderAddress_) external {
-        if (assetAddress_ == address(0)) revert InvalidAddress();
-        IPriceProvider priceProvider = IPriceProvider(priceProviderAddress_);
+    function addAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
         // verifies it is a valid priceProvider
-        (, bool has) = priceProvider.peek();
+        (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
 
-        if (assetIndex[address(assetAddress_)].exist) revert AssetAlreadyAdded();
-        assetIndex[address(assetAddress_)] = AssetIndex({ index: uint8(assets.length), exist: true });
+        if (assetIndex[address(asset_)].exist) revert AssetAlreadyAdded();
+        assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exist: true });
 
-        assets.push(IERC20(assetAddress_));
-        priceProviderMap[assetAddress_] = priceProvider;
-        emit AssetAdded(assetAddress_, priceProviderAddress_);
+        assets.push(asset_);
+        priceProviderMap[address(asset_)] = priceProvider_;
+        emit AssetAdded(address(asset_), address(priceProvider_));
     }
 
     /**
