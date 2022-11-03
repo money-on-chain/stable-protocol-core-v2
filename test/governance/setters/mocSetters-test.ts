@@ -61,6 +61,12 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.protThrld()).to.be.equal(45);
       });
     });
+    describe(`WHEN setLiqThrld is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setLiqThrld(46);
+        expect(await mocProxy.liqThrld()).to.be.equal(46);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -97,6 +103,11 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setProtThrld is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setProtThrld(42));
+      });
+    });
+    describe("WHEN setLiqThrld is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setLiqThrld(42));
       });
     });
   });
