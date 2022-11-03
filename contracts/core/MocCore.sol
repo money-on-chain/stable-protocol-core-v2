@@ -332,11 +332,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         qTPtoMint = qTP_;
-        uint256 lckAC = _getLckAC();
-        uint256 nACtoMint = _getACtoMint(lckAC);
-        uint256 pTCac = _getPTCac(lckAC, nACtoMint);
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        uint256 pTCac = _getPTCac(lckAC, nACgain);
         uint256 pACtp = _getPACtp(i_);
-        uint256 cglbMinusOne = _getCglb(lckAC, nACtoMint) - ONE;
+        uint256 cglbMinusOne = _getCglb(lckAC, nACgain) - ONE;
         // PREC^2] = [PREC] * [PREC]
         uint256 pTCacMulPTCac = pTCac * pACtp;
         // calculate how many TC are needed to mint TP and not change coverage

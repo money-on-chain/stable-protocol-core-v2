@@ -393,13 +393,13 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) internal validAsset(assetAddress_) {
         // get Collateral Token contract address
-        IERC20 tcToken = mocCore.tcToken();
+        IERC20Upgradeable tcToken = mocCore.tcToken();
         // get Pegged Token contract address
-        IERC20 tpToken = mocCore.tpTokens(i_);
+        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
         // transfer Collateral Token from sender to this address
-        SafeERC20.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
         // transfer Pegged Token from sender to this address
-        SafeERC20.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
         // checking it after with qAssetMin
@@ -418,9 +418,9 @@ contract MocCAWrapper is MocUpgradable {
             recipient_
         );
         // transfer unused Collateral Token to the sender
-        SafeERC20.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
+        SafeERC20Upgradeable.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
         // transfer unused Pegged Token to the sender
-        SafeERC20.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
+        SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
@@ -451,9 +451,10 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) internal validAsset(assetAddress_) {
         uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
-
+        // get Pegged Token contract address
+        IERC20Upgradeable tpTokenFrom = IERC20Upgradeable(mocCore.tpTokens(iFrom_));
         // transfer Pegged Token from sender to this address
-        SafeERC20.safeTransferFrom(mocCore.tpTokens(iFrom_), sender_, address(this), qTP_);
+        SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, sender_, address(this), qTP_);
         uint256 wcaUsed = mocCore.swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, wcaMinted, recipient_);
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
