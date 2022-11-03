@@ -34,9 +34,8 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
-    event AssetAdded(address indexed assetAddress_, address priceProviderAddress);
+    event AssetModified(address indexed assetAddress_, address priceProviderAddress);
     // ------- Custom Errors -------
-    error AssetAlreadyAdded();
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
@@ -44,8 +43,8 @@ contract MocCAWrapper is MocUpgradable {
     struct AssetIndex {
         // asset index
         uint8 index;
-        // true if asset token exist
-        bool exist;
+        // true if asset token exists
+        bool exists;
     }
 
     // ------- Storage -------
@@ -101,7 +100,7 @@ contract MocCAWrapper is MocUpgradable {
      * @return true if it is valid
      */
     function _isValidAsset(address assetAddress_) internal view returns (bool) {
-        return assetIndex[assetAddress_].exist;
+        return assetIndex[assetAddress_].exists;
     }
 
     /**
@@ -333,21 +332,20 @@ contract MocCAWrapper is MocUpgradable {
 
     // ------- External Functions -------
     /**
-     * @notice add an asset to the whitelist
+     * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
      * @param priceProvider_ Asset Price Provider contract address
      */
-    function addAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
+    function addOrEditAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
-
-        if (assetIndex[address(asset_)].exist) revert AssetAlreadyAdded();
-        assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exist: true });
-
-        assets.push(asset_);
+        if (!assetIndex[address(asset_)].exists) {
+            assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exists: true });
+            assets.push(asset_);
+        }
         priceProviderMap[address(asset_)] = priceProvider_;
-        emit AssetAdded(address(asset_), address(priceProvider_));
+        emit AssetModified(address(asset_), address(priceProvider_));
     }
 
     /**

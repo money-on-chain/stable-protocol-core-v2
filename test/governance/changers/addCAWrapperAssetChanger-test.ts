@@ -35,7 +35,7 @@ describe("Feature: Governance protected CA Wrapper Asset addition ", () => {
     describe("WHEN a the governor executes the changer contract", () => {
       it("THEN the new Asset is added", async function () {
         await expect(governor.executeChange(changeContract.address))
-          .to.emit(mocCAWrapper, "AssetAdded")
+          .to.emit(mocCAWrapper, "AssetModified")
           .withArgs(newAsset.address, priceProvider.address);
       });
     });
