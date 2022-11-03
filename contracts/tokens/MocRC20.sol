@@ -1,32 +1,60 @@
 pragma solidity ^0.8.17;
 
 import "../interfaces/IMocRC20.sol";
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "../governance/Governed.sol";
 
 /**
  * @title MocRC20
  * @notice Base Moc ERC20 Token: burn, mint. It can be both Pegs and Collateral Tokens.
  * @dev ERC20 like token that allows roles allowed contracts to mint and burn (destroyed) any token.
  */
-contract MocRC20 is AccessControlEnumerable, ERC20, IMocRC20 {
+contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeable, UUPSUpgradeable, Governed {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * See {__MocRC20_init}.
+     */
+    function initialize(
+        string memory name_,
+        string memory symbol_,
+        address admin_,
+        IGovernor governor_
+    ) external virtual initializer {
+        __MocRC20_init(name_, symbol_, admin_, governor_);
+    }
 
     /**
      * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` & `BURNER_ROLE` to `admin` address.
      *
-     * See {ERC20-constructor}.
+     * See {ERC20_init}.
      */
-    constructor(
+    function __MocRC20_init(
         string memory name_,
         string memory symbol_,
-        address admin_
-    ) ERC20(name_, symbol_) {
+        address admin_,
+        IGovernor governor_
+    ) internal onlyInitializing {
+        __ERC20_init(name_, symbol_);
+        __AccessControlEnumerable_init();
+        __UUPSUpgradeable_init();
+        __Governed_init(address(governor_));
+
         _setupRole(DEFAULT_ADMIN_ROLE, admin_);
         _setupRole(MINTER_ROLE, admin_);
         _setupRole(BURNER_ROLE, admin_);
     }
+
+    /* solhint-disable-next-line no-empty-blocks */
+    function _authorizeUpgrade(address newImplementation) internal override onlyAuthorizedChanger {}
 
     /**
      * @dev Creates `amount` new tokens for `to`.

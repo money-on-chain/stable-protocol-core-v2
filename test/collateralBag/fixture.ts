@@ -47,12 +47,12 @@ export function fixtureDeployedMocCABag(
       signer,
     );
 
-    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
-    if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
+    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
+    if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
     const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
-    const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAsset");
-    if (!deployedWCAContract) throw new Error("No WrappedCollateralAsset deployed.");
+    const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAssetProxy");
+    if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");
     const wcaToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
     const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);

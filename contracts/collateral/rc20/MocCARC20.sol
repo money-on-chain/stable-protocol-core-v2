@@ -37,7 +37,7 @@ contract MocCARC20 is MocCore {
 
     // ------- Storage -------
     // Collateral Asset token
-    IMocRC20 private acToken;
+    IERC20 private acToken;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -62,7 +62,7 @@ contract MocCARC20 is MocCore {
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
-        acToken = IMocRC20(initializeParams_.acTokenAddress);
+        acToken = IERC20(initializeParams_.acTokenAddress);
         __MocCore_init(
             initializeParams_.governorAddress,
             initializeParams_.stopperAddress,

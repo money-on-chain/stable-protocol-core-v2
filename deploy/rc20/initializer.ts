@@ -29,8 +29,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     signer,
   );
 
-  const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
-  if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
+  const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
   const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
   //TODO: for live deployments we need to receive the Collateral Asset address
@@ -52,6 +52,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   // initializations
+  await waitForTxConfirmation(
+    CollateralToken.initialize("CollateralToken", "CollateralToken", deployedMocContract.address, governorAddress),
+  );
   await waitForTxConfirmation(
     mocCARC20.initialize(
       {

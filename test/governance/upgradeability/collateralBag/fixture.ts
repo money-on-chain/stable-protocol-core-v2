@@ -27,8 +27,8 @@ export function fixtureDeployGovernance(): () => Promise<{
     const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
     if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
 
-    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBag");
-    if (!deployedTCContract) throw new Error("No CollateralTokenCARBag deployed.");
+    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
+    if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
 
     const mockAddress = deployer;
     // initializations

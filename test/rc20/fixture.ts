@@ -38,8 +38,8 @@ export function fixtureDeployedMocRC20(
       signer,
     );
 
-    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20");
-    if (!deployedTCContract) throw new Error("No CollateralTokenCARC20 deployed.");
+    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
+    if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
     const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
     const deployedERC20MockContract = await deployments.getOrNull("CollateralAssetCARC20");

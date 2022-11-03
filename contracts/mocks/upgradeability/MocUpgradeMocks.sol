@@ -1,7 +1,7 @@
 pragma solidity 0.8.17;
 
 // This contract is not intended to be used in a production system
-// It was designed to be using in a testing environment only
+// It was designed to be used in a testing environment only
 
 import "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
 import "../../collateral/coinbase/MocCACoinbase.sol";
@@ -10,7 +10,7 @@ import "../../collateral/collateralBag/MocCAWrapper.sol";
 
 /**
  * @title UpgradableMock
- * @dev Only for upgradability testing purpuses. Generic contract for initiliaze a mock and get a custom method.
+ * @dev Only for upgradeability testing purposes. Generic contract for initialize a mock and get a custom method.
  */
 abstract contract UpgradableMock {
     uint256 public newVariable;

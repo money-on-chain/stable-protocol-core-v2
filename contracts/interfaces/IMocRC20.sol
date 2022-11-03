@@ -1,12 +1,12 @@
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * @title IMocRC20
  * @notice Base Moc ERC20 Token Interface: burn, mint. It can be both Pegs and Collateral Tokens.
  */
-interface IMocRC20 is IERC20 {
+interface IMocRC20 is IERC20Upgradeable {
     /**
      * @dev Creates `amount` new tokens for `to`.
      * See {ERC20-_mint}.
