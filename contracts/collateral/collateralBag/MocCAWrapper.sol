@@ -331,7 +331,7 @@ contract MocCAWrapper is MocUpgradable {
     ) internal validAsset(assetAddress_) {
         uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
         // get Pegged Token contract address
-        IERC20Upgradeable tpTokenFrom = IERC20Upgradeable(mocCore.tpTokens(iFrom_));
+        IERC20Upgradeable tpTokenFrom = mocCore.tpTokens(iFrom_);
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, sender_, address(this), qTP_);
         uint256 wcaUsed = mocCore.swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, wcaMinted, recipient_);
