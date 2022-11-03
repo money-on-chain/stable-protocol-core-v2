@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { tpParamsDefault } from "../../helpers/utils";
-import { fixtureDeployGovernance } from "../upgradability/coinbase/fixture";
+import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
 import {
   IChangeContract__factory,
   MocCACoinbase,
@@ -29,7 +29,7 @@ describe("Feature: Governance protected Pegged Token edition ", () => {
   before(async () => {
     ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
     let deployAddChanger;
-    ({ deployAddChanger, mocPeggedToken, priceProvider } = await deployChangerClosure(mocProxy.address)());
+    ({ deployAddChanger, mocPeggedToken, priceProvider } = await deployChangerClosure(mocProxy)());
     const addChangerContract = await deployAddChanger();
     governor.executeChange(addChangerContract.address);
 

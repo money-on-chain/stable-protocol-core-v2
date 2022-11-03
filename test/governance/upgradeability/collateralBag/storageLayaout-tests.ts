@@ -23,7 +23,7 @@ describe("Feature: Check MocCAWrapper storage layout compatibility using openzep
       });
 
       const mocWCAFactory = await ethers.getContractFactory("MocRC20");
-      const mocWCA = await mocWCAFactory.deploy("mocWCA", "WCA", mocProxy.address);
+      const mocWCA = await mocWCAFactory.deploy();
 
       const mocImpl = MocCAWrapper__factory.connect(mocProxy.address, ethers.provider.getSigner());
       await mocImpl.initialize(governorMock.address, deployer, deployer, mocWCA.address, { gasLimit: GAS_LIMIT_PATCH });

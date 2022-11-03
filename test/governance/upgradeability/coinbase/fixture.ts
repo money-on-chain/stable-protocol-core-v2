@@ -3,7 +3,7 @@ import { Contract } from "ethers";
 import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
 import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../../scripts/utils";
 import { coreParams, tcParams, mocAddresses } from "../../../../deploy-config/config";
-import { deployAeropagusGovernor } from "../../../helpers/utils";
+import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 
 export function fixtureDeployGovernance(): () => Promise<{
   governor: Contract;
@@ -25,8 +25,10 @@ export function fixtureDeployGovernance(): () => Promise<{
 
     const governor = await deployAeropagusGovernor(deployer);
 
-    const mocTCFactory = await ethers.getContractFactory("MocTC");
-    const mocTC = await mocTCFactory.deploy("mocCT", "CT", deployMocProxy.address);
+    const mocTC = await deployCollateralToken({
+      adminAddress: deployMocProxy.address,
+      governorAddress: governor.address,
+    });
 
     const mockAddress = deployer;
     let { pauserAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocAppreciationBeneficiaryAddress } =
