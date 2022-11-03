@@ -1,7 +1,7 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { MocTC } from "../../typechain";
-import { MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, DEFAULT_ADMIN_ROLE } from "../helpers/utils";
+import { MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, DEFAULT_ADMIN_ROLE, deployCollateralToken } from "../helpers/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Address } from "hardhat-deploy/types";
 
@@ -11,9 +11,9 @@ describe("Feature: Moc Tokens Role Access restrictions", () => {
   let aliceSigner: SignerWithAddress;
   describe("GIVEN there is a MocTC", () => {
     before(async () => {
-      const MocTCFactory = await ethers.getContractFactory("MocTC");
       ({ alice, deployer, otherUser: roleAdmin } = await getNamedAccounts());
-      token = (await MocTCFactory.deploy("TestMocRC20", "TestMocRC20", roleAdmin)).connect(
+      const fakeGovernor = deployer; // Governor is not relevant for this tests
+      token = (await deployCollateralToken({ adminAddress: roleAdmin, governorAddress: fakeGovernor })).connect(
         await ethers.getSigner(roleAdmin),
       );
       aliceSigner = await ethers.getSigner(alice);

@@ -8,7 +8,7 @@ import {
   MocSettlement,
 } from "../../typechain";
 import { expect } from "chai";
-import { ERRORS, CONSTANTS } from "../helpers/utils";
+import { ERRORS, CONSTANTS, deployCollateralToken } from "../helpers/utils";
 import { mocInitialize } from "./initializers";
 import { mocAddresses } from "../../deploy-config/config";
 import { ethers, deployments } from "hardhat";
@@ -79,10 +79,12 @@ describe("Feature: MocCABag initialization", function () {
       const mocCARC20ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
       const proxy = await mocCARC20ProxyFactory.deploy(mocCARC20Impl.address, "0x");
 
-      const mocTCFactory = await ethers.getContractFactory("MocTC");
-      const newMocTC = await mocTCFactory.deploy("mocCT", "CT", proxy.address);
-
       const newMocImpl = MocCARC20__factory.connect(proxy.address, ethers.provider.getSigner());
+
+      const newMocTC = await deployCollateralToken({
+        adminAddress: proxy.address,
+        governorAddress: await newMocImpl.governor(),
+      });
       newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address, mocSettlement.address);
     });
     describe("WHEN it is initialized with invalid protThrld value", () => {

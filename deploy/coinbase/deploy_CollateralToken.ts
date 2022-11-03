@@ -1,26 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { GAS_LIMIT_PATCH } from "../../scripts/utils";
+import { deployUUPSArtifact } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployments, getNamedAccounts } = hre;
-  const { deployer } = await getNamedAccounts();
-  const { deploy } = deployments;
-
-  const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
-  if (!deployedMocContractProxy) throw new Error("No MocCACoinbaseProxy deployed.");
-
-  const deployResult = await deploy("CollateralTokenCoinbase", {
-    contract: "MocTC",
-    from: deployer,
-    gasLimit: GAS_LIMIT_PATCH,
-    args: ["CollateralToken", "CollateralToken", deployedMocContractProxy.address],
-  });
-  console.log(`MocTC, as CollateralTokenCoinbase, deployed at ${deployResult.address}`);
+  await deployUUPSArtifact(hre, "CollateralTokenCoinbase", "MocTC");
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 
 deployFunc.id = "deployed_CollateralTokenCoinbase"; // id required to prevent re-execution
 deployFunc.tags = ["CollateralTokenCoinbase"];
-deployFunc.dependencies = ["MocCACoinbase"];
