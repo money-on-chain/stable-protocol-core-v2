@@ -1,7 +1,6 @@
 pragma solidity ^0.8.17;
 
 import "./MocBaseBucket.sol";
-import "../MocSettlement.sol";
 
 /**
  * @title MocInterestRate
@@ -35,17 +34,6 @@ abstract contract MocInterestRate is MocBaseBucket {
     FACitem[] public tpFAC;
     // minimum amount of blocks until the settlement to charge interest for the redemption of Pegged Token
     uint256[] public tpBmin;
-    // MocSettlement contract
-    MocSettlement public mocSettlement;
-
-    // ------- Initializer -------
-    /**
-     * @notice contract initializer
-     * @param mocSettlementAddress_ MocSettlement contract address
-     */
-    function __MocInterestRate_init_unchained(address mocSettlementAddress_) internal onlyInitializing {
-        mocSettlement = MocSettlement(mocSettlementAddress_);
-    }
 
     // ------- Internal Functions -------
 
@@ -53,24 +41,29 @@ abstract contract MocInterestRate is MocBaseBucket {
      * @notice calculate interest rate for redeem Pegged Token
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to redeem
+     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_ amount Pegged Token in the bucket [N]
+     * @param tpGain_ amount Pegged Token to be minted during settlement [N]
      * @return interestRate [PREC]
      */
     function _calcTPinterestRate(
         uint8 i_,
         uint256 qTP_,
-        uint256 tpAvailableToRedeem,
-        uint256 nTP_
+        uint256 tpAvailableToRedeem_,
+        uint256 nTP_,
+        uint256 tpGain_
     ) internal view returns (uint256 interestRate) {
         // get the number of blocks remaining for settlement
         uint256 bts = mocSettlement.getBts();
         // check if it is within the block limit to charge interest
         if (bts > tpBmin[i_]) {
+            uint256 nTPplusTPgain = nTP_ + tpGain_;
             // get the initial abundance of TPi
             // [PREC]
-            uint256 arb = _getArb(tpAvailableToRedeem, nTP_);
+            uint256 arb = _getArb(tpAvailableToRedeem_, nTPplusTPgain);
             // get the final abundance of TPi
             // [PREC]
-            uint256 arf = _getArf(tpAvailableToRedeem, nTP_, qTP_);
+            uint256 arf = _getArf(tpAvailableToRedeem_, nTPplusTPgain, qTP_);
             // calculate the initial correction factor
             // [PREC]
             uint256 fctb = _calcFAC(i_, arb);
@@ -82,7 +75,7 @@ abstract contract MocInterestRate is MocBaseBucket {
             uint256 fctAvg = (fctb + fctf) / 2;
             // calculate the interest rate using the correction factor
             // [PREC] = ([PREC] * [PREC]) / [PREC]
-            interestRate = (tpInterestRate[i_].tils * fctAvg) / PRECISION;
+            interestRate = _mulPrec(tpInterestRate[i_].tils, fctAvg);
             // calculate the proportional part until the settlement
             // [PREC] = ([PREC] * [N]) / [N]
             interestRate = (interestRate * bts) / mocSettlement.bes();

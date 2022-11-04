@@ -8,32 +8,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
 contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
-    // ------- Structs -------
-    struct InitializeParams {
-        // The address that will define when a change contract is authorized
-        address governorAddress;
-        // The address that is authorized to pause this contract
-        address stopperAddress;
-        // Collateral Token contract address
-        address tcTokenAddress;
-        // MocSettlement contract address
-        address mocSettlementAddress;
-        // Moc Fee Flow contract address
-        address mocFeeFlowAddress;
-        // mocInterestCollector address
-        address mocInterestCollectorAddress;
-        // protected state threshold [PREC]
-        uint256 protThrld;
-        // liquidation coverage threshold [PREC]
-        uint256 liqThrld;
-        // fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-        uint256 tcMintFee;
-        // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
-        uint256 tcRedeemFee;
-        // amount of blocks to wait between Pegged ema calculation
-        uint256 emaCalculationBlockSpan;
-    }
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -42,33 +16,26 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param initializeParams_ contract initializer params
+     * @param initializeCoreParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
-     *      stopperAddress The address that is authorized to pause this contract
+     *      pauserAddress The address that is authorized to pause this contract
      *      tcTokenAddress Collateral Token contract address
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocInterestCollectorAddress mocInterestCollector address
+     *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
      *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *      tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *      successFee pct of the gain because Pegged Tokens devaluation that is transferred
+     *        in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
+     *        in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      */
-    function initialize(InitializeParams calldata initializeParams_) external initializer {
-        __MocCore_init(
-            initializeParams_.governorAddress,
-            initializeParams_.stopperAddress,
-            initializeParams_.tcTokenAddress,
-            initializeParams_.mocSettlementAddress,
-            initializeParams_.mocFeeFlowAddress,
-            initializeParams_.mocInterestCollectorAddress,
-            initializeParams_.protThrld,
-            initializeParams_.liqThrld,
-            initializeParams_.tcMintFee,
-            initializeParams_.tcRedeemFee,
-            initializeParams_.emaCalculationBlockSpan
-        );
+    function initialize(InitializeCoreParams calldata initializeCoreParams_) external initializer {
+        __MocCore_init(initializeCoreParams_);
     }
 
     // ------- Internal Functions -------
@@ -197,6 +164,13 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         address recipient_
     ) external returns (uint256 qACtoRedeem) {
         return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice allow to send Coinbase to increment the Collateral Asset in the protocol
+     */
+    receive() external payable {
+        nACcb += msg.value;
     }
 
     /**

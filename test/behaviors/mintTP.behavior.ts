@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -262,7 +262,7 @@ const mintTPBehavior = function () {
         beforeEach(async function () {
           await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 23500 });
         });
-        describe("AND Collateral Asset relation with Pegged Token price falls to 37.9", function () {
+        describe("AND Pegged Token has been revaluated to 37.9", function () {
           /*  
             nAC = 3100    
             nTP = 23500
@@ -271,6 +271,9 @@ const mintTPBehavior = function () {
         */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, "37.9");
+          });
+          it("THEN the coverage is 5", async function () {
+            assertPrec("4.999574468085106382", await mocContracts.mocImpl.getCglb());
           });
           describe("WHEN Alice tries to mint 1 TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
@@ -281,16 +284,20 @@ const mintTPBehavior = function () {
             });
           });
         });
-        describe("AND Collateral Asset relation with Pegged Token price falls to 38, so there are 75 TP0 available to mint", function () {
+        describe("AND Pegged Token has been revaluated to 38, so there are 75 TP0 available to mint", function () {
           /*  
             nAC = 3100    
             nTP = 23500
             lckAC = 618
-            ctarg = 5
+            ctargemaCA = 5
+            ctargemaTP = 5
             => TP available to mint = 75
         */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 38);
+          });
+          it("THEN there are 75 TP available to mint", async function () {
+            assertPrec("75.000000000000000020", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
           });
           describe("WHEN Alice tries to mint 75.1 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
@@ -300,48 +307,257 @@ const mintTPBehavior = function () {
               );
             });
           });
-          describe("WHEN Alice mints 75 TP", function () {
-            let alicePrevTPBalance: Balance;
-            beforeEach(async function () {
-              alicePrevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-              await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 75 });
-            });
-            it("THEN alice receives 75 TP", async function () {
-              const aliceActualTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-              const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
-              assertPrec(75, diff);
-            });
-          });
         });
-        describe("AND Collateral Asset relation with Pegged Token price raises to 300, so there are 125739.3087 TP0 available to mint", function () {
+        describe("AND Pegged Token has been devaluated to 300", function () {
           /*  
             nAC = 3100    
-            nTP = 23500
-            lckAC = 78.33
-            ctarg = 7.07
-            => TP available to mint = 125739.3087
-        */
+            nTP = 23500 + 3250(tp gain)
+            lckAC = 78.33 + 10.835(tp gain)
+            nACgain = 2.1666
+            ctargemaCA = 7.07
+            ctargemaTP = 7.07
+            => TP available to mint = 121847.2421
+            => coverage = 34.74
+            => pTCac = 1.002
+          */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 300);
           });
-          describe("WHEN Alice tries to mint 125739.31 TP", function () {
-            it("THEN tx reverts because there is not enough TP to mint", async function () {
-              await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 125739.31 })).to.be.revertedWithCustomError(
-                mocContracts.mocImpl,
-                ERRORS.INSUFFICIENT_TP_TO_MINT,
-              );
+          it("THEN there are 121847.2421 TP available to mint", async function () {
+            assertPrec("121847.242150377340925125", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+          });
+          it("THEN the coverage is 34.74", async function () {
+            assertPrec("34.742056074766355140", await mocContracts.mocImpl.getCglb());
+          });
+          it("THEN TC price is 1.002", async function () {
+            assertPrec("1.002888888888888888", await mocContracts.mocImpl.getPTCac());
+          });
+          describe("AND EMA is updated", function () {
+            /*
+            ctargemaCA = 6.93
+            ctargemaTP = 6.93
+            => TP available to mint = 125449.0669
+            */
+            beforeEach(async function () {
+              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+              await mocContracts.mocImpl.updateEmas();
+            });
+            it("THEN there are 125449.0669 TP available to mint", async function () {
+              assertPrec("125449.066971443529804161", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
             });
           });
-          describe("WHEN Alice mints 125739.3 TP", function () {
-            let alicePrevTPBalance: Balance;
+          describe("AND 3000 TP 0 are minted", function () {
+            /*  
+            nAC = 3110    
+            nTP = 23500 + 3000
+            iou = 21.66
+            */
+            let tx: ContractTransaction;
             beforeEach(async function () {
-              alicePrevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-              await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 125739.3 });
+              tx = await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 3000 });
             });
-            it("THEN alice receives 125739.3 TP", async function () {
-              const aliceActualTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-              const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
-              assertPrec(125739.3, diff);
+            it("THEN a TPMinted event is emitted", async function () {
+              // tp: 0
+              // sender: deployer || mocWrapper
+              // receiver: deployer
+              // qTP: 3000 TP
+              // qAC: 10 AC + 5% for Moc Fee Flow
+              // qACfee: 5% AC
+              await expect(tx)
+                .to.emit(mocContracts.mocImpl, "TPMinted")
+                .withArgs(
+                  TP_0,
+                  mocContracts.mocWrapper?.address || deployer,
+                  deployer,
+                  pEth(3000),
+                  pEth(10 * 1.05),
+                  pEth(10 * 0.05),
+                );
+            });
+            describe("AND Pegged Token has been devaluated to 1000", function () {
+              /*  
+              nAC = 3110    
+              nTP = 26500 + 41750(tp gain)
+              lckAC = 26.5 + 41.75(tp gain)
+              nACgain = 2.1666(iou) + 6.18(PnL)  
+              ctargemaCA = 23.58
+              ctargemaTP = 23.58
+              => TP available to mint = 66087.4
+              => coverage = 45.44
+              => pTCac = 1.011
+              */
+              beforeEach(async function () {
+                await mocFunctions.pokePrice(TP_0, 1000);
+              });
+              it("THEN there are 66087.4 TP available to mint", async function () {
+                assertPrec("66087.407998395976575724", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+              });
+              it("THEN the coverage is 45.44", async function () {
+                assertPrec("45.445421245421245421", await mocContracts.mocImpl.getCglb());
+              });
+              it("THEN TC price is 1.011", async function () {
+                assertPrec("1.011133333333333333", await mocContracts.mocImpl.getPTCac());
+              });
+              describe("AND EMA is updated", function () {
+                /*
+                ctargemaCA = 19.88
+                ctargemaTP = 19.88
+                => TP available to mint = 92369.57
+                */
+                beforeEach(async function () {
+                  await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+                  await mocContracts.mocImpl.updateEmas();
+                });
+                it("THEN there are 92369.57 TP available to mint", async function () {
+                  assertPrec("92369.578979910128584434", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                });
+              });
+            });
+            describe("AND Pegged Token has been revaluated to 250", function () {
+              /*  
+              nAC = 3110    
+              nTP = 26500 + 500(tp gain)
+              lckAC = 106 + 2(tp gain)
+              nACgain = 2.1666(iou) - 1.76(PnL)  
+              ctargemaCA = 5.89
+              ctargemaTP = 5.89
+              => TP available to mint = 126295.71
+              => coverage = 28.79
+              => pTCac = 1.000533 
+              */
+              beforeEach(async function () {
+                await mocFunctions.pokePrice(TP_0, 250);
+              });
+              it("THEN there are 126295.71 TP available to mint", async function () {
+                assertPrec("126295.710817372538465788", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+              });
+              it("THEN the coverage is 28.29", async function () {
+                assertPrec("28.792592592592592592", await mocContracts.mocImpl.getCglb());
+              });
+              it("THEN TC price is 1.000533", async function () {
+                assertPrec("1.000533333333333333", await mocContracts.mocImpl.getPTCac());
+              });
+              describe("AND EMA is updated", function () {
+                /*
+                ctargemaCA = 5.84
+                ctargemaTP = 5.84
+                => TP available to mint = 127951.22
+                */
+                beforeEach(async function () {
+                  await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+                  await mocContracts.mocImpl.updateEmas();
+                });
+                it("THEN there are 127951.22 TP available to mint", async function () {
+                  assertPrec("127951.224154539014099053", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                });
+              });
+            });
+          });
+        });
+        describe("AND Pegged Token has been revaluated to 100", function () {
+          /*  
+            nAC = 3100    
+            nTP = 23500 + 0(tp gain)
+            lckAC = 235 + 0(tp gain)
+            nACgain = 0
+            ctargemaCA = 5
+            ctargemaTP = 5
+            => TP available to mint = 48125
+            => coverage = 13.19
+            => pTCac = 0.955
+          */
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(TP_0, 100);
+          });
+          it("THEN there are 48125 TP available to mint", async function () {
+            assertPrec(48125, await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+          });
+          it("THEN the coverage is 13.19", async function () {
+            assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
+          });
+          it("THEN TC price is 0.955", async function () {
+            assertPrec(0.955, await mocContracts.mocImpl.getPTCac());
+          });
+          describe("AND EMA is updated", function () {
+            /*
+            ctargemaCA = 5
+            ctargemaTP = 5
+            => TP available to mint = 48125
+            */
+            beforeEach(async function () {
+              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+              await mocContracts.mocImpl.updateEmas();
+            });
+            it("THEN there are 48125 TP available to mint", async function () {
+              assertPrec(48125, await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+            });
+          });
+          describe("AND 1000 TP are minted", function () {
+            /*  
+            nAC = 3110    
+            nTP = 23500 + 1000
+            iou = -135
+            */
+            let tx: ContractTransaction;
+            beforeEach(async function () {
+              tx = await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 1000 });
+            });
+            it("THEN a TPMinted event is emitted", async function () {
+              // tp: 0
+              // sender: deployer || mocWrapper
+              // receiver: deployer
+              // qTP: 1000 TP
+              // qAC: 10 AC + 5% for Moc Fee Flow
+              // qACfee: 5% AC
+              await expect(tx)
+                .to.emit(mocContracts.mocImpl, "TPMinted")
+                .withArgs(
+                  TP_0,
+                  mocContracts.mocWrapper?.address || deployer,
+                  deployer,
+                  pEth(1000),
+                  pEth(10 * 1.05),
+                  pEth(10 * 0.05),
+                );
+            });
+            describe("AND Pegged Token has been devaluated to 1000", function () {
+              /*  
+              nAC = 3110    
+              nTP = 24500 + 4275(tp gain)
+              lckAC = 24.5 + 42.75(tp gain)
+              nACgain = -13.5(iou) + 22.05(PnL)  
+              ctargemaCA = 23.58
+              ctargemaTP = 23.58
+              => TP available to mint = 67122.83
+              => coverage = 46.11
+              => pTCac = 1.0114
+              */
+              beforeEach(async function () {
+                await mocFunctions.pokePrice(TP_0, 1000);
+              });
+              it("THEN there are 67122.83 TP available to mint", async function () {
+                assertPrec("67122.836865805061029229", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+              });
+              it("THEN the coverage is 46.11", async function () {
+                assertPrec("46.118215613382899628", await mocContracts.mocImpl.getCglb());
+              });
+              it("THEN TC price is 1.0114", async function () {
+                assertPrec("1.0114", await mocContracts.mocImpl.getPTCac());
+              });
+              describe("AND EMA is updated", function () {
+                /*
+                ctargemaCA = 19.88
+                ctargemaTP = 19.88
+                => TP available to mint = 93411.93
+                */
+                beforeEach(async function () {
+                  await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+                  await mocContracts.mocImpl.updateEmas();
+                });
+                it("THEN there are 93411.93 TP available to mint", async function () {
+                  assertPrec("93411.939256558090641158", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                });
+              });
             });
           });
         });

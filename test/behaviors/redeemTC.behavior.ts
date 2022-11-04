@@ -2,7 +2,7 @@ import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
 
@@ -280,15 +280,41 @@ const redeemTCBehavior = function () {
             });
           });
         });
-        describe("AND Collateral Asset relation with Pegged Token price rices to 500 making TC price rices too", function () {
+        describe("AND Pegged Token has been devaluated to 500 making TC price rices", function () {
           /*  
           nAC = 310    
-          nTP = 2350
-          lckAC = 4.7
-          => pTCac = 1.0176
+          nTP = 2350 + 1325
+          lckAC = 7.35
+          nACgain = 0.53
+          => pTCac = 1.00706
+          => coverage = 42.104
+          ctargemaCA = 11.79
+          => TC available to redeem = 221.24
           */
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, 500);
+          });
+          it("THEN TC price is 1.00706", async function () {
+            assertPrec("1.007066666666666666", await mocContracts.mocImpl.getPTCac());
+          });
+          it("THEN coverage is 42.104", async function () {
+            assertPrec("42.104761904761904761", await mocContracts.mocImpl.getCglb());
+          });
+          it("THEN there are 221.24 TC available to redeem", async function () {
+            assertPrec("221.248334070249917149", await mocContracts.mocImpl.getTCAvailableToRedeem());
+          });
+          describe("AND EMA is updated", function () {
+            /*
+            ctargemaCA = 11.04
+            => TC available to redeem = 226.71
+            */
+            beforeEach(async function () {
+              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+              await mocContracts.mocImpl.updateEmas();
+            });
+            it("THEN there are 226.71 TC available to redeem", async function () {
+              assertPrec("226.719806179762611513", await mocContracts.mocImpl.getTCAvailableToRedeem());
+            });
           });
           describe("WHEN alice redeems 100 TC", function () {
             let alicePrevACBalance: Balance;
@@ -296,10 +322,59 @@ const redeemTCBehavior = function () {
               alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
               await mocFunctions.redeemTC({ from: alice, qTC: 100 });
             });
-            it("THEN alice receives 96.67 assets instead of 95", async function () {
+            it("THEN alice receives 95.67 assets instead of 95", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = aliceActualACBalance.sub(alicePrevACBalance);
-              assertPrec("96.678333333333333270", diff);
+              assertPrec("95.671333333333333270", diff);
+            });
+          });
+          describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
+            /*  
+            nAC = 310  
+            nTP = 2350
+            lckAC = 23.5
+            nACgain = -8.1
+            => pTCac = 0.955
+            => coverage = 13.19
+            ctargemaCA = 5
+            => TC available to redeem = 201.57
+            */
+            beforeEach(async function () {
+              await mocFunctions.pokePrice(TP_0, 100);
+            });
+            it("THEN TC price is 0.955", async function () {
+              assertPrec("0.955", await mocContracts.mocImpl.getPTCac());
+            });
+            it("THEN the coverage is 13.19", async function () {
+              assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
+            });
+            it("THEN there are 201.57 TC available to redeem", async function () {
+              assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
+            });
+            describe("AND EMA is updated", function () {
+              /*
+              ctargemaCA = 5
+              => TC available to redeem = 201.57
+              */
+              beforeEach(async function () {
+                await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
+                await mocContracts.mocImpl.updateEmas();
+              });
+              it("THEN there are 201.57 TC available to redeem", async function () {
+                assertPrec("201.570680628272251308", await mocContracts.mocImpl.getTCAvailableToRedeem());
+              });
+            });
+            describe("WHEN alice redeems 100 TC", function () {
+              let alicePrevACBalance: Balance;
+              beforeEach(async function () {
+                alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+                await mocFunctions.redeemTC({ from: alice, qTC: 100 });
+              });
+              it("THEN alice receives 90.725 assets instead of 95", async function () {
+                const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+                const diff = aliceActualACBalance.sub(alicePrevACBalance);
+                assertPrec("90.725", diff);
+              });
             });
           });
         });

@@ -20,7 +20,7 @@ describe("Feature: MocCABag initialization", function () {
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
-  const { governorAddress, stopperAddress } = mocAddresses["hardhat"];
+  const { governorAddress, pauserAddress } = mocAddresses["hardhat"];
   before(async () => {
     ({
       mocImpl: mocProxy,
@@ -52,7 +52,7 @@ describe("Feature: MocCABag initialization", function () {
     describe("WHEN initialize mocWrapper again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
         await expect(
-          mocWrapper.initialize(governorAddress, stopperAddress, mocProxy.address, wcaToken.address),
+          mocWrapper.initialize(governorAddress, pauserAddress, mocProxy.address, wcaToken.address),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
@@ -64,7 +64,7 @@ describe("Feature: MocCABag initialization", function () {
           ethers.provider.getSigner(),
         );
         await expect(
-          mocWrapperImplementation.initialize(governorAddress, stopperAddress, mocProxy.address, wcaToken.address),
+          mocWrapperImplementation.initialize(governorAddress, pauserAddress, mocProxy.address, wcaToken.address),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
@@ -106,6 +106,22 @@ describe("Feature: MocCABag initialization", function () {
     describe("WHEN it is initialized with invalid TCredeemFee value", () => {
       it("THEN tx fails because TCredeemFee is above ONE", async () => {
         await expect(newMocInit({ tcRedeemFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN it is initialized with invalid success fee value", () => {
+      it("THEN tx fails because sf is above ONE", async () => {
+        await expect(newMocInit({ successFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
+    describe("WHEN it is initialized with invalid appreciation factor value", () => {
+      it("THEN tx fails because fa is above ONE", async () => {
+        await expect(newMocInit({ appreciationFactor: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );

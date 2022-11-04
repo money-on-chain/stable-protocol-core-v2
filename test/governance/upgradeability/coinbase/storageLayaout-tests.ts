@@ -27,16 +27,21 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
       });
 
       const initParams = {
+        initializeBaseBucketParams: {
+          tcTokenAddress: mocTC.address,
+          mocSettlementAddress: deployer,
+          mocFeeFlowAddress: deployer,
+          mocInterestCollectorAddress: deployer,
+          mocAppreciationBeneficiaryAddress: deployer,
+          protThrld: coreParams.protThrld,
+          liqThrld: coreParams.liqThrld,
+          tcMintFee: tcParams.mintFee,
+          tcRedeemFee: tcParams.redeemFee,
+          successFee: coreParams.successFee,
+          appreciationFactor: coreParams.appreciationFactor,
+        },
         governorAddress: governorMock.address,
-        stopperAddress: deployer,
-        tcTokenAddress: mocTC.address,
-        mocSettlementAddress: deployer,
-        mocFeeFlowAddress: deployer,
-        mocInterestCollectorAddress: deployer,
-        protThrld: coreParams.protThrld,
-        liqThrld: coreParams.liqThrld,
-        tcMintFee: tcParams.mintFee,
-        tcRedeemFee: tcParams.redeemFee,
+        pauserAddress: deployer,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
       };
       const mocImpl = MocCACoinbase__factory.connect(mocProxy.address, ethers.provider.getSigner());

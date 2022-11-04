@@ -32,7 +32,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
   const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
-  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
+  let {
+    governorAddress,
+    pauserAddress,
+    mocFeeFlowAddress,
+    mocInterestCollectorAddress,
+    mocAppreciationBeneficiaryAddress,
+  } = mocAddresses[network];
 
   // For testing environment, we use Mock helper contracts
   if (network == "hardhat") {
@@ -48,16 +54,21 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
       {
+        initializeBaseBucketParams: {
+          tcTokenAddress: CollateralToken.address,
+          mocSettlementAddress: MocSettlement.address,
+          mocFeeFlowAddress,
+          mocInterestCollectorAddress,
+          mocAppreciationBeneficiaryAddress,
+          protThrld: coreParams.protThrld,
+          liqThrld: coreParams.liqThrld,
+          tcMintFee: tcParams.mintFee,
+          tcRedeemFee: tcParams.redeemFee,
+          successFee: coreParams.successFee,
+          appreciationFactor: coreParams.appreciationFactor,
+        },
         governorAddress,
-        stopperAddress,
-        tcTokenAddress: CollateralToken.address,
-        mocSettlementAddress: MocSettlement.address,
-        mocFeeFlowAddress,
-        mocInterestCollectorAddress,
-        protThrld: coreParams.protThrld,
-        liqThrld: coreParams.liqThrld,
-        tcMintFee: tcParams.mintFee,
-        tcRedeemFee: tcParams.redeemFee,
+        pauserAddress,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
       },
       { gasLimit: GAS_LIMIT_PATCH },
@@ -67,7 +78,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     MocSettlement.initialize(
       governorAddress,
-      stopperAddress,
+      pauserAddress,
       MocCACoinbase.address,
       settlementParams.bes,
       settlementParams.bmulcdj,

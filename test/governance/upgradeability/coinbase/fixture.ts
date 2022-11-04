@@ -31,21 +31,28 @@ export function fixtureDeployGovernance(): () => Promise<{
     });
 
     const mockAddress = deployer;
+    let { pauserAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocAppreciationBeneficiaryAddress } =
+      mocAddresses[networkName];
     // TODO: fix these mockAddresses
     // initializations
     await waitForTxConfirmation(
       mocCACoinbase.initialize(
         {
+          initializeBaseBucketParams: {
+            tcTokenAddress: mocTC.address,
+            mocSettlementAddress: mockAddress,
+            mocFeeFlowAddress: mocFeeFlowAddress,
+            mocInterestCollectorAddress: mocInterestCollectorAddress,
+            mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            tcMintFee: tcParams.mintFee,
+            tcRedeemFee: tcParams.redeemFee,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
+          },
           governorAddress: governor.address,
-          stopperAddress: mockAddress,
-          tcTokenAddress: mocTC.address,
-          mocSettlementAddress: mockAddress,
-          mocFeeFlowAddress: mocAddresses[networkName].mocFeeFlowAddress,
-          mocInterestCollectorAddress: mockAddress,
-          protThrld: coreParams.protThrld,
-          liqThrld: coreParams.liqThrld,
-          tcMintFee: tcParams.mintFee,
-          tcRedeemFee: tcParams.redeemFee,
+          pauserAddress: pauserAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
         { gasLimit: GAS_LIMIT_PATCH },

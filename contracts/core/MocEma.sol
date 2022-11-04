@@ -78,21 +78,23 @@ abstract contract MocEma is MocBaseBucket {
     // ------- Public Functions -------
 
     /**
-     * @notice calculates target coverage adjusted by all Pegged Token's to Collateral Asset rate moving average
+     * @notice get last calculated target coverage adjusted by all Pegged Token's to
+     *  Collateral Asset rate moving average
      * @dev qAC = nTP / pACtp
-     *      ctargemaCA = ∑(tpCarg * currency) / ∑(currency)
+     *      ctargemaCA = ∑(tpCarg * qAC) / ∑(qAC)
      * @return ctargemaCA [PREC]
      */
-    function calcCtargemaCA() public returns (uint256 ctargemaCA) {
-        // Make sure EMAs are up to date for all the pegs
-        updateEmas();
+    function _getCtargemaCA() internal view returns (uint256 ctargemaCA) {
         uint256 num;
         uint256 den;
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
+            // [N] = [N] - [N]
+            uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
+            (uint256 tpGain, ) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
             // [PREC] = [N] * [PREC] * [PREC]  / [PREC]
-            uint256 qAC = (pegContainer[i].nTP * PRECISION * PRECISION) / pACtp;
+            uint256 qAC = _divPrec((tpAvailableToRedeem + tpGain) * PRECISION, pACtp);
             // [PREC]^2 = [PREC] * [PREC]
             num += _getCtargemaTP(i, pACtp) * qAC;
             // [PREC] = [PREC]
@@ -106,6 +108,20 @@ abstract contract MocEma is MocBaseBucket {
         }
         // [PREC] = ([PREC]^2) / [PREC]
         ctargemaCA = num / den;
+    }
+
+    // ------- Public Functions -------
+
+    /**
+     * @notice calculates target coverage adjusted by all Pegged Token's to Collateral Asset rate moving average
+     * @dev qAC = nTP / pACtp
+     *      ctargemaCA = ∑(tpCarg * currency) / ∑(currency)
+     * @return ctargemaCA [PREC]
+     */
+    function calcCtargemaCA() public returns (uint256 ctargemaCA) {
+        // Make sure EMAs are up to date for all the pegs
+        updateEmas();
+        return _getCtargemaCA();
     }
 
     /**

@@ -6,23 +6,23 @@ import { mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
-const { governorAddress, stopperAddress } = mocAddresses["hardhat"];
+const { governorAddress, pauserAddress } = mocAddresses["hardhat"];
 
 function mocSettlementInitialize(mocSettlement: MocSettlement, mocImpl: Address) {
   return ({
     mocGovernorAddress = governorAddress,
-    mocStopperAddress = stopperAddress,
+    mocPauserAddress = pauserAddress,
     mocImplAddress = mocImpl,
     bes = 0,
     bmulcdj = 0,
   }: {
     mocGovernorAddress?: Address;
-    mocStopperAddress?: Address;
+    mocPauserAddress?: Address;
     mocImplAddress?: Address;
     bes?: BigNumberish;
     bmulcdj?: BigNumberish;
   } = {}) => {
-    return mocSettlement.initialize(mocGovernorAddress, mocStopperAddress, mocImplAddress, bes, bmulcdj);
+    return mocSettlement.initialize(mocGovernorAddress, mocPauserAddress, mocImplAddress, bes, bmulcdj);
   };
 }
 

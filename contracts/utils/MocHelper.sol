@@ -19,6 +19,26 @@ abstract contract MocHelper {
     }
 
     /**
+     * @notice add precision and div two number
+     * @param a_ numerator
+     * @param b_ denominator
+     * @return `a_` * PRECISION / `b_`
+     */
+    function _divPrec(uint256 a_, uint256 b_) internal pure returns (uint256) {
+        return (a_ * PRECISION) / b_;
+    }
+
+    /**
+     * @notice multiply two number and remove precision
+     * @param a_ term 1
+     * @param b_ term 2
+     * @return `a_` * `b_` / PRECISION
+     */
+    function _mulPrec(uint256 a_, uint256 b_) internal pure returns (uint256) {
+        return (a_ * b_) / PRECISION;
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps

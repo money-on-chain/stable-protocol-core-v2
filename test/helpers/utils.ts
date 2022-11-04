@@ -238,6 +238,7 @@ export const ERRORS = {
   TRANSFER_FAIL: "TransferFailed",
   PEGGED_TOKEN_ALREADY_ADDED: "PeggedTokenAlreadyAdded",
   QAC_NEEDED_MUST_BE_GREATER_ZERO: "QacNeededMustBeGreaterThanZero",
+  ONLY_SETTLEMENT: "OnlySettlement",
 };
 
 export const CONSTANTS = {

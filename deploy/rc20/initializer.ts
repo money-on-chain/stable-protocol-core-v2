@@ -36,7 +36,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  let { governorAddress, stopperAddress, mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses[network];
+  let {
+    governorAddress,
+    pauserAddress,
+    mocFeeFlowAddress,
+    mocInterestCollectorAddress,
+    mocAppreciationBeneficiaryAddress,
+  } = mocAddresses[network];
 
   // for tests we deploy a Collateral Asset and Governor Mock
   if (network === "hardhat") {
@@ -58,18 +64,25 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     mocCARC20.initialize(
       {
-        governorAddress,
-        stopperAddress,
+        initializeCoreParams: {
+          initializeBaseBucketParams: {
+            tcTokenAddress: CollateralToken.address,
+            mocSettlementAddress: MocSettlement.address,
+            mocFeeFlowAddress,
+            mocInterestCollectorAddress,
+            mocAppreciationBeneficiaryAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            tcMintFee: tcParams.mintFee,
+            tcRedeemFee: tcParams.redeemFee,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
+          },
+          governorAddress,
+          pauserAddress,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+        },
         acTokenAddress: collateralAssetToken,
-        tcTokenAddress: CollateralToken.address,
-        mocSettlementAddress: MocSettlement.address,
-        mocFeeFlowAddress,
-        mocInterestCollectorAddress,
-        protThrld: coreParams.protThrld,
-        liqThrld: coreParams.liqThrld,
-        tcMintFee: tcParams.mintFee,
-        tcRedeemFee: tcParams.redeemFee,
-        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
       },
       { gasLimit: GAS_LIMIT_PATCH },
     ),
@@ -78,7 +91,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await waitForTxConfirmation(
     MocSettlement.initialize(
       governorAddress,
-      stopperAddress,
+      pauserAddress,
       mocCARC20.address,
       settlementParams.bes,
       settlementParams.bmulcdj,
