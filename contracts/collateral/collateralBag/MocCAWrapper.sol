@@ -40,6 +40,8 @@ contract MocCAWrapper is MocUpgradable {
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
+    error InsufficientFunds();
+
     // ------- Structs -------
     struct AssetIndex {
         // asset index
@@ -332,6 +334,28 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     // ------- External Functions -------
+
+    /**
+     * @notice given an amount of wrapped tokens `wcaTokenAmount_`, converts to the equivalent value
+     * in the given `assetAddress_` and transfer it to the `recipient_` address
+     * @param assetAddress_ Asset contract address
+     * @param wcaTokenAmount_ amount of wrapped tokens
+     * @param recipient_ address who receives the Asset
+     */
+    function unwrapToAsset(
+        address assetAddress_,
+        uint256 wcaTokenAmount_,
+        address recipient_
+    ) external {
+        if (wcaToken.balanceOf(msg.sender) < wcaTokenAmount_) revert InsufficientFunds();
+        // calculate the equivalent amount of Asset
+        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
+        // burns the wcaToken for this user
+        wcaToken.burn(msg.sender, wcaTokenAmount_);
+        // transfer Asset to the recipient
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+    }
+
     /**
      * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
