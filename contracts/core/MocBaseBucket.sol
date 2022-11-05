@@ -562,6 +562,17 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @dev sets Moc Appreciation Beneficiary Address
+     * @param mocAppreciationBeneficiaryAddress_ moc Appreciation Beneficiary new address
+     */
+    function setMocAppreciationBeneficiaryAddress(address mocAppreciationBeneficiaryAddress_)
+        external
+        onlyAuthorizedChanger
+    {
+        mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
+    }
+
+    /**
      * @dev sets the value of the protected threshold configuration param
      * @param protThrld_ coverage protected state threshold [PREC]
      */
