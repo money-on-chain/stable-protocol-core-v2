@@ -67,6 +67,18 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.liqThrld()).to.be.equal(46);
       });
     });
+    describe(`WHEN setSuccessFee is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setSuccessFee(47);
+        expect(await mocProxy.successFee()).to.be.equal(47);
+      });
+    });
+    describe(`WHEN setAppreciationFactor is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setAppreciationFactor(48);
+        expect(await mocProxy.appreciationFactor()).to.be.equal(48);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -108,6 +120,16 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setLiqThrld is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setLiqThrld(42));
+      });
+    });
+    describe("WHEN setSuccessFee is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setSuccessFee(42));
+      });
+    });
+    describe("WHEN setAppreciationFactor is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setAppreciationFactor(42));
       });
     });
   });

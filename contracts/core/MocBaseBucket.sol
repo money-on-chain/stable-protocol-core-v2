@@ -586,6 +586,24 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @dev sets success Fee value.
+     * @param successFee_ pct of the gain because Pegged Tokens devaluation that is
+     * transferred in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     */
+    function setSuccessFee(uint256 successFee_) external onlyAuthorizedChanger {
+        successFee = successFee_;
+    }
+
+    /**
+     * @dev sets appreciation Factor value.
+     * @param appreciationFactor_ pct of the gain because Pegged Tokens devaluation that is returned
+     * in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
+     */
+    function setAppreciationFactor(uint256 appreciationFactor_) external onlyAuthorizedChanger {
+        appreciationFactor = appreciationFactor_;
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
