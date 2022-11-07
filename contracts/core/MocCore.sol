@@ -30,6 +30,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
+    event TPSwapped(
+        uint8 indexed iFrom_,
+        uint8 iTo_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTPfrom_,
+        uint256 qTPto_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    );
     event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
@@ -218,20 +228,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 qACmax_,
         address sender_,
-        address recipient_,
-        bool checkCoverage_
+        address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
-        if (checkCoverage_) {
-            uint256 ctargemaCA = calcCtargemaCA();
-            (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-            // evaluates whether or not the system coverage is healthy enough to mint TP
-            // given the target coverage adjusted by the moving average, reverts if it's not
-            _evalCoverage(ctargemaCA, lckAC, nACgain);
-            // evaluates if there are enough TP available to mint, reverts if it's not
-            _evalTPavailableToMint(i_, qTP_, pACtp, ctargemaCA, lckAC, nACgain);
-        }
+        uint256 ctargemaCA = calcCtargemaCA();
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        // evaluates whether or not the system coverage is healthy enough to mint TP
+        // given the target coverage adjusted by the moving average, reverts if it's not
+        _evalCoverage(ctargemaCA, lckAC, nACgain);
+        // evaluates if there are enough TP available to mint, reverts if it's not
+        _evalTPavailableToMint(i_, qTP_, pACtp, ctargemaCA, lckAC, nACgain);
         // calculate how many qAC are needed to mint TP and the qAC fee
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
@@ -264,19 +271,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 qACmin_,
         address sender_,
-        address recipient_,
-        bool checkCoverage_
+        address recipient_
     ) internal notLiquidated returns (uint256 qACtoRedeem) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        if (checkCoverage_) {
-            (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-            _evalCoverage(protThrld, lckAC, nACgain);
-        }
-        // calculate how many total qAC are redemeed, how many correspond for fee and how many for interests
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        _evalCoverage(protThrld, lckAC, nACgain);
+        // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp);
-        // if is 0 reverts because it is triyng to redeem an amount below precision
+        // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
@@ -315,20 +319,55 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated returns (uint256 qACtotalNeeded) {
         if (iFrom_ == iTo_) revert InvalidValue();
+        uint256 pACtpFrom = _getPACtp(iFrom_);
+        uint256 pACtpTo = _getPACtp(iTo_);
+        _updateTPtracking(iFrom_, pACtpFrom);
+        _updateTPtracking(iTo_, pACtpTo);
+        // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
+        (uint256 qACtotalToRedeem, , uint256 qACinterest) = _calcQACforRedeemTP(iFrom_, qTP_, pACtpFrom);
         // calculate how many qTP can mint with the given qAC
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qTPtoMint = (qTP_ * _getPACtp(iTo_)) / _getPACtp(iFrom_);
-        if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
+        uint256 qTPtoMint = (qTP_ * pACtpTo) / pACtpFrom;
+        if (qTPtoMint < qTPmin_ || qTPtoMint == 0) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
-        uint256 qACfromRedeem = _redeemTPto(iFrom_, qTP_, 0, sender_, address(this), false);
         // if ctargemaTPto > ctargemaTPfrom we need to check coverage
-        bool checkCoverage = tpCtarg[iTo_] > tpCtarg[iFrom_];
-        uint256 qACtoMint = _mintTPto(iTo_, qTPtoMint, UINT256_MAX, address(this), recipient_, checkCoverage);
-        qACtotalNeeded = qACtoMint - qACfromRedeem;
+        if (tpCtarg[iTo_] > tpCtarg[iFrom_]) {
+            uint256 ctargemaCA = calcCtargemaCA();
+            (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+            // evaluates whether or not the system coverage is healthy enough to mint TP
+            // given the target coverage adjusted by the moving average, reverts if it's not
+            _evalCoverage(ctargemaCA, lckAC, nACgain);
+            // evaluates if there are enough TP available to mint, reverts if it's not
+            _evalTPavailableToMint(iTo_, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
+        }
 
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
+        qACtotalNeeded = qACfee + qACinterest;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+
+        // sub qTP from the Bucket
+        _withdrawTP(iFrom_, qTP_, 0);
+        // add qTP to the Bucket
+        _depositTP(iTo_, qTPtoMint, 0);
+        // burn qTP from the sender
+        tpTokens[iFrom_].burn(sender_, qTP_);
+        // mint qTP to the recipient
+        tpTokens[iTo_].mint(recipient_, qTPtoMint);
         // transfer the qAC change to the sender
         acTransfer(sender_, qACmax_ - qACtotalNeeded);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfer qAC for interest
+        acTransfer(mocInterestCollectorAddress, qACinterest);
+        // inside a block to avoid stack too deep error
+        {
+            uint8 iFrom = iFrom_;
+            uint8 iTo = iTo_;
+            uint256 qTP = qTP_;
+            emit TPSwapped(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee, qACinterest);
+        }
         return qACtotalNeeded;
     }
 
