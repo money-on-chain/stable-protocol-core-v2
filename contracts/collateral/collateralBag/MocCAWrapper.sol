@@ -40,7 +40,6 @@ contract MocCAWrapper is MocUpgradable {
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
-    error InsufficientFunds();
 
     // ------- Structs -------
     struct AssetIndex {
@@ -346,13 +345,12 @@ contract MocCAWrapper is MocUpgradable {
         address assetAddress_,
         uint256 wcaTokenAmount_,
         address recipient_
-    ) external {
-        if (wcaToken.balanceOf(msg.sender) < wcaTokenAmount_) revert InsufficientFunds();
+    ) external validAsset(assetAddress_) {
         // calculate the equivalent amount of Asset
         uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
-        // burns the wcaToken for this user
+        // burns the wcaToken for this user, will fail if insufficient funds
         wcaToken.burn(msg.sender, wcaTokenAmount_);
-        // transfer Asset to the recipient
+        // transfer Asset to the recipient, will fail if not enough assetAmount
         SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
     }
 

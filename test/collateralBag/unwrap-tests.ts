@@ -1,6 +1,6 @@
 import { fixtureDeployedMocCABag } from "./fixture";
 import { ERC20Mock, MocCAWrapper } from "../../typechain";
-import { pEth } from "../helpers/utils";
+import { deployAsset, ERRORS, pEth } from "../helpers/utils";
 import { expect } from "chai";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { ethers, getNamedAccounts } from "hardhat";
@@ -32,6 +32,17 @@ describe("Feature: MocCAWrapper unwrap", function () {
       await mocFunctions.mintTP({ i: 0, from: bob, qTP: 100, asset: assets[0] });
       await mocFunctions.mintTP({ i: 0, from: bob, qTP: 100, asset: assets[1] });
     });
+    describe("WHEN tries to unwraps using an asset not whitelisted", () => {
+      let assetNotWhitelisted: ERC20Mock;
+      beforeEach(async () => {
+        assetNotWhitelisted = await deployAsset();
+      });
+      it("THEN tx fails because asset is invalid", async () => {
+        await expect(
+          mocWrapper.unwrapToAsset(assetNotWhitelisted.address, pEth(61), mocFeeFlow),
+        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
+      });
+    });
     describe("WHEN mocFee address unwraps his tokens", () => {
       it("THEN it receives the corresponding assets values", async () => {
         // 1200 * 0.05 = 60
@@ -54,7 +65,7 @@ describe("Feature: MocCAWrapper unwrap", function () {
           mocWrapper
             .connect(await ethers.provider.getSigner(mocFeeFlow))
             .unwrapToAsset(assets[0].address, pEth(61), mocFeeFlow),
-        ).to.revertedWithCustomError(mocWrapper, "InsufficientFunds");
+        ).to.revertedWith("ERC20: burn amount exceeds balance");
       });
     });
     describe("AND there is not enough balance of a given asset", () => {
