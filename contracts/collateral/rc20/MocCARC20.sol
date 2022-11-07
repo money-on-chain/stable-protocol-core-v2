@@ -58,7 +58,7 @@ contract MocCARC20 is MocCore {
      *  safeTransfer will revert if token transfer reverts or returns 0
      */
     function acTransfer(address to_, uint256 amount_) internal override {
-        if (amount_ > 0 && address(this) != to_) {
+        if (amount_ > 0) {
             SafeERC20.safeTransfer(acToken, to_, amount_);
         }
     }
@@ -81,7 +81,7 @@ contract MocCARC20 is MocCore {
      */
     function mintTC(uint256 qTC_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        return _mintTCto(qTC_, qACmax_, msg.sender, msg.sender, true);
+        return _mintTCto(qTC_, qACmax_, msg.sender, msg.sender);
     }
 
     /**
@@ -98,7 +98,7 @@ contract MocCARC20 is MocCore {
         address recipient_
     ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        return _mintTCto(qTC_, qACmax_, msg.sender, recipient_, true);
+        return _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
     }
 
     /**
@@ -108,7 +108,7 @@ contract MocCARC20 is MocCore {
      * @return qACtoRedeem amount of AC sent to sender
      */
     function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACtoRedeem) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender, true);
+        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
     }
 
     /**
@@ -123,7 +123,7 @@ contract MocCARC20 is MocCore {
         uint256 qACmin_,
         address recipient_
     ) external returns (uint256 qACtoRedeem) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_, true);
+        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
     }
 
     /**
@@ -140,7 +140,7 @@ contract MocCARC20 is MocCore {
         uint256 qACmax_
     ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        return _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender, true);
+        return _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
     }
 
     /**
@@ -159,7 +159,7 @@ contract MocCARC20 is MocCore {
         address recipient_
     ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        return _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_, true);
+        return _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }
 
     /**
@@ -174,7 +174,7 @@ contract MocCARC20 is MocCore {
         uint256 qTP_,
         uint256 qACmin_
     ) external returns (uint256 qACtoRedeem) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender, true);
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
     }
 
     /**
@@ -191,7 +191,7 @@ contract MocCARC20 is MocCore {
         uint256 qACmin_,
         address recipient_
     ) external returns (uint256 qACtoRedeem) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_, true);
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
     }
 
     /**

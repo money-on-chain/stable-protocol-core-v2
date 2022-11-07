@@ -14,7 +14,7 @@ import {
   MocTC__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../scripts/utils";
-import { coreParams, settlementParams, tcParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, settlementParams, feeParams, mocAddresses } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
@@ -78,8 +78,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
-            tcMintFee: tcParams.mintFee,
-            tcRedeemFee: tcParams.redeemFee,
+            tcMintFee: feeParams.mintFee,
+            tcRedeemFee: feeParams.redeemFee,
+            swapTPforTPFee: feeParams.swapTPforTPFee,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
           },

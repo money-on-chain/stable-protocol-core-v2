@@ -59,6 +59,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 tcMintFee;
         // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
         uint256 tcRedeemFee;
+        // fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+        uint256 swapTPforTPFee;
         // pct of the gain because Pegged Tokens devaluation that is transferred
         // in Collateral Asset to Moc Fee Flow during the settlement [PREC]
         uint256 successFee;
@@ -102,6 +104,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow on Collateral Tokens redeem [PREC]
     uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+    uint256 public swapTPforTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // fee pct sent to Fee Flow on Pegged Tokens mint [PREC]
     uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
@@ -164,6 +168,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        liqThrld liquidation coverage threshold [PREC]
      *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *        swapTPforTPFee fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
@@ -176,6 +181,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.swapTPforTPFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor > PRECISION)
             revert InvalidValue();
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
@@ -189,6 +195,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         liqThrld = initializeBaseBucketParams_.liqThrld;
         tcMintFee = initializeBaseBucketParams_.tcMintFee;
         tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
+        swapTPforTPFee = initializeBaseBucketParams_.swapTPforTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
         liquidated = false;
@@ -354,15 +361,12 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Tokens [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
+     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     * @return nACgain amount of collateral asset to be distributed during settlement [N]
      */
-    function _evalCoverage(
-        uint256 cThrld_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view {
-        uint256 cglb = _getCglb(lckAC_, nACgain_);
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC, uint256 nACgain) {
+        (lckAC, nACgain) = _getLckACandACgain();
+        uint256 cglb = _getCglb(lckAC, nACgain);
         // check if coverage is above the given threshold
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
     }
@@ -560,6 +564,15 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setTcRedeemFee(uint256 tcRedeemFee_) external onlyAuthorizedChanger {
         tcRedeemFee = tcRedeemFee_;
+    }
+
+    /**
+     * @dev sets the fee charged when swap a Pegged Token for another Pegged Token.
+     * @param swapTPforTPFee_ fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setSwapTPforTPFee(uint256 swapTPforTPFee_) external onlyAuthorizedChanger {
+        swapTPforTPFee = swapTPforTPFee_;
     }
 
     /**

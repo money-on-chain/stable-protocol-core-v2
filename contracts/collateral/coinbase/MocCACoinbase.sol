@@ -44,7 +44,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @inheritdoc MocCore
      */
     function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
-        if (amount_ > 0 && address(this) != to_) {
+        if (amount_ > 0) {
             if (to_ == address(0)) revert InvalidAddress();
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = to_.call{ value: amount_ }("");
@@ -68,7 +68,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @return qACtotalNeeded amount of AC used to mint qTC
      */
     function mintTC(uint256 qTC_) external payable returns (uint256 qACtotalNeeded) {
-        return _mintTCto(qTC_, msg.value, msg.sender, msg.sender, true);
+        return _mintTCto(qTC_, msg.value, msg.sender, msg.sender);
     }
 
     /**
@@ -79,7 +79,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @return qACtotalNeeded amount of AC used to mint qTC
      */
     function mintTCto(uint256 qTC_, address recipient_) external payable returns (uint256 qACtotalNeeded) {
-        return _mintTCto(qTC_, msg.value, msg.sender, recipient_, true);
+        return _mintTCto(qTC_, msg.value, msg.sender, recipient_);
     }
 
     /**
@@ -89,7 +89,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @return qACtoRedeem amount of AC sent to sender
      */
     function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACtoRedeem) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender, true);
+        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
     }
 
     /**
@@ -104,7 +104,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         uint256 qACmin_,
         address recipient_
     ) external returns (uint256 qACtoRedeem) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_, true);
+        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
     }
 
     /**
@@ -115,7 +115,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function mintTP(uint8 i_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded) {
-        return _mintTPto(i_, qTP_, msg.value, msg.sender, msg.sender, true);
+        return _mintTPto(i_, qTP_, msg.value, msg.sender, msg.sender);
     }
 
     /**
@@ -131,7 +131,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         uint256 qTP_,
         address recipient_
     ) external payable returns (uint256 qACtotalNeeded) {
-        return _mintTPto(i_, qTP_, msg.value, msg.sender, recipient_, true);
+        return _mintTPto(i_, qTP_, msg.value, msg.sender, recipient_);
     }
 
     /**
@@ -146,7 +146,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         uint256 qTP_,
         uint256 qACmin_
     ) external returns (uint256 qACtoRedeem) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender, true);
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
     }
 
     /**
@@ -163,7 +163,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         uint256 qACmin_,
         address recipient_
     ) external returns (uint256 qACtoRedeem) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_, true);
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
     }
 
     /**
