@@ -44,7 +44,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @inheritdoc MocCore
      */
     function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
-        if (amount_ > 0 && address(this) != to_) {
+        if (amount_ > 0) {
             if (to_ == address(0)) revert InvalidAddress();
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = to_.call{ value: amount_ }("");

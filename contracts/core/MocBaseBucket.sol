@@ -361,15 +361,12 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Tokens [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
+     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     * @return nACgain amount of collateral asset to be distributed during settlement [N]
      */
-    function _evalCoverage(
-        uint256 cThrld_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view {
-        uint256 cglb = _getCglb(lckAC_, nACgain_);
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC, uint256 nACgain) {
+        (lckAC, nACgain) = _getLckACandACgain();
+        uint256 cglb = _getCglb(lckAC, nACgain);
         // check if coverage is above the given threshold
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
     }
