@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract ERC20Mock is ERC20Burnable {
     uint256 internal constant UINT256_MAX = ~uint256(0);
+    uint8 public customDecimals = 18;
 
     // There are existing ERC20 token deployments that reverts and others that return false
     // This state is used to test both
@@ -42,5 +43,13 @@ contract ERC20Mock is ERC20Burnable {
 
     function forceTransferToFail(FailType failType_) external {
         failType = failType_;
+    }
+
+    function setDecimals(uint8 customDecimals_) external {
+        customDecimals = customDecimals_;
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return customDecimals;
     }
 }

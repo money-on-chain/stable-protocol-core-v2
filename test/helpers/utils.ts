@@ -204,7 +204,7 @@ export async function deployAsset(): Promise<ERC20Mock> {
   const asset = await factory.deploy();
   // Fill users accounts with balance so that they can operate
   const { alice, bob, charlie } = await getNamedAccounts();
-  await Promise.all([alice, bob, charlie].map(address => asset.mint(address, pEth(10000000))));
+  await Promise.all([alice, bob, charlie].map(address => asset.mint(address, pEth(1e16))));
   return asset;
 }
 
