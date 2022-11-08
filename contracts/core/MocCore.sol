@@ -327,7 +327,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTPtoMint < qTPmin_ || qTPtoMint == 0) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
         // if ctargemaTPto > ctargemaTPfrom we need to check coverage
-        if (tpCtarg[iTo_] > tpCtarg[iFrom_]) {
+        if (_getCtargemaTP(iTo_, pACtpTo) > _getCtargemaTP(iFrom_, pACtpFrom)) {
             uint256 ctargemaCA = calcCtargemaCA();
             // evaluates whether or not the system coverage is healthy enough to mint TP
             // given the target coverage adjusted by the moving average, reverts if it's not
