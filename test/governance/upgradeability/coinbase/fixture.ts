@@ -49,6 +49,7 @@ export function fixtureDeployGovernance(): () => Promise<{
             tcMintFee: feeParams.mintFee,
             tcRedeemFee: feeParams.redeemFee,
             swapTPforTPFee: feeParams.swapTPforTPFee,
+            redeemTCandTPFee: feeParams.redeemTCandTPFee,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
           },

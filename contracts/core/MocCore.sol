@@ -40,6 +40,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
+    event TCandTPRedeemed(
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    );
     event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
@@ -322,7 +332,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
-        (uint256 pTCac, uint256 qTPtoRedeem) = _calcTCandTPrelation(qTC_, pACtp);
+        (uint256 pTCac, uint256 qTPtoRedeem) = _calcTPforRedeemTC(qTC_, pACtp);
         if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTCandTP(
             i_,
@@ -348,6 +358,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(mocFeeFlowAddress, qACfee);
         // transfer qAC for interest
         acTransfer(mocInterestCollectorAddress, qACinterest);
+        // inside a block to avoid stack too deep error
+        {
+            uint8 i = i_;
+            uint256 qTC = qTC_;
+            emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem, qACfee, qACinterest);
+        }
         return (qACtoRedeem, qTPtoRedeem);
     }
 
@@ -589,19 +605,19 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
-    function _calcTCandTPrelation(uint256 qTC_, uint256 pACtp_)
+    function _calcTPforRedeemTC(uint256 qTC_, uint256 pACtp_)
         internal
         view
-        returns (uint256 pTCac, uint256 relationBetweenTcAndTP)
+        returns (uint256 pTCac, uint256 tpToRedeem)
     {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         pTCac = _getPTCac(lckAC, nACgain);
         uint256 cglbMinusOne = _getCglb(lckAC, nACgain) - ONE;
 
-        // calculate how many TP are needed tp redeem TC and not change coverage
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        relationBetweenTcAndTP = ((qTC_ * pTCac * pACtp_) / cglbMinusOne) / PRECISION;
-        return (pTCac, relationBetweenTcAndTP);
+        // calculate how many TP are needed to redeem TC and not change coverage
+        // [N] = (([N] * [PREC] * [PREC]) / [PREC]) / [PREC]
+        tpToRedeem = _mulPrec(qTC_, pTCac * pACtp_) / cglbMinusOne;
+        return (pTCac, tpToRedeem);
     }
 
     function _calcQACforRedeemTCandTP(
@@ -619,7 +635,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint256 qACinterest
         )
     {
-        if (qTC_ == 0 || qTP_ == 0) revert InvalidValue();
+        if (qTC_ == 0) revert InvalidValue();
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
@@ -627,7 +643,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
+        qACfee = _mulPrec(qACtotalToRedeem, redeemTCandTPFee);
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
@@ -871,6 +887,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function getCglb() external view returns (uint256 cglob) {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        console.log("lckAC", lckAC);
+        console.log("nACgain", nACgain);
         return _getCglb(lckAC, nACgain);
     }
 
