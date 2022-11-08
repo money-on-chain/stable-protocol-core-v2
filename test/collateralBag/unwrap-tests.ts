@@ -39,7 +39,7 @@ describe("Feature: MocCAWrapper unwrap", function () {
       });
       it("THEN tx fails because asset is invalid", async () => {
         await expect(
-          mocWrapper.unwrapToAsset(assetNotWhitelisted.address, pEth(61), mocFeeFlow),
+          mocWrapper.unwrapToAsset(assetNotWhitelisted.address, pEth(61), pEth(61), mocFeeFlow),
         ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
@@ -49,14 +49,23 @@ describe("Feature: MocCAWrapper unwrap", function () {
         await assertPrec(60, await mocFunctions.acBalanceOf(mocFeeFlow));
         await mocWrapper
           .connect(await ethers.provider.getSigner(mocFeeFlow))
-          .unwrapToAsset(assets[0].address, pEth(30), mocFeeFlow);
+          .unwrapToAsset(assets[0].address, pEth(30), pEth(30), mocFeeFlow);
         await mocWrapper
           .connect(await ethers.provider.getSigner(mocFeeFlow))
-          .unwrapToAsset(assets[1].address, pEth(20), mocFeeFlow);
+          .unwrapToAsset(assets[1].address, pEth(20), pEth(20), mocFeeFlow);
 
         await assertPrec(10, await mocFunctions.acBalanceOf(mocFeeFlow));
         await assertPrec(30, await assets[0].balanceOf(mocFeeFlow));
         await assertPrec(20, await assets[1].balanceOf(mocFeeFlow));
+      });
+    });
+    describe("WHEN mocFee address expects to unwraps more than what corresponds", () => {
+      it("THEN it fails", async () => {
+        await expect(
+          mocWrapper
+            .connect(await ethers.provider.getSigner(mocFeeFlow))
+            .unwrapToAsset(assets[0].address, pEth(60), pEth(61), mocFeeFlow),
+        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.QAC_BELOW_MINIMUM);
       });
     });
     describe("WHEN mocFee address tries to unwraps more than what he has", () => {
@@ -64,7 +73,7 @@ describe("Feature: MocCAWrapper unwrap", function () {
         await expect(
           mocWrapper
             .connect(await ethers.provider.getSigner(mocFeeFlow))
-            .unwrapToAsset(assets[0].address, pEth(61), mocFeeFlow),
+            .unwrapToAsset(assets[0].address, pEth(61), pEth(61), mocFeeFlow),
         ).to.revertedWith("ERC20: burn amount exceeds balance");
       });
     });
@@ -76,7 +85,7 @@ describe("Feature: MocCAWrapper unwrap", function () {
           await expect(
             mocWrapper
               .connect(await ethers.provider.getSigner(mocFeeFlow))
-              .unwrapToAsset(assets[1].address, pEth(30), mocFeeFlow),
+              .unwrapToAsset(assets[1].address, pEth(30), pEth(30), mocFeeFlow),
           ).to.revertedWith("ERC20: transfer amount exceeds balance");
         });
       });
