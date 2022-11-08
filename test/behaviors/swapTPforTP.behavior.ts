@@ -157,11 +157,19 @@ const swapTPforTPBehavior = function () {
             => interest = 1% * 0.1 * (85339/86400) = 0.0987%
           */
         beforeEach(async function () {
-          coverageBefore = await mocContracts.mocImpl.getCglb();
-          alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-          mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          mocInterestCollectorPrevACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
+          [
+            coverageBefore,
+            alicePrevACBalance,
+            mocPrevACBalance,
+            mocFeeFlowPrevACBalance,
+            mocInterestCollectorPrevACBalance,
+          ] = await Promise.all([
+            mocContracts.mocImpl.getCglb(),
+            mocFunctions.assetBalanceOf(alice),
+            mocFunctions.acBalanceOf(mocContracts.mocImpl.address),
+            mocFunctions.acBalanceOf(mocFeeFlowAddress),
+            mocFunctions.acBalanceOf(mocInterestCollectorAddress),
+          ]);
           // go forward to a fixed block remaining for settlement to avoid unpredictability
           const bns = await mocContracts.mocSettlement.bns();
           await mineUpTo(bns.sub(fixedBlock));
@@ -249,10 +257,7 @@ const swapTPforTPBehavior = function () {
         beforeEach(async function () {
           coverageBefore = await mocContracts.mocImpl.getCglb();
           alicePrevTP0Balance = await mocFunctions.tpBalanceOf(TP_0, alice);
-          alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          mocInterestCollectorPrevACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
           // go forward to a fixed block remaining for settlement to avoid unpredictability
           const bns = await mocContracts.mocSettlement.bns();
           await mineUpTo(bns.sub(fixedBlock));
@@ -278,21 +283,6 @@ const swapTPforTPBehavior = function () {
         });
         it("THEN Moc balance didn´t change", async function () {
           assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
-        });
-        it("THEN Moc Fee Flow balance increase 1% of 10 AC", async function () {
-          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
-          assertPrec(10 * 0.01, diff);
-        });
-        it("THEN Moc Interest Collector balance increase 0.0987% of 10 AC", async function () {
-          const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
-          const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
-          assertPrec("0.009877199074074070", diff);
-        });
-        it("THEN alice balance decrease 5.1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 100 Asset", async function () {
-          const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-          const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec("0.109877199074074070", diff);
         });
         it("THEN a TPSwapped event is emitted", async function () {
           // iFrom: 0
@@ -334,7 +324,6 @@ const swapTPforTPBehavior = function () {
           */
           beforeEach(async function () {
             coverageBefore = await mocContracts.mocImpl.getCglb();
-            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
             mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
             // go forward to a fixed block remaining for settlement to avoid unpredictability
             const bns = await mocContracts.mocSettlement.bns();
@@ -343,11 +332,6 @@ const swapTPforTPBehavior = function () {
           });
           it("THEN coverage didn´t change", async function () {
             assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
-          });
-          it("THEN alice balance decrease 1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 223.8 Asset", async function () {
-            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-            const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("2.459156360229276804", diff);
           });
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
@@ -405,7 +389,6 @@ const swapTPforTPBehavior = function () {
           */
           beforeEach(async function () {
             coverageBefore = await mocContracts.mocImpl.getCglb();
-            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
             mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
             // go forward to a fixed block remaining for settlement to avoid unpredictability
             const bns = await mocContracts.mocSettlement.bns();
@@ -414,11 +397,6 @@ const swapTPforTPBehavior = function () {
           });
           it("THEN coverage didn´t change", async function () {
             assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
-          });
-          it("THEN alice balance decrease 1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 50 Asset", async function () {
-            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-            const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("0.549385995370370350", diff);
           });
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
@@ -453,7 +431,6 @@ const swapTPforTPBehavior = function () {
           */
           beforeEach(async function () {
             coverageBefore = await mocContracts.mocImpl.getCglb();
-            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
             mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
             // go forward to a fixed block remaining for settlement to avoid unpredictability
             const bns = await mocContracts.mocSettlement.bns();
@@ -462,11 +439,6 @@ const swapTPforTPBehavior = function () {
           });
           it("THEN coverage didn´t change", async function () {
             assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
-          });
-          it("THEN alice balance decrease 1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 5 Asset", async function () {
-            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
-            const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("0.054938599537037035", diff);
           });
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));

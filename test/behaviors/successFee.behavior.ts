@@ -1,7 +1,8 @@
 import { getNamedAccounts } from "hardhat";
+import { ContractTransaction } from "ethers";
 import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance } from "../helpers/utils";
+import { Balance, pEth } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { ERRORS, mineUpTo } from "../helpers/utils";
 import { expect } from "chai";
@@ -52,11 +53,12 @@ const successFeeBehavior = function () {
         });
       });
       describe("AND settlement is executed without TP price variations", function () {
+        let tx: ContractTransaction;
         beforeEach(async function () {
           await initializeBeforeBalances();
           nextBlockSettlement = await mocContracts.mocSettlement.bns();
           await mineUpTo(nextBlockSettlement);
-          await mocContracts.mocSettlement.execSettlement();
+          tx = await mocContracts.mocSettlement.execSettlement();
         });
         it("THEN TC price is still 1 because the TP prices had not changed", async function () {
           assertPrec(1, await mocContracts.mocImpl.getPTCac());
@@ -79,6 +81,14 @@ const successFeeBehavior = function () {
           const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(0, diff);
+        });
+        it("THEN SuccessFeeDistributed event is emitted", async function () {
+          // mocGain: 0
+          // tpGain[0]: 0
+          // tpGain[1]: 0
+          // tpGain[2]: 0
+          // tpGain[3]: 0
+          await expect(tx).to.emit(mocContracts.mocImpl, "SuccessFeeDistributed").withArgs(0, [0, 0, 0, 0]);
         });
       });
       describe("AND TPs prices have changed +100%, +50% and -25% respectively", function () {
@@ -111,10 +121,11 @@ const successFeeBehavior = function () {
           TP2 Minted to appreciation beneficiary = 26.25
           TP3 Minted to appreciation beneficiary = 0 => remains iuo = -3.33
           */
+          let tx: ContractTransaction;
           beforeEach(async function () {
             nextBlockSettlement = await mocContracts.mocSettlement.bns();
             await mineUpTo(nextBlockSettlement);
-            await mocContracts.mocSettlement.execSettlement();
+            tx = await mocContracts.mocSettlement.execSettlement();
           });
           it("THEN TC price didn´t change, it is 1.019", async function () {
             assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
@@ -140,6 +151,16 @@ const successFeeBehavior = function () {
             const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
             const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
             assertPrec("5.666666666666666666", diff);
+          });
+          it("THEN SuccessFeeDistributed event is emitted", async function () {
+            // mocGain: 5.66
+            // tpGain[0]: 11750
+            // tpGain[1]: 26.25
+            // tpGain[2]: 0
+            // tpGain[3]: 0
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "SuccessFeeDistributed")
+              .withArgs(pEth("5.666666666666666666"), [pEth(11750), pEth("26.250000000000000001"), 0, 0]);
           });
           describe("AND TPs prices have changed again +50%, -50% and +100% respectively", function () {
             /*
@@ -189,10 +210,11 @@ const successFeeBehavior = function () {
             TP2 Minted to appreciation beneficiary = 0 => remains iuo = -6.666
             TP3 Minted to appreciation beneficiary = 2336.45
             */
+            let tx: ContractTransaction;
             beforeEach(async function () {
               nextBlockSettlement = await mocContracts.mocSettlement.bns();
               await mineUpTo(nextBlockSettlement);
-              await mocContracts.mocSettlement.execSettlement();
+              tx = await mocContracts.mocSettlement.execSettlement();
             });
             it("THEN TC price didn´t change, it is 1.0213", async function () {
               assertPrec("1.021333333333333333", await mocContracts.mocImpl.getPTCac());
@@ -218,6 +240,16 @@ const successFeeBehavior = function () {
               const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
               const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
               assertPrec(7, diff);
+            });
+            it("THEN SuccessFeeDistributed event is emitted", async function () {
+              // mocGain: 7
+              // tpGain[0]: 23500
+              // tpGain[1]: 0
+              // tpGain[2]: 2336.45
+              // tpGain[3]: 0
+              await expect(tx)
+                .to.emit(mocContracts.mocImpl, "SuccessFeeDistributed")
+                .withArgs(pEth(7), [pEth("23500.000000000000000117"), 0, pEth("2336.450000000000000467"), 0]);
             });
           });
         });

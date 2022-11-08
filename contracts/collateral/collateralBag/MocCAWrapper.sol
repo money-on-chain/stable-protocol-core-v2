@@ -59,6 +59,7 @@ contract MocCAWrapper is MocUpgradable {
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
+
     // ------- Structs -------
     struct AssetIndex {
         // asset index
@@ -211,7 +212,7 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param qAssetMin_ minimum expected Asset amount to be received
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Asset
      */
@@ -278,7 +279,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param qAssetMin_ minimum expected Asset amount to be received
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the Asset
      */
@@ -443,7 +444,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAssetMin_ minimum amount of Asset that expects to be received
      * @param sender_ address who sends the Wrapped Collateral Asset
      * @param recipient_ address who receives the Asset
-     * @return assetRedeemed amount of Asset redeemed to the recipient
+     * @return assetAmount amount of Asset redeemed to the recipient
      */
     function _unwrapToAssetTo(
         address assetAddress_,
@@ -451,15 +452,15 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qAssetMin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 assetRedeemed) {
+    ) internal returns (uint256 assetAmount) {
         // calculate the equivalent amount of Asset
-        assetRedeemed = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
-        if (assetRedeemed < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetRedeemed);
-        // burn the wcaToken redeemed
+        assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
+        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
+        // burns the wcaToken for this user, will fail if insufficient funds
         wcaToken.burn(sender_, wcaTokenAmount_);
-        // transfer Asset to the recipient
-        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetRedeemed);
-        return assetRedeemed;
+        // transfer Asset to the recipient, will fail if not enough assetAmount
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+        return assetAmount;
     }
 
     // ------- Public Functions -------
@@ -487,6 +488,24 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     // ------- External Functions -------
+
+    /**
+     * @notice given an amount of wrapped tokens `wcaTokenAmount_`, converts to the equivalent value
+     * in the given `assetAddress_` and transfer it to the `recipient_` address
+     * @param assetAddress_ Asset contract address
+     * @param wcaTokenAmount_ amount of wrapped tokens
+     * @param qAssetMin_ minimum expected Asset amount to be received
+     * @param recipient_ address who receives the Asset
+     */
+    function unwrapToAsset(
+        address assetAddress_,
+        uint256 wcaTokenAmount_,
+        uint256 qAssetMin_,
+        address recipient_
+    ) external validAsset(assetAddress_) {
+        _unwrapToAssetTo(assetAddress_, wcaTokenAmount_, qAssetMin_, msg.sender, recipient_);
+    }
+
     /**
      * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
@@ -541,7 +560,7 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that sender expects receive
+     * @param qAssetMin_ minimum amount of Asset that sender expects to receive
      */
     function redeemTC(
         address assetAddress_,
@@ -610,7 +629,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that sender expects receive
+     * @param qAssetMin_ minimum Asset amount that sender expects to be received
      */
     function redeemTP(
         address assetAddress_,

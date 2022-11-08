@@ -51,6 +51,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACinterest_
     );
     event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
+    event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
@@ -411,7 +412,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qTPtoMint < qTPmin_ || qTPtoMint == 0) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
         // if ctargemaTPto > ctargemaTPfrom we need to check coverage
-        if (tpCtarg[iTo_] > tpCtarg[iFrom_]) {
+        if (_getCtargemaTP(iTo_, pACtpTo) > _getCtargemaTP(iFrom_, pACtpFrom)) {
             uint256 ctargemaCA = calcCtargemaCA();
             // evaluates whether or not the system coverage is healthy enough to mint TP
             // given the target coverage adjusted by the moving average, reverts if it's not
@@ -603,7 +604,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         tpAvailableToRedeem += tpGain;
         // check if there are enough TP available to redeem
         if (tpAvailableToRedeem < qTP_) revert InsufficientTPtoRedeem(qTP_, tpAvailableToRedeem);
-        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP + tpGain);
+        uint256 interestRate = _calcTPinterestRate(i_, qTP_, tpAvailableToRedeem, nTP, tpGain);
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _divPrec(qTP_, pACtp_);
@@ -702,21 +703,22 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function _distributeSuccessFee() internal {
         uint256 mocGain;
         uint256 pegAmount = pegContainer.length;
+        uint256[] memory tpToMint = new uint256[](pegAmount);
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = _getPACtp(i);
             _updateTPtracking(i, pACtp);
             int256 iou = tpiou[i];
             if (iou > 0) {
                 // [N] = (([PREC] * [PREC] / [PREC]) * [N]) / [PREC]
-                uint256 tpToMint = _mulPrec(_mulPrec(appreciationFactor, pACtp), uint256(iou));
+                tpToMint[i] = _mulPrec(_mulPrec(appreciationFactor, pACtp), uint256(iou));
                 // [N] = [N] + [N]
                 mocGain += uint256(iou);
                 // reset TP profit
                 tpiou[i] = 0;
                 // add qTP to the Bucket
-                _depositTP(i, tpToMint, 0);
+                _depositTP(i, tpToMint[i], 0);
                 // mint TP to appreciation beneficiary, is not necessary to check coverage
-                tpTokens[i].mint(mocAppreciationBeneficiaryAddress, tpToMint);
+                tpTokens[i].mint(mocAppreciationBeneficiaryAddress, tpToMint[i]);
             }
         }
         if (mocGain != 0) {
@@ -727,6 +729,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             // transfer the qAC to Moc Fee Flow
             acTransfer(mocFeeFlowAddress, mocGain);
         }
+        emit SuccessFeeDistributed(mocGain, tpToMint);
     }
 
     // ------- Only Settlement Functions -------

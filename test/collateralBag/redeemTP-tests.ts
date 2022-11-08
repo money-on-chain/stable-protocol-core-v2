@@ -49,7 +49,7 @@ describe("Feature: MocCABag redeem TP", function () {
 
     describe("AND alice has 23500 TPs with asset price at 1:1", () => {
       let tx: ContractTransaction;
-      const fixedBlock = 200;
+      const fixedBlock = 100;
       beforeEach(async () => {
         // add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
@@ -71,7 +71,7 @@ describe("Feature: MocCABag redeem TP", function () {
           // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
           await expect(tx)
             .to.emit(mocWrapper, "TPRedeemed")
-            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth("9.490021064814814820"));
+            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth("9.49000879629629630"));
         });
       });
       describe("WHEN alice redeems 2350 TP to bob", () => {
@@ -87,7 +87,7 @@ describe("Feature: MocCABag redeem TP", function () {
           // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
           await expect(tx)
             .to.emit(mocWrapper, "TPRedeemed")
-            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth("9.490021064814814820"));
+            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth("9.49000879629629630"));
         });
       });
       describe("AND asset price provider is deprecated", () => {
@@ -123,7 +123,7 @@ describe("Feature: MocCABag redeem TP", function () {
             //asset reward = 94.89 currency / 0.9 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("105.444688786008230555", diff);
+            assertPrec("105.444552469135802555", diff);
           });
         });
       });
@@ -145,7 +145,7 @@ describe("Feature: MocCABag redeem TP", function () {
             //asset reward = 94.89 currency / 1.1 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("86.272927188552188636", diff);
+            assertPrec("86.272815656565656636", diff);
           });
         });
       });
