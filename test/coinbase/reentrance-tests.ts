@@ -7,7 +7,7 @@ import { ERRORS, pEth } from "../helpers/utils";
 import { Address } from "hardhat-deploy/types";
 import { tpParams } from "../helpers/utils";
 
-describe("Feature: MocCoinbase reentrance tets", () => {
+describe("Feature: MocCoinbase reentrance tests", () => {
   let mocImpl: MocCACoinbase;
   let mocContracts: any;
   let mocFunctions: any;
