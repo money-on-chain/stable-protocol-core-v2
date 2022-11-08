@@ -383,7 +383,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAssetMin_ minimum amount of Asset that expects to be received
      * @param sender_ address who sends the Wrapped Collateral Asset
      * @param recipient_ address who receives the Asset
-     * @return assetRedeemed amount of Asset redeemed to the recipient
+     * @return assetAmount amount of Asset redeemed to the recipient
      */
     function _unwrapToAssetTo(
         address assetAddress_,
@@ -391,15 +391,15 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qAssetMin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 assetRedeemed) {
+    ) internal returns (uint256 assetAmount) {
         // calculate the equivalent amount of Asset
-        assetRedeemed = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
-        if (assetRedeemed < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetRedeemed);
-        // burn the wcaToken redeemed
+        assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
+        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
+        // burns the wcaToken for this user, will fail if insufficient funds
         wcaToken.burn(sender_, wcaTokenAmount_);
-        // transfer Asset to the recipient
-        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetRedeemed);
-        return assetRedeemed;
+        // transfer Asset to the recipient, will fail if not enough assetAmount
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+        return assetAmount;
     }
 
     // ------- Public Functions -------
@@ -442,13 +442,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qAssetMin_,
         address recipient_
     ) external validAsset(assetAddress_) {
-        // calculate the equivalent amount of Asset
-        uint256 assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
-        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
-        // burns the wcaToken for this user, will fail if insufficient funds
-        wcaToken.burn(msg.sender, wcaTokenAmount_);
-        // transfer Asset to the recipient, will fail if not enough assetAmount
-        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+        _unwrapToAssetTo(assetAddress_, wcaTokenAmount_, qAssetMin_, msg.sender, recipient_);
     }
 
     /**
