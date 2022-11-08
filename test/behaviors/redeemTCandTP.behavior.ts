@@ -338,9 +338,9 @@ const redeemTCandTPBehavior = function () {
                 mocContracts.mocWrapper?.address || alice,
                 pEth(100),
                 pEth("783.333333333333333333"),
-                pEth(100 * 0.95),
-                pEth(100 * 0.05),
-                pEth("0.003292399691358023"),
+                pEth("98.089295273919753119"),
+                pEth("5.166666666666666666"),
+                pEth("0.077371392746913548"),
               );
           });
         });
@@ -356,8 +356,8 @@ const redeemTCandTPBehavior = function () {
             nACgain = 5
             coverage = 41.266
             pTCac = 1.0066
-            => to redeem 100 TC we use 783.33 TP
-            => AC redeemed = 25 AC - 5% + 78.33AC - 5% - 0.0987% = 98.08
+            => to redeem 100 TC we use 1175 TP
+            => AC redeemed = 100.66 AC - 5% + 2.5AC - 5% - 0.0987% = 98.08
           */
           let tx: ContractTransaction;
           beforeEach(async function () {
@@ -372,7 +372,7 @@ const redeemTCandTPBehavior = function () {
             tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
           });
           it("THEN coverage did not change", async function () {
-            assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
+            assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb(), undefined, 1);
           });
           it("THEN TC price did not change", async function () {
             assertPrec(tcPriceBefore, await mocContracts.mocImpl.getPTCac());
@@ -385,8 +385,8 @@ const redeemTCandTPBehavior = function () {
             // sender: alice || mocWrapper
             // receiver: alice || mocWrapper
             // qTC: 100 TC
-            // qTP: 783.33 TP
-            // qAC: 103.33 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+            // qTP: 1175 TP
+            // qAC: 103.16 AC - 5% for Moc Fee Flow - 0.0987% for Moc Interest Collector
             // qACfee: 5% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
@@ -396,10 +396,10 @@ const redeemTCandTPBehavior = function () {
                 mocContracts.mocWrapper?.address || alice,
                 mocContracts.mocWrapper?.address || alice,
                 pEth(100),
-                pEth("783.333333333333333333"),
-                pEth(100 * 0.95),
-                pEth(100 * 0.05),
-                pEth("0.003292399691358023"),
+                pEth(1175),
+                pEth("98.005864033564814753"),
+                pEth("5.158333333333333330"),
+                pEth("0.002469299768518517"),
               );
           });
         });

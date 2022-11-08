@@ -332,14 +332,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
     ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
-        (uint256 pTCac, uint256 qTPtoRedeem) = _calcTPforRedeemTC(qTC_, pACtp);
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
+        // pTCac = totalACavailable - lckAC ; cglb = totalACavailable / lckAC
+        // So, we can simplify
+        // [N] = ([N] * [N] * [PREC] / [PREC]) / [N]
+        uint256 qTPtoRedeem = _mulPrec(qTC_ * lckAC, pACtp) / nTCcb;
+
         if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTCandTP(
             i_,
             qTC_,
             qTPtoRedeem,
-            pTCac,
-            pACtp
+            pACtp,
+            _getPTCac(lckAC, nACgain)
         );
         qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
@@ -349,7 +355,11 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // sub qTP from the Bucket
         _withdrawTP(i_, qTPtoRedeem, 0);
         // burn qTC from the sender
-        tcToken.burn(sender_, qTC_);
+        {
+            // TODO: refactor this when issue #91 is applied
+            uint256 qTC = qTC_;
+            tcToken.burn(sender_, qTC);
+        }
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTPtoRedeem);
         // transfer qAC to the recipient
@@ -362,7 +372,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         {
             uint8 i = i_;
             uint256 qTC = qTC_;
-            emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem, qACfee, qACinterest);
+            uint256 qACtoRedeem_ = qACtoRedeem;
+            emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem_, qACfee, qACinterest);
         }
         return (qACtoRedeem, qTPtoRedeem);
     }
@@ -605,27 +616,24 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
-    function _calcTPforRedeemTC(uint256 qTC_, uint256 pACtp_)
-        internal
-        view
-        returns (uint256 pTCac, uint256 tpToRedeem)
-    {
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-        pTCac = _getPTCac(lckAC, nACgain);
-        uint256 cglbMinusOne = _getCglb(lckAC, nACgain) - ONE;
-
-        // calculate how many TP are needed to redeem TC and not change coverage
-        // [N] = (([N] * [PREC] * [PREC]) / [PREC]) / [PREC]
-        tpToRedeem = _mulPrec(qTC_, pTCac * pACtp_) / cglbMinusOne;
-        return (pTCac, tpToRedeem);
-    }
-
+    /**
+     * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
+     * and Pegged Token in one operation
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param pACtp_ Pegged Token price [PREC]
+     * @param pTCac_ Collateral Token price [PREC]
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
+     */
     function _calcQACforRedeemTCandTP(
         uint8 i_,
         uint256 qTC_,
         uint256 qTP_,
-        uint256 pTCac_,
-        uint256 pACtp_
+        uint256 pACtp_,
+        uint256 pTCac_
     )
         internal
         view
@@ -639,7 +647,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
-        // [N] = [N] * [PREC] / [PREC]
+        // [N] = [N] * [PREC] / [N]
         qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
@@ -887,8 +895,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function getCglb() external view returns (uint256 cglob) {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-        console.log("lckAC", lckAC);
-        console.log("nACgain", nACgain);
         return _getCglb(lckAC, nACgain);
     }
 
