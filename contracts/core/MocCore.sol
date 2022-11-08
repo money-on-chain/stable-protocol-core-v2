@@ -643,7 +643,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint256 qACinterest
         )
     {
-        if (qTC_ == 0) revert InvalidValue();
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
