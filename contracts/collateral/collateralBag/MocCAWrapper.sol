@@ -319,7 +319,8 @@ contract MocCAWrapper is MocUpgradable {
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTC_ maximum amount of Collateral Token to redeem
@@ -671,7 +672,8 @@ contract MocCAWrapper is MocUpgradable {
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTC_ maximum amount of Collateral Token to redeem
@@ -693,7 +695,8 @@ contract MocCAWrapper is MocUpgradable {
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTC_ maximum amount of Collateral Token to redeem

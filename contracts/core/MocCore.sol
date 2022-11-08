@@ -207,9 +207,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
         // evaluates if there are enough Collateral Token available to redeem, reverts if it`s not
         _evalTCavailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
-        // calculate how many total qAC are redemeed and how many correspond for fee
+        // calculate how many total qAC are redeemed and how many correspond for fee
         (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
-        // if is 0 reverts because it is triyng to redeem an amount below precision
+        // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
