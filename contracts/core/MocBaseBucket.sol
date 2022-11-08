@@ -377,7 +377,6 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function settleLiquidationPrices() internal {
         // Total amount of AC available to be redeemed
-        // TODO: check if should be totalACavailable =  nACcb + nACioucb - nACgain;
         uint256 totalACAvailable = nACcb + nACioucb;
         if (totalACAvailable == 0) return;
         uint256 pegAmount = pegContainer.length;
@@ -400,24 +399,24 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice @notice updates Pegged Token P&L and last operation price
+     * @notice updates Pegged Token P&L and last operation price
      * @param i_ Pegged Token index
      * @param pACtp_ Pegged Token price [PREC]
      */
     function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
         uint256 tpAvailableToRedeem = pegContainer[i_].nTP - pegContainer[i_].nTPXV;
-        tpiou[i_] += _getOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
+        tpiou[i_] += _calcOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
         pACtpLstop[i_] = pACtp_;
     }
 
     /**
-     * @notice @notice gets on the fly Pegged Token P&L
+     * @notice calculates on the fly Pegged Token P&L
      * @param i_ Pegged Token index
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return otfPnLtp [N]
      */
-    function _getOtfPnLTP(
+    function _calcOtfPnLTP(
         uint8 i_,
         uint256 tpAvailableToRedeem_,
         uint256 pACtp_
@@ -429,7 +428,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice @notice gets accumulated Pegged Token P&L
+     * @notice gets accumulated Pegged Token P&L
      * @param i_ Pegged Token index
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
      * @param pACtp_ Pegged Token price [PREC]
@@ -442,9 +441,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 pACtp_
     ) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
         // [N] = [N] + [N]
-        int256 adjPnLtpiAux = tpiou[i_] + _getOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
+        int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
         if (adjPnLtpiAux > 0) {
-            // [N] = [N] + [N]
             adjPnLtpi = uint256(adjPnLtpiAux);
             // [N] = (([PREC] * [PREC] / [PREC]) * [N]) / [PREC]
             tpGain = _mulPrec(_mulPrec(appreciationFactor, pACtp_), adjPnLtpi);
@@ -464,7 +462,7 @@ abstract contract MocBaseBucket is MocUpgradable {
             uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
             uint256 pACtp = _getPACtp(i);
             (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
-            // [N] = ([N] - [N]) * [PREC] / [PREC]
+            // [N] = ([N] + [N]) * [PREC] / [PREC]
             lckAC += _divPrec(tpAvailableToRedeem + tpGain, pACtp);
             nACgain += adjPnLtpi;
         }
@@ -580,6 +578,17 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @dev sets Moc Appreciation Beneficiary Address
+     * @param mocAppreciationBeneficiaryAddress_ moc Appreciation Beneficiary new address
+     */
+    function setMocAppreciationBeneficiaryAddress(address mocAppreciationBeneficiaryAddress_)
+        external
+        onlyAuthorizedChanger
+    {
+        mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
+    }
+
+    /**
      * @dev sets the value of the protected threshold configuration param
      * @param protThrld_ coverage protected state threshold [PREC]
      */
@@ -601,6 +610,24 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setLiqEnabled(bool liqEnabled_) external onlyAuthorizedChanger {
         liqEnabled = liqEnabled_;
+    }
+
+    /**
+     * @dev sets success Fee value.
+     * @param successFee_ pct of the gain because Pegged Tokens devaluation that is
+     * transferred in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     */
+    function setSuccessFee(uint256 successFee_) external onlyAuthorizedChanger {
+        successFee = successFee_;
+    }
+
+    /**
+     * @dev sets appreciation Factor value.
+     * @param appreciationFactor_ pct of the gain because Pegged Tokens devaluation that is returned
+     * in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
+     */
+    function setAppreciationFactor(uint256 appreciationFactor_) external onlyAuthorizedChanger {
+        appreciationFactor = appreciationFactor_;
     }
 
     /**
