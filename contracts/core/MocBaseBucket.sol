@@ -562,6 +562,17 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @dev sets Moc Appreciation Beneficiary Address
+     * @param mocAppreciationBeneficiaryAddress_ moc Appreciation Beneficiary new address
+     */
+    function setMocAppreciationBeneficiaryAddress(address mocAppreciationBeneficiaryAddress_)
+        external
+        onlyAuthorizedChanger
+    {
+        mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
+    }
+
+    /**
      * @dev sets the value of the protected threshold configuration param
      * @param protThrld_ coverage protected state threshold [PREC]
      */
@@ -583,6 +594,24 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setLiqEnabled(bool liqEnabled_) external onlyAuthorizedChanger {
         liqEnabled = liqEnabled_;
+    }
+
+    /**
+     * @dev sets success Fee value.
+     * @param successFee_ pct of the gain because Pegged Tokens devaluation that is
+     * transferred in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     */
+    function setSuccessFee(uint256 successFee_) external onlyAuthorizedChanger {
+        successFee = successFee_;
+    }
+
+    /**
+     * @dev sets appreciation Factor value.
+     * @param appreciationFactor_ pct of the gain because Pegged Tokens devaluation that is returned
+     * in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
+     */
+    function setAppreciationFactor(uint256 appreciationFactor_) external onlyAuthorizedChanger {
+        appreciationFactor = appreciationFactor_;
     }
 
     /**
