@@ -50,6 +50,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
+    error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     // ------- Structs -------
 
     struct InitializeCoreParams {
@@ -300,15 +301,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice redeem Collateral Asset in exchange for Collateral Token and Pegged Token
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTC_ amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param sender_ address who sends Collateral Token and Pegged Token
      * @param recipient_ address who receives the Collateral Asset
      * @return qACtoRedeem amount of AC sent to `recipient_`
-     * @return qTCtoRedeem amount of Collateral Token redeemed
      * @return qTPtoRedeem amount of Pegged Token redeemed
      */
     function _redeemTCandTPto(
@@ -318,35 +319,36 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    )
-        internal
-        notLiquidated
-        returns (
-            uint256 qACtoRedeem,
-            uint256 qTCtoRedeem,
-            uint256 qTPtoRedeem
-        )
-    {
-        qTCtoRedeem = qTC_;
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-        uint256 pTCac = _getPTCac(lckAC, nACgain);
+    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
         uint256 pACtp = _getPACtp(i_);
-        uint256 cglbMinusOne = _getCglb(lckAC, nACgain) - ONE;
-        // PREC^2] = [PREC] * [PREC]
-        uint256 pTCacMulPTCac = pTCac * pACtp;
-        // calculate how many TP are needed tp redeem TC and not change coverage
-        // [N] = ([N] * [PREC^2] / [PREC]) / [PREC]
-        qTPtoRedeem = ((qTCtoRedeem * pTCacMulPTCac) / cglbMinusOne) / PRECISION;
-        if (qTPtoRedeem > qTP_) {
-            // if TP are not enough we redeem the TC that reach
-            qTPtoRedeem = qTP_;
-            // [N] = ([N] * [PREC] * [PREC]) / ([PREC^2])
-            qTCtoRedeem = _divPrec(qTPtoRedeem * cglbMinusOne, pTCacMulPTCac);
-        }
-        qACtoRedeem = _redeemTCto(qTCtoRedeem, qACmin_, sender_, recipient_);
-        qACtoRedeem += _redeemTPto(i_, qTPtoRedeem, qACmin_, sender_, recipient_);
+        _updateTPtracking(i_, pACtp);
+        (uint256 pTCac, uint256 qTPtoRedeem) = _calcTCandTPrelation(qTC_, pACtp);
+        if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
+        (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTCandTP(
+            i_,
+            qTC_,
+            qTPtoRedeem,
+            pTCac,
+            pACtp
+        );
+        qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
-        return (qACtoRedeem, qTCtoRedeem, qTPtoRedeem);
+
+        // sub qTC and qAC from the Bucket
+        _withdrawTC(qTC_, qACtotalToRedeem);
+        // sub qTP from the Bucket
+        _withdrawTP(i_, qTPtoRedeem, 0);
+        // burn qTC from the sender
+        tcToken.burn(sender_, qTC_);
+        // burn qTP from the sender
+        tpTokens[i_].burn(sender_, qTPtoRedeem);
+        // transfer qAC to the recipient
+        acTransfer(recipient_, qACtoRedeem);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfer qAC for interest
+        acTransfer(mocInterestCollectorAddress, qACinterest);
+        return (qACtoRedeem, qTPtoRedeem);
     }
 
     /**
@@ -584,6 +586,48 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many qAC to transfer to interest collector
         // [N] = [N] * [PREC] / [PREC]
         qACinterest = _mulPrec(qACtotalToRedeem, interestRate);
+        return (qACtotalToRedeem, qACfee, qACinterest);
+    }
+
+    function _calcTCandTPrelation(uint256 qTC_, uint256 pACtp_)
+        internal
+        view
+        returns (uint256 pTCac, uint256 relationBetweenTcAndTP)
+    {
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        pTCac = _getPTCac(lckAC, nACgain);
+        uint256 cglbMinusOne = _getCglb(lckAC, nACgain) - ONE;
+
+        // calculate how many TP are needed tp redeem TC and not change coverage
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        relationBetweenTcAndTP = ((qTC_ * pTCac * pACtp_) / cglbMinusOne) / PRECISION;
+        return (pTCac, relationBetweenTcAndTP);
+    }
+
+    function _calcQACforRedeemTCandTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 pTCac_,
+        uint256 pACtp_
+    )
+        internal
+        view
+        returns (
+            uint256 qACtotalToRedeem,
+            uint256 qACfee,
+            uint256 qACinterest
+        )
+    {
+        if (qTC_ == 0 || qTP_ == 0) revert InvalidValue();
+        // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
+        (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
+        // calculate how many qAC are redeemed because TC
+        // [N] = [N] * [PREC] / [PREC]
+        qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 

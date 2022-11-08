@@ -348,12 +348,7 @@ contract MocCAWrapper is MocUpgradable {
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
         // checking it after with qAssetMin
-        (uint256 wcaTokenAmountRedeemed, uint256 qTCtoRedeem, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(
-            i_,
-            qTC_,
-            qTP_,
-            0
-        );
+        (uint256 wcaTokenAmountRedeemed, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
         // send Asset to the recipient
         uint256 assetRedeemed = _unwrapToAssetTo(
             assetAddress_,
@@ -362,14 +357,13 @@ contract MocCAWrapper is MocUpgradable {
             address(this),
             recipient_
         );
-        // transfer unused Collateral Token to the sender
-        SafeERC20Upgradeable.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
         // transfer unused Pegged Token to the sender
         SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
-            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTCtoRedeem, qTPtoRedeem, assetRedeemed);
+            uint256 qTC = qTC_;
+            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTC, qTPtoRedeem, assetRedeemed);
         }
     }
 

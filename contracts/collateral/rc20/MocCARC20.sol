@@ -204,7 +204,6 @@ contract MocCARC20 is MocCore {
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
      * @return qACtoRedeem amount of AC sent to the sender
-     * @return qTCtoRedeem amount of Collateral Token redeemed
      * @return qTPtoRedeem amount of Pegged Token redeemed
      */
     function redeemTCandTP(
@@ -212,14 +211,7 @@ contract MocCARC20 is MocCore {
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_
-    )
-        external
-        returns (
-            uint256 qACtoRedeem,
-            uint256 qTCtoRedeem,
-            uint256 qTPtoRedeem
-        )
-    {
+    ) external returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
         return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, msg.sender);
     }
 
@@ -234,7 +226,6 @@ contract MocCARC20 is MocCore {
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
      * @return qACtoRedeem amount of AC sent to the `recipient_`
-     * @return qTCtoRedeem amount of Collateral Token redeemed
      * @return qTPtoRedeem amount of Pegged Token redeemed
      */
     function redeemTCandTPto(
@@ -243,14 +234,7 @@ contract MocCARC20 is MocCore {
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
-    )
-        external
-        returns (
-            uint256 qACtoRedeem,
-            uint256 qTCtoRedeem,
-            uint256 qTPtoRedeem
-        )
-    {
+    ) external returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
         return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, recipient_);
     }
 
