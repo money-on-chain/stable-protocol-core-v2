@@ -346,7 +346,7 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
+        uint256 wcaMinted = _wrapFromAssetTo(assetAddress_, qAssetMax_, sender_, address(this));
 
         // mint TC and TP to the recipient
         (uint256 wcaUsed, uint256 qTCminted, uint256 qTPminted) = mocCore.mintTCandTPto(
@@ -360,7 +360,7 @@ contract MocCAWrapper is MocUpgradable {
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;

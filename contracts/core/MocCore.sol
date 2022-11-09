@@ -339,27 +339,25 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint256 qTPtoMint
         )
     {
-        qTPtoMint = qTP_;
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-        uint256 pTCac = _getPTCac(lckAC, nACgain);
+        uint256 qACNeededtoMint;
+        uint256 qACfee;
         uint256 pACtp = _getPACtp(i_);
-        uint256 cglbMinusOne = _getCglb(lckAC, nACgain) - ONE;
-        // PREC^2] = [PREC] * [PREC]
-        uint256 pTCacMulPTCac = pTCac * pACtp;
-        // calculate how many TC are needed to mint TP and not change coverage
-        // [N] = ([N] * [PREC] * [PREC]) / ([PREC^2])
-        qTCtoMint = _divPrec(qTPtoMint * cglbMinusOne, pTCacMulPTCac);
-        if (qTCtoMint > qTC_) {
-            // if TC are not enough we mint the TP that reach
-            qTCtoMint = qTC_;
-            // [N] = ([N] * [PREC^2] / [PREC]) / [PREC]
-            qTPtoMint = ((qTCtoMint * pTCacMulPTCac) / cglbMinusOne) / PRECISION;
-        }
-        qACtotalNeeded = _mintTCto(qTCtoMint, qACmax_, sender_, recipient_, false);
-        qACtotalNeeded += _mintTPto(i_, qTPtoMint, qACmax_, sender_, recipient_, false);
+        _updateTPtracking(i_, pACtp);
+        (qACNeededtoMint, qTCtoMint, qTPtoMint, qACfee) = _calcQACforMintTCandTP(qACmax_, qTP_, pACtp);
+        qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        // add qTC and qAC to the Bucket
+        _depositTC(qTC_, qACNeededtoMint);
+        // add qTP to the Bucket
+        _depositTP(i_, qTP_, 0);
+        // mint qTC to the recipient
+        tcToken.mint(recipient_, qTCtoMint);
+        // mint qTP from the recipient
+        tpTokens[i_].mint(recipient_, qTP_);
         // transfer the qAC change to the sender
         acTransfer(sender_, qACmax_ - qACtotalNeeded);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
         return (qACtotalNeeded, qACtotalNeeded, qTPtoMint);
     }
 
@@ -385,15 +383,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
+    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        // calculate how many TP are needed to redeem TC and not change coverage
         // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
         // pTCac = totalACavailable - lckAC ; cglb = totalACavailable / lckAC
         // So, we can simplify
         // [N] = ([N] * [N] * [PREC] / [PREC]) / [N]
-        uint256 qTPtoRedeem = _mulPrec(qTC_ * lckAC, pACtp) / nTCcb;
+        qTPtoRedeem = _mulPrec(qTC_ * lckAC, pACtp) / nTCcb;
 
         if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTCandTP(
@@ -672,6 +671,44 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // [N] = [N] * [PREC] / [PREC]
         qACinterest = _mulPrec(qACtotalToRedeem, interestRate);
         return (qACtotalToRedeem, qACfee, qACinterest);
+    }
+
+    function _calcQACforMintTCandTP(
+        uint256 qACmax_,
+        uint256 qTP_,
+        uint256 pACtp_
+    )
+        internal
+        view
+        returns (
+            uint256 qTCtoMint,
+            uint256 qTPtoMint,
+            uint256 qACNeededtoMint,
+            uint256 qACfee
+        )
+    {
+        uint256 ctargemaCA = _getCtargemaCA();
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        uint256 pTCac = _getPTCac(lckAC, nACgain);
+        // [PREC] = ([PREC] * [PREC]) / ([PREC] * [PREC] / [PREC])
+        uint256 prop = _divPrec(ctargemaCA - ONE, _mulPrec(pTCac, pACtp_));
+        if (qTP_ > 0) {
+            // calculate how many TC are needed to mint TP
+            // qTCtoMint = qTP * (ctargema - 1) / pACtp * pTCac)
+            // [N] = [N] * [PREC]) / ([PREC]
+            qTCtoMint = _mulPrec(qTP_, prop);
+            qTPtoMint = qTP_;
+            // [N] = [N] + [N]
+            qACNeededtoMint = _mulPrec(qTCtoMint, pTCac) + _divPrec(qTPtoMint, pACtp_);
+            qACfee = _mulPrec(qACNeededtoMint, redeemTCandTPFee);
+        } else {
+            // use all the qAC to mint TC and TP in equal proportions
+            qACfee = _mulPrec(qACmax_, redeemTCandTPFee);
+            qACNeededtoMint = qACmax_ - qACfee;
+            qTPtoMint = (qACNeededtoMint * pACtp_) / ctargemaCA;
+            qTCtoMint = qTPtoMint * prop;
+        }
+        return (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee);
     }
 
     /**

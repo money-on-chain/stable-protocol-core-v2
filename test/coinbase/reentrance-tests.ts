@@ -74,5 +74,6 @@ describe("Feature: MocCoinbase reentrance tests", () => {
         await expectRevertReentrancyGuard(reentracyAttack(op));
       });
     });
+    // TODO: mintTCandTP
   });
 });

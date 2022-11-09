@@ -88,6 +88,7 @@ const shouldBehaveLikeLiquidable = function () {
           // before actually executing redeemTC but on moving TC assets and hitting paused revert
           await expect(this.mocFunctions.redeemTCandTP({ i: 0, from: bob, qTC: 1, qTP: 1 })).to.be.reverted;
         });
+        // TODO: mintTCandTP
         describe("WHEN Bob and Charlie redeem their TPs by liquidation redeem", async function () {
           let bobPrevAssetBalance: Balance, charliePrevAssetBalance: Balance, otherUserPrevAssetBalance: Balance;
           beforeEach(async function () {

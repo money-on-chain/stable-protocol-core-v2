@@ -55,6 +55,12 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.redeemTCandTPFee()).to.be.equal(44);
       });
     });
+    describe(`WHEN setMintTCandTPFee is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setMintTCandTPFee(44);
+        expect(await mocProxy.mintTCandTPFee()).to.be.equal(44);
+      });
+    });
     describe(`WHEN setMocFeeFlowAddress is invoked`, () => {
       it("THEN the new value is assigned", async function () {
         await mocProxy.setMocFeeFlowAddress(mockAddress);
@@ -128,6 +134,11 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setRedeemTCandTPFee is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setRedeemTCandTPFee(42));
+      });
+    });
+    describe("WHEN setMintTCandTPFee is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMintTCandTPFee(42));
       });
     });
     describe("WHEN setMocFeeFlowAddress is invoked", () => {
