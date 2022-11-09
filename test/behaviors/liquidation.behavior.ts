@@ -78,6 +78,11 @@ const shouldBehaveLikeLiquidable = function () {
             ERRORS.LIQUIDATED,
           );
         });
+        it("THEN even if prices are restored, bob cannot swapTPforTP", async function () {
+          await expect(
+            this.mocFunctions.swapTPforTP({ iFrom: 0, iTo: 1, from: bob, qTP: 1 }),
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.LIQUIDATED);
+        });
         describe("WHEN Bob and Charlie redeem their TPs by liquidation redeem", async function () {
           let bobPrevAssetBalance: Balance, charliePrevAssetBalance: Balance, otherUserPrevAssetBalance: Balance;
           beforeEach(async function () {

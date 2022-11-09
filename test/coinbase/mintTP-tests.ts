@@ -1,5 +1,5 @@
 import { fixtureDeployedMocCoinbase } from "./fixture";
-import { MocCACoinbase, NonPayableMock, ReentrancyAttackerMock } from "../../typechain";
+import { MocCACoinbase, NonPayableMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { ethers, getNamedAccounts } from "hardhat";
@@ -37,22 +37,6 @@ describe("Feature: MocCoinbase mint TP", function () {
         await expect(nonPayable.forward(mocImpl.address, data, { value: pEth(100) })).to.be.revertedWithCustomError(
           mocImpl,
           ERRORS.TRANSFER_FAIL,
-        );
-      });
-    });
-
-    describe("WHEN a reentracy attacker contract reentrant mintTP", () => {
-      let reentrancyAttacker: ReentrancyAttackerMock;
-      beforeEach(async () => {
-        //add collateral
-        await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
-        const factory = await ethers.getContractFactory("ReentrancyAttackerMock");
-        reentrancyAttacker = await factory.deploy();
-      });
-      it("THEN tx fails because there is a reentrant call", async () => {
-        const data = mocImpl.interface.encodeFunctionData("mintTP", [0, pEth(1)]);
-        await expect(reentrancyAttacker.forward(mocImpl.address, data, true, { value: pEth(100) })).to.be.revertedWith(
-          ERRORS.REENTRACYGUARD,
         );
       });
     });

@@ -1,7 +1,7 @@
 import { ethers, getNamedAccounts, upgrades } from "hardhat";
 import { Contract } from "ethers";
 
-import { coreParams, tcParams } from "../../../../deploy-config/config";
+import { coreParams, feeParams } from "../../../../deploy-config/config";
 import { MocCACoinbase__factory } from "../../../../typechain";
 import { deployCollateralToken, GAS_LIMIT_PATCH } from "../../../helpers/utils";
 
@@ -35,8 +35,9 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
           mocAppreciationBeneficiaryAddress: deployer,
           protThrld: coreParams.protThrld,
           liqThrld: coreParams.liqThrld,
-          tcMintFee: tcParams.mintFee,
-          tcRedeemFee: tcParams.redeemFee,
+          tcMintFee: feeParams.mintFee,
+          tcRedeemFee: feeParams.redeemFee,
+          swapTPforTPFee: feeParams.swapTPforTPFee,
           successFee: coreParams.successFee,
           appreciationFactor: coreParams.appreciationFactor,
         },

@@ -81,7 +81,7 @@ abstract contract MocEma is MocBaseBucket {
      * @notice get last calculated target coverage adjusted by all Pegged Token's to
      *  Collateral Asset rate moving average
      * @dev qAC = nTP / pACtp
-     *      ctargemaCA = ∑(tpCarg * qAC) / ∑(qAC)
+     *      ctargemaCA = ∑(ctargemaTP * qAC) / ∑(qAC)
      * @return ctargemaCA [PREC]
      */
     function _getCtargemaCA() internal view returns (uint256 ctargemaCA) {
@@ -115,7 +115,7 @@ abstract contract MocEma is MocBaseBucket {
     /**
      * @notice calculates target coverage adjusted by all Pegged Token's to Collateral Asset rate moving average
      * @dev qAC = nTP / pACtp
-     *      ctargemaCA = ∑(tpCarg * currency) / ∑(currency)
+     *      ctargemaCA = ∑(ctargemaTP * qAC) / ∑(qAC)
      * @return ctargemaCA [PREC]
      */
     function calcCtargemaCA() public returns (uint256 ctargemaCA) {

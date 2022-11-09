@@ -5,7 +5,6 @@ import { Address } from "hardhat-deploy/dist/types";
 import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
-import { beforeEach } from "mocha";
 
 const redeemTPBehavior = function () {
   let mocContracts: any;
@@ -14,7 +13,7 @@ const redeemTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_2 = 2;
-  const TP_NON_EXISTENT = 4;
+  const TP_NON_EXISTENT = 5;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
@@ -385,7 +384,7 @@ const redeemTPBehavior = function () {
         => coverage = 1.93 
         */
         beforeEach(async function () {
-          await mocFunctions.pokePrice(0, "15.1");
+          await mocFunctions.pokePrice(TP_0, "15.1");
         });
         it("THEN the coverage is 1.93", async function () {
           assertPrec("1.932027189124350259", await mocContracts.mocImpl.getCglb());

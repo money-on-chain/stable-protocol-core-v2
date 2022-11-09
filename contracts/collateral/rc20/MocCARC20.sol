@@ -195,6 +195,48 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends a Pegged Token and receives another one
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     */
+    function swapTPforTP(
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qACmax_
+    ) external returns (uint256 qACtotalNeeded) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
+     * @param recipient_ address who receives the target Pegged Token
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     */
+    function swapTPforTPto(
+        uint8 iFrom_,
+        uint8 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address recipient_
+    ) external returns (uint256 qACtotalNeeded) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
