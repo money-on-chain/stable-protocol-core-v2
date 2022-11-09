@@ -71,7 +71,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
               alice,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("98.163334760802469138"),
+              pEth("98.163335223765432101"),
             );
         });
       });
@@ -96,7 +96,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
               bob,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("98.163334760802469138"),
+              pEth("98.163335223765432101"),
             );
         });
       });

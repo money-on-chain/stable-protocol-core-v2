@@ -1,6 +1,6 @@
 import { MocCARC20 } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
-import { coreParams, tcParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, feeParams, mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 
 const {
@@ -23,8 +23,10 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     appreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
-    tcMintFee = tcParams.mintFee,
-    tcRedeemFee = tcParams.redeemFee,
+    tcMintFee = feeParams.mintFee,
+    tcRedeemFee = feeParams.redeemFee,
+    swapTPforTPFee = feeParams.swapTPforTPFee,
+    redeemTCandTPFee = feeParams.redeemTCandTPFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
     successFee = coreParams.successFee,
     appreciationFactor = coreParams.appreciationFactor,
@@ -41,6 +43,8 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     liqThrld?: BigNumberish;
     tcMintFee?: BigNumberish;
     tcRedeemFee?: BigNumberish;
+    swapTPforTPFee?: BigNumberish;
+    redeemTCandTPFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
     successFee?: BigNumberish;
     appreciationFactor?: BigNumberish;
@@ -57,6 +61,8 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           liqThrld,
           tcMintFee,
           tcRedeemFee,
+          swapTPforTPFee,
+          redeemTCandTPFee,
           successFee,
           appreciationFactor,
         },

@@ -68,6 +68,7 @@ contract MocCAWrapper is MocUpgradable {
     error InvalidPriceProvider(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
+
     // ------- Structs -------
     struct AssetIndex {
         // asset index
@@ -203,7 +204,7 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
+        uint256 wcaMinted = _wrapFromAssetTo(assetAddress_, qAssetMax_, sender_, address(this));
 
         // mint TC to the recipient
         uint256 wcaUsed = mocCore.mintTCto(qTC_, wcaMinted, recipient_);
@@ -211,7 +212,7 @@ contract MocCAWrapper is MocUpgradable {
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
         emit TCMinted(assetAddress_, sender_, recipient_, qTC_, qAssetMax_ - assetUnused);
     }
 
@@ -220,7 +221,7 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param qAssetMin_ minimum expected Asset amount to be received
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Asset
      */
@@ -240,7 +241,7 @@ contract MocCAWrapper is MocUpgradable {
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
         // send Asset to the recipient
-        uint256 assetRedeemed = _redeemWCAto(
+        uint256 assetRedeemed = _unwrapToAssetTo(
             assetAddress_,
             wcaTokenAmountRedeemed,
             qAssetMin_,
@@ -269,7 +270,7 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
+        uint256 wcaMinted = _wrapFromAssetTo(assetAddress_, qAssetMax_, sender_, address(this));
 
         // mint TP to the recipient
         uint256 wcaUsed = mocCore.mintTPto(i_, qTP_, wcaMinted, recipient_);
@@ -277,7 +278,7 @@ contract MocCAWrapper is MocUpgradable {
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
         emit TPMinted(assetAddress_, i_, sender_, recipient_, qTP_, qAssetMax_ - assetUnused);
     }
 
@@ -287,7 +288,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param qAssetMin_ minimum expected Asset amount to be received
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the Asset
      */
@@ -313,7 +314,7 @@ contract MocCAWrapper is MocUpgradable {
         if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
         else wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
         // send Asset to the recipient
-        uint256 assetRedeemed = _redeemWCAto(
+        uint256 assetRedeemed = _unwrapToAssetTo(
             assetAddress_,
             wcaTokenAmountRedeemed,
             qAssetMin_,
@@ -374,7 +375,8 @@ contract MocCAWrapper is MocUpgradable {
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTC_ maximum amount of Collateral Token to redeem
@@ -403,28 +405,22 @@ contract MocCAWrapper is MocUpgradable {
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
         // checking it after with qAssetMin
-        (uint256 wcaTokenAmountRedeemed, uint256 qTCtoRedeem, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(
-            i_,
-            qTC_,
-            qTP_,
-            0
-        );
+        (uint256 wcaTokenAmountRedeemed, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
         // send Asset to the recipient
-        uint256 assetRedeemed = _redeemWCAto(
+        uint256 assetRedeemed = _unwrapToAssetTo(
             assetAddress_,
             wcaTokenAmountRedeemed,
             qAssetMin_,
             address(this),
             recipient_
         );
-        // transfer unused Collateral Token to the sender
-        SafeERC20Upgradeable.safeTransfer(tcToken, sender_, qTC_ - qTCtoRedeem);
         // transfer unused Pegged Token to the sender
         SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
-            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTCtoRedeem, qTPtoRedeem, assetRedeemed);
+            uint256 qTC = qTC_;
+            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTC, qTPtoRedeem, assetRedeemed);
         }
     }
 
@@ -450,9 +446,9 @@ contract MocCAWrapper is MocUpgradable {
         address sender_,
         address recipient_
     ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _mintWCAto(assetAddress_, qAssetMax_, sender_, address(this));
+        uint256 wcaMinted = _wrapFromAssetTo(assetAddress_, qAssetMax_, sender_, address(this));
         // get Pegged Token contract address
-        IERC20Upgradeable tpTokenFrom = IERC20Upgradeable(mocCore.tpTokens(iFrom_));
+        IERC20Upgradeable tpTokenFrom = mocCore.tpTokens(iFrom_);
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, sender_, address(this), qTP_);
         uint256 wcaUsed = mocCore.swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, wcaMinted, recipient_);
@@ -460,7 +456,7 @@ contract MocCAWrapper is MocUpgradable {
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _redeemWCAto(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
@@ -479,47 +475,47 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAsset_ amount of Asset to be Wrapped
      * @param sender_ address who sends the Asset
      * @param recipient_ address who receives the Wrapped Collateral Asset
-     * @return wcaMinted amount of Wrapped Collateral Asset minted to the recipient
+     * @return wcaTokenWrapped amount of Wrapped Collateral Asset minted to the recipient
      */
-    function _mintWCAto(
+    function _wrapFromAssetTo(
         address assetAddress_,
         uint256 qAsset_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 wcaMinted) {
-        wcaMinted = _convertAssetToToken(assetAddress_, qAsset_);
-        wcaToken.mint(recipient_, wcaMinted);
+    ) internal returns (uint256 wcaTokenWrapped) {
+        wcaTokenWrapped = _convertAssetToToken(assetAddress_, qAsset_);
+        wcaToken.mint(recipient_, wcaTokenWrapped);
 
         // transfer asset from sender to this contract
         SafeERC20.safeTransferFrom(IERC20(assetAddress_), sender_, address(this), qAsset_);
-        return wcaMinted;
+        return wcaTokenWrapped;
     }
 
     /**
-     * @notice caller sends Wrapped Collateral Asset and recipient receives Asset
-     *  Requires prior sender approval of Asset to this contract
+     * @notice given an amount of wrapped tokens `wcaTokenAmount_`, converts to the equivalent value
+     * in the given `assetAddress_` and transfer it to the `recipient_` address
      * @param assetAddress_ Asset contract address
-     * @param qWCA_ amount of Wrapped Collateral Asset to be unwrapped
+     * @param wcaTokenAmount_ amount of wrapped tokens
      * @param qAssetMin_ minimum amount of Asset that expects to be received
      * @param sender_ address who sends the Wrapped Collateral Asset
      * @param recipient_ address who receives the Asset
-     * @return assetRedeemed amount of Asset redeemed to the recipient
+     * @return assetAmount amount of Asset redeemed to the recipient
      */
-    function _redeemWCAto(
+    function _unwrapToAssetTo(
         address assetAddress_,
-        uint256 qWCA_,
+        uint256 wcaTokenAmount_,
         uint256 qAssetMin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 assetRedeemed) {
+    ) internal returns (uint256 assetAmount) {
         // calculate the equivalent amount of Asset
-        assetRedeemed = _convertTokenToAsset(assetAddress_, qWCA_);
-        if (assetRedeemed < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetRedeemed);
-        // burn the wcaToken redeemed
-        wcaToken.burn(sender_, qWCA_);
-        // transfer Asset to the recipient
-        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetRedeemed);
-        return assetRedeemed;
+        assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
+        if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
+        // burns the wcaToken for this user, will fail if insufficient funds
+        wcaToken.burn(sender_, wcaTokenAmount_);
+        // transfer Asset to the recipient, will fail if not enough assetAmount
+        SafeERC20.safeTransfer(IERC20(assetAddress_), recipient_, assetAmount);
+        return assetAmount;
     }
 
     // ------- Public Functions -------
@@ -547,6 +543,24 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     // ------- External Functions -------
+
+    /**
+     * @notice given an amount of wrapped tokens `wcaTokenAmount_`, converts to the equivalent value
+     * in the given `assetAddress_` and transfer it to the `recipient_` address
+     * @param assetAddress_ Asset contract address
+     * @param wcaTokenAmount_ amount of wrapped tokens
+     * @param qAssetMin_ minimum expected Asset amount to be received
+     * @param recipient_ address who receives the Asset
+     */
+    function unwrapToAsset(
+        address assetAddress_,
+        uint256 wcaTokenAmount_,
+        uint256 qAssetMin_,
+        address recipient_
+    ) external validAsset(assetAddress_) {
+        _unwrapToAssetTo(assetAddress_, wcaTokenAmount_, qAssetMin_, msg.sender, recipient_);
+    }
+
     /**
      * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
@@ -601,7 +615,7 @@ contract MocCAWrapper is MocUpgradable {
         Requires prior sender approval of Collateral Token to this contract 
      * @param assetAddress_ Asset contract address
      * @param qTC_ amount of Collateral Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that sender expects receive
+     * @param qAssetMin_ minimum amount of Asset that sender expects to receive
      */
     function redeemTC(
         address assetAddress_,
@@ -670,7 +684,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that sender expects receive
+     * @param qAssetMin_ minimum Asset amount that sender expects to be received
      */
     function redeemTP(
         address assetAddress_,
@@ -778,7 +792,8 @@ contract MocCAWrapper is MocUpgradable {
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTC_ maximum amount of Collateral Token to redeem
@@ -800,7 +815,8 @@ contract MocCAWrapper is MocUpgradable {
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
      *  This operation is done without check coverage
      *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTP are insufficient, less TC are redeemed
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      * @param qTC_ maximum amount of Collateral Token to redeem

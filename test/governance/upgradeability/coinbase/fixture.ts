@@ -2,7 +2,7 @@ import { deployments, getNamedAccounts, network } from "hardhat";
 import { Contract } from "ethers";
 import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
 import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../../scripts/utils";
-import { coreParams, tcParams, mocAddresses } from "../../../../deploy-config/config";
+import { coreParams, feeParams, mocAddresses } from "../../../../deploy-config/config";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 
 export function fixtureDeployGovernance(): () => Promise<{
@@ -46,8 +46,10 @@ export function fixtureDeployGovernance(): () => Promise<{
             mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
-            tcMintFee: tcParams.mintFee,
-            tcRedeemFee: tcParams.redeemFee,
+            tcMintFee: feeParams.mintFee,
+            tcRedeemFee: feeParams.redeemFee,
+            swapTPforTPFee: feeParams.swapTPforTPFee,
+            redeemTCandTPFee: feeParams.redeemTCandTPFee,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
           },

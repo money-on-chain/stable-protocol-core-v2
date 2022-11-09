@@ -59,6 +59,10 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 tcMintFee;
         // fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
         uint256 tcRedeemFee;
+        // fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+        uint256 swapTPforTPFee;
+        // fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token in one operation [PREC]
+        uint256 redeemTCandTPFee;
         // pct of the gain because Pegged Tokens devaluation that is transferred
         // in Collateral Asset to Moc Fee Flow during the settlement [PREC]
         uint256 successFee;
@@ -102,6 +106,10 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow on Collateral Tokens redeem [PREC]
     uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+    uint256 public swapTPforTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token in one operation [PREC]
+    uint256 public redeemTCandTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // fee pct sent to Fee Flow on Pegged Tokens mint [PREC]
     uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
@@ -164,6 +172,8 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        liqThrld liquidation coverage threshold [PREC]
      *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *        swapTPforTPFee fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+     *        redeemTCandTPFee fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
@@ -176,6 +186,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.swapTPforTPFee > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.redeemTCandTPFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor > PRECISION)
             revert InvalidValue();
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
@@ -189,6 +201,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         liqThrld = initializeBaseBucketParams_.liqThrld;
         tcMintFee = initializeBaseBucketParams_.tcMintFee;
         tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
+        swapTPforTPFee = initializeBaseBucketParams_.swapTPforTPFee;
+        redeemTCandTPFee = initializeBaseBucketParams_.redeemTCandTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
         liquidated = false;
@@ -354,15 +368,12 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Tokens [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
+     * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
+     * @return nACgain amount of collateral asset to be distributed during settlement [N]
      */
-    function _evalCoverage(
-        uint256 cThrld_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view {
-        uint256 cglb = _getCglb(lckAC_, nACgain_);
+    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC, uint256 nACgain) {
+        (lckAC, nACgain) = _getLckACandACgain();
+        uint256 cglb = _getCglb(lckAC, nACgain);
         // check if coverage is above the given threshold
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
     }
@@ -373,7 +384,6 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function settleLiquidationPrices() internal {
         // Total amount of AC available to be redeemed
-        // TODO: check if should be totalACavailable =  nACcb + nACioucb - nACgain;
         uint256 totalACAvailable = nACcb + nACioucb;
         if (totalACAvailable == 0) return;
         uint256 pegAmount = pegContainer.length;
@@ -396,24 +406,24 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice @notice updates Pegged Token P&L and last operation price
+     * @notice updates Pegged Token P&L and last operation price
      * @param i_ Pegged Token index
      * @param pACtp_ Pegged Token price [PREC]
      */
     function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
         uint256 tpAvailableToRedeem = pegContainer[i_].nTP - pegContainer[i_].nTPXV;
-        tpiou[i_] += _getOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
+        tpiou[i_] += _calcOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
         pACtpLstop[i_] = pACtp_;
     }
 
     /**
-     * @notice @notice gets on the fly Pegged Token P&L
+     * @notice calculates on the fly Pegged Token P&L
      * @param i_ Pegged Token index
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return otfPnLtp [N]
      */
-    function _getOtfPnLTP(
+    function _calcOtfPnLTP(
         uint8 i_,
         uint256 tpAvailableToRedeem_,
         uint256 pACtp_
@@ -425,7 +435,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice @notice gets accumulated Pegged Token P&L
+     * @notice gets accumulated Pegged Token P&L
      * @param i_ Pegged Token index
      * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
      * @param pACtp_ Pegged Token price [PREC]
@@ -438,9 +448,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 pACtp_
     ) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
         // [N] = [N] + [N]
-        int256 adjPnLtpiAux = tpiou[i_] + _getOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
+        int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
         if (adjPnLtpiAux > 0) {
-            // [N] = [N] + [N]
             adjPnLtpi = uint256(adjPnLtpiAux);
             // [N] = (([PREC] * [PREC] / [PREC]) * [N]) / [PREC]
             tpGain = _mulPrec(_mulPrec(appreciationFactor, pACtp_), adjPnLtpi);
@@ -460,7 +469,7 @@ abstract contract MocBaseBucket is MocUpgradable {
             uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
             uint256 pACtp = _getPACtp(i);
             (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
-            // [N] = ([N] - [N]) * [PREC] / [PREC]
+            // [N] = ([N] + [N]) * [PREC] / [PREC]
             lckAC += _divPrec(tpAvailableToRedeem + tpGain, pACtp);
             nACgain += adjPnLtpi;
         }
@@ -563,6 +572,24 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @dev sets the fee charged when swap a Pegged Token for another Pegged Token.
+     * @param swapTPforTPFee_ fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setSwapTPforTPFee(uint256 swapTPforTPFee_) external onlyAuthorizedChanger {
+        swapTPforTPFee = swapTPforTPFee_;
+    }
+
+    /**
+     * @dev sets the fee charged when redeem Collateral Token and Pegged Token in one operation.
+     * @param redeemTCandTPFee_ fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setRedeemTCandTPFee(uint256 redeemTCandTPFee_) external onlyAuthorizedChanger {
+        redeemTCandTPFee = redeemTCandTPFee_;
+    }
+
+    /**
      * @dev sets Moc Fee Flow contract address
      * @param mocFeeFlowAddress_ moc Fee Flow new contract address
      */
@@ -576,6 +603,17 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setMocInterestCollectorAddress(address mocInterestCollectorAddress_) external onlyAuthorizedChanger {
         mocInterestCollectorAddress = mocInterestCollectorAddress_;
+    }
+
+    /**
+     * @dev sets Moc Appreciation Beneficiary Address
+     * @param mocAppreciationBeneficiaryAddress_ moc Appreciation Beneficiary new address
+     */
+    function setMocAppreciationBeneficiaryAddress(address mocAppreciationBeneficiaryAddress_)
+        external
+        onlyAuthorizedChanger
+    {
+        mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
     }
 
     /**
@@ -600,6 +638,24 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setLiqEnabled(bool liqEnabled_) external onlyAuthorizedChanger {
         liqEnabled = liqEnabled_;
+    }
+
+    /**
+     * @dev sets success Fee value.
+     * @param successFee_ pct of the gain because Pegged Tokens devaluation that is
+     * transferred in Collateral Asset to Moc Fee Flow during the settlement [PREC]
+     */
+    function setSuccessFee(uint256 successFee_) external onlyAuthorizedChanger {
+        successFee = successFee_;
+    }
+
+    /**
+     * @dev sets appreciation Factor value.
+     * @param appreciationFactor_ pct of the gain because Pegged Tokens devaluation that is returned
+     * in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
+     */
+    function setAppreciationFactor(uint256 appreciationFactor_) external onlyAuthorizedChanger {
+        appreciationFactor = appreciationFactor_;
     }
 
     /**
