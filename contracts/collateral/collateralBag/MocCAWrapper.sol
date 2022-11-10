@@ -318,8 +318,8 @@ contract MocCAWrapper is MocUpgradable {
     /**
      * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
-     *  This operation is done without check coverage
-     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
@@ -348,7 +348,7 @@ contract MocCAWrapper is MocUpgradable {
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
-        // we pass '0' to qACmin parameter to do not revert by qAC below minimium since we are
+        // we pass '0' as qACmin parameter to avoid reverting by qAC below minimum since we are
         // checking it after with qAssetMin
         (uint256 wcaTokenAmountRedeemed, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
         // send Asset to the recipient
@@ -689,8 +689,8 @@ contract MocCAWrapper is MocUpgradable {
     /**
      * @notice caller sends Collateral Token and Pegged Token and receives Assets
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
-     *  This operation is done without check coverage
-     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address
@@ -712,8 +712,8 @@ contract MocCAWrapper is MocUpgradable {
     /**
      * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
      *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
-     *  This operation is done without check coverage
-     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
      * @param assetAddress_ Asset contract address

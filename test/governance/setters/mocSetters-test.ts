@@ -45,14 +45,14 @@ describe("Feature: Verify that all config settings are protected by governance",
     });
     describe(`WHEN setSwapTPforTPFee is invoked`, () => {
       it("THEN the new value is assigned", async function () {
-        await mocProxy.setSwapTPforTPFee(44);
-        expect(await mocProxy.swapTPforTPFee()).to.be.equal(44);
+        await mocProxy.setSwapTPforTPFee(45);
+        expect(await mocProxy.swapTPforTPFee()).to.be.equal(45);
       });
     });
     describe(`WHEN setRedeemTCandTPFee is invoked`, () => {
       it("THEN the new value is assigned", async function () {
-        await mocProxy.setRedeemTCandTPFee(44);
-        expect(await mocProxy.redeemTCandTPFee()).to.be.equal(44);
+        await mocProxy.setRedeemTCandTPFee(46);
+        expect(await mocProxy.redeemTCandTPFee()).to.be.equal(46);
       });
     });
     describe(`WHEN setMocFeeFlowAddress is invoked`, () => {

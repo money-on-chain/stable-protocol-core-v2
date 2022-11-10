@@ -13,7 +13,6 @@ const redeemTCandTPBehavior = function () {
   let alice: Address;
   let bob: Address;
   const TP_0 = 0;
-  const TP_NON_EXISTENT = 4;
 
   const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
   const fixedBlock = 85342;
@@ -29,7 +28,7 @@ const redeemTCandTPBehavior = function () {
   let mocFeeFlowPrevACBalance: Balance;
   let mocInterestCollectorPrevACBalance: Balance;
 
-  describe("Feature: redeem Pegged Token", function () {
+  describe("Feature: joint Redeem TC and TP operation", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
@@ -40,25 +39,6 @@ const redeemTCandTPBehavior = function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: alice, qTC: 3000 });
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
-      });
-      describe("AND TP price provider is deprecated", function () {
-        beforeEach(async function () {
-          await mocContracts.priceProviders[TP_0].deprecatePriceProvider();
-        });
-        describe("WHEN alice tries to redeem 100 TC and 23500 TP", function () {
-          it("THEN tx reverts because invalid price provider", async function () {
-            await expect(
-              mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 }),
-            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_PRICE_PROVIDER);
-          });
-        });
-      });
-      describe("WHEN alice tries to redeem a non-existent TP", function () {
-        it("THEN tx reverts with panic code 0x32 array out of bounded", async function () {
-          // generic revert because on collateral bag implementation fail before accessing the tp array
-          await expect(mocFunctions.redeemTCandTP({ i: TP_NON_EXISTENT, from: alice, qTC: 100, qTP: 23500 })).to.be
-            .reverted;
-        });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
         it("THEN tx reverts because the amount of TP is invalid", async function () {

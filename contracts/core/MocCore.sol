@@ -206,8 +206,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
-        // evaluates if there are enough Collateral Token available to redeem, reverts if it`s not
-        _evalTCavailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
+        // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
+        _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
         // calculate how many total qAC are redeemed and how many correspond for fee
         (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
         // if is 0 reverts because it is trying to redeem an amount below precision
@@ -310,8 +310,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
     /**
      * @notice redeem Collateral Asset in exchange for Collateral Token and Pegged Token
-     *  This operation is done without check coverage
-     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
      * @param i_ Pegged Token index
@@ -335,10 +335,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _updateTPtracking(i_, pACtp);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
-        // pTCac = totalACavailable - lckAC ; cglb = totalACavailable / lckAC
-        // So, we can simplify
-        // [N] = ([N] * [N] * [PREC] / [PREC]) / [N]
-        uint256 qTPtoRedeem = _mulPrec(qTC_ * lckAC, pACtp) / nTCcb;
+        // pTCac = (totalACavailable - lckAC) / nTCcb
+        // cglb = totalACavailable / lckAC => cglb - 1 = (totalACavailable - lckAC) / lckAC
+        // pTCac = (qTC * pACtp * (totalACavailable - lckAC) / nTCcb) / ((totalACavailable - lckAC) / lckAC)
+        // So, we can simplify (totalACavailable - lckAC)
+        // pTCac = (qTC * pACtp * lckAC) / nTCcb
+        // [N] = ([N] * [N] * [PREC] / [N]) /  [PREC]
+        uint256 qTPtoRedeem = ((qTC_ * lckAC * pACtp) / nTCcb) / PRECISION;
 
         if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
         (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTCandTP(
@@ -647,7 +650,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
-        // [N] = [N] * [PREC] / [N]
+        // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
@@ -656,20 +659,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
-     * @notice evaluates if there are enough Collateral Token availabie to redeem, reverts if it`s not
+     * @notice evaluates if there is enough Collateral Token available to redeem, reverts if there's not
      * @param qTC_ amount of Collateral Token to redeem [N]
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
-     * @param nACtoMint_ amount of Collateral Asset that will be distributed at
+     * @param nACgain_ amount of Collateral Asset that will be distributed at
      *         settlement because Pegged Token devaluation [N]
      */
-    function _evalTCavailableToRedeem(
+    function _evalTCAvailableToRedeem(
         uint256 qTC_,
         uint256 ctargemaCA_,
         uint256 lckAC_,
-        uint256 nACtoMint_
+        uint256 nACgain_
     ) internal view {
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACtoMint_);
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
     }
