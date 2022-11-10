@@ -240,6 +240,7 @@ export const ERRORS = {
   INSUFFICIENT_QTP_SENT: "InsufficientQtpSent",
   QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
+  NOT__WHEN_PAUSED: "NotWhenPaused",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   LOW_COVERAGE: "LowCoverage",
