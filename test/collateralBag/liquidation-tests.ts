@@ -1,6 +1,6 @@
-import { fixtureDeployedMocCABag } from "./fixture";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { shouldBehaveLikeLiquidable } from "../behaviors/liquidation.behavior";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag Liquidation", function () {
   describe("GIVEN a MocCABag implementation deployed with two Pegs", function () {

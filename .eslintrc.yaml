@@ -2,12 +2,15 @@ extends:
   - eslint:recommended
   - plugin:prettier/recommended
   - prettier
+  - plugin:import/recommended
+  - plugin:import/typescript
 parser: "@typescript-eslint/parser"
 parserOptions:
   project: tsconfig.json
 plugins:
   - "@typescript-eslint"
   - "no-only-tests"
+  - "import"
 env:
   node: true
   mocha: true
@@ -24,3 +27,9 @@ rules:
       varsIgnorePattern: _
   "no-only-tests/no-only-tests":
     - error
+  "import/no-unresolved": 
+    - error
+  "import/order":
+    - error
+
+

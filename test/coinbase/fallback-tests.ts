@@ -1,8 +1,8 @@
-import { fixtureDeployedMocCoinbase } from "./fixture";
-import { MocCACoinbase } from "../../typechain";
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import { MocCACoinbase } from "../../typechain";
 import { pEth } from "../helpers/utils";
+import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase fallback", function () {
   let mocImpl: MocCACoinbase;

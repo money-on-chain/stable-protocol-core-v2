@@ -1,20 +1,20 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
+import { Address } from "hardhat-deploy/types";
+import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
 import {
   ERC20Mock,
-  PriceProviderMock,
-  MocRC20,
-  MocCore,
   MocCAWrapper,
+  MocCore,
+  MocRC20,
   MocRC20__factory,
-  MocTC__factory,
   MocTC,
+  MocTC__factory,
+  PriceProviderMock,
 } from "../../typechain";
-import { Address } from "hardhat-deploy/types";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
-import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
 
 export const GAS_LIMIT_PATCH = 30000000;
 const PCT_BASE = BigNumber.from((1e18).toString());

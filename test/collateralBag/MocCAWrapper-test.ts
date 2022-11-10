@@ -1,8 +1,8 @@
-import { fixtureDeployedMocCABag } from "./fixture";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
-import { deployAsset, deployPriceProvider, pEth, ERRORS } from "../helpers/utils";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
+import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { ERRORS, deployAsset, deployPriceProvider, pEth } from "../helpers/utils";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCAWrapper", function () {
   let mocWrapper: MocCAWrapper;

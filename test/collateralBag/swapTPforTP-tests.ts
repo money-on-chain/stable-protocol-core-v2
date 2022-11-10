@@ -1,13 +1,12 @@
-import { fixtureDeployedMocCABag } from "./fixture";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
-import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
-import { deployAsset, ERRORS, mineUpTo, pEth } from "../helpers/utils";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
-import { tpParams } from "../helpers/utils";
+import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
+import { ERRORS, deployAsset, mineUpTo, pEth, tpParams } from "../helpers/utils";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag swap TP for TP", function () {
   let mocWrapper: MocCAWrapper;

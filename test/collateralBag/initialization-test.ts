@@ -1,4 +1,5 @@
-import { fixtureDeployedMocCABag } from "./fixture";
+import { expect } from "chai";
+import { deployments, ethers } from "hardhat";
 import {
   MocCARC20,
   MocCARC20__factory,
@@ -7,11 +8,10 @@ import {
   MocRC20,
   MocSettlement,
 } from "../../typechain";
-import { expect } from "chai";
-import { ERRORS, CONSTANTS, deployCollateralToken } from "../helpers/utils";
-import { mocInitialize } from "./initializers";
+import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
-import { ethers, deployments } from "hardhat";
+import { fixtureDeployedMocCABag } from "./fixture";
+import { mocInitialize } from "./initializers";
 
 describe("Feature: MocCABag initialization", function () {
   let mocProxy: MocCARC20;

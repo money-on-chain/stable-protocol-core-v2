@@ -1,8 +1,7 @@
 import { expect } from "chai";
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades, getNamedAccounts } from "hardhat";
 import { MocTC, MocTC__factory } from "../../../../typechain";
 import { GAS_LIMIT_PATCH } from "../../../helpers/utils";
-import { getNamedAccounts } from "hardhat";
 
 describe("Feature: Check MocTC storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocTC: MocTC;

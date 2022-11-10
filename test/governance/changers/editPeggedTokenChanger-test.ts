@@ -1,19 +1,17 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { tpParamsDefault } from "../../helpers/utils";
+import { ethers, getNamedAccounts } from "hardhat";
+import { Contract } from "ethers";
 import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
 import {
+  EditPeggedTokenChangerTemplate,
+  EditPeggedTokenChangerTemplate__factory,
   IChangeContract__factory,
   MocCACoinbase,
   MocRC20,
   PriceProviderMock,
-  EditPeggedTokenChangerTemplate,
-  EditPeggedTokenChangerTemplate__factory,
 } from "../../../typechain";
-import { deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
+import { ERRORS, deployPriceProvider, pEth, tpParamsDefault } from "../../helpers/utils";
 import { deployChangerClosure } from "./addPeggedTokenChanger-test";
-import { Contract } from "ethers";
-import { getNamedAccounts } from "hardhat";
 
 const fixtureDeploy = fixtureDeployGovernance();
 

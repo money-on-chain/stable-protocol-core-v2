@@ -1,7 +1,7 @@
-import { fixtureDeployedMocRC20 } from "./fixture";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { successFeeBehavior } from "../behaviors/successFee.behavior";
 import { tpParams } from "../helpers/utils";
+import { fixtureDeployedMocRC20 } from "./fixture";
 
 describe("Feature: MocCABag success fee distribution", function () {
   describe("GIVEN a MocCABag implementation deployed", function () {
