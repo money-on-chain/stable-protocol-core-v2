@@ -26,7 +26,7 @@ const redeemTCBehavior = function () {
         await mocFunctions.mintTC({ from: alice, qTC: 300 });
       });
       describe("WHEN alice tries to redeem 0 TC", function () {
-        it("THEN tx reverts because the amount of AC is invalid", async function () {
+        it("THEN tx reverts because the amount of TC is invalid", async function () {
           await expect(mocFunctions.redeemTC({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
             ERRORS.INVALID_VALUE,

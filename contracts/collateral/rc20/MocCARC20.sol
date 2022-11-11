@@ -195,6 +195,52 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
+     * @return qACtoRedeem amount of AC sent to the sender
+     * @return qTPtoRedeem amount of Pegged Token redeemed
+     */
+    function redeemTCandTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
+        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to the `recipient_`
+     * @return qTPtoRedeem amount of Pegged Token redeemed
+     */
+    function redeemTCandTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
+        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
      * @notice caller sends a Pegged Token and receives another one
      * @param iFrom_ owned Pegged Token index
      * @param iTo_ target Pegged Token index

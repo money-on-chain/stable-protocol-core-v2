@@ -40,6 +40,16 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
+    event TCandTPRedeemed(
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    );
     event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     // ------- Custom Errors -------
@@ -51,6 +61,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
+    error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     // ------- Structs -------
 
     struct InitializeCoreParams {
@@ -195,8 +206,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
-        // calculate how many total qAC are redemeed and how many correspond for fee
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, ctargemaCA, lckAC, nACgain);
+        // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
+        _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
+        // calculate how many total qAC are redeemed and how many correspond for fee
+        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
@@ -293,6 +306,80 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(mocInterestCollectorAddress, qACinterest);
         emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee, qACinterest);
         return qACtoRedeem;
+    }
+
+    /**
+     * @notice redeem Collateral Asset in exchange for Collateral Token and Pegged Token
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param sender_ address who sends Collateral Token and Pegged Token
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACtoRedeem amount of AC sent to `recipient_`
+     * @return qTPtoRedeem amount of Pegged Token redeemed
+     */
+    function _redeemTCandTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address sender_,
+        address recipient_
+    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
+        uint256 pACtp = _getPACtp(i_);
+        _updateTPtracking(i_, pACtp);
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
+        // pTCac = (totalACavailable - lckAC) / nTCcb
+        // cglb = totalACavailable / lckAC => cglb - 1 = (totalACavailable - lckAC) / lckAC
+        // pTCac = (qTC * pACtp * (totalACavailable - lckAC) / nTCcb) / ((totalACavailable - lckAC) / lckAC)
+        // So, we can simplify (totalACavailable - lckAC)
+        // pTCac = (qTC * pACtp * lckAC) / nTCcb
+        // [N] = ([N] * [N] * [PREC] / [N]) /  [PREC]
+        uint256 qTPtoRedeem = ((qTC_ * lckAC * pACtp) / nTCcb) / PRECISION;
+
+        if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
+        (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) = _calcQACforRedeemTCandTP(
+            i_,
+            qTC_,
+            qTPtoRedeem,
+            pACtp,
+            _getPTCac(lckAC, nACgain)
+        );
+        qACtoRedeem = qACtotalToRedeem - qACfee - qACinterest;
+        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+
+        // sub qTC and qAC from the Bucket
+        _withdrawTC(qTC_, qACtotalToRedeem);
+        // sub qTP from the Bucket
+        _withdrawTP(i_, qTPtoRedeem, 0);
+        // burn qTC from the sender
+        {
+            // TODO: refactor this when issue #91 is applied
+            uint256 qTC = qTC_;
+            tcToken.burn(sender_, qTC);
+        }
+        // burn qTP from the sender
+        tpTokens[i_].burn(sender_, qTPtoRedeem);
+        // transfer qAC to the recipient
+        acTransfer(recipient_, qACtoRedeem);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfer qAC for interest
+        acTransfer(mocInterestCollectorAddress, qACinterest);
+        // inside a block to avoid stack too deep error
+        {
+            uint8 i = i_;
+            uint256 qTC = qTC_;
+            uint256 qACtoRedeem_ = qACtoRedeem;
+            emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem_, qACfee, qACinterest);
+        }
+        return (qACtoRedeem, qTPtoRedeem);
     }
 
     /**
@@ -446,7 +533,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
     /**
      * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
      * @param qTC_ amount of Collateral Token to redeem [N]
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
@@ -454,16 +540,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function _calcQACforRedeemTC(
         uint256 qTC_,
-        uint256 ctargemaCA_,
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         if (qTC_ == 0) revert InvalidValue();
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
-
-        // check if there are enough TC available to redeem
-        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
-
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
@@ -538,6 +618,63 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // [N] = [N] * [PREC] / [PREC]
         qACinterest = _mulPrec(qACtotalToRedeem, interestRate);
         return (qACtotalToRedeem, qACfee, qACinterest);
+    }
+
+    /**
+     * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
+     * and Pegged Token in one operation
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param pACtp_ Pegged Token price [PREC]
+     * @param pTCac_ Collateral Token price [PREC]
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
+     */
+    function _calcQACforRedeemTCandTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 pACtp_,
+        uint256 pTCac_
+    )
+        internal
+        view
+        returns (
+            uint256 qACtotalToRedeem,
+            uint256 qACfee,
+            uint256 qACinterest
+        )
+    {
+        // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
+        (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
+        // calculate how many qAC are redeemed because TC
+        // [N] = [N] * [PREC] / [PREC]
+        qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        qACfee = _mulPrec(qACtotalToRedeem, redeemTCandTPFee);
+        return (qACtotalToRedeem, qACfee, qACinterest);
+    }
+
+    /**
+     * @notice evaluates if there is enough Collateral Token available to redeem, reverts if there's not
+     * @param qTC_ amount of Collateral Token to redeem [N]
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param nACgain_ amount of Collateral Asset that will be distributed at
+     *         settlement because Pegged Token devaluation [N]
+     */
+    function _evalTCAvailableToRedeem(
+        uint256 qTC_,
+        uint256 ctargemaCA_,
+        uint256 lckAC_,
+        uint256 nACgain_
+    ) internal view {
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
+        // check if there are enough TC available to redeem
+        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
     }
 
     /**
@@ -799,6 +936,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function getTotalACavailable() external view returns (uint256 totalACavailable) {
         (, uint256 nACgain) = _getLckACandACgain();
         return _getTotalACavailable(nACgain);
+    }
+
+    /**
+     * @notice get Collateral Token leverage
+     * @return leverageTC [PREC]
+     */
+    function getLeverageTC() external view returns (uint256 leverageTC) {
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        return _getLeverageTC(lckAC, nACgain);
     }
 
     /**

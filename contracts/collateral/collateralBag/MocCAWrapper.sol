@@ -35,6 +35,15 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
+    event TCandTPRedeemed(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
     event TPSwapped(
         address asset_,
         uint8 indexed iFrom_,
@@ -292,7 +301,6 @@ contract MocCAWrapper is MocUpgradable {
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
-
         uint256 wcaTokenAmountRedeemed;
         if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
         else wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
@@ -304,8 +312,61 @@ contract MocCAWrapper is MocUpgradable {
             address(this),
             recipient_
         );
-
         emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetRedeemed);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that expect to be received
+     * @param sender_ address who sends Collateral Token and Pegged Token
+     * @param recipient_ address who receives the Collateral Asset
+     */
+    function _redeemTCandTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        // get Collateral Token contract address
+        IERC20Upgradeable tcToken = mocCore.tcToken();
+        // get Pegged Token contract address
+        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
+        // transfer Collateral Token from sender to this address
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        // transfer Pegged Token from sender to this address
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
+        // we pass '0' as qACmin parameter to avoid reverting by qAC below minimum since we are
+        // checking it after with qAssetMin
+        (uint256 wcaTokenAmountRedeemed, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
+        // send Asset to the recipient
+        uint256 assetRedeemed = _unwrapToAssetTo(
+            assetAddress_,
+            wcaTokenAmountRedeemed,
+            qAssetMin_,
+            address(this),
+            recipient_
+        );
+        // transfer unused Pegged Token to the sender
+        SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
+        // inside a block to avoid stack too deep error
+        {
+            address assetAddress = assetAddress_;
+            uint256 qTC = qTC_;
+            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTC, qTPtoRedeem, assetRedeemed);
+        }
     }
 
     /**
@@ -623,6 +684,54 @@ contract MocCAWrapper is MocUpgradable {
     ) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and receives Assets
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
+     */
+    function redeemTCandTP(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_
+    ) external {
+        _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     */
+    function redeemTCandTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address recipient_
+    ) external {
+        _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, recipient_);
     }
 
     /**

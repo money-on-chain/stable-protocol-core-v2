@@ -51,7 +51,7 @@ const redeemTPBehavior = function () {
         });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
-        it("THEN tx reverts because the amount of AC is invalid", async function () {
+        it("THEN tx reverts because the amount of TP is invalid", async function () {
           await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
             ERRORS.INVALID_VALUE,

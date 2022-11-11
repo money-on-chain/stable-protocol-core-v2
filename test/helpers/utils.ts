@@ -237,6 +237,7 @@ export const ERRORS = {
   INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
   INSUFFICIENT_TP_TO_REDEEM: "InsufficientTPtoRedeem",
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
+  INSUFFICIENT_QTP_SENT: "InsufficientQtpSent",
   QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
