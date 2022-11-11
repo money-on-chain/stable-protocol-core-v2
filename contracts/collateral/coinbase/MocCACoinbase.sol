@@ -169,20 +169,16 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
     /**
      * @notice caller sends coinbase as Collateral Asset and receives Collateral Token and Pegged Token
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
      * @return qTPtoMint amount of Pegged Token minted
      */
-    function mintTCandTP(
-        uint8 i_,
-        uint256 qTC_,
-        uint256 qTP_
-    )
+    function mintTCandTP(uint8 i_, uint256 qTP_)
         external
         payable
         returns (
@@ -191,17 +187,17 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             uint256 qTPtoMint
         )
     {
-        return _mintTCandTPto(i_, qTC_, qTP_, msg.value, msg.sender, msg.sender);
+        return _mintTCandTPto(i_, qTP_, msg.value, msg.sender, msg.sender);
     }
 
     /**
      * @notice caller sends coinbase as Collateral Asset and recipient receives Collateral Token and Pegged Token
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
@@ -209,7 +205,6 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      */
     function mintTCandTPto(
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         address recipient_
     )
@@ -221,7 +216,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
             uint256 qTPtoMint
         )
     {
-        return _mintTCandTPto(i_, qTC_, qTP_, msg.value, msg.sender, recipient_);
+        return _mintTCandTPto(i_, qTP_, msg.value, msg.sender, recipient_);
     }
 
     /**

@@ -104,28 +104,26 @@ const redeemTPto =
 
 const mintTCandTP =
   (mocWrapper, assetDefault) =>
-  async ({ i, from, qTC, qTP, qACmax = qTC * 10, applyPrecision = true, asset = assetDefault }) => {
+  async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
-      qTC = pEth(qTC);
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
     await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
-    return mocWrapper.connect(signer).mintTCandTP(asset.address, i, qTC, qTP, qACmax);
+    return mocWrapper.connect(signer).mintTCandTP(asset.address, i, qTP, qACmax);
   };
 
 const mintTCandTPto =
   (mocWrapper, assetDefault) =>
-  async ({ i, from, to, qTC, qTP, qACmax = qTC * 10, applyPrecision = true, asset = assetDefault }) => {
+  async ({ i, from, to, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
-      qTC = pEth(qTC);
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
     await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
-    return mocWrapper.connect(signer).mintTCandTPto(asset.address, i, qTC, qTP, qACmax, to);
+    return mocWrapper.connect(signer).mintTCandTPto(asset.address, i, qTP, qACmax, to);
   };
 
 const redeemTCandTP =

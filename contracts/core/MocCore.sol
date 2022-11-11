@@ -50,6 +50,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
+    event TCandTPMinted(
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_
+    );
     event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     // ------- Custom Errors -------
@@ -311,13 +320,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
     /**
      * @notice mint Collateral Token and Pegged Token in exchange for Collateral Asset
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @param sender_ address who sends Collateral Aseet
+     * @param sender_ address who sends Collateral Asset
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
@@ -325,7 +334,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
      */
     function _mintTCandTPto(
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         uint256 qACmax_,
         address sender_,
@@ -343,22 +351,26 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee;
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
-        (qACNeededtoMint, qTCtoMint, qTPtoMint, qACfee) = _calcQACforMintTCandTP(qACmax_, qTP_, pACtp);
+        (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qACmax_, qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
+        console.log("qACNeededtoMint", qACNeededtoMint);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        // if is 0 reverts because it is trying to mint an amount below precision
+        if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         // add qTC and qAC to the Bucket
-        _depositTC(qTC_, qACNeededtoMint);
+        _depositTC(qTCtoMint, qACNeededtoMint);
         // add qTP to the Bucket
-        _depositTP(i_, qTP_, 0);
+        _depositTP(i_, qTPtoMint, 0);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTCtoMint);
         // mint qTP from the recipient
-        tpTokens[i_].mint(recipient_, qTP_);
+        tpTokens[i_].mint(recipient_, qTPtoMint);
         // transfer the qAC change to the sender
         acTransfer(sender_, qACmax_ - qACtotalNeeded);
         // transfer qAC fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee);
-        return (qACtotalNeeded, qACtotalNeeded, qTPtoMint);
+        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTPtoMint, qACtotalNeeded, qACfee);
+        return (qACtotalNeeded, qTCtoMint, qTPtoMint);
     }
 
     /**
@@ -691,6 +703,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         uint256 ctargemaCA = _getCtargemaCA();
+        console.log("ctargemaCA", ctargemaCA);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         uint256 pTCac = _getPTCac(lckAC, nACgain);
         // [PREC] = ([PREC] * [PREC]) / ([PREC] * [PREC] / [PREC])
@@ -702,14 +715,20 @@ abstract contract MocCore is MocEma, MocInterestRate {
             qTCtoMint = _mulPrec(qTP_, prop);
             qTPtoMint = qTP_;
             // [N] = [N] + [N]
+            console.log("qTCtoMint", qTCtoMint);
             qACNeededtoMint = _mulPrec(qTCtoMint, pTCac) + _divPrec(qTPtoMint, pACtp_);
-            qACfee = _mulPrec(qACNeededtoMint, redeemTCandTPFee);
+            qACfee = _mulPrec(qACNeededtoMint, mintTCandTPFee);
         } else {
             // use all the qAC to mint TC and TP in equal proportions
-            qACfee = _mulPrec(qACmax_, redeemTCandTPFee);
-            qACNeededtoMint = qACmax_ - qACfee;
+            qACNeededtoMint = _divPrec(qACmax_, ONE + mintTCandTPFee);
+            qACfee = qACmax_ - qACNeededtoMint;
+            console.log("qACfee", qACfee);
+            // [N] = [N] * [PREC] / [PREC]
             qTPtoMint = (qACNeededtoMint * pACtp_) / ctargemaCA;
-            qTCtoMint = qTPtoMint * prop;
+            console.log("qTPtoMint", qTPtoMint);
+            // [N] = [N] * [PREC] / [PREC]
+            qTCtoMint = _mulPrec(qTPtoMint, prop);
+            console.log("qTCtoMint", qTCtoMint);
         }
         return (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee);
     }

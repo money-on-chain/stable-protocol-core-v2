@@ -102,28 +102,26 @@ const redeemTPto =
 
 const mintTCandTP =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, qTC, qTP, qACmax = qTC * 10, applyPrecision = true }) => {
+  async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
-      qTC = pEth(qTC);
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
-    return mocImpl.connect(signer).mintTCandTP(i, qTC, qTP, qACmax);
+    return mocImpl.connect(signer).mintTCandTP(i, qTP, qACmax);
   };
 
 const mintTCandTPto =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, to, qTC, qTP, qACmax = qTC * 10, applyPrecision = true }) => {
+  async ({ i, from, to, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
-      qTC = pEth(qTC);
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
-    return mocImpl.connect(signer).mintTCandTPto(i, qTC, qTP, qACmax, to);
+    return mocImpl.connect(signer).mintTCandTPto(i, qTP, qACmax, to);
   };
 
 const redeemTCandTP =

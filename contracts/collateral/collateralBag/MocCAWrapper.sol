@@ -328,19 +328,18 @@ contract MocCAWrapper is MocUpgradable {
      * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
      *  Requires prior sender approval of Collateral Asset to this contract
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      */
     function _mintTCandTPto(
         address assetAddress_,
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         uint256 qAssetMax_,
         address sender_,
@@ -351,7 +350,6 @@ contract MocCAWrapper is MocUpgradable {
         // mint TC and TP to the recipient
         (uint256 wcaUsed, uint256 qTCminted, uint256 qTPminted) = mocCore.mintTCandTPto(
             i_,
-            qTC_,
             qTP_,
             wcaMinted,
             recipient_
@@ -745,46 +743,44 @@ contract MocCAWrapper is MocUpgradable {
      * @notice caller sends Asset and receives Collateral Token and Pegged Token
      *  Requires prior sender approval of Collateral Asset to this contract
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTCandTP(
         address assetAddress_,
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         uint256 qAssetMax_
     ) external {
-        _mintTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMax_, msg.sender, msg.sender);
+        _mintTCandTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
     }
 
     /**
      * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
      *  Requires prior sender approval of Collateral Asset to this contract
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      */
     function mintTCandTPto(
         address assetAddress_,
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         uint256 qAssetMax_,
         address recipient_
     ) external {
-        _mintTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMax_, msg.sender, recipient_);
+        _mintTCandTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
     }
 
     /**

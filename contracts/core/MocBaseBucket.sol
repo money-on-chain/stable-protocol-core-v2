@@ -5,6 +5,7 @@ import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
 import "../MocSettlement.sol";
+import "hardhat/console.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
@@ -600,7 +601,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param mintTCandTPFee_ fee pct sent to Fee Flow for mint Collateral Token and Pegged Token [PREC]
      * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
      */
-    function setMintCandTPFee(uint256 mintTCandTPFee_) external onlyAuthorizedChanger {
+    function setMintTCandTPFee(uint256 mintTCandTPFee_) external onlyAuthorizedChanger {
         mintTCandTPFee = mintTCandTPFee_;
     }
 

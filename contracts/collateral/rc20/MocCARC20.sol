@@ -198,11 +198,11 @@ contract MocCARC20 is MocCore {
      * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token
      *  Requires prior sender approval of Collateral Asset to this contract
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
@@ -210,7 +210,6 @@ contract MocCARC20 is MocCore {
      */
     function mintTCandTP(
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         uint256 qACmax_
     )
@@ -223,18 +222,18 @@ contract MocCARC20 is MocCore {
         )
     {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        return _mintTCandTPto(i_, qTC_, qTP_, qACmax_, msg.sender, msg.sender);
+        return _mintTCandTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
     }
 
     /**
      * @notice caller sends Collateral Asset and recipient receives Collateral Token and Pegged Token
      *  Requires prior sender approval of Collateral Asset to this contract
      *  This operation is done without checking coverage
-     *  Mint Collateral Token and Pegged Token in equal proportions so that its price
-     *  and global coverage are not modified. If the qTC are insufficient, less TP are minted
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to mint
-     * @param qTP_ maximum amount of Pegged Token to mint
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
@@ -243,7 +242,6 @@ contract MocCARC20 is MocCore {
      */
     function mintTCandTPto(
         uint8 i_,
-        uint256 qTC_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
@@ -257,7 +255,7 @@ contract MocCARC20 is MocCore {
         )
     {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
-        return _mintTCandTPto(i_, qTC_, qTP_, qACmax_, msg.sender, recipient_);
+        return _mintTCandTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }
 
     /**

@@ -57,8 +57,8 @@ describe("Feature: Verify that all config settings are protected by governance",
     });
     describe(`WHEN setMintTCandTPFee is invoked`, () => {
       it("THEN the new value is assigned", async function () {
-        await mocProxy.setMintTCandTPFee(44);
-        expect(await mocProxy.mintTCandTPFee()).to.be.equal(44);
+        await mocProxy.setMintTCandTPFee(47);
+        expect(await mocProxy.mintTCandTPFee()).to.be.equal(47);
       });
     });
     describe(`WHEN setMocFeeFlowAddress is invoked`, () => {
