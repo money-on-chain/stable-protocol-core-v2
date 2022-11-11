@@ -11,7 +11,7 @@ import {
   MocSettlement__factory,
   PriceProviderMock,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, deployAndAddAssets } from "../helpers/utils";
+import { deployAndAddAssets, deployAndAddPeggedTokens } from "../helpers/utils";
 
 export function fixtureDeployedMocCABag(
   amountPegTokens: number,

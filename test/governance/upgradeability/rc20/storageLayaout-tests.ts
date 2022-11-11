@@ -3,7 +3,7 @@ import { Contract } from "ethers";
 
 import { coreParams, feeParams } from "../../../../deploy-config/config";
 import { MocCARC20__factory } from "../../../../typechain";
-import { deployCollateralToken, GAS_LIMIT_PATCH } from "../../../helpers/utils";
+import { GAS_LIMIT_PATCH, deployCollateralToken } from "../../../helpers/utils";
 
 describe("Feature: Check MocCARC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;

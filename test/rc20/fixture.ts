@@ -10,7 +10,7 @@ import {
   MocSettlement__factory,
   PriceProviderMock,
 } from "../../typechain";
-import { pEth, deployAndAddPeggedTokens } from "../helpers/utils";
+import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
 
 export function fixtureDeployedMocRC20(
   amountPegTokens: number,

@@ -1,7 +1,7 @@
-import { MocCARC20 } from "../../typechain";
 import { Address } from "hardhat-deploy/types";
-import { coreParams, feeParams, mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
+import { MocCARC20 } from "../../typechain";
+import { coreParams, feeParams, mocAddresses } from "../../deploy-config/config";
 
 const {
   governorAddress,

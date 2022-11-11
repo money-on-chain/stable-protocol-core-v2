@@ -1,11 +1,10 @@
-import { fixtureDeployedMocCoinbase } from "./fixture";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { MocCACoinbase, NonPayableMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
-import { ethers } from "hardhat";
-import { expect } from "chai";
-import { ERRORS, pEth } from "../helpers/utils";
-import { tpParams } from "../helpers/utils";
+import { ERRORS, pEth, tpParams } from "../helpers/utils";
+import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase mint TC", function () {
   let mocImpl: MocCACoinbase;

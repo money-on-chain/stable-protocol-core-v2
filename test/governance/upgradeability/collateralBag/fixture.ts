@@ -1,7 +1,7 @@
 import { deployments, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 import { MocCAWrapper, MocCAWrapper__factory } from "../../../../typechain";
-import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../../scripts/utils";
+import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor } from "../../../helpers/utils";
 
 export function fixtureDeployGovernance(): () => Promise<{

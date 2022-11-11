@@ -1,4 +1,4 @@
-import { ContractTransaction, ContractReceipt } from "ethers";
+import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatNetworkUserConfig } from "hardhat/types/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 

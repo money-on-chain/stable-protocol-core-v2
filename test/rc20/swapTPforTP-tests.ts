@@ -1,7 +1,7 @@
-import { fixtureDeployedMocRC20 } from "./fixture";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
 import { tpParams } from "../helpers/utils";
+import { fixtureDeployedMocRC20 } from "./fixture";
 
 describe("Feature: MocCARC20 swap TP for TP", function () {
   describe("GIVEN a MocCARC20 implementation deployed", function () {

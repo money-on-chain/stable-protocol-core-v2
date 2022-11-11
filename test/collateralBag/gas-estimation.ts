@@ -1,6 +1,6 @@
-import { fixtureDeployedMocCABag } from "./fixture";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation.behavior";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag gas estimation", function () {
   describe("GIVEN a MocCABag implementation deployed", function () {

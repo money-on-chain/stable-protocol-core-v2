@@ -1,14 +1,13 @@
-import { fixtureDeployedMocCABag } from "./fixture";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
-import { redeemTCBehavior } from "../behaviors/redeemTC.behavior";
-import { Balance, deployAsset, deployPriceProvider, ERRORS, pEth } from "../helpers/utils";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
-import { assertPrec } from "../helpers/assertHelper";
 import { ContractTransaction } from "ethers";
-import { tpParams } from "../helpers/utils";
+import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { redeemTCBehavior } from "../behaviors/redeemTC.behavior";
+import { Balance, ERRORS, deployAsset, deployPriceProvider, pEth, tpParams } from "../helpers/utils";
+import { assertPrec } from "../helpers/assertHelper";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag redeem TC", function () {
   let mocWrapper: MocCAWrapper;

@@ -1,7 +1,7 @@
-import { fixtureDeployedMocRC20 } from "./fixture";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { redeemTCBehavior } from "../behaviors/redeemTC.behavior";
 import { tpParams } from "../helpers/utils";
+import { fixtureDeployedMocRC20 } from "./fixture";
 
 describe("Feature: MocCARC20 redeem TC", function () {
   describe("GIVEN a MocCARC20 implementation deployed", function () {

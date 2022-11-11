@@ -1,6 +1,6 @@
-import { fixtureDeployedMocCoinbase } from "./fixture";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { shouldBehaveLikeLiquidable } from "../behaviors/liquidation.behavior";
+import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase Liquidation", function () {
   describe("GIVEN a MocCoinbase implementation deployed with two Pegs", function () {

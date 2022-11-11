@@ -2,15 +2,15 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
 import {
-  MocRC20,
-  MocRC20__factory,
   MocCARC20,
   MocCARC20__factory,
+  MocRC20,
+  MocRC20__factory,
   MocSettlement,
   MocSettlement__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../scripts/utils";
-import { coreParams, settlementParams, feeParams, mocAddresses } from "../../deploy-config/config";
+import { coreParams, feeParams, mocAddresses, settlementParams } from "../../deploy-config/config";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
