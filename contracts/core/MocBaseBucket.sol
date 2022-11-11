@@ -149,7 +149,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // ------- Modifiers -------
     /// @notice functions with this modifier reverts being in liquidated state
     modifier notLiquidated() {
-        if (liquidated) revert Liquidated();
+        _checkLiquidated();
         _;
     }
 
@@ -210,6 +210,13 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     // ------- Internal Functions -------
+
+    /**
+     * reverts if in liquidated state
+     */
+    function _checkLiquidated() internal view {
+        if (liquidated) revert Liquidated();
+    }
 
     /**
      * @notice add Collateral Token and Collateral Asset to the Bucket
