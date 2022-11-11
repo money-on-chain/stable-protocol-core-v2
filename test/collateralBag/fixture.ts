@@ -9,6 +9,8 @@ import {
   MocRC20__factory,
   MocSettlement,
   MocSettlement__factory,
+  MocTC,
+  MocTC__factory,
   PriceProviderMock,
 } from "../../typechain";
 import { deployAndAddAssets, deployAndAddPeggedTokens } from "../helpers/utils";
@@ -21,7 +23,7 @@ export function fixtureDeployedMocCABag(
   mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
   mocSettlement: MocSettlement;
-  mocCollateralToken: MocRC20;
+  mocCollateralToken: MocTC;
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
   wcaToken: MocRC20;
@@ -49,7 +51,7 @@ export function fixtureDeployedMocCABag(
 
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
     if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
-    const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
+    const mocCollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
     const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAssetProxy");
     if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");

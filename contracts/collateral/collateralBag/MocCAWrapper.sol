@@ -126,12 +126,12 @@ contract MocCAWrapper is MocUpgradable {
 
     /**
      * @notice get Asset price
-     * @param priceProviderAddress_ Asset Price Provider contract address
+     * @param assetAddress_ Asset contract address
      * @return price [PREC]
      */
-    function _getAssetPrice(IPriceProvider priceProviderAddress_) internal view returns (uint256) {
-        (bytes32 price, bool has) = priceProviderAddress_.peek();
-        if (!has) revert InvalidPriceProvider(address(priceProviderAddress_));
+    function _getAssetPrice(address assetAddress_) internal view returns (uint256) {
+        (bytes32 price, bool has) = priceProviderMap[assetAddress_].peek();
+        if (!has) revert InvalidPriceProvider(address(priceProviderMap[assetAddress_]));
         return uint256(price);
     }
 
@@ -151,7 +151,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 wcaTokenPrice = getTokenPrice();
         // calculate how much currency will increment the pool
         // [PREC] = [N] * [PREC]
-        uint256 currencyToAdd = assetAmount_ * _getAssetPrice(priceProviderMap[assetAddress_]);
+        uint256 currencyToAdd = assetAmount_ * _getAssetPrice(assetAddress_);
         // divide by wrapped token price to get the equivalent amount of tokens
         // [N] = [PREC] / [PREC]
         return currencyToAdd / wcaTokenPrice;
@@ -176,7 +176,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 currencyNeeded = wcaTokenPrice * wcaTokenAmount_;
         // divide currencyNeeded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
-        return currencyNeeded / _getAssetPrice(priceProviderMap[assetAddress_]);
+        return currencyNeeded / _getAssetPrice(assetAddress_);
     }
 
     /**
@@ -481,7 +481,7 @@ contract MocCAWrapper is MocUpgradable {
             uint256 assetBalance = asset.balanceOf(address(this));
             // multiply by actual asset price and add to the accumulated total currency
             // [PREC] = [N] * [PREC]
-            totalCurrency += assetBalance * _getAssetPrice(priceProviderMap[address(asset)]);
+            totalCurrency += assetBalance * _getAssetPrice(address(asset));
         }
         // [PREC] = [PREC] / [N]
         return totalCurrency / tokenTotalSupply;
