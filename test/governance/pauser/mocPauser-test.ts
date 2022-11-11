@@ -39,24 +39,21 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     let pauseTx: ContractTransaction, unPauseTx: ContractTransaction;
     describe(`WHEN the pauser pauses it`, () => {
       before(async () => {
-        pauseTx = await mocImpl.connect(await ethers.getSigner(pauser)).pause();
+        pauseTx = await mocImpl.pause();
       });
       it("THEN it is paused", async function () {
         await expect(await mocImpl.paused()).to.be.true;
       });
-      it("THEN a pause event is emitter", async function () {
+      it("THEN a pause event is emitted", async function () {
         await expect(pauseTx).to.emit(mocImpl, "Paused").withArgs(pauser);
       });
       describe(`WHEN the pauser tries to pause it again`, () => {
         it("THEN it fails as is already paused", async function () {
-          await expect(mocImpl.connect(await ethers.getSigner(pauser)).pause()).to.be.revertedWithCustomError(
-            mocImpl,
-            ERRORS.NOT_WHEN_PAUSED,
-          );
+          await expect(mocImpl.pause()).to.be.revertedWithCustomError(mocImpl, ERRORS.NOT_WHEN_PAUSED);
         });
       });
       describe(`WHEN someone else tries to unpause`, () => {
-        it("THEN it fails as only pause can", async function () {
+        it("THEN it fails as only pauser can", async function () {
           await expect(mocImpl.connect(await ethers.getSigner(alice)).unpause()).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.ONLY_PAUSER,
@@ -65,17 +62,14 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
       });
       describe(`WHEN the pauser unpause it`, () => {
         before(async () => {
-          unPauseTx = await mocImpl.connect(await ethers.getSigner(pauser)).unpause();
+          unPauseTx = await mocImpl.unpause();
         });
-        it("THEN a unpause event is emitter", async function () {
+        it("THEN a unpause event is emitted", async function () {
           await expect(unPauseTx).to.emit(mocImpl, "Unpaused").withArgs(pauser);
         });
         describe(`WHEN the pauser tries to unpause it again`, () => {
           it("THEN it fails at is already unpaused", async function () {
-            await expect(mocImpl.connect(await ethers.getSigner(pauser)).unpause()).to.be.revertedWithCustomError(
-              mocImpl,
-              ERRORS.ONLY_WHILE_PAUSED,
-            );
+            await expect(mocImpl.unpause()).to.be.revertedWithCustomError(mocImpl, ERRORS.ONLY_WHILE_PAUSED);
           });
         });
       });
@@ -98,17 +92,14 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     });
     describe(`WHEN the Pauser tries to pause`, () => {
       it("THEN it fails, as while unstoppable, even the pauser can't", async function () {
-        await expect(mocImpl.connect(await ethers.getSigner(pauser)).pause()).to.be.revertedWithCustomError(
-          mocImpl,
-          ERRORS.UNSTOPPABLE,
-        );
+        await expect(mocImpl.pause()).to.be.revertedWithCustomError(mocImpl, ERRORS.UNSTOPPABLE);
       });
     });
   });
 
   describe("GIVEN the Pauser, pauses the system", () => {
     before(async () => {
-      await mocImpl.connect(await ethers.getSigner(pauser)).pause();
+      await mocImpl.pause();
     });
     describe(`AND liquidation conditions are met`, () => {
       before(async () => {
@@ -130,9 +121,9 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
       });
       describe(`AND the system gets unpaused`, () => {
         it("THEN he can mintTC again", async function () {
-          await mocImpl.connect(await ethers.getSigner(pauser)).unpause();
+          await mocImpl.unpause();
           await mocFunctions.mintTC({ from: alice, qTC: 10 });
-          await mocImpl.connect(await ethers.getSigner(pauser)).pause();
+          await mocImpl.pause();
         });
       });
     });
