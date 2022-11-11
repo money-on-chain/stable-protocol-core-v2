@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
-import { GovernorMock, MocCACoinbase, GovernorMock__factory } from "../../../typechain";
-import { ERRORS } from "../../helpers/utils";
 import { Address } from "hardhat-deploy/types";
+import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
+import { GovernorMock, GovernorMock__factory, MocCACoinbase } from "../../../typechain";
+import { ERRORS } from "../../helpers/utils";
 
 const fixtureDeploy = fixtureDeployedMocCoinbase(1);
 

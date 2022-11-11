@@ -1,10 +1,10 @@
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
-import { assertPrec } from "../helpers/assertHelper";
 import { Address } from "hardhat-deploy/dist/types";
-import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
 import { expect } from "chai";
+import { assertPrec } from "../helpers/assertHelper";
+import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
+import { mocAddresses } from "../../deploy-config/config";
 
 const redeemTCBehavior = function () {
   let mocContracts: any;

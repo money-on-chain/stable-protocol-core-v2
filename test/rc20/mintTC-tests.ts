@@ -1,12 +1,11 @@
-import { fixtureDeployedMocRC20 } from "./fixture";
+import { expect } from "chai";
+import { getNamedAccounts } from "hardhat";
+import { Address } from "hardhat-deploy/types";
 import { ERC20Mock, MocCARC20 } from "../../typechain";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
-import { CONSTANTS } from "../helpers/utils";
-import { expect } from "chai";
-import { tpParams } from "../helpers/utils";
-import { getNamedAccounts } from "hardhat";
-import { Address } from "hardhat-deploy/types";
+import { CONSTANTS, tpParams } from "../helpers/utils";
+import { fixtureDeployedMocRC20 } from "./fixture";
 
 describe("Feature: MocCARC20 mint TC", function () {
   let mocImpl: MocCARC20;

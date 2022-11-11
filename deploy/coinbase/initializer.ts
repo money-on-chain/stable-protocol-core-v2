@@ -4,10 +4,10 @@ import { ethers } from "hardhat";
 import {
   MocCACoinbase,
   MocCACoinbase__factory,
-  MocTC,
-  MocTC__factory,
   MocSettlement,
   MocSettlement__factory,
+  MocTC,
+  MocTC__factory,
 } from "../../typechain";
 import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../scripts/utils";
 import { coreParams, settlementParams, feeParams, mocAddresses } from "../../deploy-config/config";

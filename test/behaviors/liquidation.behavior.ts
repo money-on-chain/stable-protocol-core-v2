@@ -1,9 +1,9 @@
-import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
-import { Balance, ERRORS, pEth } from "../helpers/utils";
 import { ContractTransaction } from "ethers";
+import { Balance, ERRORS, pEth } from "../helpers/utils";
+import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 
 const shouldBehaveLikeLiquidable = function () {

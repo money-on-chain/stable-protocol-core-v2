@@ -1,6 +1,6 @@
-import { fixtureDeployedMocCoinbase } from "./fixture";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation.behavior";
+import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase gas estimation", function () {
   describe("GIVEN a MocCoinbase implementation deployed", function () {

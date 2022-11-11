@@ -1,10 +1,10 @@
-import { fixtureDeployedMocCABag } from "../collateralBag/fixture";
-import { MocCARC20, MocSettlement } from "../../typechain";
 import { expect } from "chai";
-import { ERRORS } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
 import { BigNumberish } from "ethers";
 import { Address } from "hardhat-deploy/types";
+import { fixtureDeployedMocCABag } from "../collateralBag/fixture";
+import { MocCARC20, MocSettlement } from "../../typechain";
+import { ERRORS } from "../helpers/utils";
+import { mocAddresses } from "../../deploy-config/config";
 
 const { governorAddress, pauserAddress } = mocAddresses["hardhat"];
 

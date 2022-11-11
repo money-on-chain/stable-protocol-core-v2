@@ -1,9 +1,9 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { deployments, ethers } from "hardhat";
 import { Contract } from "ethers";
 
-import { fixtureDeployGovernance } from "./fixture";
 import { MocCACoinbase, MocCoinbaseMock, MocCoinbaseMock__factory } from "../../../../typechain";
+import { fixtureDeployGovernance } from "./fixture";
 
 const fixtureDeploy = fixtureDeployGovernance();
 

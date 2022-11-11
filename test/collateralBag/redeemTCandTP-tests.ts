@@ -1,12 +1,12 @@
-import { fixtureDeployedMocCABag } from "./fixture";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
-import { redeemTCandTPBehavior } from "../behaviors/redeemTCandTP.behavior";
-import { deployAsset, ERRORS, pEth, tpParams } from "../helpers/utils";
 import { expect } from "chai";
-import { ERC20Mock, MocCAWrapper } from "../../typechain";
 import { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { ContractTransaction } from "ethers";
+import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { redeemTCandTPBehavior } from "../behaviors/redeemTCandTP.behavior";
+import { deployAsset, ERRORS, pEth, tpParams } from "../helpers/utils";
+import { ERC20Mock, MocCAWrapper } from "../../typechain";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag redeem TC and TP", function () {
   let mocWrapper: MocCAWrapper;
