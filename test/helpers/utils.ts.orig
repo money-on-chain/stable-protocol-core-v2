@@ -233,12 +233,16 @@ export const ERRORS = {
   INVALID_VALUE: "InvalidValue",
   INVALID_PRICE_PROVIDER: "InvalidPriceProvider",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
-  INSUFFICIENT_QTP_SENT: "InsufficientQtpSent",
   INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
   INSUFFICIENT_TP_TO_REDEEM: "InsufficientTPtoRedeem",
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
+<<<<<<< HEAD
+  INSUFFICIENT_QTP_SENT: "InsufficientQtpSent",
+  QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",
+=======
   LIQUIDATED: "Liquidated",
   LOW_COVERAGE: "LowCoverage",
+>>>>>>> feat: complete pause tests
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   NOT_WHEN_PAUSED: "NotWhenPaused",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",

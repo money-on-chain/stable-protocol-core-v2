@@ -96,7 +96,7 @@ const redeemTPto =
 
 const redeemTCandTP =
   mocImpl =>
-  async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
+  async ({ i = 0, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);

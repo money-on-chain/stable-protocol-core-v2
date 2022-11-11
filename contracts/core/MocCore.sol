@@ -330,7 +330,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
@@ -741,7 +741,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice this function is executed during settlement.
      *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
-    function execSettlement() external onlySettlement {
+    function execSettlement() external onlySettlement notPaused {
         _distributeSuccessFee();
     }
 
