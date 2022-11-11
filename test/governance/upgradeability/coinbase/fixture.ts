@@ -1,7 +1,7 @@
 import { deployments, getNamedAccounts, network } from "hardhat";
 import { Contract } from "ethers";
 import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
-import { waitForTxConfirmation, GAS_LIMIT_PATCH } from "../../../../scripts/utils";
+import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../../../scripts/utils";
 import { coreParams, feeParams, mocAddresses } from "../../../../deploy-config/config";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { pEth, mineNBlocks } from "./utils";
+import { mineNBlocks, pEth } from "./utils";
 
 const mintTC =
   mocImpl =>

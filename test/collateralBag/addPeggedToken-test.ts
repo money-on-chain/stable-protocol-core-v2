@@ -1,10 +1,9 @@
-import { fixtureDeployedMocCABag } from "./fixture";
-import { MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { expect } from "chai";
-import { ERRORS, deployPeggedToken, deployPriceProvider, pEth } from "../helpers/utils";
-import { tpParamsDefault } from "../helpers/utils";
 import { BigNumberish, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
+import { ERRORS, deployPeggedToken, deployPriceProvider, pEth, tpParamsDefault } from "../helpers/utils";
+import { MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag add Pegged Token", function () {
   let mocImpl: MocCARC20;

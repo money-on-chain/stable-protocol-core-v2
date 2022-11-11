@@ -1,17 +1,16 @@
-import { fixtureDeployedMocCABag } from "./fixture";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
-import { redeemTCandTPBehavior } from "../behaviors/redeemTCandTP.behavior";
-import { deployAsset, ERRORS, pEth, tpParams } from "../helpers/utils";
 import { expect } from "chai";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
 import { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { ContractTransaction } from "ethers";
+import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { redeemTCandTPBehavior } from "../behaviors/redeemTCandTP.behavior";
+import { deployAsset, ERRORS, pEth, tpParams } from "../helpers/utils";
+import { ERC20Mock, MocCAWrapper } from "../../typechain";
+import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag redeem TC and TP", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
-  let assetPriceProvider: PriceProviderMock;
   let mocFunctions: any;
   let alice: Address;
   let bob: Address;
@@ -27,7 +26,6 @@ describe("Feature: MocCABag redeem TC and TP", function () {
       ({
         assets: [assetDefault],
         mocWrapper,
-        assetPriceProviders: [assetPriceProvider],
       } = this.mocContracts);
     });
     redeemTCandTPBehavior();
@@ -61,7 +59,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
           // receiver: alice
           // qTC: 100 TC
           // qTP: 783.33 TP
-          // qAC: 100 AC - 5% + 3.33AC - 5% - 0.0987%
+          // qAC: 100 AC - 8% + 3.33AC - 8% - 0.0987%
           await expect(tx)
             .to.emit(mocWrapper, "TCandTPRedeemed")
             .withArgs(
@@ -71,7 +69,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
               alice,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("98.163335223765432101"),
+              pEth("95.063335223765432101"),
             );
         });
       });
@@ -86,7 +84,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
           // receiver: bob
           // qTC: 100 TC
           // qTP: 783.33 TP
-          // qAC: 100 AC - 5% + 3.33AC - 5% - 0.0987%
+          // qAC: 100 AC - 8% + 3.33AC - 8% - 0.0987%
           await expect(tx)
             .to.emit(mocWrapper, "TCandTPRedeemed")
             .withArgs(
@@ -96,20 +94,8 @@ describe("Feature: MocCABag redeem TC and TP", function () {
               bob,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("98.163335223765432101"),
+              pEth("95.063335223765432101"),
             );
-        });
-      });
-      describe("AND asset price provider is deprecated", () => {
-        beforeEach(async () => {
-          await assetPriceProvider.deprecatePriceProvider();
-        });
-        describe("WHEN alice redeems 100 TC and 783.33 TP 0", () => {
-          it("THEN tx fails because invalid price provider", async () => {
-            await expect(
-              mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 }),
-            ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_PRICE_PROVIDER);
-          });
         });
       });
     });

@@ -1,6 +1,6 @@
-import { fixtureDeployedMocRC20 } from "./fixture";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation.behavior";
+import { fixtureDeployedMocRC20 } from "./fixture";
 
 describe("Feature: MocCRC20 gas estimation", function () {
   describe("GIVEN a MocCRC20 implementation deployed", function () {

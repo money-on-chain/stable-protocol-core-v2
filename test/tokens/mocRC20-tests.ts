@@ -1,9 +1,9 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
-import { MocTC } from "../../typechain";
-import { MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, DEFAULT_ADMIN_ROLE, deployCollateralToken } from "../helpers/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Address } from "hardhat-deploy/types";
+import { MocTC } from "../../typechain";
+import { BURNER_ROLE, DEFAULT_ADMIN_ROLE, MINTER_ROLE, PAUSER_ROLE, deployCollateralToken } from "../helpers/utils";
 
 describe("Feature: Moc Tokens Role Access restrictions", () => {
   let token: MocTC;

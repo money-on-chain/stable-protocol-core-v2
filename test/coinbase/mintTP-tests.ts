@@ -1,12 +1,11 @@
-import { fixtureDeployedMocCoinbase } from "./fixture";
+import { ethers, getNamedAccounts } from "hardhat";
+import { expect } from "chai";
+import { Address } from "hardhat-deploy/types";
 import { MocCACoinbase, NonPayableMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
-import { ethers, getNamedAccounts } from "hardhat";
-import { expect } from "chai";
-import { ERRORS, pEth } from "../helpers/utils";
-import { Address } from "hardhat-deploy/types";
-import { tpParams } from "../helpers/utils";
+import { ERRORS, pEth, tpParams } from "../helpers/utils";
+import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase mint TP", function () {
   let mocImpl: MocCACoinbase;

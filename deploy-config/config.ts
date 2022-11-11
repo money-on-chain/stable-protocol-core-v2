@@ -21,8 +21,8 @@ export const feeParams = {
   mintFee: PCT_BASE.mul(5).div(100), // 5%
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
   swapTPforTPFee: PCT_BASE.mul(1).div(100), // 1%
-  redeemTCandTPFee: PCT_BASE.mul(5).div(100), // 5%
-  mintTCandTPFee: PCT_BASE.mul(10).div(100), // 10%
+  redeemTCandTPFee: PCT_BASE.mul(8).div(100), // 8%
+  mintTCandTPFee: PCT_BASE.mul(8).div(100), // 8%
 };
 
 export const mocAddresses = {

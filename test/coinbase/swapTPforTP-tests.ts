@@ -1,7 +1,7 @@
-import { fixtureDeployedMocCoinbase } from "./fixture";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
 import { tpParams } from "../helpers/utils";
+import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase swap TP for TP", function () {
   describe("GIVEN a MocCoinbase implementation deployed", function () {

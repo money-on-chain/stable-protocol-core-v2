@@ -1,11 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { CONSTANTS, tpParamsDefault } from "../../helpers/utils";
-import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
-import { IChangeContract__factory, MocCACoinbase, MocCore } from "../../../typechain";
-import { deployPeggedToken, deployPriceProvider, ERRORS, pEth } from "../../helpers/utils";
 import { BigNumberish, Contract } from "ethers";
 import { Address } from "hardhat-deploy/types";
+import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
+import { IChangeContract__factory, MocCACoinbase, MocCore } from "../../../typechain";
+import { ERRORS, deployPeggedToken, deployPriceProvider, pEth, CONSTANTS, tpParamsDefault } from "../../helpers/utils";
 
 const fixtureDeploy = fixtureDeployGovernance();
 

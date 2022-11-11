@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { GAS_LIMIT_PATCH, pEth, mineNBlocks } from "./utils";
+import { GAS_LIMIT_PATCH, mineNBlocks, pEth } from "./utils";
 
 const mintTC =
   (mocImpl, collateralAsset) =>

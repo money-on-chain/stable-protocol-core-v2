@@ -262,8 +262,8 @@ contract MocCARC20 is MocCore {
 
     /**
      * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
-     *  This operation is done without check coverage
-     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
      * @param i_ Pegged Token index
@@ -284,8 +284,8 @@ contract MocCARC20 is MocCore {
 
     /**
      * @notice caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset
-     *  This operation is done without check coverage
-     *  Redeem Collateral Token and Pegged Token in equal proportions so that its price
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
      * @param i_ Pegged Token index
