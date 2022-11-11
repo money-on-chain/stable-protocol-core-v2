@@ -59,7 +59,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
           // receiver: alice
           // qTC: 100 TC
           // qTP: 783.33 TP
-          // qAC: 100 AC - 5% + 3.33AC - 5% - 0.0987%
+          // qAC: 100 AC - 8% + 3.33AC - 8% - 0.0987%
           await expect(tx)
             .to.emit(mocWrapper, "TCandTPRedeemed")
             .withArgs(
@@ -69,7 +69,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
               alice,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("98.163335223765432101"),
+              pEth("95.063335223765432101"),
             );
         });
       });
@@ -84,7 +84,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
           // receiver: bob
           // qTC: 100 TC
           // qTP: 783.33 TP
-          // qAC: 100 AC - 5% + 3.33AC - 5% - 0.0987%
+          // qAC: 100 AC - 8% + 3.33AC - 8% - 0.0987%
           await expect(tx)
             .to.emit(mocWrapper, "TCandTPRedeemed")
             .withArgs(
@@ -94,7 +94,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
               bob,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("98.163335223765432101"),
+              pEth("95.063335223765432101"),
             );
         });
       });
