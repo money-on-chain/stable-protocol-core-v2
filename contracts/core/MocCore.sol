@@ -167,7 +167,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
         // calculates how many qAC are needed to mint TC and the qAC fee
@@ -201,7 +201,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem) {
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
@@ -241,7 +241,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
@@ -283,7 +283,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem) {
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
@@ -330,7 +330,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256) {
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256) {
         uint256 pACtp = _getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
@@ -401,7 +401,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
         if (iFrom_ == iTo_) revert InvalidValue();
         uint256 pACtpFrom = _getPACtp(iFrom_);
         uint256 pACtpTo = _getPACtp(iTo_);
@@ -466,7 +466,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint8 i_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 qACRedeemed) {
+    ) internal notPaused returns (uint256 qACRedeemed) {
         if (!liquidated) revert OnlyWhenLiquidated();
         uint256 qTP = tpTokens[i_].balanceOf(sender_);
         if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
@@ -741,7 +741,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice this function is executed during settlement.
      *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
-    function execSettlement() external onlySettlement {
+    function execSettlement() external onlySettlement notPaused {
         _distributeSuccessFee();
     }
 

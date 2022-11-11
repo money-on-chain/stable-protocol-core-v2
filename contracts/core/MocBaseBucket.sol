@@ -541,7 +541,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *
      * May emit a {ContractLiquidated} event.
      */
-    function evalLiquidation() public {
+    function evalLiquidation() external notPaused {
         if (liqEnabled && !liquidated && isLiquidationReached()) {
             liquidated = true;
             tcToken.pause();

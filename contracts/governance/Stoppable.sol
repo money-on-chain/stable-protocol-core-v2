@@ -20,21 +20,21 @@ contract Stoppable is Governed {
     // ------- Custom Errors -------
     error Unstoppable();
     error OnlyWhilePaused();
-    error NotAllowWhenPaused();
+    error NotWhenPaused();
     error OnlyPauser();
 
     /**
     @notice Modifier to make a function callable only when the contract is not paused
   */
-    modifier whenNotPaused() {
-        if (_paused) revert NotAllowWhenPaused();
+    modifier notPaused() {
+        if (_paused) revert NotWhenPaused();
         _;
     }
 
     /**
     @notice Modifier to make a function callable only when the contract is paused
     */
-    modifier whenPaused() {
+    modifier onlyPaused() {
         if (!_paused) revert OnlyWhilePaused();
         _;
     }
@@ -62,7 +62,7 @@ contract Stoppable is Governed {
     @notice Called by the owner to pause, triggers stopped state
     @dev Should only be called by the pauser and when it is stoppable
    */
-    function pause() public whenNotPaused {
+    function pause() public notPaused {
         if (msg.sender != pauser) revert OnlyPauser();
         if (!stoppable) revert Unstoppable();
         _paused = true;
@@ -72,7 +72,7 @@ contract Stoppable is Governed {
     /**
     @notice Called by the owner to unpause, returns to normal state
    */
-    function unpause() public whenPaused {
+    function unpause() public onlyPaused {
         if (msg.sender != pauser) revert OnlyPauser();
         _paused = false;
         emit Unpaused(msg.sender);

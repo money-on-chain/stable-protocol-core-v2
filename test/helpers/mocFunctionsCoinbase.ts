@@ -48,7 +48,7 @@ const redeemTCto =
 
 const mintTP =
   mocImpl =>
-  async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -59,7 +59,7 @@ const mintTP =
 
 const mintTPto =
   mocImpl =>
-  async ({ i, from, to, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, to, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -70,7 +70,7 @@ const mintTPto =
 
 const redeemTP =
   mocImpl =>
-  async ({ i, from, qTP, qACmin = 0, applyPrecision = true }) => {
+  async ({ i = 0, from, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -83,7 +83,7 @@ const redeemTP =
 
 const redeemTPto =
   mocImpl =>
-  async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true }) => {
+  async ({ i = 0, from, to, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -96,7 +96,7 @@ const redeemTPto =
 
 const redeemTCandTP =
   mocImpl =>
-  async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
+  async ({ i = 0, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -124,14 +124,14 @@ const redeemTCandTPto =
 
 const liqRedeemTP =
   mocImpl =>
-  async ({ i, from }) => {
+  async ({ i = 0, from }) => {
     const signer = await ethers.getSigner(from);
     return mocImpl.connect(signer).liqRedeemTP(i, { gasPrice: 0 });
   };
 
 const liqRedeemTPto =
   mocImpl =>
-  async ({ i, from, to }) => {
+  async ({ i = 0, from, to }) => {
     const signer = await ethers.getSigner(from);
     return mocImpl.connect(signer).liqRedeemTPto(i, to, { gasPrice: 0 });
   };
@@ -182,7 +182,7 @@ const tcTransfer =
 
 const tpTransfer =
   mocPeggedTokens =>
-  async ({ i, from, to, amount, applyPrecision = true }) => {
+  async ({ i = 0, from, to, amount, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       amount = pEth(amount);

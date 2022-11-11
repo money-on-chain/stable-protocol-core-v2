@@ -52,7 +52,7 @@ const redeemTCto =
 
 const mintTP =
   (mocWrapper, assetDefault) =>
-  async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
+  async ({ i = 0, from, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -64,7 +64,7 @@ const mintTP =
 
 const mintTPto =
   (mocWrapper, assetDefault) =>
-  async ({ i, from, to, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
+  async ({ i = 0, from, to, qTP, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -76,7 +76,7 @@ const mintTPto =
 
 const redeemTP =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
-  async ({ i, from, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+  async ({ i = 0, from, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -90,7 +90,7 @@ const redeemTP =
 
 const redeemTPto =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
-  async ({ i, from, to, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
+  async ({ i = 0, from, to, qTP, qACmin = 0, applyPrecision = true, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -136,7 +136,7 @@ const redeemTCandTPto =
 
 const liqRedeemTP =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
-  async ({ i, from, asset = assetDefault }) => {
+  async ({ i = 0, from, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
 
     await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, pEth(1e10));
@@ -145,7 +145,7 @@ const liqRedeemTP =
 
 const liqRedeemTPto =
   (mocWrapper, mocPeggedTokens, assetDefault) =>
-  async ({ i, from, to, asset = assetDefault }) => {
+  async ({ i = 0, from, to, asset = assetDefault }) => {
     const signer = await ethers.getSigner(from);
     await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, pEth(1e10));
     return mocWrapper.connect(signer).liqRedeemTPto(asset.address, i, to, { gasLimit: GAS_LIMIT_PATCH });
@@ -212,7 +212,7 @@ const tcTransfer =
 
 const tpTransfer =
   mocPeggedTokens =>
-  async ({ i, from, to, amount, applyPrecision = true }) => {
+  async ({ i = 0, from, to, amount, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       amount = pEth(amount);
