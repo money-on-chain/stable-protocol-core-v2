@@ -26,8 +26,8 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
-     *      tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-     *      tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *      tcMintFee additional fee pct applied on mint Collateral Tokens operations [PREC]
+     *      tcRedeemFee additional fee pct applied on redeem Collateral Tokens operations [PREC]
      *      successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *        in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
