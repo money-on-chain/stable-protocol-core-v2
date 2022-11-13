@@ -57,6 +57,9 @@ describe("Feature: MocCABag mint TP", function () {
         beforeEach(async () => {
           tx = await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
         });
+        it("THEN Pegged Tokens AC price is 2350", async function () {
+          assertPrec(235, await this.mocContracts.mocImpl.getPACtp(TP_0));
+        });
         it("THEN a TPMinted event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
