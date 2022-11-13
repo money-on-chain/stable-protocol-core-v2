@@ -512,7 +512,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforMintTC(
         uint256 qTC_,
@@ -536,7 +536,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforRedeemTC(
         uint256 qTC_,
@@ -559,7 +559,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param qTP_ amount of Pegged Token to mint [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforMintTP(
         uint8 i_,
@@ -582,7 +582,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param qTP_ amount of Pegged Token to redeem
      * @param pACtp_ Pegged Token price [PREC]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
      */
     function _calcQACforRedeemTP(
@@ -629,7 +629,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param pACtp_ Pegged Token price [PREC]
      * @param pTCac_ Collateral Token price [PREC]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
      */
     function _calcQACforRedeemTCandTP(
@@ -945,6 +945,26 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function getLeverageTC() external view returns (uint256 leverageTC) {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         return _getLeverageTC(lckAC, nACgain);
+    }
+
+    /**
+     * @notice returns how many Collateral Asset are needed to redeem `qTP_` amount of Pegged Token `i_`
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
+     * @return qACinterest amount of Collateral Asset in concept of interests [N]
+     */
+    function getQACforRedeemTP(uint8 i_, uint256 qTP_)
+        external
+        view
+        returns (
+            uint256 qACtotalToRedeem,
+            uint256 qACfee,
+            uint256 qACinterest
+        )
+    {
+        return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));
     }
 
     /**
