@@ -55,6 +55,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 protThrld;
         // liquidation coverage threshold [PREC]
         uint256 liqThrld;
+        // pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
+        uint256 feeRetainer;
         // additional fee pct applied on mint Collateral Tokens operations [PREC]
         uint256 tcMintFee;
         // additional fee pct applied on redeem Collateral Tokens operations [PREC]
@@ -102,6 +104,8 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // ------- Storage Fees -------
 
+    // pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
+    uint256 public feeRetainer; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // addition fee pct applied on Collateral Tokens mint [PREC]
     uint256 public tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // addition fee pct applied on Collateral Tokens redeem [PREC]
@@ -170,6 +174,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected coverage threshold [PREC]
      *        liqThrld liquidation coverage threshold [PREC]
+     *        feeRetainer pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
      *        tcMintFee additional fee pct applied on mint Collateral Tokens operations [PREC]
      *        tcRedeemFee additional fee pct applied on redeem Collateral Tokens operations [PREC]
      *        swapTPforTPFee additional fee pct applied on swap a Pegged Token for another Pegged Token [PREC]
@@ -184,6 +189,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         onlyInitializing
     {
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.feeRetainer > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.swapTPforTPFee > PRECISION) revert InvalidValue();
@@ -199,6 +205,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         mocSettlement = MocSettlement(initializeBaseBucketParams_.mocSettlementAddress);
         protThrld = initializeBaseBucketParams_.protThrld;
         liqThrld = initializeBaseBucketParams_.liqThrld;
+        feeRetainer = initializeBaseBucketParams_.feeRetainer;
         tcMintFee = initializeBaseBucketParams_.tcMintFee;
         tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
         swapTPforTPFee = initializeBaseBucketParams_.swapTPforTPFee;
@@ -561,6 +568,15 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     // ------- Only Authorized Changer Functions -------
+
+    /**
+     * @dev sets the fee pct to be retainer on AC fees payments as AC re-injection.
+     * @param feeRetainer_  pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setFeeRetainer(uint256 feeRetainer_) external onlyAuthorizedChanger {
+        feeRetainer = feeRetainer_;
+    }
 
     /**
      * @dev sets the fee charged on Token Collateral mint.

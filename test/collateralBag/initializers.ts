@@ -23,6 +23,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     appreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
+    feeRetainer = feeParams.feeRetainer,
     tcMintFee = feeParams.mintFee,
     tcRedeemFee = feeParams.redeemFee,
     swapTPforTPFee = feeParams.swapTPforTPFee,
@@ -41,6 +42,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     appreciationBeneficiaryAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
+    feeRetainer?: BigNumberish;
     tcMintFee?: BigNumberish;
     tcRedeemFee?: BigNumberish;
     swapTPforTPFee?: BigNumberish;
@@ -59,6 +61,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           mocAppreciationBeneficiaryAddress: appreciationBeneficiaryAddress,
           protThrld,
           liqThrld,
+          feeRetainer,
           tcMintFee,
           tcRedeemFee,
           swapTPforTPFee,
