@@ -419,7 +419,7 @@ const redeemTPBehavior = function () {
         });
         describe("AND 3000 TP 0 are redeemed", function () {
           /*  
-          nAC = 3190    
+          nAC = 3190
           nTP0 = 23500 - 3000
           nTP1 = 93458
           iou = 21.66
