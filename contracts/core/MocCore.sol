@@ -180,10 +180,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _depositTC(qTC_, qACNeededtoMint);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTC_);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers any AC change to the sender, and distributes fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
@@ -218,10 +216,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _withdrawTC(qTC_, qACtotalToRedeem);
         // burn qTC from the sender
         tcToken.burn(sender_, qTC_);
-        // transfer qAC to the recipient
-        acTransfer(recipient_, qACtoRedeem);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers qAC to the recipient, and distributes fees
+        _distOpResults(recipient_, qACtoRedeem, qACfee, 0);
         emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
@@ -260,10 +256,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _depositTP(i_, qTP_, qACNeededtoMint);
         // mint qTP to the recipient
         tpTokens[i_].mint(recipient_, qTP_);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers any AC change to the sender, and distributes fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
         emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
@@ -298,12 +292,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _withdrawTP(i_, qTP_, qACtotalToRedeem);
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP_);
-        // transfer qAC to the recipient
-        acTransfer(recipient_, qACtoRedeem);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
+        // transfers qAC to the recipient, and distributes fees and interests
+        _distOpResults(recipient_, qACtoRedeem, qACfee, qACinterest);
         emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee, qACinterest);
         return qACtoRedeem;
     }
@@ -366,12 +356,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         }
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTPtoRedeem);
-        // transfer qAC to the recipient
-        acTransfer(recipient_, qACtoRedeem);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
+
+        // transfers qAC to the recipient, and distributes fees and interests
+        _distOpResults(recipient_, qACtoRedeem, qACfee, qACinterest);
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
@@ -438,12 +425,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         tpTokens[iFrom_].burn(sender_, qTP_);
         // mint qTP to the recipient
         tpTokens[iTo_].mint(recipient_, qTPtoMint);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
+        // transfer any qAC change to the sender, and distribute fees and interests
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, qACinterest);
         // inside a block to avoid stack too deep error
         {
             uint8 iFrom = iFrom_;
@@ -481,6 +464,27 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // transfer qAC to the recipient, reverts if fail
         acTransfer(recipient_, qACRedeemed);
         emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0);
+    }
+
+    /**
+     * @notice Distributes Operation results to the different recipients
+     * @param operatorsAddress_ operator's address to receive `operatorsQAC_`
+     * @param operatorsQAC_ amount of AC to transfer operator [N]
+     * @param qACfee_ amount of AC to be distributed as fees [N]
+     * @param qACinterest_ amount of AC to be distributed as interests [N]
+     */
+    function _distOpResults(
+        address operatorsAddress_,
+        uint256 operatorsQAC_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    ) internal {
+        // transfer qAC to operator
+        acTransfer(operatorsAddress_, operatorsQAC_);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee_);
+        // transfer qAC for interest
+        acTransfer(mocInterestCollectorAddress, qACinterest_);
     }
 
     // ------- Public Functions -------
