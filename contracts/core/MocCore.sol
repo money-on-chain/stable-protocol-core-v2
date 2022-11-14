@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 import "../interfaces/IMocRC20.sol";
 import "./MocEma.sol";
 import "./MocInterestRate.sol";
-import "hardhat/console.sol";
 
 /**
  * @title MocCore
