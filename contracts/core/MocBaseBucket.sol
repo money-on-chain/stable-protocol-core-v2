@@ -5,7 +5,6 @@ import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
 import "../MocSettlement.sol";
-import "hardhat/console.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
@@ -212,8 +211,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         mintTCandTPFee = initializeBaseBucketParams_.mintTCandTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
-        liquidated = false;
-        liqEnabled = false;
     }
 
     // ------- Internal Functions -------

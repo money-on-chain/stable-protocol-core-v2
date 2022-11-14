@@ -353,7 +353,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _updateTPtracking(i_, pACtp);
         (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qACmax_, qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
-        console.log("qACNeededtoMint", qACNeededtoMint);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
@@ -688,6 +687,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
         return (qACtotalToRedeem, qACfee, qACinterest);
     }
 
+    /**
+     * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token
+     * and Pegged Token in one operation
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param pACtp_ Pegged Token price [PREC]
+     * @return qTCtoMint amount of Collateral Token to mint [N]
+     * @return qTPtoMint amount of Pegged Token to mint [N]
+     * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
+     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     */
     function _calcQACforMintTCandTP(
         uint256 qACmax_,
         uint256 qTP_,
@@ -703,32 +713,27 @@ abstract contract MocCore is MocEma, MocInterestRate {
         )
     {
         uint256 ctargemaCA = _getCtargemaCA();
-        console.log("ctargemaCA", ctargemaCA);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         uint256 pTCac = _getPTCac(lckAC, nACgain);
-        // [PREC] = ([PREC] * [PREC]) / ([PREC] * [PREC] / [PREC])
-        uint256 prop = _divPrec(ctargemaCA - ONE, _mulPrec(pTCac, pACtp_));
+        uint256 ctargemaCASubOne = ctargemaCA - ONE;
         if (qTP_ > 0) {
             // calculate how many TC are needed to mint TP
             // qTCtoMint = qTP * (ctargema - 1) / pACtp * pTCac)
-            // [N] = [N] * [PREC]) / ([PREC]
-            qTCtoMint = _mulPrec(qTP_, prop);
+            // [N] = ([N] * [PREC] * [PREC]) / ([PREC] * [PREC])
+            qTCtoMint = _divPrec(qTP_ * ctargemaCASubOne, pTCac * pACtp_);
             qTPtoMint = qTP_;
             // [N] = [N] + [N]
-            console.log("qTCtoMint", qTCtoMint);
             qACNeededtoMint = _mulPrec(qTCtoMint, pTCac) + _divPrec(qTPtoMint, pACtp_);
+            // [N] = [N] * [PREC] / [PREC]
             qACfee = _mulPrec(qACNeededtoMint, mintTCandTPFee);
         } else {
             // use all the qAC to mint TC and TP in equal proportions
             qACNeededtoMint = _divPrec(qACmax_, ONE + mintTCandTPFee);
             qACfee = qACmax_ - qACNeededtoMint;
-            console.log("qACfee", qACfee);
+            // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
+            qTCtoMint = ((qACNeededtoMint * pTCac * ctargemaCASubOne) / ctargemaCA) / PRECISION;
             // [N] = [N] * [PREC] / [PREC]
-            qTPtoMint = (qACNeededtoMint * pACtp_) / ctargemaCA;
-            console.log("qTPtoMint", qTPtoMint);
-            // [N] = [N] * [PREC] / [PREC]
-            qTCtoMint = _mulPrec(qTPtoMint, prop);
-            console.log("qTCtoMint", qTCtoMint);
+            qTPtoMint = _mulPrec(qACNeededtoMint - _mulPrec(qTCtoMint, pTCac), pACtp_);
         }
         return (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee);
     }
