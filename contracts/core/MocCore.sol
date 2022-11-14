@@ -242,7 +242,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
@@ -284,7 +284,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         _evalCoverage(protThrld);
@@ -331,7 +331,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256) {
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
@@ -403,8 +403,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
         if (iFrom_ == iTo_) revert InvalidValue();
-        uint256 pACtpFrom = _getPACtp(iFrom_);
-        uint256 pACtpTo = _getPACtp(iTo_);
+        uint256 pACtpFrom = getPACtp(iFrom_);
+        uint256 pACtpTo = getPACtp(iTo_);
         _updateTPtracking(iFrom_, pACtpFrom);
         _updateTPtracking(iTo_, pACtpTo);
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
@@ -708,7 +708,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pegAmount = pegContainer.length;
         uint256[] memory tpToMint = new uint256[](pegAmount);
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 pACtp = _getPACtp(i);
+            uint256 pACtp = getPACtp(i);
             _updateTPtracking(i, pACtp);
             int256 iou = tpiou[i];
             if (iou > 0) {
@@ -817,7 +817,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         );
         tpiou.push();
         // reverts if price provider is invalid
-        pACtpLstop.push(_getPACtp(newTPindex));
+        pACtpLstop.push(getPACtp(newTPindex));
         // emit the event
         emit PeggedTokenChange(newTPindex, peggedTokenParams_);
     }
@@ -924,7 +924,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return tpAvailableToMint [N]
      */
     function getTPAvailableToMint(uint8 i_) external view returns (uint256 tpAvailableToMint) {
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         return _getTPAvailableToMint(_getCtargemaCA(), _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
     }

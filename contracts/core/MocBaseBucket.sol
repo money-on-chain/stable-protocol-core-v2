@@ -74,14 +74,14 @@ abstract contract MocBaseBucket is MocUpgradable {
     // ------- Storage -------
 
     // total amount of Collateral Asset held in the Collateral Bag
-    uint256 internal nACcb;
+    uint256 public nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     uint256 internal nACioucb;
 
     // Collateral Token
     MocTC public tcToken;
-    // Collateral Token total supply
-    uint256 internal nTCcb;
+    // Collateral Token in the Collateral Bag
+    uint256 public nTCcb;
 
     // Pegged Tokens MocRC20 addresses
     IMocRC20[] public tpTokens;
@@ -269,18 +269,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice get how many Pegged Token equal 1 Collateral Asset
-     * @param i_ Pegged Token index
-     * @return price [PREC]
-     */
-    function _getPACtp(uint8 i_) internal view virtual returns (uint256) {
-        IPriceProvider priceProvider = pegContainer[i_].priceProvider;
-        (bytes32 price, bool has) = priceProvider.peek();
-        if (!has) revert InvalidPriceProvider(address(priceProvider));
-        return uint256(price);
-    }
-
-    /**
      * @notice get amount of Collateral Asset locked by Pegged Token adjusted by EMA
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
@@ -402,7 +390,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         // for each peg, calculates the proportion of AC reserves it's locked
 
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            pACtps[i] = _getPACtp(i);
+            pACtps[i] = getPACtp(i);
             // [N] = [N] * [PREC] / [PREC]
             lckAC += _divPrec(pegContainer[i].nTP, pACtps[i]);
         }
@@ -474,7 +462,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
-            uint256 pACtp = _getPACtp(i);
+            uint256 pACtp = getPACtp(i);
             (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
             // [N] = ([N] + [N]) * [PREC] / [PREC]
             lckAC += _divPrec(tpAvailableToRedeem + tpGain, pACtp);
@@ -531,6 +519,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         return _divPrec(_getTotalACavailable(nACgain_), lckAC_);
     }
 
+    // ------- Public Functions -------
+
     /**
      * @notice If liquidation is enabled, verifies if forced liquidation has been
      * reached, checking if globalCoverage <= liquidation
@@ -556,6 +546,18 @@ abstract contract MocBaseBucket is MocUpgradable {
             settleLiquidationPrices();
             emit ContractLiquidated();
         }
+    }
+
+    /**
+     * @notice get how many Pegged Token equal 1 Collateral Asset
+     * @param i_ Pegged Token index
+     * @return price [PREC]
+     */
+    function getPACtp(uint8 i_) public view virtual returns (uint256) {
+        IPriceProvider priceProvider = pegContainer[i_].priceProvider;
+        (bytes32 price, bool has) = priceProvider.peek();
+        if (!has) revert InvalidPriceProvider(address(priceProvider));
+        return uint256(price);
     }
 
     // ------- Only Authorized Changer Functions -------
