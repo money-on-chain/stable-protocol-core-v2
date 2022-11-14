@@ -61,6 +61,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
+    error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
     error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     // ------- Structs -------
 
@@ -434,6 +435,50 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint256 qTP = qTP_;
             emit TPSwapped(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee, qACinterest);
         }
+        return qACtotalNeeded;
+    }
+
+    function _swapTPforTCto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_,
+        address sender_,
+        address recipient_
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        uint256 pACtp = getPACtp(i_);
+        _updateTPtracking(i_, pACtp);
+        // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
+        (uint256 qACtotalToRedeem, , uint256 qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp);
+        // calculate how many qTC can mint with the given qAC
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qTCtoMint = _divPrec(qTP_ * (_getTotalACavailable(nACgain) - lckAC), nTCcb * pACtp);
+        if (qTCtoMint < qTCmin_ || qTCtoMint == 0) revert QtcBelowMinimumRequired(qTCmin_, qTCtoMint);
+
+        // calculate qAC fee to transfer to Fee Flow
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
+        qACtotalNeeded = qACfee + qACinterest;
+        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+
+        // sub qTP from the Bucket
+        _withdrawTP(i_, qTP_, 0);
+        // add qTC to the Bucket
+        _depositTC(qTCtoMint, 0);
+        // burn qTP from the sender
+        tpTokens[i_].burn(sender_, qTP_);
+        // mint qTC to the recipient
+        tcToken.mint(recipient_, qTCtoMint);
+        // transfer any qAC change to the sender, and distribute fees and interests
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, qACinterest);
+        // inside a block to avoid stack too deep error
+        /*{
+            uint8 iFrom = iFrom_;
+            uint8 iTo = iTo_;
+            uint256 qTP = qTP_;
+            emit TPSwapped(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee, qACinterest);
+        }*/
         return qACtotalNeeded;
     }
 
