@@ -73,7 +73,7 @@ abstract contract MocEma is MocBaseBucket {
      */
     function updateTPema(uint8 i_) internal {
         EmaItem memory currentTPema = tpEma[i_];
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         // [PREC²] = [PREC] * ([PREC] - [PREC])
         uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
         // [PREC²] = [PREC] * [PREC]
@@ -99,7 +99,7 @@ abstract contract MocEma is MocBaseBucket {
         uint256 den;
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 pACtp = _getPACtp(i);
+            uint256 pACtp = getPACtp(i);
             // [N] = [N] - [N]
             uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
             (uint256 tpGain, ) = _getPnLTP(i, tpAvailableToRedeem, pACtp);

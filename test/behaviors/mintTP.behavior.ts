@@ -431,7 +431,7 @@ const mintTPBehavior = function () {
               it("THEN there are 126295.71 TP available to mint", async function () {
                 assertPrec("126295.710817372538465788", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
               });
-              it("THEN the coverage is 28.29", async function () {
+              it("THEN the coverage is 28.79", async function () {
                 assertPrec("28.792592592592592592", await mocContracts.mocImpl.getCglb());
               });
               it("THEN TC price is 1.000533", async function () {

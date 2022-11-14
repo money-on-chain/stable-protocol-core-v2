@@ -73,6 +73,14 @@ describe("Feature: MocCABag redeem TP", function () {
             .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth("9.49000879629629630"));
         });
       });
+      describe("WHEN alice asks for fees and interest for redeem 2350", () => {
+        it("THEN she gets the 5% as fee and ~1% as interest", async function () {
+          const result = await this.mocContracts.mocImpl.getQACforRedeemTP(TP_0, pEth(2350));
+          assertPrec(10, result.qACtotalToRedeem);
+          assertPrec(0.5, result.qACfee);
+          assertPrec("0.009991435185185180", result.qACinterest);
+        });
+      });
       describe("WHEN alice redeems 2350 TP to bob", () => {
         beforeEach(async () => {
           tx = await mocFunctions.redeemTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });

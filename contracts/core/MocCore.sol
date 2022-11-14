@@ -176,7 +176,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
         // calculates how many qAC are needed to mint TC and the qAC fee
@@ -189,10 +189,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _depositTC(qTC_, qACNeededtoMint);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTC_);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers any AC change to the sender, and distributes fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
@@ -210,7 +208,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem) {
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
@@ -227,10 +225,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _withdrawTC(qTC_, qACtotalToRedeem);
         // burn qTC from the sender
         tcToken.burn(sender_, qTC_);
-        // transfer qAC to the recipient
-        acTransfer(recipient_, qACtoRedeem);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers qAC to the recipient, and distributes fees
+        _distOpResults(recipient_, qACtoRedeem, qACfee, 0);
         emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
@@ -250,8 +246,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
-        uint256 pACtp = _getPACtp(i_);
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
@@ -269,10 +265,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _depositTP(i_, qTP_, qACNeededtoMint);
         // mint qTP to the recipient
         tpTokens[i_].mint(recipient_, qTP_);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers any AC change to the sender, and distributes fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
         emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
@@ -292,8 +286,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem) {
-        uint256 pACtp = _getPACtp(i_);
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         _evalCoverage(protThrld);
@@ -307,12 +301,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _withdrawTP(i_, qTP_, qACtotalToRedeem);
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP_);
-        // transfer qAC to the recipient
-        acTransfer(recipient_, qACtoRedeem);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
+        // transfers qAC to the recipient, and distributes fees and interests
+        _distOpResults(recipient_, qACtoRedeem, qACfee, qACinterest);
         emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee, qACinterest);
         return qACtoRedeem;
     }
@@ -349,7 +339,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     {
         uint256 qACNeededtoMint;
         uint256 qACfee;
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qACmax_, qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
@@ -364,10 +354,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         tcToken.mint(recipient_, qTCtoMint);
         // mint qTP from the recipient
         tpTokens[i_].mint(recipient_, qTPtoMint);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
+        // transfers qAC to the sender, and distributes fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
         emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTPtoMint, qACtotalNeeded, qACfee);
         return (qACtotalNeeded, qTCtoMint, qTPtoMint);
     }
@@ -394,8 +382,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmin_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
-        uint256 pACtp = _getPACtp(i_);
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
+        uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         // calculate how many TP are needed to redeem TC and not change coverage
@@ -431,12 +419,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         }
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTPtoRedeem);
-        // transfer qAC to the recipient
-        acTransfer(recipient_, qACtoRedeem);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
+
+        // transfers qAC to the recipient, and distributes fees and interests
+        _distOpResults(recipient_, qACtoRedeem, qACfee, qACinterest);
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
@@ -468,10 +453,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated returns (uint256 qACtotalNeeded) {
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
         if (iFrom_ == iTo_) revert InvalidValue();
-        uint256 pACtpFrom = _getPACtp(iFrom_);
-        uint256 pACtpTo = _getPACtp(iTo_);
+        uint256 pACtpFrom = getPACtp(iFrom_);
+        uint256 pACtpTo = getPACtp(iTo_);
         _updateTPtracking(iFrom_, pACtpFrom);
         _updateTPtracking(iTo_, pACtpTo);
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
@@ -505,12 +490,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         tpTokens[iFrom_].burn(sender_, qTP_);
         // mint qTP to the recipient
         tpTokens[iTo_].mint(recipient_, qTPtoMint);
-        // transfer the qAC change to the sender
-        acTransfer(sender_, qACmax_ - qACtotalNeeded);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee);
-        // transfer qAC for interest
-        acTransfer(mocInterestCollectorAddress, qACinterest);
+        // transfer any qAC change to the sender, and distribute fees and interests
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, qACinterest);
         // inside a block to avoid stack too deep error
         {
             uint8 iFrom = iFrom_;
@@ -533,7 +514,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint8 i_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 qACRedeemed) {
+    ) internal notPaused returns (uint256 qACRedeemed) {
         if (!liquidated) revert OnlyWhenLiquidated();
         uint256 qTP = tpTokens[i_].balanceOf(sender_);
         if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
@@ -548,6 +529,27 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // transfer qAC to the recipient, reverts if fail
         acTransfer(recipient_, qACRedeemed);
         emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0);
+    }
+
+    /**
+     * @notice Distributes Operation results to the different recipients
+     * @param operatorsAddress_ operator's address to receive `operatorsQAC_`
+     * @param operatorsQAC_ amount of AC to transfer operator [N]
+     * @param qACfee_ amount of AC to be distributed as fees [N]
+     * @param qACinterest_ amount of AC to be distributed as interests [N]
+     */
+    function _distOpResults(
+        address operatorsAddress_,
+        uint256 operatorsQAC_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    ) internal {
+        // transfer qAC to operator
+        acTransfer(operatorsAddress_, operatorsQAC_);
+        // transfer qAC fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee_);
+        // transfer qAC for interest
+        acTransfer(mocInterestCollectorAddress, qACinterest_);
     }
 
     // ------- Public Functions -------
@@ -579,7 +581,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforMintTC(
         uint256 qTC_,
@@ -603,7 +605,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforRedeemTC(
         uint256 qTC_,
@@ -626,7 +628,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param qTP_ amount of Pegged Token to mint [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforMintTP(
         uint8 i_,
@@ -649,7 +651,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param qTP_ amount of Pegged Token to redeem
      * @param pACtp_ Pegged Token price [PREC]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
      */
     function _calcQACforRedeemTP(
@@ -747,7 +749,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param pACtp_ Pegged Token price [PREC]
      * @param pTCac_ Collateral Token price [PREC]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
      * @return qACinterest amount of Collateral Asset should be transfer to interest collector [N]
      */
     function _calcQACforRedeemTCandTP(
@@ -826,7 +828,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 pegAmount = pegContainer.length;
         uint256[] memory tpToMint = new uint256[](pegAmount);
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 pACtp = _getPACtp(i);
+            uint256 pACtp = getPACtp(i);
             _updateTPtracking(i, pACtp);
             int256 iou = tpiou[i];
             if (iou > 0) {
@@ -859,7 +861,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @notice this function is executed during settlement.
      *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
-    function execSettlement() external onlySettlement {
+    function execSettlement() external onlySettlement notPaused {
         _distributeSuccessFee();
     }
 
@@ -935,7 +937,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         );
         tpiou.push();
         // reverts if price provider is invalid
-        pACtpLstop.push(_getPACtp(newTPindex));
+        pACtpLstop.push(getPACtp(newTPindex));
         // emit the event
         emit PeggedTokenChange(newTPindex, peggedTokenParams_);
     }
@@ -1042,7 +1044,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return tpAvailableToMint [N]
      */
     function getTPAvailableToMint(uint8 i_) external view returns (uint256 tpAvailableToMint) {
-        uint256 pACtp = _getPACtp(i_);
+        uint256 pACtp = getPACtp(i_);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         return _getTPAvailableToMint(_getCtargemaCA(), _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
     }
@@ -1063,6 +1065,26 @@ abstract contract MocCore is MocEma, MocInterestRate {
     function getLeverageTC() external view returns (uint256 leverageTC) {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         return _getLeverageTC(lckAC, nACgain);
+    }
+
+    /**
+     * @notice returns how many Collateral Asset are needed to redeem `qTP_` amount of Pegged Token `i_`
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACfee amount of Collateral Asset in concept of fees [N]
+     * @return qACinterest amount of Collateral Asset in concept of interests [N]
+     */
+    function getQACforRedeemTP(uint8 i_, uint256 qTP_)
+        external
+        view
+        returns (
+            uint256 qACtotalToRedeem,
+            uint256 qACfee,
+            uint256 qACinterest
+        )
+    {
+        return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));
     }
 
     /**

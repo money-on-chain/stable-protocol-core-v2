@@ -176,5 +176,25 @@ describe("Feature: Verify that all config settings are protected by governance",
         await expectRevertNotAuthorized(mocProxy.setAppreciationFactor(42));
       });
     });
+    describe("WHEN makeUnstoppable is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.makeUnstoppable());
+      });
+    });
+    describe("WHEN makeStoppable is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.makeStoppable());
+      });
+    });
+    describe("WHEN setPauser is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setPauser(mockAddress));
+      });
+    });
+    describe("WHEN setLiqEnable is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setLiqEnabled(true));
+      });
+    });
   });
 });

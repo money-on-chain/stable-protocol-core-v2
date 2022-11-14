@@ -73,6 +73,12 @@ describe("Feature: MocCABag mint TC", function () {
       beforeEach(async () => {
         tx = await mocFunctions.mintTC({ from: alice, qTC: 10 });
       });
+      it("THEN Collateral Asset held in the Collateral Bag are 10", async function () {
+        assertPrec(10, await this.mocContracts.mocImpl.nACcb());
+      });
+      it("THEN Collateral Tokens held in the Collateral Bag are 10", async function () {
+        assertPrec(10, await this.mocContracts.mocImpl.nTCcb());
+      });
       it("THEN a TCMinted event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // sender: alice

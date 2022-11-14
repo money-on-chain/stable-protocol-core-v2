@@ -307,6 +307,58 @@ const swapTPforTPBehavior = function () {
             );
         });
       });
+      describe("WHEN alice swap 2350 TP 0 for 52.5 TP 4. ctargemaTP 4 > ctargemaTP 0, so coverage is checked", function () {
+        /*
+          ctargemaTP0 = 5
+          ctargemaTP4 = 6
+        */
+        beforeEach(async function () {
+          coverageBefore = await mocContracts.mocImpl.getCglb();
+          mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+          // go forward to a fixed block remaining for settlement to avoid unpredictability
+          const bns = await mocContracts.mocSettlement.bns();
+          await mineUpTo(bns.sub(fixedBlock));
+          tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_4, from: alice, qTP: 2350, qTPmin: 52.5 });
+        });
+        it("THEN coverage didn´t change", async function () {
+          assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
+        });
+        it("THEN Moc balance didn´t change", async function () {
+          assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
+        });
+        it("THEN a TPSwapped event is emitted", async function () {
+          // iFrom: 0
+          // iTo: 4
+          // sender: alice || mocWrapper
+          // receiver: alice
+          // qTPfrom: 2350 TP
+          // qTPto: 52.5 TP
+          // qACfee: 1% AC
+          // qACInterest: 0.0987% AC
+          await expect(tx)
+            .to.emit(mocContracts.mocImpl, "TPSwapped")
+            .withArgs(
+              TP_0,
+              TP_4,
+              mocContracts.mocWrapper?.address || alice,
+              alice,
+              pEth(2350),
+              pEth(52.5),
+              pEth(10 * 0.01),
+              pEth("0.009877199074074070"),
+            );
+        });
+      });
+      describe("AND 2500 TP 4 are minted", function () {
+        beforeEach(async function () {
+          await mocFunctions.mintTP({ i: TP_4, from: deployer, qTP: 2500 });
+        });
+        it("THEN tx reverts because there is not enough TP 4 to mint", async function () {
+          await expect(
+            mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_4, from: alice, qTP: 2350, qTPmin: 52.5 }),
+          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
+        });
+      });
       describe("AND TP 0 revalues to 10.5", function () {
         /*
           nAC = 3100    
@@ -359,12 +411,12 @@ const swapTPforTPBehavior = function () {
               );
           });
         });
-        describe("WHEN alice swap 2350 TP 0 for 1175 TP 4", function () {
+        describe("WHEN alice swap 2350 TP 0 for 1175 TP 4. ctargemaTP 4 > ctargemaTP 0, so coverage is checked", function () {
           /*
             ctargemaTP0 = 5
             ctargemaTP4 = 6
           */
-          it("THEN tx reverts because low coverage, ctargmeaTP4 > ctargemaTP0", async function () {
+          it("THEN tx reverts because low coverage", async function () {
             await expect(
               mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_4, from: alice, qTP: 2350, qTPmin: 1175 }),
             ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.LOW_COVERAGE);
@@ -424,51 +476,8 @@ const swapTPforTPBehavior = function () {
               );
           });
         });
-        describe("WHEN alice swap 2350 TP 0 for 26.25 TP 4", function () {
-          /*
-            ctargemaTP0 = 5
-            ctargemaTP4 = 6
-          */
-          beforeEach(async function () {
-            coverageBefore = await mocContracts.mocImpl.getCglb();
-            mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-            // go forward to a fixed block remaining for settlement to avoid unpredictability
-            const bns = await mocContracts.mocSettlement.bns();
-            await mineUpTo(bns.sub(fixedBlock));
-            tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_4, from: alice, qTP: 2350, qTPmin: 26.25 });
-          });
-          it("THEN coverage didn´t change", async function () {
-            assertPrec(coverageBefore, await mocContracts.mocImpl.getCglb());
-          });
-          it("THEN Moc balance didn´t change", async function () {
-            assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
-          });
-          it("THEN a TPSwapped event is emitted", async function () {
-            // iFrom: 0
-            // iTo: 4
-            // sender: alice || mocWrapper
-            // receiver: alice
-            // qTPfrom: 2350 TP
-            // qTPto: 26.25 TP
-            // qACfee: 1% AC
-            // qACInterest: 0.0987% AC
-            await expect(tx)
-              .to.emit(mocContracts.mocImpl, "TPSwapped")
-              .withArgs(
-                TP_0,
-                TP_4,
-                mocContracts.mocWrapper?.address || alice,
-                alice,
-                pEth(2350),
-                pEth(26.25),
-                pEth(5 * 0.01),
-                pEth("0.004938599537037035"),
-              );
-          });
-        });
       });
     });
   });
 };
-
 export { swapTPforTPBehavior };
