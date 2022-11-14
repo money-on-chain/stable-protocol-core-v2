@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 import "../interfaces/IMocRC20.sol";
 import "./MocEma.sol";
 import "./MocInterestRate.sol";
+import "hardhat/console.sol";
 
 /**
  * @title MocCore
@@ -482,8 +483,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
     ) internal {
         // transfer qAC to operator
         acTransfer(operatorsAddress_, operatorsQAC_);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee_);
+        // [N] = [PREC] * [N] / [PREC]
+        uint256 qACfeeRetained = _mulPrec(feeRetainer, qACfee_);
+        // Increase collateral in the retain amount
+        // TODO: review after issue #99 is completed
+        nACcb += qACfeeRetained;
+        // transfer qAC leftover fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee_ - qACfeeRetained);
         // transfer qAC for interest
         acTransfer(mocInterestCollectorAddress, qACinterest_);
     }
@@ -683,7 +689,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
-     * @notice evaluates if there are enough Pegged Token availabie to mint, reverts if it`s not
+     * @notice evaluates if there are enough Pegged Token available to mint, reverts if it`s not
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint [N]
      * @param pACtp_ Pegged Token price [PREC]
