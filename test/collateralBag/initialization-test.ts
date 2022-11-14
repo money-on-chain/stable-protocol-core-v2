@@ -111,25 +111,25 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
-    describe("WHEN it is initialized with invalid swapTPforTPfee value", () => {
-      it("THEN tx fails because swapTPforTPfee is above ONE", async () => {
-        await expect(newMocInit({ swapTPforTPfee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+    describe("WHEN it is initialized with invalid swapTPforTPFee value", () => {
+      it("THEN tx fails because swapTPforTPFee is above ONE", async () => {
+        await expect(newMocInit({ swapTPforTPFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );
       });
     });
-    describe("WHEN it is initialized with invalid redeemTCandTPfee value", () => {
-      it("THEN tx fails because redeemTCandTPfee is above ONE", async () => {
-        await expect(newMocInit({ redeemTCandTPfee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+    describe("WHEN it is initialized with invalid redeemTCandTPFee value", () => {
+      it("THEN tx fails because redeemTCandTPFee is above ONE", async () => {
+        await expect(newMocInit({ redeemTCandTPFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );
       });
     });
-    describe("WHEN it is initialized with invalid mintTCandTPfee value", () => {
-      it("THEN tx fails because mintTCandTPfee is above ONE", async () => {
-        await expect(newMocInit({ mintTCandTPfee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+    describe("WHEN it is initialized with invalid mintTCandTPFee value", () => {
+      it("THEN tx fails because mintTCandTPFee is above ONE", async () => {
+        await expect(newMocInit({ mintTCandTPFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
           mocProxy,
           ERRORS.INVALID_VALUE,
         );
