@@ -9,5 +9,9 @@
     "cSpell.words": [
         "PREC",
         "Thrld"
-    ]
+    ],
+    "solidity.formatter": "prettier",
+    "[solidity]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

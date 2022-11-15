@@ -24,11 +24,7 @@ contract AddCAWrapperAssetChangerTemplate is IChangeContract {
     @param asset_ new asset address
     @param priceProvider_ priceProvider for this asset
   */
-    constructor(
-        MocCAWrapper mocCAWrapper_,
-        IERC20 asset_,
-        IPriceProvider priceProvider_
-    ) {
+    constructor(MocCAWrapper mocCAWrapper_, IERC20 asset_, IPriceProvider priceProvider_) {
         mocCAWrapper = mocCAWrapper_;
         asset = asset_;
         priceProvider = priceProvider_;

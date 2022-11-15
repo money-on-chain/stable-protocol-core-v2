@@ -27,7 +27,7 @@ contract PriceProviderShifter is IPriceProvider {
      */
     function peek() external view returns (bytes32 price, bool hasPrice) {
         (price, hasPrice) = priceProvider.peek();
-        if (shift > 0) price = bytes32(uint256(price) * 10**uint8(shift));
-        else if (shift < 0) price = bytes32(uint256(price) / 10**uint8(-shift));
+        if (shift > 0) price = bytes32(uint256(price) * 10 ** uint8(shift));
+        else if (shift < 0) price = bytes32(uint256(price) / 10 ** uint8(-shift));
     }
 }

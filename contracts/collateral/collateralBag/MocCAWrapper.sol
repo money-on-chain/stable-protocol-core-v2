@@ -141,11 +141,10 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAmount_ amount of Asset to wrap
      * @return wcaTokenAmount amount of wcaToken [N]
      */
-    function _convertAssetToToken(address assetAddress_, uint256 assetAmount_)
-        internal
-        view
-        returns (uint256 wcaTokenAmount)
-    {
+    function _convertAssetToToken(
+        address assetAddress_,
+        uint256 assetAmount_
+    ) internal view returns (uint256 wcaTokenAmount) {
         // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
         // [PREC]
         uint256 wcaTokenPrice = getTokenPrice();
@@ -163,11 +162,10 @@ contract MocCAWrapper is MocUpgradable {
      * @param wcaTokenAmount_ amount of wrapped tokens
      * @return assetAmount amount of Asset needed to wrap or unwrap the desired amount of wcaToken [N]
      */
-    function _convertTokenToAsset(address assetAddress_, uint256 wcaTokenAmount_)
-        internal
-        view
-        returns (uint256 assetAmount)
-    {
+    function _convertTokenToAsset(
+        address assetAddress_,
+        uint256 wcaTokenAmount_
+    ) internal view returns (uint256 assetAmount) {
         // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
         // [PREC]
         uint256 wcaTokenPrice = getTokenPrice();
@@ -530,11 +528,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTC_ amount of Collateral Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
-    function mintTC(
-        address assetAddress_,
-        uint256 qTC_,
-        uint256 qAssetMax_
-    ) external {
+    function mintTC(address assetAddress_, uint256 qTC_, uint256 qAssetMax_) external {
         _mintTCto(assetAddress_, qTC_, qAssetMax_, msg.sender, msg.sender);
     }
 
@@ -546,12 +540,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      */
-    function mintTCto(
-        address assetAddress_,
-        uint256 qTC_,
-        uint256 qAssetMax_,
-        address recipient_
-    ) external {
+    function mintTCto(address assetAddress_, uint256 qTC_, uint256 qAssetMax_, address recipient_) external {
         _mintTCto(assetAddress_, qTC_, qAssetMax_, msg.sender, recipient_);
     }
 
@@ -562,11 +551,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTC_ amount of Collateral Token to redeem
      * @param qAssetMin_ minimum amount of Asset that sender expects to receive
      */
-    function redeemTC(
-        address assetAddress_,
-        uint256 qTC_,
-        uint256 qAssetMin_
-    ) external {
+    function redeemTC(address assetAddress_, uint256 qTC_, uint256 qAssetMin_) external {
         _redeemTCto(assetAddress_, qTC_, qAssetMin_, msg.sender, msg.sender);
     }
 
@@ -578,12 +563,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Asset
      */
-    function redeemTCto(
-        address assetAddress_,
-        uint256 qTC_,
-        uint256 qAssetMin_,
-        address recipient_
-    ) external {
+    function redeemTCto(address assetAddress_, uint256 qTC_, uint256 qAssetMin_, address recipient_) external {
         _redeemTCto(assetAddress_, qTC_, qAssetMin_, msg.sender, recipient_);
     }
 
@@ -595,12 +575,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ amount of Collateral Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
-    function mintTP(
-        address assetAddress_,
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qAssetMax_
-    ) external {
+    function mintTP(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMax_) external {
         _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
     }
 
@@ -613,13 +588,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      */
-    function mintTPto(
-        address assetAddress_,
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qAssetMax_,
-        address recipient_
-    ) external {
+    function mintTPto(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMax_, address recipient_) external {
         _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
     }
 
@@ -631,12 +600,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ amount of Pegged Token to redeem
      * @param qAssetMin_ minimum Asset amount that sender expects to be received
      */
-    function redeemTP(
-        address assetAddress_,
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qAssetMin_
-    ) external {
+    function redeemTP(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMin_) external {
         _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, msg.sender, false);
     }
 
@@ -677,11 +641,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param i_ Pegged Token index
      * @param recipient_ address who receives the Asset
      */
-    function liqRedeemTPto(
-        address assetAddress_,
-        uint8 i_,
-        address recipient_
-    ) external {
+    function liqRedeemTPto(address assetAddress_, uint8 i_, address recipient_) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
     }
@@ -699,13 +659,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
      */
-    function redeemTCandTP(
-        address assetAddress_,
-        uint8 i_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qAssetMin_
-    ) external {
+    function redeemTCandTP(address assetAddress_, uint8 i_, uint256 qTC_, uint256 qTP_, uint256 qAssetMin_) external {
         _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, msg.sender);
     }
 

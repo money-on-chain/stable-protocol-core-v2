@@ -19,7 +19,7 @@ contract ERC20Mock is ERC20Burnable {
     FailType internal failType;
 
     constructor() ERC20("ERC20Mock", "ERC20Mock") {
-        _mint(msg.sender, UINT256_MAX / 10**10);
+        _mint(msg.sender, UINT256_MAX / 10 ** 10);
     }
 
     function mint(address account, uint256 amount) external {
