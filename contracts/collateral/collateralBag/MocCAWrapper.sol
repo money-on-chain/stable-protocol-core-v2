@@ -11,40 +11,37 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  */
 contract MocCAWrapper is MocUpgradable {
     // ------- Events -------
-    event TCMinted(address asset_, address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAsset_);
-    event TCRedeemed(
+    event TCMintedWithWrapper(
         address asset_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
         uint256 qAsset_
     );
-    event TPMinted(
+    event TCRedeemedWithWrapper(
         address asset_,
-        uint8 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qAsset_
-    );
-    event TPRedeemed(
-        address asset_,
-        uint8 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qAsset_
-    );
-    event TCandTPMinted(
-        address asset_,
-        uint8 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
+        uint256 qAsset_
+    );
+    event TPMintedWithWrapper(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
         uint256 qTP_,
         uint256 qAsset_
     );
-    event TCandTPRedeemed(
+    event TPRedeemedWithWrapper(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
+    event TCandTPMintedWithWrapper(
         address asset_,
         uint8 indexed i_,
         address indexed sender_,
@@ -53,7 +50,16 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTP_,
         uint256 qAsset_
     );
-    event TPSwapped(
+    event TCandTPRedeemedWithWrapper(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
+    event TPSwappedWithWrapper(
         address asset_,
         uint8 indexed iFrom_,
         uint8 iTo_,
@@ -213,7 +219,7 @@ contract MocCAWrapper is MocUpgradable {
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
-        emit TCMinted(assetAddress_, sender_, recipient_, qTC_, qAssetMax_ - assetUnused);
+        emit TCMintedWithWrapper(assetAddress_, sender_, recipient_, qTC_, qAssetMax_ - assetUnused);
     }
 
     /**
@@ -249,7 +255,7 @@ contract MocCAWrapper is MocUpgradable {
             recipient_
         );
 
-        emit TCRedeemed(assetAddress_, sender_, recipient_, qTC_, assetRedeemed);
+        emit TCRedeemedWithWrapper(assetAddress_, sender_, recipient_, qTC_, assetRedeemed);
     }
 
     /**
@@ -279,7 +285,7 @@ contract MocCAWrapper is MocUpgradable {
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
-        emit TPMinted(assetAddress_, i_, sender_, recipient_, qTP_, qAssetMax_ - assetUnused);
+        emit TPMintedWithWrapper(assetAddress_, i_, sender_, recipient_, qTP_, qAssetMax_ - assetUnused);
     }
 
     /**
@@ -321,7 +327,7 @@ contract MocCAWrapper is MocUpgradable {
             address(this),
             recipient_
         );
-        emit TPRedeemed(assetAddress_, i_, sender_, recipient_, qTP_, assetRedeemed);
+        emit TPRedeemedWithWrapper(assetAddress_, i_, sender_, recipient_, qTP_, assetRedeemed);
     }
 
     /**
@@ -360,7 +366,7 @@ contract MocCAWrapper is MocUpgradable {
             uint8 i = i_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TCandTPMinted(assetAddress, i, sender_, recipient_, qTCminted, qTP, qAssetUsed);
+            emit TCandTPMintedWithWrapper(assetAddress, i, sender_, recipient_, qTCminted, qTP, qAssetUsed);
         }
     }
 
@@ -414,7 +420,7 @@ contract MocCAWrapper is MocUpgradable {
         {
             address assetAddress = assetAddress_;
             uint256 qTC = qTC_;
-            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTC, qTPtoRedeem, assetRedeemed);
+            emit TCandTPRedeemedWithWrapper(assetAddress, i_, sender_, recipient_, qTC, qTPtoRedeem, assetRedeemed);
         }
     }
 
@@ -458,7 +464,7 @@ contract MocCAWrapper is MocUpgradable {
             uint8 iTo = iTo_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TPSwapped(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qAssetUsed);
+            emit TPSwappedWithWrapper(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qAssetUsed);
         }
     }
 
