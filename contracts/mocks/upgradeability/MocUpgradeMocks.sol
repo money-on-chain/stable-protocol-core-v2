@@ -59,9 +59,10 @@ contract MocCAWrapperMock is MocCAWrapper, UpgradableMock {
  */
 // solhint-disable no-empty-blocks
 contract MocUpgradeChangerMock is UpgraderUUPSChangerTemplate {
-    constructor(UUPSUpgradeable _proxy, UpgradableMock _newImplementation)
-        UpgraderUUPSChangerTemplate(_proxy, address(_newImplementation))
-    {}
+    constructor(
+        UUPSUpgradeable _proxy,
+        UpgradableMock _newImplementation
+    ) UpgraderUUPSChangerTemplate(_proxy, address(_newImplementation)) {}
 
     function _beforeUpgrade() internal override {}
 

@@ -73,6 +73,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
+            feeRetainer: feeParams.feeRetainer,
             tcMintFee: feeParams.mintFee,
             tcRedeemFee: feeParams.redeemFee,
             swapTPforTPFee: feeParams.swapTPforTPFee,

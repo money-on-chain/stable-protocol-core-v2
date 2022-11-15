@@ -38,6 +38,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
             mocAppreciationBeneficiaryAddress: deployer,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
+            feeRetainer: feeParams.feeRetainer,
             tcMintFee: feeParams.mintFee,
             tcRedeemFee: feeParams.redeemFee,
             swapTPforTPFee: feeParams.swapTPforTPFee,

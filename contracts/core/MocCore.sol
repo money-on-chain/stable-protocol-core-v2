@@ -95,9 +95,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 tpR;
         // Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
         uint256 tpBmin;
-        // fee pct sent to Fee Flow for mint [PREC]
+        // additional fee pct applied on mint [PREC]
         uint256 tpMintFee;
-        // fee pct sent to Fee Flow for redeem [PREC]
+        // additional fee pct applied on redeem [PREC]
         uint256 tpRedeemFee;
         // initial Pegged Token exponential moving average [PREC]
         uint256 tpEma;
@@ -131,8 +131,9 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected state threshold [PREC]
      *        liqThrld liquidation coverage threshold [PREC]
-     *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
-     *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
+     *        feeRetainer pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
+     *        tcMintFee additional fee pct applied on mint Collateral Tokens operations [PREC]
+     *        tcRedeemFee additional fee pct applied on redeem Collateral Tokens operations [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
@@ -421,7 +422,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             _evalTPavailableToMint(iTo_, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
         }
 
-        // calculate qAC fee to transfer to Fee Flow
+        // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
         qACtotalNeeded = qACfee + qACinterest;
@@ -532,12 +533,17 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     ) internal {
-        // transfer qAC to operator
-        acTransfer(operatorsAddress_, operatorsQAC_);
-        // transfer qAC fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee_);
+        // [N] = [PREC] * [N] / [PREC]
+        uint256 qACfeeRetained = _mulPrec(feeRetainer, qACfee_);
+        // Increase collateral in the retain amount
+        // TODO: review after issue #99 is completed
+        nACcb += qACfeeRetained;
+        // transfer qAC leftover fees to Fee Flow
+        acTransfer(mocFeeFlowAddress, qACfee_ - qACfeeRetained);
         // transfer qAC for interest
         acTransfer(mocInterestCollectorAddress, qACinterest_);
+        // transfer qAC to operator
+        acTransfer(operatorsAddress_, operatorsQAC_);
     }
 
     // ------- Public Functions -------
@@ -580,7 +586,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
         qACNeededtoMint = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
-        // calculate qAC fee to transfer to Fee Flow
+        // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACNeededtoMint, tcMintFee);
 
@@ -604,7 +610,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
-        // calculate qAC fee to transfer to Fee Flow
+        // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACtotalToRedeem, tcRedeemFee);
         return (qACtotalToRedeem, qACfee);
@@ -627,7 +633,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
         qACNeededtoMint = _divPrec(qTP_, pACtp_);
-        // calculate qAC fee to transfer to Fee Flow
+        // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACNeededtoMint, tpMintFee[i_]);
         return (qACNeededtoMint, qACfee);
@@ -646,15 +652,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint8 i_,
         uint256 qTP_,
         uint256 pACtp_
-    )
-        internal
-        view
-        returns (
-            uint256 qACtotalToRedeem,
-            uint256 qACfee,
-            uint256 qACinterest
-        )
-    {
+    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) {
         if (qTP_ == 0) revert InvalidValue();
         // get amount of TP in the bucket
         uint256 nTP = pegContainer[i_].nTP;
@@ -668,7 +666,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // calculate how many qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _divPrec(qTP_, pACtp_);
-        // calculate qAC fee to transfer to Fee Flow
+        // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACtotalToRedeem, tpRedeemFee[i_]);
         // calculate how many qAC to transfer to interest collector
@@ -695,21 +693,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 pACtp_,
         uint256 pTCac_
-    )
-        internal
-        view
-        returns (
-            uint256 qACtotalToRedeem,
-            uint256 qACfee,
-            uint256 qACinterest
-        )
-    {
+    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) {
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
-        // calculate qAC fee to transfer to Fee Flow
+        // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACtotalToRedeem, redeemTCandTPFee);
         return (qACtotalToRedeem, qACfee, qACinterest);
@@ -735,7 +725,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
     }
 
     /**
-     * @notice evaluates if there are enough Pegged Token availabie to mint, reverts if it`s not
+     * @notice evaluates if there are enough Pegged Token available to mint, reverts if it`s not
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint [N]
      * @param pACtp_ Pegged Token price [PREC]
@@ -786,7 +776,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             mocGain = _mulPrec(mocGain, successFee);
             // sub qAC from the Bucket
             nACcb -= mocGain;
-            // transfer the qAC to Moc Fee Flow
+            // transfer the mocGain AC to Moc Fee Flow
             acTransfer(mocFeeFlowAddress, mocGain);
         }
         emit SuccessFeeDistributed(mocGain, tpToMint);
@@ -813,8 +803,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *      tpCtarg Pegged Token target coverage [PREC]
      *      tpR Pegged Token reserve factor [PREC]
      *      tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
-     *      tpMintFee fee pct sent to Fee Flow for mint [PREC]
-     *      tpRedeemFee fee pct sent to Fee Flow for redeem [PREC]
+     *      tpMintFee additional fee pct applied on mint [PREC]
+     *      tpRedeemFee additional fee pct applied on redeem [PREC]
      *      tpEma initial Pegged Token exponential moving average [PREC]
      *      tpEmaSf Pegged Token smoothing factor [PREC]
      *      tpTils Pegged Token initial interest rate
@@ -888,8 +878,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *      tpCtarg Pegged Token target coverage [PREC]
      *      tpR Pegged Token reserve factor [PREC]
      *      tpBmin Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
-     *      tpMintFee fee pct sent to Fee Flow for mint [PREC]
-     *      tpRedeemFee fee pct sent to Fee Flow for redeem [PREC]
+     *      tpMintFee additional fee pct applied on mint [PREC]
+     *      tpRedeemFee additional fee pct applied on redeem [PREC]
      *      tpEma initial Pegged Token exponential moving average [PREC]
      *      tpEmaSf Pegged Token smoothing factor [PREC]
      *      tpTils Pegged Token initial interest rate
@@ -1012,15 +1002,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return qACfee amount of Collateral Asset in concept of fees [N]
      * @return qACinterest amount of Collateral Asset in concept of interests [N]
      */
-    function getQACforRedeemTP(uint8 i_, uint256 qTP_)
-        external
-        view
-        returns (
-            uint256 qACtotalToRedeem,
-            uint256 qACfee,
-            uint256 qACinterest
-        )
-    {
+    function getQACforRedeemTP(
+        uint8 i_,
+        uint256 qTP_
+    ) external view returns (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) {
         return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));
     }
 

@@ -31,7 +31,13 @@ describe("Feature: Verify that all config settings are protected by governance",
       });
     });
     // MocBaseBucket
-    describe(`WHEN tcMintFee is invoked`, () => {
+    describe(`WHEN setFeeRetainer is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setFeeRetainer(422);
+        expect(await mocProxy.feeRetainer()).to.be.equal(422);
+      });
+    });
+    describe(`WHEN setTcMintFee is invoked`, () => {
       it("THEN the new value is assigned", async function () {
         await mocProxy.setTcMintFee(43);
         expect(await mocProxy.tcMintFee()).to.be.equal(43);
