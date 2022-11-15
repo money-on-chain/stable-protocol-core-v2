@@ -77,7 +77,7 @@ describe("Feature: MocCAWrapper with different decimal based assets", function (
         const signer = await ethers.getSigner(mocFeeFlow);
         await Promise.all(
           [asset8, asset18, asset24].map(asset =>
-            mocWrapper.connect(signer).unwrapToAsset(asset.address, pEth(0.5), 0, mocFeeFlow),
+            mocWrapper.connect(signer).unwrapTo(asset.address, pEth(0.5), 0, mocFeeFlow),
           ),
         );
         await expect(await asset8.balanceOf(mocFeeFlow)).to.be.equal(BigNumber.from(1e7).mul(5));
