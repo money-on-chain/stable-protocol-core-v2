@@ -208,7 +208,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTPtoMint amount of Pegged Token mint
+     * @return qTPtoMint amount of Pegged Token to mint
      */
     function swapTPforTP(
         uint8 iFrom_,
@@ -227,7 +227,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param recipient_ address who receives the target Pegged Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTPtoMint amount of Pegged Token mint
+     * @return qTPtoMint amount of Pegged Token to mint
      */
     function swapTPforTPto(
         uint8 iFrom_,
@@ -245,7 +245,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTCtoMint amount of Collateral Token mint
+     * @return qTCtoMint amount of Collateral Token to mint
      */
     function swapTPforTC(
         uint8 i_,
@@ -262,7 +262,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTCtoMint amount of Collateral Token mint
+     * @return qTCtoMint amount of Collateral Token to mint
      */
     function swapTPforTCto(
         uint8 i_,

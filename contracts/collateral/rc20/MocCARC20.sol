@@ -233,7 +233,7 @@ contract MocCARC20 is MocCore {
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTPtoMint amount of Pegged Token mint
+     * @return qTPtoMint amount of Pegged Token to mint
      */
     function swapTPforTP(
         uint8 iFrom_,
@@ -255,7 +255,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
      * @param recipient_ address who receives the target Pegged Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTPtoMint amount of Pegged Token mint
+     * @return qTPtoMint amount of Pegged Token to mint
      */
     function swapTPforTPto(
         uint8 iFrom_,
@@ -276,7 +276,7 @@ contract MocCARC20 is MocCore {
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTCtoMint amount of Collateral Token mint
+     * @return qTCtoMint amount of Collateral Token to mint
      */
     function swapTPforTC(
         uint8 i_,
@@ -296,7 +296,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
      * @param recipient_ address who receives the Collateral Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTCtoMint amount of Collateral Token mint
+     * @return qTCtoMint amount of Collateral Token to mint
      */
     function swapTPforTCto(
         uint8 i_,

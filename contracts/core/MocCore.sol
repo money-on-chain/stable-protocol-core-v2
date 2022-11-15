@@ -390,7 +390,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTPtoMint amount of Pegged Token mint
+     * @return qTPtoMint amount of Pegged Token to mint
      */
     function _swapTPforTPto(
         uint8 iFrom_,
@@ -458,7 +458,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTCtoMint amount of Collateral Token mint
+     * @return qTCtoMint amount of Collateral Token to mint
      */
     function _swapTPforTCto(
         uint8 i_,
