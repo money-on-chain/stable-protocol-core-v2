@@ -202,25 +202,16 @@ contract MocCARC20 is MocCore {
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
-     * @return qTPtoMint amount of Pegged Token minted
      */
     function mintTCandTP(
         uint8 i_,
         uint256 qTP_,
         uint256 qACmax_
-    )
-        external
-        payable
-        returns (
-            uint256 qACtotalNeeded,
-            uint256 qTCtoMint,
-            uint256 qTPtoMint
-        )
-    {
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTCandTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
     }
@@ -233,27 +224,18 @@ contract MocCARC20 is MocCore {
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
-     * @return qTPtoMint amount of Pegged Token minted
      */
     function mintTCandTPto(
         uint8 i_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
-    )
-        external
-        payable
-        returns (
-            uint256 qACtotalNeeded,
-            uint256 qTCtoMint,
-            uint256 qTPtoMint
-        )
-    {
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTCandTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
     }

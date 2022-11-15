@@ -314,13 +314,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
      * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param sender_ address who sends Collateral Asset
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
-     * @return qTPtoMint amount of Pegged Token minted
      */
     function _mintTCandTPto(
         uint8 i_,
@@ -328,20 +327,12 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    )
-        internal
-        notLiquidated
-        returns (
-            uint256 qACtotalNeeded,
-            uint256 qTCtoMint,
-            uint256 qTPtoMint
-        )
-    {
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
         uint256 qACNeededtoMint;
         uint256 qACfee;
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
-        (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qACmax_, qTP_, pACtp);
+        (qTCtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
@@ -349,15 +340,15 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // add qTC and qAC to the Bucket
         _depositTC(qTCtoMint, qACNeededtoMint);
         // add qTP to the Bucket
-        _depositTP(i_, qTPtoMint, 0);
+        _depositTP(i_, qTP_, 0);
         // mint qTC to the recipient
         tcToken.mint(recipient_, qTCtoMint);
         // mint qTP from the recipient
-        tpTokens[i_].mint(recipient_, qTPtoMint);
+        tpTokens[i_].mint(recipient_, qTP_);
         // transfers qAC to the sender, and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
-        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTPtoMint, qACtotalNeeded, qACfee);
-        return (qACtotalNeeded, qTCtoMint, qTPtoMint);
+        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
+        return (qACtotalNeeded, qTCtoMint);
     }
 
     /**
@@ -692,52 +683,31 @@ abstract contract MocCore is MocEma, MocInterestRate {
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token
      * and Pegged Token in one operation
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param pACtp_ Pegged Token price [PREC]
      * @return qTCtoMint amount of Collateral Token to mint [N]
-     * @return qTPtoMint amount of Pegged Token to mint [N]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
-    function _calcQACforMintTCandTP(
-        uint256 qACmax_,
-        uint256 qTP_,
-        uint256 pACtp_
-    )
+    function _calcQACforMintTCandTP(uint256 qTP_, uint256 pACtp_)
         internal
         view
         returns (
             uint256 qTCtoMint,
-            uint256 qTPtoMint,
             uint256 qACNeededtoMint,
             uint256 qACfee
         )
     {
-        uint256 ctargemaCA = _getCtargemaCA();
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         uint256 pTCac = _getPTCac(lckAC, nACgain);
-        uint256 ctargemaCASubOne = ctargemaCA - ONE;
-        if (qTP_ > 0) {
-            // calculate how many TC are needed to mint TP
-            // qTCtoMint = qTP * (ctargema - 1) / pACtp * pTCac)
-            // [N] = ([N] * [PREC] * [PREC]) / ([PREC] * [PREC])
-            qTCtoMint = _divPrec(qTP_ * ctargemaCASubOne, pTCac * pACtp_);
-            qTPtoMint = qTP_;
-            // [N] = [N] + [N]
-            qACNeededtoMint = _mulPrec(qTCtoMint, pTCac) + _divPrec(qTPtoMint, pACtp_);
-            // [N] = [N] * [PREC] / [PREC]
-            qACfee = _mulPrec(qACNeededtoMint, mintTCandTPFee);
-        } else {
-            // use all the qAC to mint TC and TP in equal proportions
-            qACNeededtoMint = _divPrec(qACmax_, ONE + mintTCandTPFee);
-            qACfee = qACmax_ - qACNeededtoMint;
-            // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
-            qTCtoMint = ((qACNeededtoMint * pTCac * ctargemaCASubOne) / ctargemaCA) / PRECISION;
-            // [N] = [N] * [PREC] / [PREC]
-            qTPtoMint = _mulPrec(qACNeededtoMint - _mulPrec(qTCtoMint, pTCac), pACtp_);
-        }
-        return (qTCtoMint, qTPtoMint, qACNeededtoMint, qACfee);
+        // calculate how many TC are needed to mint TP
+        // [N] = [N] * [PREC] * ([PREC] - [PREC]) / ([PREC] * [PREC])
+        qTCtoMint = _divPrec(qTP_ * (_getCtargemaCA() - ONE), pTCac * pACtp_);
+        // [N] = [N] + [N]
+        qACNeededtoMint = _mulPrec(qTCtoMint, pTCac) + _divPrec(qTP_, pACtp_);
+        // [N] = [N] * [PREC] / [PREC]
+        qACfee = _mulPrec(qACNeededtoMint, mintTCandTPFee);
+        return (qTCtoMint, qACNeededtoMint, qACfee);
     }
 
     /**

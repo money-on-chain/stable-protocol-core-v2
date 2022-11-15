@@ -333,7 +333,7 @@ contract MocCAWrapper is MocUpgradable {
      *  Reverts if qAC sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      */
@@ -348,12 +348,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 wcaMinted = _wrapFromAssetTo(assetAddress_, qAssetMax_, sender_, address(this));
 
         // mint TC and TP to the recipient
-        (uint256 wcaUsed, uint256 qTCminted, uint256 qTPminted) = mocCore.mintTCandTPto(
-            i_,
-            qTP_,
-            wcaMinted,
-            recipient_
-        );
+        (uint256 wcaUsed, uint256 qTCminted) = mocCore.mintTCandTPto(i_, qTP_, wcaMinted, recipient_);
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
@@ -363,8 +358,9 @@ contract MocCAWrapper is MocUpgradable {
         {
             address assetAddress = assetAddress_;
             uint8 i = i_;
+            uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TCandTPMinted(assetAddress, i, sender_, recipient_, qTCminted, qTPminted, qAssetUsed);
+            emit TCandTPMinted(assetAddress, i, sender_, recipient_, qTCminted, qTP, qAssetUsed);
         }
     }
 
@@ -748,7 +744,7 @@ contract MocCAWrapper is MocUpgradable {
      *  Reverts if qAC sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTCandTP(
@@ -769,7 +765,7 @@ contract MocCAWrapper is MocUpgradable {
      *  Reverts if qAC sent are insufficient.
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint. If it is 0 uses all the qAC sent to mint
+     * @param qTP_ amount of Pegged Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      */

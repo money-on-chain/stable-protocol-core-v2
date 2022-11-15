@@ -315,49 +315,6 @@ const mintTCandTPBehavior = function () {
           });
         });
       });
-      // describe("WHEN alice sends 59.84 Assets to mint all", function () {
-      //   /*
-      //   nAC = 3100
-      //   nTP = 23500
-      //   lckAC = 100
-      //   ctargemaCA = 5.54
-      //   qTC = 45.4 TC
-      //   qAC = 45.4 AC + 10 AC + 8% for Moc Fee Flow
-      //   coverage = (3100 + 54.4) / 110
-      //   */
-      //   let tx: ContractTransaction;
-      //   beforeEach(async function () {
-      //     tx = await mocFunctions.mintTCandTP({
-      //       i: TP_0,
-      //       from: alice,
-      //       qTP: 0,
-      //       qACmax: "59.847198641765704576",
-      //     });
-      //   });
-      //   it("THEN coverage decrease to 28.68", async function () {
-      //     assertPrec("28.685582480149542962", await mocContracts.mocImpl.getCglb());
-      //   });
-      //   it("THEN a TCandTPMinted event is emitted", async function () {
-      //     // i: 0
-      //     // sender: alice || mocWrapper
-      //     // receiver: alice
-      //     // qTC: 45.41 TC
-      //     // qTP: 2350 TP
-      //     // qAC: 45.4 AC + 10 AC + 8% for Moc Fee Flow
-      //     // qACfee: 8% AC
-      //     await expect(tx)
-      //       .to.emit(mocContracts.mocImpl, "TCandTPMinted")
-      //       .withArgs(
-      //         TP_0,
-      //         mocContracts.mocWrapper?.address || alice,
-      //         alice,
-      //         pEth("45.414072816449725850"),
-      //         pEth(2350),
-      //         pEth("59.847198641765703918"),
-      //         pEth("4.433125825315978068"),
-      //       );
-      //   });
-      // });
     });
   });
 };
