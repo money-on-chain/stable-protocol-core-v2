@@ -93,11 +93,7 @@ contract MocCARC20 is MocCore {
      * @param recipient_ address who receives the Collateral Token
      * @return qACtotalNeeded amount of AC used to mint qTC
      */
-    function mintTCto(
-        uint256 qTC_,
-        uint256 qACmax_,
-        address recipient_
-    ) external returns (uint256 qACtotalNeeded) {
+    function mintTCto(uint256 qTC_, uint256 qACmax_, address recipient_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTCto(qTC_, qACmax_, msg.sender, recipient_);
     }
@@ -119,11 +115,7 @@ contract MocCARC20 is MocCore {
      * @param recipient_ address who receives the Collateral Asset
      * @return qACtoRedeem amount of AC sent to 'recipient_'
      */
-    function redeemTCto(
-        uint256 qTC_,
-        uint256 qACmin_,
-        address recipient_
-    ) external returns (uint256 qACtoRedeem) {
+    function redeemTCto(uint256 qTC_, uint256 qACmin_, address recipient_) external returns (uint256 qACtoRedeem) {
         return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
     }
 
@@ -135,11 +127,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACtotalNeeded amount of AC used to mint qTP
      */
-    function mintTP(
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qACmax_
-    ) external returns (uint256 qACtotalNeeded) {
+    function mintTP(uint8 i_, uint256 qTP_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
     }
@@ -170,11 +158,7 @@ contract MocCARC20 is MocCore {
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @return qACtoRedeem amount of AC sent to sender
      */
-    function redeemTP(
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qACmin_
-    ) external returns (uint256 qACtoRedeem) {
+    function redeemTP(uint8 i_, uint256 qTP_, uint256 qACmin_) external returns (uint256 qACtoRedeem) {
         return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
     }
 

@@ -599,15 +599,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint8 i_,
         uint256 qTP_,
         uint256 pACtp_
-    )
-        internal
-        view
-        returns (
-            uint256 qACtotalToRedeem,
-            uint256 qACfee,
-            uint256 qACinterest
-        )
-    {
+    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) {
         if (qTP_ == 0) revert InvalidValue();
         // get amount of TP in the bucket
         uint256 nTP = pegContainer[i_].nTP;
@@ -648,15 +640,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qTP_,
         uint256 pACtp_,
         uint256 pTCac_
-    )
-        internal
-        view
-        returns (
-            uint256 qACtotalToRedeem,
-            uint256 qACfee,
-            uint256 qACinterest
-        )
-    {
+    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) {
         // calculate how many total qAC are redeemed, how many correspond for fee and how many for interests
         (qACtotalToRedeem, , qACinterest) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
@@ -965,15 +949,10 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @return qACfee amount of Collateral Asset in concept of fees [N]
      * @return qACinterest amount of Collateral Asset in concept of interests [N]
      */
-    function getQACforRedeemTP(uint8 i_, uint256 qTP_)
-        external
-        view
-        returns (
-            uint256 qACtotalToRedeem,
-            uint256 qACfee,
-            uint256 qACinterest
-        )
-    {
+    function getQACforRedeemTP(
+        uint8 i_,
+        uint256 qTP_
+    ) external view returns (uint256 qACtotalToRedeem, uint256 qACfee, uint256 qACinterest) {
         return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));
     }
 

@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 abstract contract MocHelper {
     error InvalidAddress();
     error InvalidValue();
-    uint256 internal constant PRECISION = 10**18;
-    uint256 internal constant ONE = 10**18;
+    uint256 internal constant PRECISION = 10 ** 18;
+    uint256 internal constant ONE = 10 ** 18;
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
     // Saves gas

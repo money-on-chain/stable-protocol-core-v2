@@ -184,10 +184,9 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
      */
-    function __MocBaseBucket_init_unchained(InitializeBaseBucketParams calldata initializeBaseBucketParams_)
-        internal
-        onlyInitializing
-    {
+    function __MocBaseBucket_init_unchained(
+        InitializeBaseBucketParams calldata initializeBaseBucketParams_
+    ) internal onlyInitializing {
         if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.feeRetainer > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
@@ -251,11 +250,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param qTP_ amount of Pegged Token to add
      * @param qAC_ amount of Collateral Asset to add
      */
-    function _depositTP(
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qAC_
-    ) internal {
+    function _depositTP(uint8 i_, uint256 qTP_, uint256 qAC_) internal {
         pegContainer[i_].nTP += qTP_;
         nACcb += qAC_;
     }
@@ -266,11 +261,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param qTP_ amount of Pegged Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
      */
-    function _withdrawTP(
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qAC_
-    ) internal {
+    function _withdrawTP(uint8 i_, uint256 qTP_, uint256 qAC_) internal {
         pegContainer[i_].nTP -= qTP_;
         nACcb -= qAC_;
     }
@@ -634,10 +625,9 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @dev sets Moc Appreciation Beneficiary Address
      * @param mocAppreciationBeneficiaryAddress_ moc Appreciation Beneficiary new address
      */
-    function setMocAppreciationBeneficiaryAddress(address mocAppreciationBeneficiaryAddress_)
-        external
-        onlyAuthorizedChanger
-    {
+    function setMocAppreciationBeneficiaryAddress(
+        address mocAppreciationBeneficiaryAddress_
+    ) external onlyAuthorizedChanger {
         mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
     }
 
