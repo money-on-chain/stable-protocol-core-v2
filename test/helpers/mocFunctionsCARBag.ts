@@ -218,7 +218,7 @@ const swapTPforTCto =
     await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
     return mocWrapper
       .connect(signer)
-      .swapTPforTPto(asset.address, i, qTP, qTCmin, qACmax, to, { gasLimit: GAS_LIMIT_PATCH });
+      .swapTPforTCto(asset.address, i, qTP, qTCmin, qACmax, to, { gasLimit: GAS_LIMIT_PATCH });
   };
 
 const balanceOf =

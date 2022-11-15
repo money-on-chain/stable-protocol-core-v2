@@ -56,7 +56,7 @@ describe("Feature: MocCABag swap TP for TC", function () {
         beforeEach(async () => {
           tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 2350 });
         });
-        it("THEN a TPSwappedForTC event is emitted by MocWrapper", async function () {
+        it("THEN a TPSwappedForTCWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
           // sender: alice
@@ -65,7 +65,7 @@ describe("Feature: MocCABag swap TP for TC", function () {
           // qTC: 10 TC
           // qAC: 1% for fee + 0.099% for interest of 100 AC
           await expect(tx)
-            .to.emit(mocWrapper, "TPSwappedForTC")
+            .to.emit(mocWrapper, "TPSwappedForTCWithWrapper")
             .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10), pEth("0.109991087962962960"));
         });
       });
@@ -73,7 +73,7 @@ describe("Feature: MocCABag swap TP for TC", function () {
         beforeEach(async () => {
           tx = await mocFunctions.swapTPforTCto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
         });
-        it("THEN a TPSwappedForTC event is emitted by MocWrapper", async function () {
+        it("THEN a TPSwappedForTCWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
           // sender: alice
@@ -82,7 +82,7 @@ describe("Feature: MocCABag swap TP for TC", function () {
           // qTC: 10 TC
           // qAC: 1% for fee + 0.099% for interest of 100 AC
           await expect(tx)
-            .to.emit(mocWrapper, "TPSwappedForTC")
+            .to.emit(mocWrapper, "TPSwappedForTCWithWrapper")
             .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10), pEth("0.109991087962962960"));
         });
       });
