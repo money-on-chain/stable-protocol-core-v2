@@ -8,11 +8,7 @@ contract ReentrancyAttackerMock {
     bytes internal returnError;
     bool internal isPayableFunction;
 
-    function forward(
-        address dest_,
-        bytes memory data_,
-        bool isPayableFunction_
-    ) public payable returns (bytes memory) {
+    function forward(address dest_, bytes memory data_, bool isPayableFunction_) public payable returns (bytes memory) {
         isPayableFunction = isPayableFunction_;
         dest = dest_;
         data = data_;

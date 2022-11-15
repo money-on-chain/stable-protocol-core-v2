@@ -35,6 +35,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
           mocAppreciationBeneficiaryAddress: deployer,
           protThrld: coreParams.protThrld,
           liqThrld: coreParams.liqThrld,
+          feeRetainer: feeParams.feeRetainer,
           tcMintFee: feeParams.mintFee,
           tcRedeemFee: feeParams.redeemFee,
           swapTPforTPFee: feeParams.swapTPforTPFee,

@@ -117,21 +117,22 @@ const mintTCBehavior = function () {
         });
       });
     });
-    describe("WHEN alice sends 105 Asset to mint 100 TC to bob", function () {
+    describe("WHEN feeRetainer is set to 20% AND alice sends 105 Asset to mint 100 TC to bob", function () {
       let tx: ContractTransaction;
       let alicePrevACBalance: Balance;
       beforeEach(async function () {
         alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+        await mocContracts.mocImpl.setFeeRetainer(pEth(0.2)); // 20%
         tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 100 });
       });
       it("THEN bob receives 100 TC", async function () {
         assertPrec(100, await mocFunctions.tcBalanceOf(bob));
       });
-      it("THEN Moc balance increase 100 AC", async function () {
-        assertPrec(100, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
+      it("THEN Moc balance increase 101 AC", async function () {
+        assertPrec(101, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
       });
-      it("THEN Moc Fee Flow balance increase 5% of 100 AC", async function () {
-        assertPrec(100 * 0.05, await mocFunctions.acBalanceOf(mocFeeFlow));
+      it("THEN Moc Fee Flow balance increase 4% of 100 AC", async function () {
+        assertPrec(100 * 0.04, await mocFunctions.acBalanceOf(mocFeeFlow));
       });
       it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
         const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
