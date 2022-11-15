@@ -61,6 +61,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 tcRedeemFee;
         // fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
         uint256 swapTPforTPFee;
+        // fee pct sent to Fee Flow for swap a Pegged Token for Collateral Token [PREC]
+        uint256 swapTPforTCFee;
         // fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token in one operation [PREC]
         uint256 redeemTCandTPFee;
         // pct of the gain because Pegged Tokens devaluation that is transferred
@@ -108,6 +110,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
     uint256 public swapTPforTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // fee pct sent to Fee Flow for swap a Pegged Token for Collateral Token [PREC]
+    uint256 public swapTPforTCFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token in one operation [PREC]
     uint256 public redeemTCandTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
@@ -173,6 +177,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        tcMintFee fee pct sent to Fee Flow for mint Collateral Tokens [PREC]
      *        tcRedeemFee fee pct sent to Fee Flow for redeem Collateral Tokens [PREC]
      *        swapTPforTPFee fee pct sent to Fee Flow for swap a Pegged Token for another Pegged Token [PREC]
+     *        swapTPforTCFee fee pct sent to Fee Flow for swap a Pegged Token for Collateral Token [PREC]
      *        redeemTCandTPFee fee pct sent to Fee Flow for redeem Collateral Token and Pegged Token [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
@@ -187,6 +192,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.swapTPforTPFee > PRECISION) revert InvalidValue();
+        if (initializeBaseBucketParams_.swapTPforTCFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.redeemTCandTPFee > PRECISION) revert InvalidValue();
         if (initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor > PRECISION)
             revert InvalidValue();
@@ -202,6 +208,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         tcMintFee = initializeBaseBucketParams_.tcMintFee;
         tcRedeemFee = initializeBaseBucketParams_.tcRedeemFee;
         swapTPforTPFee = initializeBaseBucketParams_.swapTPforTPFee;
+        swapTPforTCFee = initializeBaseBucketParams_.swapTPforTCFee;
         redeemTCandTPFee = initializeBaseBucketParams_.redeemTCandTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
@@ -587,6 +594,15 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setSwapTPforTPFee(uint256 swapTPforTPFee_) external onlyAuthorizedChanger {
         swapTPforTPFee = swapTPforTPFee_;
+    }
+
+    /**
+     * @dev sets the fee charged when swap a Pegged Token for Collateral Token.
+     * @param swapTPforTCFee_ fee pct sent to Fee Flow for swap a Pegged Token for Collateral Token [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setSwapTPforTCFee(uint256 swapTPforTCFee_) external onlyAuthorizedChanger {
+        swapTPforTCFee = swapTPforTCFee_;
     }
 
     /**

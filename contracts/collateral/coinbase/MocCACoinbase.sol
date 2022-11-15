@@ -268,7 +268,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @param i_ Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-     * @param recipient_ address who receives the target Collateral Token
+     * @param recipient_ address who receives the Collateral Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
      */
     function swapTPforTCto(

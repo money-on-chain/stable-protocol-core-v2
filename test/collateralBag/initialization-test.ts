@@ -111,6 +111,14 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
+    describe("WHEN it is initialized with invalid swapTPforTCFee value", () => {
+      it("THEN tx fails because swapTPforTCFee is above ONE", async () => {
+        await expect(newMocInit({ swapTPforTCFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
     describe("WHEN it is initialized with invalid success fee value", () => {
       it("THEN tx fails because sf is above ONE", async () => {
         await expect(newMocInit({ successFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(

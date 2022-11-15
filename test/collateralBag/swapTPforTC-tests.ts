@@ -2,22 +2,20 @@ import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { ERC20Mock, MocCAWrapper } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
-import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
+import { swapTPforTCBehavior } from "../behaviors/swapTPforTC.behavior";
 import { ERRORS, deployAsset, mineUpTo, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
 
-describe("Feature: MocCABag swap TP for TP", function () {
+describe("Feature: MocCABag swap TP for TC", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
-  let assetPriceProvider: PriceProviderMock;
   let mocFunctions: any;
   let deployer: Address;
   let alice: Address;
   let bob: Address;
   const TP_0 = 0;
-  const TP_1 = 1;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
@@ -28,10 +26,9 @@ describe("Feature: MocCABag swap TP for TP", function () {
       ({
         assets: [assetDefault],
         mocWrapper,
-        assetPriceProviders: [assetPriceProvider],
       } = this.mocContracts);
     });
-    swapTPforTPBehavior();
+    swapTPforTCBehavior();
 
     describe("WHEN swap TP using an asset not whitelisted", () => {
       let assetNotWhitelisted: ERC20Mock;
@@ -55,50 +52,38 @@ describe("Feature: MocCABag swap TP for TP", function () {
         // go forward to a fixed block remaining for settlement to avoid unpredictability
         await mineUpTo(fixedBlock);
       });
-      describe("WHEN alice swap 2350 TP 0 for TP 1", () => {
+      describe("WHEN alice swap 2350 TP 0 for TC", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 2350 });
+          tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 2350 });
         });
-        it("THEN a TPSwappedForTP event is emitted by MocWrapper", async function () {
+        it("THEN a TPSwappedForTC event is emitted by MocWrapper", async function () {
           // asset: assetDefault
-          // iFrom: 0
-          // iTo: 1
+          // i: 0
           // sender: alice
           // receiver: alice
           // qTP: 2350 TP
+          // qTC: 10 TC
           // qAC: 1% for fee + 0.099% for interest of 100 AC
           await expect(tx)
-            .to.emit(mocWrapper, "TPSwappedForTP")
-            .withArgs(assetDefault.address, TP_0, TP_1, alice, alice, pEth(2350), pEth("0.109991087962962960"));
+            .to.emit(mocWrapper, "TPSwappedForTC")
+            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10), pEth("0.109991087962962960"));
         });
       });
-      describe("WHEN alice swap 2350 TP 0 for TP 1 to bob", () => {
+      describe("WHEN alice swap 2350 TP 0 for TC to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.swapTPforTPto({ iFrom: TP_0, iTo: TP_1, from: alice, to: bob, qTP: 2350 });
+          tx = await mocFunctions.swapTPforTCto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
         });
-        it("THEN a TPSwappedForTP event is emitted by MocWrapper", async function () {
+        it("THEN a TPSwappedForTC event is emitted by MocWrapper", async function () {
           // asset: assetDefault
-          // iFrom: 0
-          // iTo: 1
+          // i: 0
           // sender: alice
           // receiver: bob
           // qTP: 2350 TP
+          // qTC: 10 TC
           // qAC: 1% for fee + 0.099% for interest of 100 AC
           await expect(tx)
-            .to.emit(mocWrapper, "TPSwappedForTP")
-            .withArgs(assetDefault.address, TP_0, TP_1, alice, bob, pEth(2350), pEth("0.109991087962962960"));
-        });
-      });
-      describe("AND asset price provider is deprecated", () => {
-        beforeEach(async () => {
-          await assetPriceProvider.deprecatePriceProvider();
-        });
-        describe("WHEN alice tries to swap 2350 TP 0 for TP 1", () => {
-          it("THEN tx fails because invalid price provider", async () => {
-            await expect(
-              mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 2350 }),
-            ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_PRICE_PROVIDER);
-          });
+            .to.emit(mocWrapper, "TPSwappedForTC")
+            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10), pEth("0.109991087962962960"));
         });
       });
     });

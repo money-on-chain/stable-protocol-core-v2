@@ -30,13 +30,22 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     );
-    event TPSwapped(
+    event TPSwappedForTP(
         uint8 indexed iFrom_,
         uint8 iTo_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTPfrom_,
         uint256 qTPto_,
+        uint256 qACfee_,
+        uint256 qACinterest_
+    );
+    event TPSwappedForTC(
+        uint8 indexed iFrom_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qTC_,
         uint256 qACfee_,
         uint256 qACinterest_
     );
@@ -433,7 +442,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
             uint8 iFrom = iFrom_;
             uint8 iTo = iTo_;
             uint256 qTP = qTP_;
-            emit TPSwapped(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee, qACinterest);
+            emit TPSwappedForTP(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee, qACinterest);
         }
         return qACtotalNeeded;
     }
@@ -458,7 +467,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
 
         // calculate qAC fee to transfer to Fee Flow
         // [N] = [N] * [PREC] / [PREC]
-        uint256 qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
+        uint256 qACfee = _mulPrec(qACtotalToRedeem, swapTPforTCFee);
         qACtotalNeeded = qACfee + qACinterest;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
 
@@ -473,12 +482,11 @@ abstract contract MocCore is MocEma, MocInterestRate {
         // transfer any qAC change to the sender, and distribute fees and interests
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, qACinterest);
         // inside a block to avoid stack too deep error
-        /*{
-            uint8 iFrom = iFrom_;
-            uint8 iTo = iTo_;
+        {
+            uint8 i = i_;
             uint256 qTP = qTP_;
-            emit TPSwapped(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee, qACinterest);
-        }*/
+            emit TPSwappedForTC(i, sender_, recipient_, qTP, qTCtoMint, qACfee, qACinterest);
+        }
         return qACtotalNeeded;
     }
 

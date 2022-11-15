@@ -283,6 +283,44 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends a Pegged Token and receives Collateral Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     */
+    function swapTPforTC(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_
+    ) external returns (uint256 qACtotalNeeded) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _swapTPforTCto(i_, qTP_, qTCmin_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives Collateral Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
+     * @param recipient_ address who receives the Collateral Token
+     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     */
+    function swapTPforTCto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_,
+        address recipient_
+    ) external returns (uint256 qACtotalNeeded) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _swapTPforTCto(i_, qTP_, qTCmin_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps

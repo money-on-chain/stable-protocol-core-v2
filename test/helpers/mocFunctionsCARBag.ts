@@ -187,6 +187,40 @@ const swapTPforTPto =
       .swapTPforTPto(asset.address, iFrom, iTo, qTP, qTPmin, qACmax, to, { gasLimit: GAS_LIMIT_PATCH });
   };
 
+const swapTPforTC =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, qTP, qTCmin = 0, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTCmin = pEth(qTCmin);
+      qACmax = pEth(qACmax);
+    }
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
+    return mocWrapper.connect(signer).swapTPforTC(asset.address, i, qTP, qTCmin, qACmax, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
+const swapTPforTCto =
+  (mocWrapper, mocPeggedTokens, assetDefault) =>
+  async ({ i, from, to, qTP, qTCmin = 0, qACmax = qTP * 10, applyPrecision = true, asset = assetDefault }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qTCmin = pEth(qTCmin);
+      qACmax = pEth(qACmax);
+    }
+    if (mocPeggedTokens[i]) {
+      await mocPeggedTokens[i].connect(signer).increaseAllowance(mocWrapper.address, qTP);
+    }
+    await asset.connect(signer).increaseAllowance(mocWrapper.address, qACmax);
+    return mocWrapper
+      .connect(signer)
+      .swapTPforTPto(asset.address, i, qTP, qTCmin, qACmax, to, { gasLimit: GAS_LIMIT_PATCH });
+  };
+
 const balanceOf =
   assetDefault =>
   (account, asset = assetDefault) =>
@@ -243,6 +277,8 @@ export const mocFunctionsCARBag = async ({
     liqRedeemTPto: liqRedeemTPto(mocWrapper, mocPeggedTokens, assets[0]),
     swapTPforTP: swapTPforTP(mocWrapper, mocPeggedTokens, assets[0]),
     swapTPforTPto: swapTPforTPto(mocWrapper, mocPeggedTokens, assets[0]),
+    swapTPforTC: swapTPforTC(mocWrapper, mocPeggedTokens, assets[0]),
+    swapTPforTCto: swapTPforTCto(mocWrapper, mocPeggedTokens, assets[0]),
     assetBalanceOf: balanceOf(assets[0]),
     acBalanceOf: balanceOf(wcaToken),
     tcBalanceOf: balanceOf(mocCollateralToken),
