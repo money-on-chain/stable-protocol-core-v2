@@ -18,6 +18,7 @@ export const settlementParams = {
 };
 
 export const feeParams = {
+  feeRetainer: 0, // 0%
   mintFee: PCT_BASE.mul(5).div(100), // 5%
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
   swapTPforTPFee: PCT_BASE.mul(1).div(100), // 1%

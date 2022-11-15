@@ -68,9 +68,9 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
             mocCore.tpR(i),
             // Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
             mocCore.tpBmin(i),
-            // fee pct sent to Fee Flow for mint [PREC]
+            // additional fee pct applied on mint [PREC]
             mocCore.tpMintFee(i),
-            // fee pct sent to Fee Flow for redeem [PREC]
+            // additional fee pct applied on redeem [PREC]
             mocCore.tpRedeemFee(i),
             // Emma is not editable, only initialized
             0,

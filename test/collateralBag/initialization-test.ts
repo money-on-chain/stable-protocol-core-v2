@@ -95,6 +95,14 @@ describe("Feature: MocCABag initialization", function () {
         );
       });
     });
+    describe("WHEN it is initialized with invalid feeRetainer value", () => {
+      it("THEN tx fails because feeRetainer is above ONE", async () => {
+        await expect(newMocInit({ feeRetainer: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_VALUE,
+        );
+      });
+    });
     describe("WHEN it is initialized with invalid TCmintFee value", () => {
       it("THEN tx fails because TCmintFee is above ONE", async () => {
         await expect(newMocInit({ tcMintFee: CONSTANTS.ONE.add(1) })).to.be.revertedWithCustomError(
