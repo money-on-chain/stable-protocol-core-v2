@@ -480,8 +480,6 @@ abstract contract MocCore is MocEma, MocInterestRate {
         uint256 qACfee_,
         uint256 qACinterest_
     ) internal {
-        // transfer qAC to operator
-        acTransfer(operatorsAddress_, operatorsQAC_);
         // [N] = [PREC] * [N] / [PREC]
         uint256 qACfeeRetained = _mulPrec(feeRetainer, qACfee_);
         // Increase collateral in the retain amount
@@ -491,6 +489,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         acTransfer(mocFeeFlowAddress, qACfee_ - qACfeeRetained);
         // transfer qAC for interest
         acTransfer(mocInterestCollectorAddress, qACinterest_);
+        // transfer qAC to operator
+        acTransfer(operatorsAddress_, operatorsQAC_);
     }
 
     // ------- Public Functions -------
