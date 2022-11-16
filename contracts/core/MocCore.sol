@@ -390,7 +390,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTPtoMint amount of Pegged Token to mint
+     * @return qTPtoMint amount of Pegged Token minted
      */
     function _swapTPforTPto(
         uint8 iFrom_,
@@ -458,7 +458,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
      * @return qACtotalNeeded amount of AC used to pay fee and interest
-     * @return qTCtoMint amount of Collateral Token to mint
+     * @return qTCtoMint amount of Collateral Token minted
      */
     function _swapTPforTCto(
         uint8 i_,
@@ -480,7 +480,7 @@ abstract contract MocCore is MocEma, MocInterestRate {
         qTCtoMint = _divPrec(qTP_ * nTCcb, (_getTotalACavailable(nACgain) - lckAC) * pACtp);
         if (qTCtoMint < qTCmin_ || qTCtoMint == 0) revert QtcBelowMinimumRequired(qTCmin_, qTCtoMint);
 
-        // calculate qAC fee to transfer to Fee Flow
+        // calculate qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACfee = _mulPrec(qACtotalToRedeem, swapTPforTCFee);
         qACtotalNeeded = qACfee + qACinterest;
