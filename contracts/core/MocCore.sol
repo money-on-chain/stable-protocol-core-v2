@@ -544,8 +544,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         (uint256 qACtotalToRedeem, ) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
         // calculate how many qTP can mint with the given qAC
         // qTPtoMint = qTC * pTCac * pACtp
-        // [N] = [N] * [N] * [PREC] / ([N] - [N]) * [PREC]
-        qTPtoMint = ((qTC_ * pACtp * (_getTotalACavailable(nACgain) - lckAC)) / nTCcb) / PRECISION;
+        // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
+        qTPtoMint = ((qTC_ * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
         // evaluates if there are enough TP available to mint, reverts if it's not
         _evalTPavailableToMint(i_, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
         if (qTPtoMint < qTPmin_ || qTPtoMint == 0) revert QtcBelowMinimumRequired(qTPmin_, qTPtoMint);

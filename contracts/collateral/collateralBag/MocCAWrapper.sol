@@ -63,6 +63,15 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qTC_,
         uint256 qAsset_
     );
+    event TCSwappedForTPWithWrapper(
+        address asset_,
+        uint8 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAsset_
+    );
     event AssetModified(address indexed assetAddress_, address priceProviderAddress);
 
     // ------- Custom Errors -------
@@ -470,6 +479,47 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
+     * @notice caller sends a Pegged Token and recipient receives Pegged Token
+     *  Requires prior sender approval of Collateral Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ owned Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param sender_ address who sends the Collateral Token
+     * @param recipient_ address who receives the Pegged Token
+     */
+    function _swapTCforTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address sender_,
+        address recipient_
+    ) internal validAsset(assetAddress_) {
+        uint256 wcaMinted = _wrapFromAssetTo(assetAddress_, qAssetMax_, sender_, address(this));
+        // get Pegged Token contract address
+        IERC20Upgradeable tcToken = mocCore.tcToken();
+        // transfer Collateral Token from sender to this address
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        (uint256 wcaUsed, uint256 qTPMinted) = mocCore.swapTCforTPto(i_, qTC_, qTPmin_, wcaMinted, recipient_);
+        uint256 wcaUnused = wcaMinted - wcaUsed;
+        // send back Asset unused to the sender
+        // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
+        // that can be spent
+        uint256 assetUnused = _unwrapToAssetTo(assetAddress_, wcaUnused, 0, address(this), sender_);
+        // inside a block to avoid stack too deep error
+        {
+            address assetAddress = assetAddress_;
+            uint8 i = i_;
+            uint256 qTC = qTC_;
+            uint256 qAssetUsed = qAssetMax_ - assetUnused;
+            emit TCSwappedForTPWithWrapper(assetAddress, i, sender_, recipient_, qTC, qTPMinted, qAssetUsed);
+        }
+    }
+
+    /**
      * @notice caller sends Asset and recipient receives Wrapped Collateral Asset
      *  Requires prior sender approval of Asset to this contract
      * @param assetAddress_ Asset contract address
@@ -822,6 +872,40 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) external {
         _swapTPforTCto(assetAddress_, i_, qTP_, qTCmin_, qAssetMax_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Pegged Token
+     *  Requires prior sender approval of Collateral Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     */
+    function swapTCforTP(address assetAddress_, uint8 i_, uint256 qTC_, uint256 qTPmin_, uint256 qAssetMax_) external {
+        _swapTCforTPto(assetAddress_, i_, qTC_, qTPmin_, qAssetMax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends a Collateral Token and recipient receives Pegged Token
+     *  Requires prior sender approval of Collateral Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param recipient_ address who receives the Pegged Token
+     */
+    function swapTCforTPto(
+        address assetAddress_,
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address recipient_
+    ) external {
+        _swapTCforTPto(assetAddress_, i_, qTC_, qTPmin_, qAssetMax_, msg.sender, recipient_);
     }
 
     /*

@@ -202,6 +202,32 @@ const swapTPforTCto =
     return mocImpl.connect(signer).swapTPforTCto(i, qTP, qTCmin, qACmax, to);
   };
 
+const swapTCforTP =
+  (mocImpl, collateralAsset) =>
+  async ({ i, from, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qTPmin = pEth(qTPmin);
+      qACmax = pEth(qACmax);
+    }
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
+    return mocImpl.connect(signer).swapTCforTP(i, qTC, qTPmin, qACmax);
+  };
+
+const swapTCforTPto =
+  (mocImpl, collateralAsset) =>
+  async ({ i, from, to, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qTPmin = pEth(qTPmin);
+      qACmax = pEth(qACmax);
+    }
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
+    return mocImpl.connect(signer).swapTCforTOto(i, qTC, qTPmin, qACmax, to);
+  };
+
 const balanceOf = asset => account => asset.balanceOf(account);
 const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].balanceOf(account);
 const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
@@ -249,6 +275,8 @@ export const mocFunctionsRC20 = async ({
   swapTPforTPto: swapTPforTPto(mocImpl, collateralAsset),
   swapTPforTC: swapTPforTC(mocImpl, collateralAsset),
   swapTPforTCto: swapTPforTCto(mocImpl, collateralAsset),
+  swapTCforTP: swapTCforTP(mocImpl, collateralAsset),
+  swapTCforTPto: swapTCforTPto(mocImpl, collateralAsset),
   assetBalanceOf: balanceOf(collateralAsset),
   acBalanceOf: balanceOf(collateralAsset),
   tcBalanceOf: balanceOf(mocCollateralToken),

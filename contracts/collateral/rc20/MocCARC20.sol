@@ -310,6 +310,46 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice caller sends Collateral Token and receives Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     */
+    function swapTCforTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qACmax_
+    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _swapTCforTPto(i_, qTC_, qTPmin_, qACmax_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the Pegged Token
+     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     */
+    function swapTCforTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address recipient_
+    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        return _swapTCforTPto(i_, qTC_, qTPmin_, qACmax_, msg.sender, recipient_);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
