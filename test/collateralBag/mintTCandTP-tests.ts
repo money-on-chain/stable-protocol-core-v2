@@ -8,7 +8,7 @@ import { deployAsset, ERRORS, tpParams, pEth } from "../helpers/utils";
 import { ERC20Mock, MocCAWrapper } from "../../typechain";
 import { fixtureDeployedMocCABag } from "./fixture";
 
-describe("Feature: MocCABag redeem TC and TP", function () {
+describe("Feature: MocCABag mint TC and TP", function () {
   let mocWrapper: MocCAWrapper;
   let assetDefault: ERC20Mock;
   let mocFunctions: any;

@@ -693,11 +693,13 @@ abstract contract MocCore is MocEma, MocInterestRate {
     ) internal view returns (uint256 qTCtoMint, uint256 qACNeededtoMint, uint256 qACfee) {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         uint256 pTCac = _getPTCac(lckAC, nACgain);
-        // calculate how many TC are needed to mint TP
-        // [N] = [N] * [PREC] * ([PREC] - [PREC]) / ([PREC] * [PREC])
-        qTCtoMint = _divPrec(qTP_ * (_getCtargemaCA() - ONE), pTCac * pACtp_);
-        // [N] = [N] + [N]
-        qACNeededtoMint = _mulPrec(qTCtoMint, pTCac) + _divPrec(qTP_, pACtp_);
+        // calculate how many TC are needed to mint TP and total qAC used for mint both
+        // [N] = [N] * ([PREC] - [PREC]) / [PREC]
+        qACNeededtoMint = (qTP_ * (_getCtargemaCA() - ONE)) / pACtp_;
+        // [N] = [N] *  [PREC] / [PREC]
+        qTCtoMint = _divPrec(qACNeededtoMint, pTCac);
+        // [N] = [N] + [N] *  [PREC] / [PREC]
+        qACNeededtoMint = qACNeededtoMint + _divPrec(qTP_, pACtp_);
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACNeededtoMint, mintTCandTPFee);
         return (qTCtoMint, qACNeededtoMint, qACfee);

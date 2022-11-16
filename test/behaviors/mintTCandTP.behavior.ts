@@ -23,7 +23,7 @@ const mintTCandTPBehavior = function () {
       ({ alice, bob } = await getNamedAccounts());
     });
     describe("GIVEN the protocol is empty", function () {
-      describe("WHEN alice mints 2350 TP", function () {
+      describe("WHEN alice asks for 2350 TP using mintTCandTP", function () {
         /*
           nAC = 0
           lckAC = 0
@@ -68,7 +68,7 @@ const mintTCandTPBehavior = function () {
         await mocFunctions.mintTC({ from: alice, qTC: 3000 });
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
       });
-      describe("WHEN alice sends 59.84(less amount) Asset to mint 2350 TP", function () {
+      describe("WHEN alice sends 59.84(less amount) AC to mint 2350 TP", function () {
         it("THEN tx reverts because the amount of AC is insufficient", async function () {
           await expect(
             mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 2350, qACmax: "59.847198641765704575" }),
@@ -82,7 +82,7 @@ const mintTCandTPBehavior = function () {
           ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
         });
       });
-      describe("WHEN alice sends 59.84(exactly amount) Assets to mint 2350 TP", function () {
+      describe("WHEN alice sends 59.84(exactly amount) AC to mint 2350 TP", function () {
         /*
         nAC = 3100    
         nTP = 23500
@@ -185,7 +185,7 @@ const mintTCandTPBehavior = function () {
             .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(2350));
         });
       });
-      describe("WHEN alice sends 589.8(exceeded amount) Assets to mint 2350 TP to bob", function () {
+      describe("WHEN alice sends 589.8(exceeded amount) AC to mint 2350 TP to bob", function () {
         /*
         nAC = 3100    
         nTP = 23500
@@ -309,8 +309,8 @@ const mintTCandTPBehavior = function () {
                 alice,
                 pEth("500.802047845527084421"),
                 pEth(23500),
-                pEth("598.471986417657045820"),
-                pEth("44.331258253159781171"),
+                pEth("598.471986417657045822"),
+                pEth("44.331258253159781172"),
               );
           });
         });

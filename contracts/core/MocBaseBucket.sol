@@ -217,6 +217,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         mintTCandTPFee = initializeBaseBucketParams_.mintTCandTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
+        liquidated = false;
+        liqEnabled = false;
     }
 
     // ------- Internal Functions -------
