@@ -358,7 +358,7 @@ contract MocCAWrapper is MocUpgradable {
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' as qACmin parameter to avoid reverting by qAC below minimum since we are
         // checking it after with qAssetMin
-        (uint256 wcaTokenAmountRedeemed, uint256 qTPtoRedeem) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
+        (uint256 wcaTokenAmountRedeemed, uint256 qTPRedeemed) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
         // send Asset to the recipient
         uint256 assetRedeemed = _unwrapToAssetTo(
             assetAddress_,
@@ -368,12 +368,12 @@ contract MocCAWrapper is MocUpgradable {
             recipient_
         );
         // transfer unused Pegged Token to the sender
-        SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPtoRedeem);
+        SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPRedeemed);
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
             uint256 qTC = qTC_;
-            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTC, qTPtoRedeem, assetRedeemed);
+            emit TCandTPRedeemed(assetAddress, i_, sender_, recipient_, qTC, qTPRedeemed, assetRedeemed);
         }
     }
 
@@ -404,7 +404,7 @@ contract MocCAWrapper is MocUpgradable {
         IERC20Upgradeable tpTokenFrom = mocCore.tpTokens(iFrom_);
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, sender_, address(this), qTP_);
-        (uint256 wcaUsed, uint256 qTPtoMint) = mocCore.swapTPforTPto(
+        (uint256 wcaUsed, uint256 qTPMinted) = mocCore.swapTPforTPto(
             iFrom_,
             iTo_,
             qTP_,
@@ -424,7 +424,7 @@ contract MocCAWrapper is MocUpgradable {
             uint8 iTo = iTo_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TPSwappedForTP(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qAssetUsed);
+            emit TPSwappedForTP(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qTPMinted, qAssetUsed);
         }
     }
 
@@ -453,7 +453,7 @@ contract MocCAWrapper is MocUpgradable {
         IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
-        (uint256 wcaUsed, uint256 qTCtoMint) = mocCore.swapTPforTCto(i_, qTP_, qTCmin_, wcaMinted, recipient_);
+        (uint256 wcaUsed, uint256 qTCMinted) = mocCore.swapTPforTCto(i_, qTP_, qTCmin_, wcaMinted, recipient_);
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
@@ -465,7 +465,7 @@ contract MocCAWrapper is MocUpgradable {
             uint8 i = i_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TPSwappedForTCWithWrapper(assetAddress, i, sender_, recipient_, qTP, qTCtoMint, qAssetUsed);
+            emit TPSwappedForTCWithWrapper(assetAddress, i, sender_, recipient_, qTP, qTCMinted, qAssetUsed);
         }
     }
 
