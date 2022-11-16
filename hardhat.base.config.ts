@@ -74,6 +74,8 @@ const config: HardhatUserConfig = {
       chainId: chainIds.hardhat,
       gasPrice: 0,
       initialBaseFeePerGas: 0,
+      // TODO: remove this
+      allowUnlimitedContractSize: true,
     },
     goerli: createTestnetConfig("goerli"),
     kovan: createTestnetConfig("kovan"),

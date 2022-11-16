@@ -156,6 +156,41 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
     }
 
     /**
+     * @notice caller sends coinbase as Collateral Asset and receives Collateral Token and Pegged Token
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCtoMint amount of Collateral Token minted
+     */
+    function mintTCandTP(uint8 i_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
+        return _mintTCandTPto(i_, qTP_, msg.value, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends coinbase as Collateral Asset and recipient receives Collateral Token and Pegged Token
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCtoMint amount of Collateral Token minted
+     */
+    function mintTCandTPto(
+        uint8 i_,
+        uint256 qTP_,
+        address recipient_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
+        return _mintTCandTPto(i_, qTP_, msg.value, msg.sender, recipient_);
+    }
+
+    /**
      * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
      *  This operation is done without checking coverage
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price

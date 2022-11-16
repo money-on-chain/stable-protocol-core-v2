@@ -50,6 +50,7 @@ const gasEstimationBehavior = function () {
             redeemTP: () => mocFunctions.redeemTP({ i: TP_0, from: deployer, qTP: 100 }),
             swapTPforTP: () => mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: deployer, qTP: 100 }),
             redeemTCandTP: () => mocFunctions.redeemTCandTP({ i: TP_0, from: deployer, qTC: 1, qTP: 100 }),
+            mintTCandTP: () => mocFunctions.mintTCandTP({ i: TP_0, from: deployer, qTP: 100 }),
             execSettlement: () => mocContracts.mocSettlement.execSettlement(),
           };
 

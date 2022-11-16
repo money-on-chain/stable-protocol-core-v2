@@ -88,6 +88,12 @@ const shouldBehaveLikeLiquidable = function () {
           // before actually executing redeemTC but on moving TC assets and hitting paused revert
           await expect(this.mocFunctions.redeemTCandTP({ i: 0, from: bob, qTC: 1, qTP: 1 })).to.be.reverted;
         });
+        it("THEN even if prices are restored, bob cannot mintTCandTP", async function () {
+          await expect(this.mocFunctions.mintTCandTP({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.LIQUIDATED,
+          );
+        });
         describe("WHEN Bob and Charlie redeem their TPs by liquidation redeem", async function () {
           let bobPrevAssetBalance: Balance, charliePrevAssetBalance: Balance, otherUserPrevAssetBalance: Balance;
           beforeEach(async function () {

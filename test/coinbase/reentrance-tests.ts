@@ -73,5 +73,11 @@ describe("Feature: MocCoinbase reentrance tests", () => {
         await expectRevertReentrancyGuard(reentracyAttack(op));
       });
     });
+    describe("WHEN a reentrance attacker contract reentrant mintTCandTP", () => {
+      it("THEN tx fails because there is a reentrant call", async () => {
+        const op = mocImpl.interface.encodeFunctionData("mintTCandTP", [0, pEth(1)]);
+        await expectRevertReentrancyGuard(reentracyAttack(op, { value: pEth(100) }));
+      });
+    });
   });
 });
