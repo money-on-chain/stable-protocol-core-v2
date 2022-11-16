@@ -192,15 +192,14 @@ abstract contract MocBaseBucket is MocUpgradable {
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
     ) internal onlyInitializing {
-        if (initializeBaseBucketParams_.protThrld < PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.feeRetainer > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.tcMintFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.tcRedeemFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.swapTPforTPFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.swapTPforTCFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.redeemTCandTPFee > PRECISION) revert InvalidValue();
-        if (initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor > PRECISION)
-            revert InvalidValue();
+        if (initializeBaseBucketParams_.protThrld < ONE) revert InvalidValue();
+        _checkLessThanOne(initializeBaseBucketParams_.feeRetainer);
+        _checkLessThanOne(initializeBaseBucketParams_.tcMintFee);
+        _checkLessThanOne(initializeBaseBucketParams_.tcRedeemFee);
+        _checkLessThanOne(initializeBaseBucketParams_.swapTPforTPFee);
+        _checkLessThanOne(initializeBaseBucketParams_.swapTPforTCFee);
+        _checkLessThanOne(initializeBaseBucketParams_.redeemTCandTPFee);
+        _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
         if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
