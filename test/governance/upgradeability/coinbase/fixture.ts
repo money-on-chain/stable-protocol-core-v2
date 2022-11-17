@@ -1,9 +1,10 @@
-import { deployments, getNamedAccounts, network } from "hardhat";
+import { deployments, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../../../scripts/utils";
-import { coreParams, feeParams, mocAddresses } from "../../../../deploy-config/config";
+import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
+
+const { coreParams, feeParams, mocAddresses } = getNetworkConfig({ network: "hardhat" });
 
 export function fixtureDeployGovernance(): () => Promise<{
   governor: Contract;
@@ -11,7 +12,6 @@ export function fixtureDeployGovernance(): () => Promise<{
 }> {
   return deployments.createFixture(async ({ ethers }) => {
     await deployments.fixture();
-    const networkName = network.name as keyof typeof mocAddresses;
     const { deployer } = await getNamedAccounts();
 
     // deploy and initialize governor
@@ -32,7 +32,7 @@ export function fixtureDeployGovernance(): () => Promise<{
 
     const mockAddress = deployer;
     let { pauserAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocAppreciationBeneficiaryAddress } =
-      mocAddresses[networkName];
+      mocAddresses;
     // TODO: fix these mockAddresses
     // initializations
     await waitForTxConfirmation(

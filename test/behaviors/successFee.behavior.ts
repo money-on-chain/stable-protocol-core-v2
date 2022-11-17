@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, pEth, ERRORS, mineUpTo } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
 
 const successFeeBehavior = function () {
   let mocContracts: any;
@@ -15,7 +15,9 @@ const successFeeBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_2 = 2;
-  const { mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses["hardhat"];
+  const { mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = getNetworkConfig({
+    network: "hardhat",
+  }).mocAddresses;
   let mocPrevACBalance: Balance;
   let mocFeeFlowPrevACBalance: Balance;
   let mocApprecBenefPrevTPsBalance: Balance[];

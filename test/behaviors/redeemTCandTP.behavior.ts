@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
 
 const redeemTCandTPBehavior = function () {
   let mocContracts: any;
@@ -14,7 +14,7 @@ const redeemTCandTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
+  const { mocFeeFlowAddress, mocInterestCollectorAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
   const fixedBlock = 85342;
 
   let coverageBefore: BigNumber;
