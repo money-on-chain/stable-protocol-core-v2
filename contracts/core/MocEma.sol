@@ -36,11 +36,21 @@ abstract contract MocEma is MocBaseBucket {
      */
     function __MocEma_init_unchained(uint256 emaCalculationBlockSpan_) internal onlyInitializing {
         if (emaCalculationBlockSpan_ == 0) revert InvalidValue();
-        nextEmaCalculation = block.number + emaCalculationBlockSpan_;
         emaCalculationBlockSpan = emaCalculationBlockSpan_;
+        _updateNextEmaCalculation(emaCalculationBlockSpan_);
     }
 
     // ------- Internal Functions -------
+
+    /**
+     * @notice updates next EMA block calculation
+     * @param emaCalculationBlockSpan_ amount of blocks to wait between Pegged ema calculation
+     */
+    function _updateNextEmaCalculation(uint256 emaCalculationBlockSpan_) internal {
+        unchecked {
+            nextEmaCalculation = block.number + emaCalculationBlockSpan_;
+        }
+    }
 
     /**
      * @notice get target coverage adjusted by the moving average of the value of a Pegged Token
@@ -143,7 +153,7 @@ abstract contract MocEma is MocBaseBucket {
             for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
                 updateTPema(i);
             }
-            nextEmaCalculation = block.number + emaCalculationBlockSpan;
+            _updateNextEmaCalculation(emaCalculationBlockSpan);
         }
     }
 

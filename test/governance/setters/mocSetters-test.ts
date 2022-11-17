@@ -61,10 +61,16 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.redeemTCandTPFee()).to.be.equal(46);
       });
     });
+    describe(`WHEN setMintTCandTPFee is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setMintTCandTPFee(47);
+        expect(await mocProxy.mintTCandTPFee()).to.be.equal(47);
+      });
+    });
     describe(`WHEN setSwapTPforTCFee is invoked`, () => {
       it("THEN the new value is assigned", async function () {
-        await mocProxy.setSwapTPforTCFee(47);
-        expect(await mocProxy.swapTPforTCFee()).to.be.equal(47);
+        await mocProxy.setSwapTPforTCFee(48);
+        expect(await mocProxy.swapTPforTCFee()).to.be.equal(48);
       });
     });
     describe(`WHEN setMocFeeFlowAddress is invoked`, () => {
@@ -145,6 +151,11 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setSwapTPforTCFee is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setSwapTPforTCFee(42));
+      });
+    });
+    describe("WHEN setMintTCandTPFee is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMintTCandTPFee(42));
       });
     });
     describe("WHEN setMocFeeFlowAddress is invoked", () => {

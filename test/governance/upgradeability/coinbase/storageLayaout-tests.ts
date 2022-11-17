@@ -41,6 +41,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
           swapTPforTPFee: feeParams.swapTPforTPFee,
           swapTPforTCFee: feeParams.swapTPforTCFee,
           redeemTCandTPFee: feeParams.redeemTCandTPFee,
+          mintTCandTPFee: feeParams.mintTCandTPFee,
           successFee: coreParams.successFee,
           appreciationFactor: coreParams.appreciationFactor,
         },

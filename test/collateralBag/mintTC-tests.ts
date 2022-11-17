@@ -79,14 +79,14 @@ describe("Feature: MocCABag mint TC", function () {
       it("THEN Collateral Tokens held in the Collateral Bag are 10", async function () {
         assertPrec(10, await this.mocContracts.mocImpl.nTCcb());
       });
-      it("THEN a TCMinted event is emitted by MocWrapper", async function () {
+      it("THEN a TCMintedWithWrapper event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // sender: alice
         // receiver: alice
         // qTC: 10 TC
         // qAC: 10AC + 5% for Moc Fee Flow
         await expect(tx)
-          .to.emit(mocWrapper, "TCMinted")
+          .to.emit(mocWrapper, "TCMintedWithWrapper")
           .withArgs(assetDefault.address, alice, alice, pEth(10), pEth(10 * 1.05));
       });
     });
@@ -96,14 +96,14 @@ describe("Feature: MocCABag mint TC", function () {
       beforeEach(async () => {
         tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 10 });
       });
-      it("THEN a TCMinted event is emitted by MocWrapper", async function () {
+      it("THEN a TCMintedWithWrapper event is emitted by MocWrapper", async function () {
         // asset: assetDefault
         // sender: alice
         // receiver: bob
         // qTC: 10 TC
         // qAC: 10AC + 5% for Moc Fee Flow
         await expect(tx)
-          .to.emit(mocWrapper, "TCMinted")
+          .to.emit(mocWrapper, "TCMintedWithWrapper")
           .withArgs(assetDefault.address, alice, bob, pEth(10), pEth(10 * 1.05));
       });
     });
