@@ -598,17 +598,19 @@ abstract contract MocCore is MocEma, MocInterestRate {
         _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
         // calculate how many total qAC are redeemed and how many correspond for fee
         (uint256 qACtotalToRedeem, ) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
+        // if is 0 reverts because it is trying to swap an amount below precision
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // calculate how many qTP can mint with the given qAC
         // qTPtoMint = qTC * pTCac * pACtp
         // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
         qTPtoMint = ((qTC_ * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
         // evaluates if there are enough TP available to mint, reverts if it's not
         _evalTPavailableToMint(i_, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
-        if (qTPtoMint < qTPmin_ || qTPtoMint == 0) revert QtcBelowMinimumRequired(qTPmin_, qTPtoMint);
+        if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
         // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalNeeded = _mulPrec(qACtotalToRedeem, swapTPforTCFee);
+        qACtotalNeeded = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
 
         // sub qTC from the Bucket

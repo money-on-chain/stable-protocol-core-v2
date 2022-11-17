@@ -235,7 +235,7 @@ const swapTCforTPto =
       qTPmin = pEth(qTPmin);
       qACmax = pEth(qACmax);
     }
-    return mocImpl.connect(signer).swapTPforTCto(i, qTC, qTPmin, to, { value: qACmax, gasPrice: 0 });
+    return mocImpl.connect(signer).swapTCforTPto(i, qTC, qTPmin, to, { value: qACmax, gasPrice: 0 });
   };
 
 const ethersGetBalance = () => account => ethers.provider.getBalance(account);
