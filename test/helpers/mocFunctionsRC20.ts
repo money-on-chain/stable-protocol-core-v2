@@ -100,6 +100,30 @@ const redeemTPto =
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to);
   };
 
+const mintTCandTP =
+  (mocImpl, collateralAsset) =>
+  async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmax = pEth(qACmax);
+    }
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
+    return mocImpl.connect(signer).mintTCandTP(i, qTP, qACmax);
+  };
+
+const mintTCandTPto =
+  (mocImpl, collateralAsset) =>
+  async ({ i, from, to, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmax = pEth(qACmax);
+    }
+    await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
+    return mocImpl.connect(signer).mintTCandTPto(i, qTP, qACmax, to);
+  };
+
 const redeemTCandTP =
   mocImpl =>
   async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
@@ -267,6 +291,8 @@ export const mocFunctionsRC20 = async ({
   mintTPto: mintTPto(mocImpl, collateralAsset),
   redeemTP: redeemTP(mocImpl),
   redeemTPto: redeemTPto(mocImpl),
+  mintTCandTP: mintTCandTP(mocImpl, collateralAsset),
+  mintTCandTPto: mintTCandTPto(mocImpl, collateralAsset),
   redeemTCandTP: redeemTCandTP(mocImpl),
   redeemTCandTPto: redeemTCandTPto(mocImpl),
   liqRedeemTP: liqRedeemTP(mocImpl),

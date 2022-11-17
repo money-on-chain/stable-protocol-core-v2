@@ -85,6 +85,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             swapTPforTCFee: feeParams.swapTPforTCFee,
             swapTCforTPFee: feeParams.swapTCforTPFee,
             redeemTCandTPFee: feeParams.redeemTCandTPFee,
+            mintTCandTPFee: feeParams.mintTCandTPFee,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
           },

@@ -52,7 +52,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
         beforeEach(async () => {
           tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
         });
-        it("THEN a TCandTPRedeemed event is emitted by MocWrapper", async function () {
+        it("THEN a TCandTPRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
           // sender: alice
@@ -61,7 +61,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
           // qTP: 783.33 TP
           // qAC: 100 AC - 8% + 3.33AC - 8% - 0.0987%
           await expect(tx)
-            .to.emit(mocWrapper, "TCandTPRedeemed")
+            .to.emit(mocWrapper, "TCandTPRedeemedWithWrapper")
             .withArgs(
               assetDefault.address,
               TP_0,
@@ -77,7 +77,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
         beforeEach(async () => {
           tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500 });
         });
-        it("THEN a TCRedeemed event is emitted by MocWrapper", async function () {
+        it("THEN a TCRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
           // sender: alice
@@ -86,7 +86,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
           // qTP: 783.33 TP
           // qAC: 100 AC - 8% + 3.33AC - 8% - 0.0987%
           await expect(tx)
-            .to.emit(mocWrapper, "TCandTPRedeemed")
+            .to.emit(mocWrapper, "TCandTPRedeemedWithWrapper")
             .withArgs(
               assetDefault.address,
               TP_0,

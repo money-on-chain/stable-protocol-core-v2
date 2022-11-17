@@ -25,6 +25,7 @@ export const feeParams = {
   swapTPforTCFee: PCT_BASE.mul(1).div(100), // 1%
   swapTCforTPFee: PCT_BASE.mul(1).div(100), // 1%
   redeemTCandTPFee: PCT_BASE.mul(8).div(100), // 8%
+  mintTCandTPFee: PCT_BASE.mul(8).div(100), // 8%
 };
 
 export const mocAddresses = {

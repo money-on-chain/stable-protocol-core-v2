@@ -58,7 +58,7 @@ const swapTPforTCBehavior = function () {
           ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
         });
       });
-      describe("WHEN alice swap 23500 TP 0 expecting receive 101 TC as minimum", function () {
+      describe("WHEN alice swap 23500 TP 0 expecting to receive 101 TC as minimum", function () {
         /*
             23500 TP 0 = 100 AC
             100 AC = 100 TC
@@ -69,7 +69,7 @@ const swapTPforTCBehavior = function () {
           ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QTC_BELOW_MINIMUM);
         });
       });
-      describe("WHEN alice swap 23500(all balance) TP 0 for 100 TC", function () {
+      describe("WHEN alice swaps 23500(all balance) TP 0 for 100 TC", function () {
         /*
             23500 TP 0 = 100 AC
             100 AC = 100 TC
@@ -165,7 +165,7 @@ const swapTPforTCBehavior = function () {
             .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(100));
         });
       });
-      describe("WHEN alice swap 2350(10% of balance) TP 0 for 10 TC to bob", function () {
+      describe("WHEN alice swaps 2350(10% of balance) TP 0 for 10 TC to bob", function () {
         /*
             2350 TP 0 = 10 AC
             10 AC = 10 TC

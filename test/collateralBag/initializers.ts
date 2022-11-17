@@ -30,6 +30,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     swapTPforTCFee = feeParams.swapTPforTCFee,
     swapTCforTPFee = feeParams.swapTCforTPFee,
     redeemTCandTPFee = feeParams.redeemTCandTPFee,
+    mintTCandTPFee = feeParams.mintTCandTPFee,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
     successFee = coreParams.successFee,
     appreciationFactor = coreParams.appreciationFactor,
@@ -51,6 +52,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     swapTPforTCFee?: BigNumberish;
     swapTCforTPFee?: BigNumberish;
     redeemTCandTPFee?: BigNumberish;
+    mintTCandTPFee?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
     successFee?: BigNumberish;
     appreciationFactor?: BigNumberish;
@@ -72,6 +74,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           swapTPforTCFee,
           swapTCforTPFee,
           redeemTCandTPFee,
+          mintTCandTPFee,
           successFee,
           appreciationFactor,
         },

@@ -60,7 +60,7 @@ describe("Feature: MocCABag mint TP", function () {
         it("THEN Pegged Tokens AC price is 235", async function () {
           assertPrec(235, await this.mocContracts.mocImpl.getPACtp(TP_0));
         });
-        it("THEN a TPMinted event is emitted by MocWrapper", async function () {
+        it("THEN a TPMintedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
           // sender: alice
@@ -68,7 +68,7 @@ describe("Feature: MocCABag mint TP", function () {
           // qTP: 2350 TP
           // qAC: 10AC + 5% for Moc Fee Flow
           await expect(tx)
-            .to.emit(mocWrapper, "TPMinted")
+            .to.emit(mocWrapper, "TPMintedWithWrapper")
             .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10 * 1.05));
         });
       });
@@ -76,7 +76,7 @@ describe("Feature: MocCABag mint TP", function () {
         beforeEach(async () => {
           tx = await mocFunctions.mintTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
         });
-        it("THEN a TPMinted event is emitted by MocWrapper", async function () {
+        it("THEN a TPMintedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // i: 0
           // sender: alice
@@ -84,7 +84,7 @@ describe("Feature: MocCABag mint TP", function () {
           // qTP: 2350 TP
           // qAC: 10AC + 5% for Moc Fee Flow
           await expect(tx)
-            .to.emit(mocWrapper, "TPMinted")
+            .to.emit(mocWrapper, "TPMintedWithWrapper")
             .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10 * 1.05));
         });
       });

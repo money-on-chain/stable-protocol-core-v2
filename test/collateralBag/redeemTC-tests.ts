@@ -53,14 +53,14 @@ describe("Feature: MocCABag redeem TC", function () {
         beforeEach(async () => {
           tx = await mocFunctions.redeemTC({ from: alice, qTC: 10 });
         });
-        it("THEN a TCRedeemed event is emitted by MocWrapper", async function () {
+        it("THEN a TCRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // sender: alice
           // receiver: alice
           // qTC: 10 TC
           // qAC: 10AC - 5% for Moc Fee Flow
           await expect(tx)
-            .to.emit(mocWrapper, "TCRedeemed")
+            .to.emit(mocWrapper, "TCRedeemedWithWrapper")
             .withArgs(assetDefault.address, alice, alice, pEth(10), pEth(10 * 0.95));
         });
       });
@@ -68,14 +68,14 @@ describe("Feature: MocCABag redeem TC", function () {
         beforeEach(async () => {
           tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 10 });
         });
-        it("THEN a TCRedeemed event is emitted by MocWrapper", async function () {
+        it("THEN a TCRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
           // sender: alice
           // receiver: bob
           // qTC: 10 TC
           // qAC: 10AC - 5% for Moc Fee Flow
           await expect(tx)
-            .to.emit(mocWrapper, "TCRedeemed")
+            .to.emit(mocWrapper, "TCRedeemedWithWrapper")
             .withArgs(assetDefault.address, alice, bob, pEth(10), pEth(10 * 0.95));
         });
       });

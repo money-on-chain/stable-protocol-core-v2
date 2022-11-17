@@ -69,6 +69,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 swapTCforTPFee;
         // additional fee pct applied on redeem Collateral Token and Pegged Token in one operations [PREC]
         uint256 redeemTCandTPFee;
+        // additional fee pct applied on mint Collateral Token and Pegged Token in one operation [PREC]
+        uint256 mintTCandTPFee;
         // pct of the gain because Pegged Tokens devaluation that is transferred
         // in Collateral Asset to Moc Fee Flow during the settlement [PREC]
         uint256 successFee;
@@ -122,6 +124,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public swapTCforTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // additional fee pct applied on redeem Collateral Token and Pegged Token in one operations [PREC]
     uint256 public redeemTCandTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // additional fee pct applied on mint Collateral Token and Pegged Token in one operation [PREC]
+    uint256 public mintTCandTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // addition fee pct applied on Pegged Tokens mint [PREC]
     uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
@@ -189,6 +193,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        swapTPforTCFee additional fee pct applied on swap a Pegged Token for Collateral Token [PREC]
      *        swapTCforTPFee additional fee pct applied on swap Collateral Token for a Pegged Token [PREC]
      *        redeemTCandTPFee additional fee pct applied on redeem Collateral Token and Pegged Token [PREC]
+     *        mintTCandTPFee additional fee pct applied on mint Collateral Token and Pegged Token [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
@@ -205,6 +210,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         _checkLessThanOne(initializeBaseBucketParams_.swapTPforTCFee);
         _checkLessThanOne(initializeBaseBucketParams_.swapTCforTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.redeemTCandTPFee);
+        _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
@@ -222,6 +228,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         swapTPforTCFee = initializeBaseBucketParams_.swapTPforTCFee;
         swapTCforTPFee = initializeBaseBucketParams_.swapTCforTPFee;
         redeemTCandTPFee = initializeBaseBucketParams_.redeemTCandTPFee;
+        mintTCandTPFee = initializeBaseBucketParams_.mintTCandTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
         liquidated = false;
@@ -634,6 +641,15 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setRedeemTCandTPFee(uint256 redeemTCandTPFee_) external onlyAuthorizedChanger {
         redeemTCandTPFee = redeemTCandTPFee_;
+    }
+
+    /**
+     * @dev sets the fee charged when mint Collateral Token and Pegged Token in one operation.
+     * @param mintTCandTPFee_ additional fee pct applied on mint Collateral Token and Pegged Token [PREC]
+     * 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setMintTCandTPFee(uint256 mintTCandTPFee_) external onlyAuthorizedChanger {
+        mintTCandTPFee = mintTCandTPFee_;
     }
 
     /**
