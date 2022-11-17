@@ -83,6 +83,12 @@ const shouldBehaveLikeLiquidable = function () {
             this.mocFunctions.swapTPforTP({ iFrom: 0, iTo: 1, from: bob, qTP: 1 }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.LIQUIDATED);
         });
+        it("THEN even if prices are restored, bob cannot swapTPforTC", async function () {
+          await expect(this.mocFunctions.swapTPforTC({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.LIQUIDATED,
+          );
+        });
         it("THEN even if prices are restored, bob cannot redeemTCandTP", async function () {
           // errorless revert assert here because, depending on implementation, redeem might fail
           // before actually executing redeemTC but on moving TC assets and hitting paused revert

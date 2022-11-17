@@ -202,7 +202,7 @@ const swapTPforTPBehavior = function () {
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
           assertPrec("1.098771990740740700", diff);
         });
-        it("THEN a TPSwapped event is emitted", async function () {
+        it("THEN a TPSwappedForTP event is emitted", async function () {
           // iFrom: 0
           // iTo: 1
           // sender: alice || mocWrapper
@@ -212,7 +212,7 @@ const swapTPforTPBehavior = function () {
           // qACfee: 1% AC
           // qACInterest: 0.0987% AC
           await expect(tx)
-            .to.emit(mocContracts.mocImpl, "TPSwapped")
+            .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
             .withArgs(
               TP_0,
               TP_1,
@@ -284,7 +284,7 @@ const swapTPforTPBehavior = function () {
         it("THEN Moc balance didn´t change", async function () {
           assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
         });
-        it("THEN a TPSwapped event is emitted", async function () {
+        it("THEN a TPSwappedForTP event is emitted", async function () {
           // iFrom: 0
           // iTo: 1
           // sender: alice || mocWrapper
@@ -294,7 +294,7 @@ const swapTPforTPBehavior = function () {
           // qACfee: 1% AC
           // qACInterest: 0.0987% AC
           await expect(tx)
-            .to.emit(mocContracts.mocImpl, "TPSwapped")
+            .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
             .withArgs(
               TP_0,
               TP_1,
@@ -326,7 +326,7 @@ const swapTPforTPBehavior = function () {
         it("THEN Moc balance didn´t change", async function () {
           assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
         });
-        it("THEN a TPSwapped event is emitted", async function () {
+        it("THEN a TPSwappedForTP event is emitted", async function () {
           // iFrom: 0
           // iTo: 4
           // sender: alice || mocWrapper
@@ -336,7 +336,7 @@ const swapTPforTPBehavior = function () {
           // qACfee: 1% AC
           // qACInterest: 0.0987% AC
           await expect(tx)
-            .to.emit(mocContracts.mocImpl, "TPSwapped")
+            .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
             .withArgs(
               TP_0,
               TP_4,
@@ -388,7 +388,7 @@ const swapTPforTPBehavior = function () {
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
           });
-          it("THEN a TPSwapped event is emitted", async function () {
+          it("THEN a TPSwappedForTP event is emitted", async function () {
             // iFrom: 0
             // iTo: 1
             // sender: alice || mocWrapper
@@ -398,7 +398,7 @@ const swapTPforTPBehavior = function () {
             // qACfee: 1% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
-              .to.emit(mocContracts.mocImpl, "TPSwapped")
+              .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
               .withArgs(
                 TP_0,
                 TP_1,
@@ -453,7 +453,7 @@ const swapTPforTPBehavior = function () {
           it("THEN Moc balance didn´t change", async function () {
             assertPrec(mocPrevACBalance, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
           });
-          it("THEN a TPSwapped event is emitted", async function () {
+          it("THEN a TPSwappedForTP event is emitted", async function () {
             // iFrom: 0
             // iTo: 1
             // sender: alice || mocWrapper
@@ -463,7 +463,7 @@ const swapTPforTPBehavior = function () {
             // qACfee: 1% AC
             // qACInterest: 0.0987% AC
             await expect(tx)
-              .to.emit(mocContracts.mocImpl, "TPSwapped")
+              .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
               .withArgs(
                 TP_0,
                 TP_1,
