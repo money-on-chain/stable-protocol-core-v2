@@ -516,10 +516,10 @@ contract MocCAWrapper is MocUpgradable {
     }
 
     /**
-     * @notice caller sends a Pegged Token and recipient receives Pegged Token
+     * @notice caller sends a Collateral Token and recipient receives Pegged Token
      *  Requires prior sender approval of Collateral Token and Asset to this contract
      * @param assetAddress_ Asset contract address
-     * @param i_ owned Pegged Token index
+     * @param i_ Pegged Token index
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
      * @param qAssetMax_ maximum amount of Asset that can be spent in fees
@@ -536,7 +536,7 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) internal validAsset(assetAddress_) {
         uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
-        // get Pegged Token contract address
+        // get Collateral Token contract address
         IERC20Upgradeable tcToken = mocCore.tcToken();
         // transfer Collateral Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
