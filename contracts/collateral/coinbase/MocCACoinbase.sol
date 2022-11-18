@@ -309,6 +309,40 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
     }
 
     /**
+     * @notice caller sends Collateral Token and receives Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
+     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     */
+    function swapTCforTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTPmin_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+        return _swapTCforTPto(i_, qTC_, qTPmin_, msg.value, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param recipient_ address who receives the Pegged Token
+     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     */
+    function swapTCforTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        address recipient_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+        return _swapTCforTPto(i_, qTC_, qTPmin_, msg.value, msg.sender, recipient_);
+    }
+
+    /**
      * @notice allow to send Coinbase to increment the Collateral Asset in the protocol
      */
     receive() external payable {

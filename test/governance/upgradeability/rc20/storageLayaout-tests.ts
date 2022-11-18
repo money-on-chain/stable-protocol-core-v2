@@ -44,6 +44,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
             tcRedeemFee: feeParams.redeemFee,
             swapTPforTPFee: feeParams.swapTPforTPFee,
             swapTPforTCFee: feeParams.swapTPforTCFee,
+            swapTCforTPFee: feeParams.swapTCforTPFee,
             redeemTCandTPFee: feeParams.redeemTCandTPFee,
             mintTCandTPFee: feeParams.mintTCandTPFee,
             successFee: coreParams.successFee,

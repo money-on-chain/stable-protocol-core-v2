@@ -214,6 +214,30 @@ const swapTPforTCto =
     return mocImpl.connect(signer).swapTPforTCto(i, qTP, qTCmin, to, { value: qACmax, gasPrice: 0 });
   };
 
+const swapTCforTP =
+  mocImpl =>
+  async ({ i, from, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qTPmin = pEth(qTPmin);
+      qACmax = pEth(qACmax);
+    }
+    return mocImpl.connect(signer).swapTCforTP(i, qTC, qTPmin, { value: qACmax, gasPrice: 0 });
+  };
+
+const swapTCforTPto =
+  mocImpl =>
+  async ({ i, from, to, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTC = pEth(qTC);
+      qTPmin = pEth(qTPmin);
+      qACmax = pEth(qACmax);
+    }
+    return mocImpl.connect(signer).swapTCforTPto(i, qTC, qTPmin, to, { value: qACmax, gasPrice: 0 });
+  };
+
 const ethersGetBalance = () => account => ethers.provider.getBalance(account);
 
 const tcBalanceOf = mocCollateralToken => async account => mocCollateralToken.balanceOf(account);
@@ -260,6 +284,8 @@ export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeg
     swapTPforTPto: swapTPforTPto(mocImpl),
     swapTPforTC: swapTPforTC(mocImpl),
     swapTPforTCto: swapTPforTCto(mocImpl),
+    swapTCforTP: swapTCforTP(mocImpl),
+    swapTCforTPto: swapTCforTPto(mocImpl),
     assetBalanceOf: ethersGetBalance(),
     acBalanceOf: ethersGetBalance(),
     tcBalanceOf: tcBalanceOf(mocCollateralToken),

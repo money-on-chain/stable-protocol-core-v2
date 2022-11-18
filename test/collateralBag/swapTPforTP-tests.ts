@@ -33,7 +33,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
     });
     swapTPforTPBehavior();
 
-    describe("WHEN swap TP using an asset not whitelisted", () => {
+    describe("WHEN swap TP for TP using an asset not whitelisted", () => {
       let assetNotWhitelisted: ERC20Mock;
       beforeEach(async () => {
         assetNotWhitelisted = await deployAsset();

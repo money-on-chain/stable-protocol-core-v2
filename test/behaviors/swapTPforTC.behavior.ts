@@ -98,7 +98,7 @@ const swapTPforTCBehavior = function () {
           // go forward to a fixed block remaining for settlement to avoid unpredictability
           const bns = await mocContracts.mocSettlement.bns();
           await mineUpTo(bns.sub(fixedBlock));
-          tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 23500, qTPmin: 100 });
+          tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 23500, qTCmin: 100 });
         });
         it("THEN coverage increase to max value", async function () {
           assertPrec(CONSTANTS.MAX_UINT256, await mocContracts.mocImpl.getCglb());
