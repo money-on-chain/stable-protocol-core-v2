@@ -9,12 +9,12 @@ import {
   MocTC,
   MocTC__factory,
 } from "../../typechain";
-import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../scripts/utils";
-import { coreParams, settlementParams, feeParams, mocAddresses } from "../../deploy-config/config";
+import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const network = hre.network.name as keyof typeof mocAddresses;
+  const network = hre.network.name;
+  const { coreParams, settlementParams, feeParams, mocAddresses } = getNetworkConfig({ network });
   const signer = ethers.provider.getSigner();
 
   const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
@@ -38,7 +38,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     mocFeeFlowAddress,
     mocInterestCollectorAddress,
     mocAppreciationBeneficiaryAddress,
-  } = mocAddresses[network];
+  } = mocAddresses;
 
   // For testing environment, we use Mock helper contracts
   if (network == "hardhat") {

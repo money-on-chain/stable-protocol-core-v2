@@ -1,7 +1,9 @@
 import { Address } from "hardhat-deploy/types";
 import { BigNumberish } from "ethers";
 import { MocCARC20 } from "../../typechain";
-import { coreParams, feeParams, mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
+
+const { coreParams, feeParams, mocAddresses } = getNetworkConfig({ network: "hardhat" });
 
 const {
   governorAddress,
@@ -9,7 +11,7 @@ const {
   mocFeeFlowAddress,
   mocInterestCollectorAddress,
   mocAppreciationBeneficiaryAddress,
-} = mocAddresses["hardhat"];
+} = mocAddresses;
 
 export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocSettlement: Address) {
   return ({
