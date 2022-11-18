@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
 
 const redeemTPBehavior = function () {
   let mocContracts: any;
@@ -15,7 +15,7 @@ const redeemTPBehavior = function () {
   const TP_2 = 2;
   const TP_NON_EXISTENT = 5;
 
-  const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
+  const { mocFeeFlowAddress, mocInterestCollectorAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
   const fixedBlock = 85342;
 
   describe("Feature: redeem Pegged Token", function () {

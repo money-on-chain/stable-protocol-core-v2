@@ -1,9 +1,10 @@
 import { ethers, getNamedAccounts, upgrades } from "hardhat";
 import { Contract } from "ethers";
-
-import { coreParams, feeParams } from "../../../../deploy-config/config";
 import { MocCARC20__factory } from "../../../../typechain";
 import { GAS_LIMIT_PATCH, deployCollateralToken } from "../../../helpers/utils";
+import { getNetworkConfig } from "../../../../scripts/utils";
+
+const { coreParams, feeParams } = getNetworkConfig({ network: "hardhat" });
 
 describe("Feature: Check MocCARC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;

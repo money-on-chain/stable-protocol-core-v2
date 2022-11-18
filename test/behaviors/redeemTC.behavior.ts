@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
 
 const redeemTCBehavior = function () {
   let mocContracts: any;
@@ -13,7 +13,7 @@ const redeemTCBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_1 = 1;
-  const mocFeeFlow = mocAddresses["hardhat"].mocFeeFlowAddress;
+  const mocFeeFlow = getNetworkConfig({ network: "hardhat" }).mocAddresses.mocFeeFlowAddress;
 
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {

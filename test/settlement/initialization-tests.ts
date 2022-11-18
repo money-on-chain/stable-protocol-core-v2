@@ -4,9 +4,9 @@ import { Address } from "hardhat-deploy/types";
 import { fixtureDeployedMocCABag } from "../collateralBag/fixture";
 import { MocCARC20, MocSettlement } from "../../typechain";
 import { ERRORS } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
 
-const { governorAddress, pauserAddress } = mocAddresses["hardhat"];
+const { governorAddress, pauserAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
 
 function mocSettlementInitialize(mocSettlement: MocSettlement, mocImpl: Address) {
   return ({
