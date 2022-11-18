@@ -287,7 +287,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice Adds Pegged Token and Collateral Asset from the Bucket and mints `qTP_` for Pegged Token `i_`
+     * @notice Adds Pegged Token and Collateral Asset to the Bucket and mints `qTP_` for Pegged Token `i_`
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to add
      * @param qAC_ amount of Collateral Asset to add
@@ -316,15 +316,15 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     /**
      * @notice Adds Collateral Token and Collateral Asset to the Bucket and mints qTCtoMint
-     * @param qTCtoMint_ amount of Collateral Token to add
+     * @param qTC_ amount of Collateral Token to add
      * @param qAC_ amount of Collateral Asset to add
      * @param recipient_ the account to mint tokens to
      */
-    function _depositAndMintTC(uint256 qTCtoMint_, uint256 qAC_, address recipient_) internal {
+    function _depositAndMintTC(uint256 qTC_, uint256 qAC_, address recipient_) internal {
         // add qTC to the Bucket
-        _depositTC(qTCtoMint_, qAC_);
+        _depositTC(qTC_, qAC_);
         // mint qTC to the recipient
-        tcToken.mint(recipient_, qTCtoMint_);
+        tcToken.mint(recipient_, qTC_);
     }
 
     /**
@@ -336,7 +336,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_, address toBurnFrom_) internal {
         // sub qTC and qAC from the Bucket
         _withdrawTC(qTC_, qAC_);
-        // burn qTC for this address
+        // burn qTC from this address
         tcToken.burn(toBurnFrom_, qTC_);
     }
 

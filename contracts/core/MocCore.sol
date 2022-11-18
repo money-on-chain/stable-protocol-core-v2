@@ -345,14 +345,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        // add qTC and qAC to the Bucket
-        _depositTC(qTCtoMint, qACNeededtoMint);
-        // add qTP to the Bucket
-        _depositTP(i_, qTP_, 0);
-        // mint qTC to the recipient
-        tcToken.mint(recipient_, qTCtoMint);
-        // mint qTP from the recipient
-        tpTokens[i_].mint(recipient_, qTP_);
+        _depositAndMintTC(qTCtoMint, qACNeededtoMint, recipient_);
+        _depositAndMintTP(i_, qTP_, 0, recipient_);
         // transfers qAC to the sender, and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee, 0);
         emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
@@ -580,14 +574,8 @@ abstract contract MocCore is MocEma, MocInterestRate {
         qACtotalNeeded = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
 
-        // sub qTC from the Bucket
-        _withdrawTC(qTC_, 0);
-        // add qTP to the Bucket
-        _depositTP(i_, qTPtoMint, 0);
-        // burn qTC from the sender
-        tcToken.burn(sender_, qTC_);
-        // mint qTP to the recipient
-        tpTokens[i_].mint(recipient_, qTPtoMint);
+        _withdrawAndBurnTC(qTC_, 0, sender_);
+        _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
         // transfer any qAC change to the sender, and distribute fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACtotalNeeded, 0);
         // inside a block to avoid stack too deep error
