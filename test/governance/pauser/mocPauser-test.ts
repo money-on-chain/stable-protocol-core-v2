@@ -152,6 +152,11 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
         await expectPauseRevert(mocFunctions.swapTPforTC({ i: 0, from: alice, qTP: 3 }));
       });
     });
+    describe(`WHEN someone tries to swapTCforTP`, () => {
+      it("THEN it fails, as the system is paused", async function () {
+        await expectPauseRevert(mocFunctions.swapTCforTP({ i: 0, from: alice, qTC: 3 }));
+      });
+    });
     describe(`WHEN someone tries to redeemTCandTP`, () => {
       it("THEN it fails, as the system is paused", async function () {
         await expectPauseRevert(mocFunctions.redeemTCandTP({ from: alice, qTC: 10, qTP: 3 }));

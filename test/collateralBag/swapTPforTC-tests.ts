@@ -30,15 +30,16 @@ describe("Feature: MocCABag swap TP for TC", function () {
     });
     swapTPforTCBehavior();
 
-    describe("WHEN swap TP using an asset not whitelisted", () => {
+    describe("WHEN swap TP for TC using an asset not whitelisted", () => {
       let assetNotWhitelisted: ERC20Mock;
       beforeEach(async () => {
         assetNotWhitelisted = await deployAsset();
       });
       it("THEN tx fails because asset is invalid", async () => {
-        await expect(
-          mocWrapper.swapTPforTP(assetNotWhitelisted.address, 0, 1, 10, 0, 10),
-        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
+        await expect(mocWrapper.swapTPforTC(assetNotWhitelisted.address, 0, 10, 0, 10)).to.be.revertedWithCustomError(
+          mocWrapper,
+          ERRORS.INVALID_ADDRESS,
+        );
       });
     });
     describe("AND alice has 23500 TP 0", () => {

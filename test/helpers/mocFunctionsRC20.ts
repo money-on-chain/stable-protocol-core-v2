@@ -249,7 +249,7 @@ const swapTCforTPto =
       qACmax = pEth(qACmax);
     }
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
-    return mocImpl.connect(signer).swapTCforTOto(i, qTC, qTPmin, qACmax, to);
+    return mocImpl.connect(signer).swapTCforTPto(i, qTC, qTPmin, qACmax, to);
   };
 
 const balanceOf = asset => account => asset.balanceOf(account);
