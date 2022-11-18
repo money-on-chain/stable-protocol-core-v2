@@ -1,26 +1,10 @@
 import { DeployFunction } from "hardhat-deploy/types";
-import { GAS_LIMIT_PATCH } from "../../scripts/utils";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { deployUUPSArtifact } from "../../scripts/utils";
 
-const deployFunc: DeployFunction = async ({ deployments, getNamedAccounts, network }) => {
-  const { deployer } = await getNamedAccounts();
-  const { deploy } = deployments;
-
-  const deployImplResult = await deploy("MocSettlementCABag", {
-    contract: "MocSettlement",
-    from: deployer,
-    gasLimit: GAS_LIMIT_PATCH,
-  });
-  console.log(`MocSettlementCABag implementation deployed at ${deployImplResult.address}`);
-
-  const deployProxyResult = await deploy("MocSettlementCABagProxy", {
-    contract: "ERC1967Proxy",
-    from: deployer,
-    gasLimit: GAS_LIMIT_PATCH,
-    args: [deployImplResult.address, "0x"],
-  });
-  console.log(`MocSettlementCABag ERC1967Proxy deployed at ${deployProxyResult.address}`);
-
-  return network.live; // prevents re execution on live networks
+const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+  await deployUUPSArtifact({ hre, contract: "MocSettlement", artifactBaseName: "MocSettlementCABag" });
+  return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 

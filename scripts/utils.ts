@@ -18,23 +18,31 @@ export const getProperConfig = (hre: HardhatRuntimeEnvironment): HardhatNetworkU
   return hre.config.networks[network] as HardhatNetworkUserConfig;
 };
 
-export const deployUUPSArtifact = async (hre: HardhatRuntimeEnvironment, artifactName: string, contract: string) => {
+export const deployUUPSArtifact = async ({
+  hre,
+  artifactBaseName,
+  contract,
+}: {
+  hre: HardhatRuntimeEnvironment;
+  artifactBaseName?: string;
+  contract: string;
+}) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
-
-  const deployImplResult = await deploy(`${artifactName}Impl`, {
+  artifactBaseName = artifactBaseName || contract;
+  const deployImplResult = await deploy(`${artifactBaseName}Impl`, {
     contract,
     from: deployer,
     gasLimit: GAS_LIMIT_PATCH,
   });
-  console.log(`${contract}, as ${artifactName} implementation deployed at ${deployImplResult.address}`);
+  console.log(`${contract}, as ${artifactBaseName} implementation deployed at ${deployImplResult.address}`);
 
-  const deployProxyResult = await deploy(`${artifactName}Proxy`, {
+  const deployProxyResult = await deploy(`${artifactBaseName}Proxy`, {
     contract: "ERC1967Proxy",
     from: deployer,
     gasLimit: GAS_LIMIT_PATCH,
     args: [deployImplResult.address, "0x"],
   });
-  console.log(`${artifactName} ERC1967Proxy deployed at ${deployProxyResult.address}`);
+  console.log(`${artifactBaseName} ERC1967Proxy deployed at ${deployProxyResult.address}`);
 };
