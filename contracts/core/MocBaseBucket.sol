@@ -245,7 +245,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice add Collateral Token and Collateral Asset to the Bucket
+     * @notice Adds Collateral Token and Collateral Asset to the Bucket
      * @param qTC_ amount of Collateral Token to add
      * @param qAC_ amount of Collateral Asset to add
      */
@@ -255,7 +255,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice subtract Collateral Token and Collateral Asset from the Bucket
+     * @notice Subtracts Collateral Token and Collateral Asset from the Bucket
      * @param qTC_ amount of Collateral Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
      */
@@ -265,7 +265,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice add Pegged Token and Collateral Asset to the Bucket
+     * @notice Adds Pegged Token and Collateral Asset to the Bucket
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to add
      * @param qAC_ amount of Collateral Asset to add
@@ -276,7 +276,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice subtract Pegged Token and Collateral Asset from the Bucket
+     * @notice Subtracts Pegged Token and Collateral Asset from the Bucket
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
@@ -284,6 +284,60 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _withdrawTP(uint8 i_, uint256 qTP_, uint256 qAC_) internal {
         pegContainer[i_].nTP -= qTP_;
         nACcb -= qAC_;
+    }
+
+    /**
+     * @notice Adds Pegged Token and Collateral Asset to the Bucket and mints `qTP_` for Pegged Token `i_`
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to add
+     * @param qAC_ amount of Collateral Asset to add
+     * @param recipient_ the account to mint tokens to
+     */
+    function _depositAndMintTP(uint8 i_, uint256 qTP_, uint256 qAC_, address recipient_) internal {
+        // add qTP and qAC to the Bucket
+        _depositTP(i_, qTP_, qAC_);
+        // mint qTP to the recipient
+        tpTokens[i_].mint(recipient_, qTP_);
+    }
+
+    /**
+     * @notice subtracts Pegged Token and Collateral Asset from the Bucket and burns `qTP_` for Pegged Token `i_`
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to subtract
+     * @param qAC_ amount of Collateral Asset to subtract
+     * @param toBurnFrom_ the account to burn tokens from
+     */
+    function _withdrawAndBurnTP(uint8 i_, uint256 qTP_, uint256 qAC_, address toBurnFrom_) internal {
+        // sub qTP and qAC from the Bucket
+        _withdrawTP(i_, qTP_, qAC_);
+        // burn qTP from this address
+        tpTokens[i_].burn(toBurnFrom_, qTP_);
+    }
+
+    /**
+     * @notice Adds Collateral Token and Collateral Asset to the Bucket and mints qTCtoMint
+     * @param qTC_ amount of Collateral Token to add
+     * @param qAC_ amount of Collateral Asset to add
+     * @param recipient_ the account to mint tokens to
+     */
+    function _depositAndMintTC(uint256 qTC_, uint256 qAC_, address recipient_) internal {
+        // add qTC to the Bucket
+        _depositTC(qTC_, qAC_);
+        // mint qTC to the recipient
+        tcToken.mint(recipient_, qTC_);
+    }
+
+    /**
+     * @notice Subtracts Collateral Token and Collateral Asset from the Bucket and burns `qTC_`
+     * @param qTC_ amount of Collateral Token to subtract
+     * @param qAC_ amount of Collateral Asset to subtract
+     * @param toBurnFrom_ the account to burn tokens from
+     */
+    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_, address toBurnFrom_) internal {
+        // sub qTC and qAC from the Bucket
+        _withdrawTC(qTC_, qAC_);
+        // burn qTC from this address
+        tcToken.burn(toBurnFrom_, qTC_);
     }
 
     /**
