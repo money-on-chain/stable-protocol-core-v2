@@ -82,6 +82,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // ------- Storage -------
 
     // total amount of Collateral Asset held in the Collateral Bag
+    // WARN: On RC20 implementation, this correlates with contract acBalance
     uint256 public nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     uint256 internal nACioucb;
@@ -245,13 +246,21 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice Adds Collateral Asset to the Bucket
+     * @param qAC_ amount of Collateral Asset to add
+     */
+    function _depositAC(uint256 qAC_) internal {
+        nACcb += qAC_;
+    }
+
+    /**
      * @notice Adds Collateral Token and Collateral Asset to the Bucket
      * @param qTC_ amount of Collateral Token to add
      * @param qAC_ amount of Collateral Asset to add
      */
     function _depositTC(uint256 qTC_, uint256 qAC_) internal {
         nTCcb += qTC_;
-        nACcb += qAC_;
+        _depositAC(qAC_);
     }
 
     /**
@@ -272,7 +281,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _depositTP(uint8 i_, uint256 qTP_, uint256 qAC_) internal {
         pegContainer[i_].nTP += qTP_;
-        nACcb += qAC_;
+        _depositAC(qAC_);
     }
 
     /**

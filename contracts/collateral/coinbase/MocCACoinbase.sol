@@ -346,7 +346,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      * @notice allow to send Coinbase to increment the Collateral Asset in the protocol
      */
     receive() external payable {
-        nACcb += msg.value;
+        _depositAC(msg.value);
     }
 
     /**
