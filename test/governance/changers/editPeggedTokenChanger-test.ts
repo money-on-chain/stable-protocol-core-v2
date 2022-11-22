@@ -94,18 +94,10 @@ describe("Feature: Governance protected Pegged Token edition ", () => {
               mocPeggedToken.address,
               newPriceProvider.address, // <---- New Price Provider
               tpParamsDefault.ctarg,
-              tpParamsDefault.r,
-              tpParamsDefault.bmin,
               tpParamsDefault.mintFee,
               tpParamsDefault.redeemFee,
               0, // Initial Emma is not set
               tpParamsDefault.smoothingFactor,
-              0, // Initila Tils is not set
-              tpParamsDefault.tiMin,
-              tpParamsDefault.tiMax,
-              tpParamsDefault.abeq,
-              tpParamsDefault.facMin,
-              tpParamsDefault.facMax,
             ]);
         });
       });

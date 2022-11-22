@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, ERRORS, pEth, CONSTANTS, mineUpTo } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
 import { getNetworkConfig } from "../../scripts/utils";
 
 const redeemTCandTPBehavior = function () {
@@ -14,8 +14,7 @@ const redeemTCandTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress, mocInterestCollectorAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
-  const fixedBlock = 85342;
+  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
 
   let coverageBefore: BigNumber;
   let tcPriceBefore: BigNumber;
@@ -26,7 +25,6 @@ const redeemTCandTPBehavior = function () {
   let bobPrevACBalance: Balance;
   let mocPrevACBalance: Balance;
   let mocFeeFlowPrevACBalance: Balance;
-  let mocInterestCollectorPrevACBalance: Balance;
 
   describe("Feature: joint Redeem TC and TP operation", function () {
     beforeEach(async function () {
@@ -94,7 +92,7 @@ const redeemTCandTPBehavior = function () {
             coverage = 31
             pTCac = 1
             => to redeem 100 TC we use 783.3 TP
-            => AC redeemed = 100 AC - 8% + 3.33AC - 8% - 0.0987% = 95.06
+            => AC redeemed = 100 AC - 8% + 3.33AC - 8% = 95.066
         */
         let tx: ContractTransaction;
         beforeEach(async function () {
@@ -108,7 +106,6 @@ const redeemTCandTPBehavior = function () {
             bobPrevACBalance,
             mocPrevACBalance,
             mocFeeFlowPrevACBalance,
-            mocInterestCollectorPrevACBalance,
           ] = await Promise.all([
             mocContracts.mocImpl.getCglb(),
             mocContracts.mocImpl.getPTCac(),
@@ -119,11 +116,7 @@ const redeemTCandTPBehavior = function () {
             mocFunctions.assetBalanceOf(bob),
             mocFunctions.acBalanceOf(mocContracts.mocImpl.address),
             mocFunctions.acBalanceOf(mocFeeFlowAddress),
-            mocFunctions.acBalanceOf(mocInterestCollectorAddress),
           ]);
-          // go forward to a fixed block remaining for settlement to avoid unpredictability
-          const bns = await mocContracts.mocSettlement.bns();
-          await mineUpTo(bns.sub(fixedBlock));
           tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: "783.333333333333333333" });
         });
         it("THEN coverage did not change", async function () {
@@ -145,10 +138,10 @@ const redeemTCandTPBehavior = function () {
           const diff = alicePrevTPBalance.sub(aliceActualTPBalance);
           assertPrec("783.333333333333333333", diff);
         });
-        it("THEN alice AC balance increase 95.06 AC", async function () {
+        it("THEN alice AC balance increase 95.066 AC", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec("95.063374266975308644", diff);
+          assertPrec("95.066666666666666667", diff);
         });
         it("THEN Moc balance decrease 103.33 AC", async function () {
           const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
@@ -160,20 +153,14 @@ const redeemTCandTPBehavior = function () {
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec("8.266666666666666666", diff);
         });
-        it("THEN Moc Interest Collector balance increase 0.0987% of 3.33 AC", async function () {
-          const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
-          const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
-          assertPrec("0.003292399691358023", diff);
-        });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
           // sender: alice || mocWrapper
           // receiver: alice || mocWrapper
           // qTC: 100 TC
           // qTP: 783.33 TP
-          // qAC: 103.33 AC - 8% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+          // qAC: 103.33 AC - 8% for Moc Fee Flow
           // qACfee: 8% AC
-          // qACInterest: 0.0987% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
             .withArgs(
@@ -182,9 +169,8 @@ const redeemTCandTPBehavior = function () {
               mocContracts.mocWrapper?.address || alice,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("95.063374266975308644"),
+              pEth("95.066666666666666667"),
               pEth("8.266666666666666666"),
-              pEth("0.003292399691358023"),
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -215,7 +201,7 @@ const redeemTCandTPBehavior = function () {
             coverage = 31
             pTCac = 1
             => to redeem 100 TC we use 783.3 TP
-            => AC redeemed = 100 AC - 8% + 3.33AC - 8% - 0.0987% = 95.06
+            => AC redeemed = 100 AC - 8% + 3.33AC - 8% = 95.066
         */
         let tx: ContractTransaction;
         beforeEach(async function () {
@@ -225,9 +211,6 @@ const redeemTCandTPBehavior = function () {
             mocContracts.mocImpl.getLeverageTC(),
             mocFunctions.assetBalanceOf(bob),
           ]);
-          // go forward to a fixed block remaining for settlement to avoid unpredictability
-          const bns = await mocContracts.mocSettlement.bns();
-          await mineUpTo(bns.sub(fixedBlock));
           tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500 });
         });
         it("THEN coverage did not change", async function () {
@@ -242,7 +225,7 @@ const redeemTCandTPBehavior = function () {
         it("THEN bob AC balance increase 95.06 AC", async function () {
           const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);
           const diff = bobActualACBalance.sub(bobPrevACBalance);
-          assertPrec("95.063374266975308644", diff);
+          assertPrec("95.066666666666666667", diff);
         });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
@@ -250,9 +233,8 @@ const redeemTCandTPBehavior = function () {
           // receiver: bob || mocWrapper
           // qTC: 100 TC
           // qTP: 783.33 TP
-          // qAC: 103.33 AC - 8% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+          // qAC: 103.33 AC - 8% for Moc Fee Flow
           // qACfee: 8% AC
-          // qACInterest: 0.0987% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
             .withArgs(
@@ -261,9 +243,8 @@ const redeemTCandTPBehavior = function () {
               mocContracts.mocWrapper?.address || bob,
               pEth(100),
               pEth("783.333333333333333333"),
-              pEth("95.063374266975308644"),
+              pEth("95.066666666666666667"),
               pEth("8.266666666666666666"),
-              pEth("0.003292399691358023"),
             );
         });
       });
@@ -278,7 +259,7 @@ const redeemTCandTPBehavior = function () {
             coverage = 1.319
             pTCac = 0.25
             => to redeem 100 TC we use 783.33 TP
-            => AC redeemed = 25 AC - 8% + 78.33AC - 8% - 0.0987% = 94.98
+            => AC redeemed = 25 AC - 8% + 78.33AC - 8% = 95.066
           */
           let tx: ContractTransaction;
           beforeEach(async function () {
@@ -287,9 +268,6 @@ const redeemTCandTPBehavior = function () {
               mocContracts.mocImpl.getPTCac(),
               mocContracts.mocImpl.getLeverageTC(),
             ]);
-            // go forward to a fixed block remaining for settlement to avoid unpredictability
-            const bns = await mocContracts.mocSettlement.bns();
-            await mineUpTo(bns.sub(fixedBlock));
             tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
           });
           it("THEN coverage did not change", async function () {
@@ -307,9 +285,8 @@ const redeemTCandTPBehavior = function () {
             // receiver: alice || mocWrapper
             // qTC: 100 TC
             // qTP: 783.33 TP
-            // qAC: 103.33 AC - 8% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+            // qAC: 103.33 AC - 8% for Moc Fee Flow
             // qACfee: 8% AC
-            // qACInterest: 0.0987% AC
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
               .withArgs(
@@ -318,9 +295,8 @@ const redeemTCandTPBehavior = function () {
                 mocContracts.mocWrapper?.address || alice,
                 pEth(100),
                 pEth("783.333333333333333333"),
-                pEth("94.989295273919753119"),
+                pEth("95.066666666666666667"),
                 pEth("8.266666666666666666"),
-                pEth("0.077371392746913548"),
               );
           });
         });
@@ -337,7 +313,7 @@ const redeemTCandTPBehavior = function () {
             coverage = 41.266
             pTCac = 1.0066
             => to redeem 100 TC we use 1175 TP
-            => AC redeemed = 100.66 AC - 8% + 2.5AC - 8% - 0.0987% = 94.91
+            => AC redeemed = 100.66 AC - 8% + 2.5AC - 8% = 94.91
           */
           let tx: ContractTransaction;
           beforeEach(async function () {
@@ -346,9 +322,6 @@ const redeemTCandTPBehavior = function () {
               mocContracts.mocImpl.getPTCac(),
               mocContracts.mocImpl.getLeverageTC(),
             ]);
-            // go forward to a fixed block remaining for settlement to avoid unpredictability
-            const bns = await mocContracts.mocSettlement.bns();
-            await mineUpTo(bns.sub(fixedBlock));
             tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
           });
           it("THEN coverage did not change", async function () {
@@ -366,9 +339,8 @@ const redeemTCandTPBehavior = function () {
             // receiver: alice || mocWrapper
             // qTC: 100 TC
             // qTP: 1175 TP
-            // qAC: 103.16 AC - 8% for Moc Fee Flow - 0.0987% for Moc Interest Collector
+            // qAC: 103.16 AC - 8% for Moc Fee Flow
             // qACfee: 8% AC
-            // qACInterest: 0.0987% AC
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
               .withArgs(
@@ -377,9 +349,8 @@ const redeemTCandTPBehavior = function () {
                 mocContracts.mocWrapper?.address || alice,
                 pEth(100),
                 pEth(1175),
-                pEth("94.910864033564814755"),
+                pEth("94.913333333333333272"),
                 pEth("8.253333333333333328"),
-                pEth("0.002469299768518517"),
               );
           });
         });

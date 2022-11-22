@@ -33,7 +33,6 @@ contract MocCARC20 is MocCore {
      *      tcTokenAddress Collateral Token contract address
      *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
-     *      mocInterestCollectorAddress mocInterestCollector address
      *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]
      *      liqThrld liquidation coverage threshold [PREC]
@@ -277,8 +276,8 @@ contract MocCARC20 is MocCore {
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
-     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @return qACFee amount of AC used to pay fee
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTPforTP(
@@ -287,7 +286,7 @@ contract MocCARC20 is MocCore {
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_
-    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, msg.sender, msg.sender);
     }
@@ -298,9 +297,9 @@ contract MocCARC20 is MocCore {
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @param recipient_ address who receives the target Pegged Token
-     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     * @return qACFee amount of AC used to pay fee
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTPforTPto(
@@ -310,7 +309,7 @@ contract MocCARC20 is MocCore {
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
-    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _swapTPforTPto(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, msg.sender, recipient_);
     }
@@ -320,8 +319,8 @@ contract MocCARC20 is MocCore {
      * @param i_ Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
-     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @return qACFee amount of AC used to pay fee
      * @return qTPMinted amount of Collateral Token minted
      */
     function swapTPforTC(
@@ -329,7 +328,7 @@ contract MocCARC20 is MocCore {
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_
-    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _swapTPforTCto(i_, qTP_, qTCmin_, qACmax_, msg.sender, msg.sender);
     }
@@ -339,9 +338,9 @@ contract MocCARC20 is MocCore {
      * @param i_ Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees and interests
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @param recipient_ address who receives the Collateral Token
-     * @return qACtotalNeeded amount of AC used to pay fee and interest
+     * @return qACFee amount of AC used to pay fee
      * @return qTPMinted amount of Collateral Token minted
      */
     function swapTPforTCto(
@@ -350,7 +349,7 @@ contract MocCARC20 is MocCore {
         uint256 qTCmin_,
         uint256 qACmax_,
         address recipient_
-    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _swapTPforTCto(i_, qTP_, qTCmin_, qACmax_, msg.sender, recipient_);
     }
@@ -361,7 +360,7 @@ contract MocCARC20 is MocCore {
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qACFee amount of AC used to pay fee
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTCforTP(
@@ -369,7 +368,7 @@ contract MocCARC20 is MocCore {
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_
-    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _swapTCforTPto(i_, qTC_, qTPmin_, qACmax_, msg.sender, msg.sender);
     }
@@ -381,7 +380,7 @@ contract MocCARC20 is MocCore {
      * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qACFee amount of AC used to pay fee
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTCforTPto(
@@ -390,7 +389,7 @@ contract MocCARC20 is MocCore {
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
-    ) external returns (uint256 qACtotalNeeded, uint256 qTPMinted) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _swapTCforTPto(i_, qTC_, qTPmin_, qACmax_, msg.sender, recipient_);
     }

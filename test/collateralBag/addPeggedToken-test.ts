@@ -15,51 +15,27 @@ describe("Feature: MocCABag add Pegged Token", function () {
       tpTokenAddress = mocPeggedToken.address,
       priceProviderAddress = priceProvider.address,
       tpCtarg = tpParamsDefault.ctarg,
-      tpR = tpParamsDefault.r,
-      tpBmin = tpParamsDefault.bmin,
       tpMintFee = tpParamsDefault.mintFee,
       tpRedeemFee = tpParamsDefault.redeemFee,
       tpEma = tpParamsDefault.initialEma,
       tpEmaSf = tpParamsDefault.smoothingFactor,
-      tpTils = tpParamsDefault.tils,
-      tpTiMin = tpParamsDefault.tiMin,
-      tpTiMax = tpParamsDefault.tiMax,
-      tpAbeq = tpParamsDefault.abeq,
-      tpFacMin = tpParamsDefault.facMin,
-      tpFacMax = tpParamsDefault.facMax,
     }: {
       tpTokenAddress?: Address;
       priceProviderAddress?: Address;
       tpCtarg?: BigNumberish;
-      tpR?: BigNumberish;
-      tpBmin?: BigNumberish;
       tpMintFee?: BigNumberish;
       tpRedeemFee?: BigNumberish;
       tpEma?: BigNumberish;
       tpEmaSf?: BigNumberish;
-      tpTils?: BigNumberish;
-      tpTiMin?: BigNumberish;
-      tpTiMax?: BigNumberish;
-      tpAbeq?: BigNumberish;
-      tpFacMin?: BigNumberish;
-      tpFacMax?: BigNumberish;
     } = {}) => {
       return mocCARC20.addPeggedToken({
         tpTokenAddress,
         priceProviderAddress,
         tpCtarg,
-        tpR,
-        tpBmin,
         tpMintFee,
         tpRedeemFee,
         tpEma,
         tpEmaSf,
-        tpTils,
-        tpTiMin,
-        tpTiMax,
-        tpAbeq,
-        tpFacMin,
-        tpFacMax,
       });
     };
 
@@ -94,18 +70,10 @@ describe("Feature: MocCABag add Pegged Token", function () {
             mocPeggedToken.address,
             priceProvider.address,
             tpParamsDefault.ctarg,
-            tpParamsDefault.r,
-            tpParamsDefault.bmin,
             tpParamsDefault.mintFee,
             tpParamsDefault.redeemFee,
             tpParamsDefault.initialEma,
             tpParamsDefault.smoothingFactor,
-            tpParamsDefault.tils,
-            tpParamsDefault.tiMin,
-            tpParamsDefault.tiMax,
-            tpParamsDefault.abeq,
-            tpParamsDefault.facMin,
-            tpParamsDefault.facMax,
           ]);
       });
       describe("AND try to add it again", () => {

@@ -27,8 +27,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     struct PegContainerItem {
         // total supply of Pegged Token
         uint256 nTP;
-        // amount of Pegged Token used by a Token X
-        uint256 nTPXV;
         // PegToken PriceFeed address
         IPriceProvider priceProvider;
     }
@@ -47,8 +45,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         address mocSettlementAddress;
         // Moc Fee Flow contract address
         address mocFeeFlowAddress;
-        // mocInterestCollector address
-        address mocInterestCollectorAddress;
         // moc appreciation beneficiary Address
         address mocAppreciationBeneficiaryAddress;
         // protected state threshold [PREC]
@@ -97,8 +93,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     mapping(address => PeggedTokenIndex) public peggedTokenIndex;
     // peg container
     PegContainerItem[] public pegContainer;
-    // reserve factor
-    uint256[] public tpR;
     // Pegged Token prices, at which they can be redeemed after liquidation event
     uint256[] internal tpLiqPrices;
     // pct of the gain because Pegged Tokens devaluation that is transferred
@@ -134,8 +128,6 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     // Moc Fee Flow contract address
     address public mocFeeFlowAddress;
-    // Moc Interest Collector address
-    address public mocInterestCollectorAddress;
     // Moc appreciation beneficiary address
     address public mocAppreciationBeneficiaryAddress;
     // MocSettlement contract
@@ -182,7 +174,6 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @dev   tcTokenAddress Collateral Token contract address
      *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
-     *        mocInterestCollectorAddress mocInterestCollector address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected coverage threshold [PREC]
      *        liqThrld liquidation coverage threshold [PREC]
@@ -216,7 +207,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         // Verifies it has the right roles over this TC
         if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
         mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
-        mocInterestCollectorAddress = initializeBaseBucketParams_.mocInterestCollectorAddress;
         mocAppreciationBeneficiaryAddress = initializeBaseBucketParams_.mocAppreciationBeneficiaryAddress;
         mocSettlement = MocSettlement(initializeBaseBucketParams_.mocSettlementAddress);
         protThrld = initializeBaseBucketParams_.protThrld;
@@ -403,36 +393,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice get abundance ratio (beginning) of Pegged Token
-     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
-     * @param nTPplusTPgain_ amount Pegged Token in the bucket + TP to be minted during settlement [N]
-     * @return arb [PREC]
-     */
-    function _getArb(uint256 tpAvailableToRedeem_, uint256 nTPplusTPgain_) internal pure returns (uint256 arb) {
-        // [PREC] = [N] * [PREC] / [N]
-        return _divPrec(tpAvailableToRedeem_, nTPplusTPgain_);
-    }
-
-    /**
-     * @notice get abundance ratio (final) of Pegged Token
-     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
-     * @param nTPplusTPgain_ amount Pegged Token in the bucket + TP to be minted during settlement [N]
-     * @param qTP_ amount of Pegged Token to calculate the final abundance
-     * @return arf [PREC]
-     */
-    function _getArf(
-        uint256 tpAvailableToRedeem_,
-        uint256 nTPplusTPgain_,
-        uint256 qTP_
-    ) internal pure returns (uint256 arf) {
-        if (qTP_ >= nTPplusTPgain_) return ONE;
-        // [N] = [N] - [N]
-        uint256 den = nTPplusTPgain_ - qTP_;
-        // [PREC] = [N] * [PREC] / [N]
-        return _divPrec(tpAvailableToRedeem_ - qTP_, den);
-    }
-
-    /**
      * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
      * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
@@ -478,7 +438,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param pACtp_ Pegged Token price [PREC]
      */
     function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
-        uint256 tpAvailableToRedeem = pegContainer[i_].nTP - pegContainer[i_].nTPXV;
+        uint256 tpAvailableToRedeem = pegContainer[i_].nTP;
         tpiou[i_] += _calcOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
         pACtpLstop[i_] = pACtp_;
     }
@@ -486,36 +446,32 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice calculates on the fly Pegged Token P&L
      * @param i_ Pegged Token index
-     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_  amount Pegged Token in the bucket [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return otfPnLtp [N]
      */
-    function _calcOtfPnLTP(
-        uint8 i_,
-        uint256 tpAvailableToRedeem_,
-        uint256 pACtp_
-    ) internal view returns (int256 otfPnLtp) {
+    function _calcOtfPnLTP(uint8 i_, uint256 nTP_, uint256 pACtp_) internal view returns (int256 otfPnLtp) {
         // [PREC] = [N] * [PREC]
-        tpAvailableToRedeem_ *= PRECISION;
+        nTP_ *= PRECISION;
         // [N] = [PREC] / [PREC] - [PREC] / [PREC]
-        return int256(tpAvailableToRedeem_ / pACtpLstop[i_]) - int256(tpAvailableToRedeem_ / pACtp_);
+        return int256(nTP_ / pACtpLstop[i_]) - int256(nTP_ / pACtp_);
     }
 
     /**
      * @notice gets accumulated Pegged Token P&L
      * @param i_ Pegged Token index
-     * @param tpAvailableToRedeem_  amount Pegged Token available to redeem (nTP - nTPXV) [N]
+     * @param nTP_  amount Pegged Token in the bucket [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return tpGain amount of Pegged Token to be minted during settlement [N]
      * @return adjPnLtpi total amount of P&L in Collateral Asset [N]
      */
     function _getPnLTP(
         uint8 i_,
-        uint256 tpAvailableToRedeem_,
+        uint256 nTP_,
         uint256 pACtp_
     ) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
         // [N] = [N] + [N]
-        int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, tpAvailableToRedeem_, pACtp_);
+        int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, nTP_, pACtp_);
         if (adjPnLtpiAux > 0) {
             adjPnLtpi = uint256(adjPnLtpiAux);
             // [N] = (([PREC] * [PREC] / [PREC]) * [N]) / [PREC]
@@ -533,11 +489,11 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _getLckACandACgain() internal view returns (uint256 lckAC, uint256 nACgain) {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 tpAvailableToRedeem = pegContainer[i].nTP - pegContainer[i].nTPXV;
+            uint256 nTP = pegContainer[i].nTP;
             uint256 pACtp = getPACtp(i);
-            (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, tpAvailableToRedeem, pACtp);
+            (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, nTP, pACtp);
             // [N] = ([N] + [N]) * [PREC] / [PREC]
-            lckAC += _divPrec(tpAvailableToRedeem + tpGain, pACtp);
+            lckAC += _divPrec(nTP + tpGain, pACtp);
             nACgain += adjPnLtpi;
         }
         // [N] = [N] * [PREC] / [PREC]
@@ -712,14 +668,6 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function setMocFeeFlowAddress(address mocFeeFlowAddress_) external onlyAuthorizedChanger {
         mocFeeFlowAddress = mocFeeFlowAddress_;
-    }
-
-    /**
-     * @dev sets Moc Interest Collector address
-     * @param mocInterestCollectorAddress_ moc Interest Collector new address
-     */
-    function setMocInterestCollectorAddress(address mocInterestCollectorAddress_) external onlyAuthorizedChanger {
-        mocInterestCollectorAddress = mocInterestCollectorAddress_;
     }
 
     /**

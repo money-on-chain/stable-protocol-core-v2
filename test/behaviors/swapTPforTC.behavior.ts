@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
 import { mocAddresses } from "../../deploy-config/config";
 
 const swapTPforTCBehavior = function () {
@@ -14,15 +14,13 @@ const swapTPforTCBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress, mocInterestCollectorAddress } = mocAddresses["hardhat"];
-  const fixedBlock = 85342;
+  const { mocFeeFlowAddress } = mocAddresses["hardhat"];
 
   let tx: ContractTransaction;
   let alicePrevTP0Balance: Balance;
   let alicePrevACBalance: Balance;
   let mocPrevACBalance: Balance;
   let mocFeeFlowPrevACBalance: Balance;
-  let mocInterestCollectorPrevACBalance: Balance;
 
   describe("Feature: swap Pegged Token for Collateral Token", function () {
     beforeEach(async function () {
@@ -51,10 +49,10 @@ const swapTPforTCBehavior = function () {
           ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QTC_BELOW_MINIMUM);
         });
       });
-      describe("WHEN alice swap 23500 TP 0 sending 1.09(less amount) Asset for fees", function () {
+      describe("WHEN alice swap 23500 TP 0 sending 0.99(less amount) Asset for fees", function () {
         it("THEN tx reverts because Asset received is below the minimum required", async function () {
           await expect(
-            mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 23500, qACmax: "1.099931712962962899" }),
+            mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 23500, qACmax: "0.999999999999999999" }),
           ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
         });
       });
@@ -80,24 +78,13 @@ const swapTPforTCBehavior = function () {
             => coverage = MAX_UINT256
 
             swapTPforTCfee = 1%
-
-            arb = 1 => fctb = 0.1
-            arf = 1 => fctb = 0.1
-            => fctAvg = 0.1
-            tils = 1%
-            => interest = 1% * 0.1 * (85339/86400) = 0.0987%
           */
         beforeEach(async function () {
-          [alicePrevACBalance, mocPrevACBalance, mocFeeFlowPrevACBalance, mocInterestCollectorPrevACBalance] =
-            await Promise.all([
-              mocFunctions.assetBalanceOf(alice),
-              mocFunctions.acBalanceOf(mocContracts.mocImpl.address),
-              mocFunctions.acBalanceOf(mocFeeFlowAddress),
-              mocFunctions.acBalanceOf(mocInterestCollectorAddress),
-            ]);
-          // go forward to a fixed block remaining for settlement to avoid unpredictability
-          const bns = await mocContracts.mocSettlement.bns();
-          await mineUpTo(bns.sub(fixedBlock));
+          [alicePrevACBalance, mocPrevACBalance, mocFeeFlowPrevACBalance] = await Promise.all([
+            mocFunctions.assetBalanceOf(alice),
+            mocFunctions.acBalanceOf(mocContracts.mocImpl.address),
+            mocFunctions.acBalanceOf(mocFeeFlowAddress),
+          ]);
           tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 23500, qTCmin: 100 });
         });
         it("THEN coverage increase to max value", async function () {
@@ -117,15 +104,10 @@ const swapTPforTCBehavior = function () {
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(100 * 0.01, diff);
         });
-        it("THEN Moc Interest Collector balance increase 0.0987% of 100 AC", async function () {
-          const mocInterestCollectorActualACBalance = await mocFunctions.acBalanceOf(mocInterestCollectorAddress);
-          const diff = mocInterestCollectorActualACBalance.sub(mocInterestCollectorPrevACBalance);
-          assertPrec("0.098771990740740700", diff);
-        });
-        it("THEN alice balance decrease 1% for Moc Fee Flow + 0.0987% for Moc Interest Collector of 100 Asset", async function () {
+        it("THEN alice balance decrease 1% for Moc Fee Flow of 100 Asset", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec("1.098771990740740700", diff);
+          assertPrec(1, diff);
         });
         it("THEN a TPSwappedForTC event is emitted", async function () {
           // iFrom: 0
@@ -135,18 +117,9 @@ const swapTPforTCBehavior = function () {
           // qTP: 23500 TP
           // qTC: 100 TC
           // qACfee: 1% AC
-          // qACInterest: 0.0987% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
-            .withArgs(
-              TP_0,
-              mocContracts.mocWrapper?.address || alice,
-              alice,
-              pEth(23500),
-              pEth(100),
-              pEth(100 * 0.01),
-              pEth("0.098771990740740700"),
-            );
+            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, alice, pEth(23500), pEth(100), pEth(100 * 0.01));
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -176,19 +149,10 @@ const swapTPforTCBehavior = function () {
             => coverage = 34.44
 
             swapTPforTCfee = 1%
-
-            arb = 1 => fctb = 0.1
-            arf = 1 => fctb = 0.1
-            => fctAvg = 0.1
-            tils = 1%
-            => interest = 1% * 0.1 * (85339/86400) = 0.0987%
           */
         beforeEach(async function () {
           alicePrevTP0Balance = await mocFunctions.tpBalanceOf(TP_0, alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-          // go forward to a fixed block remaining for settlement to avoid unpredictability
-          const bns = await mocContracts.mocSettlement.bns();
-          await mineUpTo(bns.sub(fixedBlock));
           tx = await mocFunctions.swapTPforTCto({
             i: TP_0,
             from: alice,
@@ -219,18 +183,9 @@ const swapTPforTCBehavior = function () {
           // qTP: 2350 TP
           // qTC: 10 TC
           // qACfee: 1% AC
-          // qACInterest: 0.0987% AC
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
-            .withArgs(
-              TP_0,
-              mocContracts.mocWrapper?.address || alice,
-              bob,
-              pEth(2350),
-              pEth(10),
-              pEth(10 * 0.01),
-              pEth("0.009877199074074070"),
-            );
+            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, bob, pEth(2350), pEth(10), pEth(10 * 0.01));
         });
       });
       describe("AND TP 0 has been revaluated to 15.1", function () {
@@ -268,9 +223,6 @@ const swapTPforTCBehavior = function () {
         });
         describe("WHEN alice swaps 4700 TP for 9.933 TC", function () {
           beforeEach(async function () {
-            // go forward to a fixed block remaining for settlement to avoid unpredictability
-            const bns = await mocContracts.mocSettlement.bns();
-            await mineUpTo(bns.sub(fixedBlock));
             tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 4700 });
           });
           it("THEN a TPSwappedForTC event is emitted", async function () {
@@ -281,7 +233,6 @@ const swapTPforTCBehavior = function () {
             // qTP: 4700 TP
             // qTC: 9.933 TC
             // qACfee: 1% AC
-            // qACInterest: 0.0987% AC
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
               .withArgs(
@@ -291,7 +242,6 @@ const swapTPforTCBehavior = function () {
                 pEth(4700),
                 pEth("9.933774834437086092"),
                 pEth(10 * 0.01),
-                pEth("0.009877199074074070"),
               );
           });
         });
@@ -311,9 +261,6 @@ const swapTPforTCBehavior = function () {
         });
         describe("WHEN alice swaps 1000 TP for 10.471 TC", function () {
           beforeEach(async function () {
-            // go forward to a fixed block remaining for settlement to avoid unpredictability
-            const bns = await mocContracts.mocSettlement.bns();
-            await mineUpTo(bns.sub(fixedBlock));
             tx = await mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 1000 });
           });
           it("THEN a TPSwappedForTC event is emitted", async function () {
@@ -324,7 +271,6 @@ const swapTPforTCBehavior = function () {
             // qTP: 1000 TP
             // qTC: 10.471 TC
             // qACfee: 1% AC
-            // qACInterest: 0.0987% AC
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
               .withArgs(
@@ -334,7 +280,6 @@ const swapTPforTCBehavior = function () {
                 pEth(1000),
                 pEth("10.471204188481675392"),
                 pEth(10 * 0.01),
-                pEth("0.009877199074074070"),
               );
           });
         });

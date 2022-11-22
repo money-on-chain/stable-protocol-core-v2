@@ -5,13 +5,7 @@ import { getNetworkConfig } from "../../scripts/utils";
 
 const { coreParams, feeParams, mocAddresses } = getNetworkConfig({ network: "hardhat" });
 
-const {
-  governorAddress,
-  pauserAddress,
-  mocFeeFlowAddress,
-  mocInterestCollectorAddress,
-  mocAppreciationBeneficiaryAddress,
-} = mocAddresses;
+const { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
 export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocSettlement: Address) {
   return ({
@@ -21,7 +15,6 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocTCAddress = mocTC,
     mocSettlementAddress = mocSettlement,
     feeFlowAddress = mocFeeFlowAddress,
-    interestCollectorAddress = mocInterestCollectorAddress,
     appreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
@@ -43,7 +36,6 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocTCAddress?: Address;
     mocSettlementAddress?: Address;
     feeFlowAddress?: Address;
-    interestCollectorAddress?: Address;
     appreciationBeneficiaryAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
@@ -65,7 +57,6 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           tcTokenAddress: mocTCAddress,
           mocSettlementAddress,
           mocFeeFlowAddress: feeFlowAddress,
-          mocInterestCollectorAddress: interestCollectorAddress,
           mocAppreciationBeneficiaryAddress: appreciationBeneficiaryAddress,
           protThrld,
           liqThrld,

@@ -5,7 +5,7 @@ import { ContractTransaction } from "ethers";
 import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { redeemTPBehavior } from "../behaviors/redeemTP.behavior";
-import { Balance, ERRORS, deployAsset, deployPriceProvider, mineUpTo, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERRORS, deployAsset, deployPriceProvider, pEth, tpParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCABag } from "./fixture";
 
@@ -48,14 +48,11 @@ describe("Feature: MocCABag redeem TP", function () {
 
     describe("AND alice has 23500 TPs with asset price at 1:1", () => {
       let tx: ContractTransaction;
-      const fixedBlock = 100;
       beforeEach(async () => {
         // add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
         // mint TP to alice
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
-        // go forward to a fixed block remaining for settlement to avoid unpredictability
-        await mineUpTo(fixedBlock);
       });
       describe("WHEN alice redeems 2350 TP", () => {
         beforeEach(async () => {
@@ -67,18 +64,17 @@ describe("Feature: MocCABag redeem TP", function () {
           // sender: alice
           // receiver: alice
           // qTP: 2350 TP
-          // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
+          // qAC: 10AC - 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocWrapper, "TPRedeemedWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth("9.49000879629629630"));
+            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(9.5));
         });
       });
-      describe("WHEN alice asks for fees and interest for redeem 2350", () => {
-        it("THEN she gets the 5% as fee and ~1% as interest", async function () {
+      describe("WHEN alice asks for fees for redeem 2350", () => {
+        it("THEN she gets the 5% as fee", async function () {
           const result = await this.mocContracts.mocImpl.getQACforRedeemTP(TP_0, pEth(2350));
           assertPrec(10, result.qACtotalToRedeem);
           assertPrec(0.5, result.qACfee);
-          assertPrec("0.009991435185185180", result.qACinterest);
         });
       });
       describe("WHEN alice redeems 2350 TP to bob", () => {
@@ -91,10 +87,10 @@ describe("Feature: MocCABag redeem TP", function () {
           // sender: alice
           // receiver: bob
           // qTP: 2350 TP
-          // qAC: 10AC - 5% for Moc Fee Flow - 0.1% for interest collector
+          // qAC: 10AC - 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocWrapper, "TPRedeemedWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth("9.49000879629629630"));
+            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(9.5));
         });
       });
       describe("AND asset price provider is deprecated", () => {
@@ -126,11 +122,11 @@ describe("Feature: MocCABag redeem TP", function () {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
-          it("THEN alice receives 105.44 of the new asset instead of 94.89", async () => {
-            //asset reward = 94.89 currency / 0.9 asset price
+          it("THEN alice receives 105.55 of the new asset instead of 95", async () => {
+            //asset reward = 95 currency / 0.9 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("105.444552469135802555", diff);
+            assertPrec("105.555555555555555555", diff);
           });
         });
       });
@@ -148,11 +144,11 @@ describe("Feature: MocCABag redeem TP", function () {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
           });
-          it("THEN alice receives 86.27 of the new asset instead of 94.89", async () => {
-            //asset reward = 94.89 currency / 1.1 asset price
+          it("THEN alice receives 86.36 of the new asset instead of 95", async () => {
+            //asset reward = 95 currency / 1.1 asset price
             const aliceNewAssetActualBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
             const diff = aliceNewAssetActualBalance.sub(aliceNewAssetPrevBalance);
-            assertPrec("86.272815656565656636", diff);
+            assertPrec("86.363636363636363636", diff);
           });
         });
       });
