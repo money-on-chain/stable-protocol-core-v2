@@ -438,40 +438,33 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param pACtp_ Pegged Token price [PREC]
      */
     function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
-        uint256 tpAvailableToRedeem = pegContainer[i_].nTP;
-        tpiou[i_] += _calcOtfPnLTP(i_, tpAvailableToRedeem, pACtp_);
+        tpiou[i_] += _calcOtfPnLTP(i_, pACtp_);
         pACtpLstop[i_] = pACtp_;
     }
 
     /**
      * @notice calculates on the fly Pegged Token P&L
      * @param i_ Pegged Token index
-     * @param nTP_  amount Pegged Token in the bucket [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return otfPnLtp [N]
      */
-    function _calcOtfPnLTP(uint8 i_, uint256 nTP_, uint256 pACtp_) internal view returns (int256 otfPnLtp) {
+    function _calcOtfPnLTP(uint8 i_, uint256 pACtp_) internal view returns (int256 otfPnLtp) {
         // [PREC] = [N] * [PREC]
-        nTP_ *= PRECISION;
+        uint256 nTP = pegContainer[i_].nTP * PRECISION;
         // [N] = [PREC] / [PREC] - [PREC] / [PREC]
-        return int256(nTP_ / pACtpLstop[i_]) - int256(nTP_ / pACtp_);
+        return int256(nTP / pACtpLstop[i_]) - int256(nTP / pACtp_);
     }
 
     /**
      * @notice gets accumulated Pegged Token P&L
      * @param i_ Pegged Token index
-     * @param nTP_  amount Pegged Token in the bucket [N]
      * @param pACtp_ Pegged Token price [PREC]
      * @return tpGain amount of Pegged Token to be minted during settlement [N]
      * @return adjPnLtpi total amount of P&L in Collateral Asset [N]
      */
-    function _getPnLTP(
-        uint8 i_,
-        uint256 nTP_,
-        uint256 pACtp_
-    ) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
+    function _getPnLTP(uint8 i_, uint256 pACtp_) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
         // [N] = [N] + [N]
-        int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, nTP_, pACtp_);
+        int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, pACtp_);
         if (adjPnLtpiAux > 0) {
             adjPnLtpi = uint256(adjPnLtpiAux);
             // [N] = (([PREC] * [PREC] / [PREC]) * [N]) / [PREC]
@@ -489,11 +482,10 @@ abstract contract MocBaseBucket is MocUpgradable {
     function _getLckACandACgain() internal view returns (uint256 lckAC, uint256 nACgain) {
         uint256 pegAmount = pegContainer.length;
         for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 nTP = pegContainer[i].nTP;
             uint256 pACtp = getPACtp(i);
-            (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, nTP, pACtp);
+            (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, pACtp);
             // [N] = ([N] + [N]) * [PREC] / [PREC]
-            lckAC += _divPrec(nTP + tpGain, pACtp);
+            lckAC += _divPrec(pegContainer[i].nTP + tpGain, pACtp);
             nACgain += adjPnLtpi;
         }
         // [N] = [N] * [PREC] / [PREC]
