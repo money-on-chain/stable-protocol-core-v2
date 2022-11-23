@@ -33,21 +33,18 @@ export const mocAddresses = {
     governorAddress: "",
     pauserAddress: "",
     mocFeeFlowAddress: "",
-    mocInterestCollectorAddress: "",
     mocAppreciationBeneficiaryAddress: "",
   },
   rsktestnet: {
     governorAddress: "",
     pauserAddress: "",
     mocFeeFlowAddress: "",
-    mocInterestCollectorAddress: "",
     mocAppreciationBeneficiaryAddress: "",
   },
   hardhat: {
     governorAddress: "0x26a00af444928d689dDEc7B4D17C0e4A8c9D407A",
     pauserAddress: "0x26a00aF444928D689DDec7B4D17C0e4a8c9d407b",
     mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
-    mocInterestCollectorAddress: "0x26a00AF444928D689DDeC7b4D17c0E4a8C9d407E",
     mocAppreciationBeneficiaryAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
   },
 };

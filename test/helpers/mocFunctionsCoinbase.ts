@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { mineNBlocks, pEth } from "./utils";
+import { pEth } from "./utils";
 
 const mintTC =
   mocImpl =>
@@ -76,8 +76,6 @@ const redeemTP =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(1);
     return mocImpl.connect(signer).redeemTP(i, qTP, qACmin, { gasPrice: 0 });
   };
 
@@ -89,8 +87,6 @@ const redeemTPto =
       qTP = pEth(qTP);
       qACmin = pEth(qACmin);
     }
-    // mine 1 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(1);
     return mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to, { gasPrice: 0 });
   };
 
@@ -125,8 +121,6 @@ const redeemTCandTP =
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
-    // mine 2 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(2);
     return mocImpl.connect(signer).redeemTCandTP(i, qTC, qTP, qACmin, { gasPrice: 0 });
   };
 
@@ -139,8 +133,6 @@ const redeemTCandTPto =
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
-    // mine 2 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(2);
     return mocImpl.connect(signer).redeemTCandTPto(i, qTC, qTP, qACmin, to, { gasPrice: 0 });
   };
 
@@ -167,8 +159,6 @@ const swapTPforTP =
       qTPmin = pEth(qTPmin);
       qACmax = pEth(qACmax);
     }
-    // mine 2 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(2);
     return mocImpl.connect(signer).swapTPforTP(iFrom, iTo, qTP, qTPmin, { value: qACmax, gasPrice: 0 });
   };
 
@@ -181,8 +171,6 @@ const swapTPforTPto =
       qTPmin = pEth(qTPmin);
       qACmax = pEth(qACmax);
     }
-    // mine 2 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(2);
     return mocImpl.connect(signer).swapTPforTPto(iFrom, iTo, qTP, qTPmin, to, { value: qACmax, gasPrice: 0 });
   };
 
@@ -195,8 +183,6 @@ const swapTPforTC =
       qTCmin = pEth(qTCmin);
       qACmax = pEth(qACmax);
     }
-    // mine 2 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(2);
     return mocImpl.connect(signer).swapTPforTC(i, qTP, qTCmin, { value: qACmax, gasPrice: 0 });
   };
 
@@ -209,8 +195,6 @@ const swapTPforTCto =
       qTCmin = pEth(qTCmin);
       qACmax = pEth(qACmax);
     }
-    // mine 2 so that it consumes the same number of blocks as collateralBag and makes the interest payment maths easier
-    await mineNBlocks(2);
     return mocImpl.connect(signer).swapTPforTCto(i, qTP, qTCmin, to, { value: qACmax, gasPrice: 0 });
   };
 

@@ -18,7 +18,6 @@ import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
 
 export const GAS_LIMIT_PATCH = 30000000;
 const PCT_BASE = BigNumber.from((1e18).toString());
-const DAY_BLOCK_SPAN = 2880;
 
 export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
 export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
@@ -68,18 +67,10 @@ export async function deployCollateralToken({
 export const tpParamsDefault = {
   price: PCT_BASE, // 1
   ctarg: PCT_BASE.mul(4), // 4
-  r: 0,
-  bmin: DAY_BLOCK_SPAN,
   mintFee: PCT_BASE.mul(5).div(100), // 5%
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
   initialEma: PCT_BASE, // 1
   smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
-  tils: PCT_BASE.mul(1).div(100), // 1%
-  tiMin: PCT_BASE.mul(1).div(1000), // 0.1%
-  tiMax: PCT_BASE.mul(10).div(100), // 10%
-  abeq: PCT_BASE.mul(25).div(100), // 0.25
-  facMin: PCT_BASE.mul(1).div(10), // 0.1
-  facMax: PCT_BASE.mul(5).div(1), // 5
 };
 
 export const tpParams = [
@@ -101,7 +92,6 @@ export const tpParams = [
     ctarg: pEth(3.5),
     initialEma: pEth(837.33),
     smoothingFactor: pEth(0.01),
-    facMin: 0,
   },
   {
     price: pEth(20.1),
@@ -121,34 +111,18 @@ export const tpParams = [
 const getTPparams = ({
   price = tpParamsDefault.price,
   ctarg = tpParamsDefault.ctarg,
-  r = tpParamsDefault.r,
-  bmin = tpParamsDefault.bmin,
   mintFee = tpParamsDefault.mintFee,
   redeemFee = tpParamsDefault.redeemFee,
   initialEma = tpParamsDefault.initialEma,
   smoothingFactor = tpParamsDefault.smoothingFactor,
-  tils = tpParamsDefault.tils,
-  tiMin = tpParamsDefault.tiMin,
-  tiMax = tpParamsDefault.tiMax,
-  abeq = tpParamsDefault.abeq,
-  facMin = tpParamsDefault.facMin,
-  facMax = tpParamsDefault.facMax,
 }) => {
   return {
     price,
     ctarg,
-    r,
-    bmin,
     mintFee,
     redeemFee,
     initialEma,
     smoothingFactor,
-    tils,
-    tiMin,
-    tiMax,
-    abeq,
-    facMin,
-    facMax,
   };
 };
 
@@ -168,18 +142,10 @@ export async function deployAndAddPeggedTokens(
       tpTokenAddress: peggedToken.address,
       priceProviderAddress: priceProvider.address,
       tpCtarg: params.ctarg,
-      tpR: params.r,
-      tpBmin: params.bmin,
       tpMintFee: params.mintFee,
       tpRedeemFee: params.redeemFee,
       tpEma: params.initialEma,
       tpEmaSf: params.smoothingFactor,
-      tpTils: params.tils,
-      tpTiMin: params.tiMin,
-      tpTiMax: params.tiMax,
-      tpAbeq: params.abeq,
-      tpFacMin: params.facMin,
-      tpFacMax: params.facMax,
     });
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);

@@ -36,13 +36,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  let {
-    governorAddress,
-    pauserAddress,
-    mocFeeFlowAddress,
-    mocInterestCollectorAddress,
-    mocAppreciationBeneficiaryAddress,
-  } = mocAddresses;
+  let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
   // for tests we deploy a Collateral Asset and Governor Mock
   if (network === "hardhat") {
@@ -69,7 +63,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             tcTokenAddress: CollateralToken.address,
             mocSettlementAddress: MocSettlement.address,
             mocFeeFlowAddress,
-            mocInterestCollectorAddress,
             mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,

@@ -85,12 +85,6 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.mocFeeFlowAddress()).to.be.equal(mockAddress);
       });
     });
-    describe(`WHEN setMocInterestCollectorAddress is invoked`, () => {
-      it("THEN the new value is assigned", async function () {
-        await mocProxy.setMocInterestCollectorAddress(mockAddress);
-        expect(await mocProxy.mocInterestCollectorAddress()).to.be.equal(mockAddress);
-      });
-    });
     describe(`WHEN setMocAppreciationBeneficiaryAddress is invoked`, () => {
       it("THEN the new value is assigned", async function () {
         await mocProxy.setMocAppreciationBeneficiaryAddress(mockAddress);
@@ -172,11 +166,6 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setMocFeeFlowAddress is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setMocFeeFlowAddress(mockAddress));
-      });
-    });
-    describe("WHEN setMocInterestCollectorAddress is invoked", () => {
-      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
-        await expectRevertNotAuthorized(mocProxy.setMocInterestCollectorAddress(mockAddress));
       });
     });
     describe("WHEN setMocAppreciationBeneficiaryAddress is invoked", () => {

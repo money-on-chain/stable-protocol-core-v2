@@ -26,18 +26,6 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
         _checkLessThanOne(peggedTokenParams_.tpMintFee);
         _checkLessThanOne(peggedTokenParams_.tpRedeemFee);
         if (peggedTokenParams_.tpEmaSf >= ONE) revert InvalidValue();
-
-        _checkLessThanOne(peggedTokenParams_.tpTiMin);
-        _checkLessThanOne(peggedTokenParams_.tpTiMax);
-        if (peggedTokenParams_.tpTiMax < peggedTokenParams_.tpTiMin) revert InvalidValue();
-        if (peggedTokenParams_.tpTils > peggedTokenParams_.tpTiMax) revert InvalidValue();
-        if (peggedTokenParams_.tpTils < peggedTokenParams_.tpTiMin) revert InvalidValue();
-
-        if (peggedTokenParams_.tpAbeq > int256(ONE)) revert InvalidValue();
-        if (peggedTokenParams_.tpAbeq < 0) revert InvalidValue();
-        if (peggedTokenParams_.tpFacMin > int256(ONE)) revert InvalidValue();
-        if (peggedTokenParams_.tpFacMin < 0) revert InvalidValue();
-        if (peggedTokenParams_.tpFacMax < int256(ONE)) revert InvalidValue();
     }
 
     /**

@@ -5,7 +5,7 @@ import { ContractTransaction } from "ethers";
 import { ERC20Mock, MocCAWrapper } from "../../typechain";
 import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { swapTPforTCBehavior } from "../behaviors/swapTPforTC.behavior";
-import { ERRORS, deployAsset, mineUpTo, pEth, tpParams } from "../helpers/utils";
+import { ERRORS, deployAsset, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
 
 describe("Feature: MocCABag swap TP for TC", function () {
@@ -44,14 +44,11 @@ describe("Feature: MocCABag swap TP for TC", function () {
     });
     describe("AND alice has 23500 TP 0", () => {
       let tx: ContractTransaction;
-      const fixedBlock = 100;
       beforeEach(async () => {
         // add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
         // mint TP to alice
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
-        // go forward to a fixed block remaining for settlement to avoid unpredictability
-        await mineUpTo(fixedBlock);
       });
       describe("WHEN alice swap 2350 TP 0 for TC", () => {
         beforeEach(async () => {
@@ -64,10 +61,10 @@ describe("Feature: MocCABag swap TP for TC", function () {
           // receiver: alice
           // qTP: 2350 TP
           // qTC: 10 TC
-          // qAC: 1% for fee + 0.099% for interest of 100 AC
+          // qAC: 1% for fee of 10 AC
           await expect(tx)
             .to.emit(mocWrapper, "TPSwappedForTCWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10), pEth("0.109991087962962960"));
+            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(10), pEth(0.1));
         });
       });
       describe("WHEN alice swap 2350 TP 0 for TC to bob", () => {
@@ -81,10 +78,10 @@ describe("Feature: MocCABag swap TP for TC", function () {
           // receiver: bob
           // qTP: 2350 TP
           // qTC: 10 TC
-          // qAC: 1% for fee + 0.099% for interest of 100 AC
+          // qAC: 1% for fee of 10 AC
           await expect(tx)
             .to.emit(mocWrapper, "TPSwappedForTCWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10), pEth("0.109991087962962960"));
+            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(10), pEth(0.1));
         });
       });
     });

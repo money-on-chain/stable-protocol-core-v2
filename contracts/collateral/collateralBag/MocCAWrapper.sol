@@ -431,7 +431,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
      */
@@ -481,7 +481,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param i_ owned Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the Collateral Token
      */
@@ -880,7 +880,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      */
     function swapTPforTP(
         address assetAddress_,
@@ -901,7 +901,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param iTo_ target Pegged Token index
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      * @param recipient_ address who receives the target Pegged Token
      */
     function swapTPforTPto(
@@ -923,7 +923,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      */
     function swapTPforTC(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qTCmin_, uint256 qAssetMax_) external {
         _swapTPforTCto(assetAddress_, i_, qTP_, qTCmin_, qAssetMax_, msg.sender, msg.sender);
@@ -936,7 +936,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees and interests
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      * @param recipient_ address who receives the Collateral Token
      */
     function swapTPforTCto(

@@ -53,8 +53,6 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
         (uint8 i, ) = mocCore.peggedTokenIndex(address(tpToEdit));
         // Fetched all values for the given index
         (, uint256 emaSf) = mocCore.tpEma(i);
-        (, uint256 tiMin, uint256 tiMax) = mocCore.tpInterestRate(i);
-        (int256 abeq, int256 facMinSubOne, int256 facMax) = mocCore.tpFAC(i);
 
         // Only edits the priceProvider, all the other values are taken from the contracts itself
         peggedTokenParams = MocCore.PeggedTokenParams(
@@ -64,10 +62,6 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
             priceProvider_,
             // Pegged Token target coverage [PREC]
             mocCore.tpCtarg(i),
-            // Pegged Token reserve factor [PREC]
-            mocCore.tpR(i),
-            // Pegged Token minimum amount of blocks until the settlement to charge interest for redeem [N]
-            mocCore.tpBmin(i),
             // additional fee pct applied on mint [PREC]
             mocCore.tpMintFee(i),
             // additional fee pct applied on redeem [PREC]
@@ -75,19 +69,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
             // Emma is not editable, only initialized
             0,
             // Pegged Token smoothing factor [PREC]
-            emaSf,
-            // Pegged Token initial interest rate (tpTils), not editable, only initialized
-            0,
-            // Pegged Token minimum interest rate that can be charged
-            tiMin,
-            // Pegged Token maximum interest rate that can be charged
-            tiMax,
-            // abundance of Pegged Token where it is desired that the model stabilizes
-            abeq,
-            // Pegged Token minimum correction factor for interest rate
-            facMinSubOne + int256(ONE),
-            // Pegged Token maximum correction factor for interest rate
-            facMax
+            emaSf
         );
     }
 

@@ -31,8 +31,7 @@ export function fixtureDeployGovernance(): () => Promise<{
     });
 
     const mockAddress = deployer;
-    let { pauserAddress, mocFeeFlowAddress, mocInterestCollectorAddress, mocAppreciationBeneficiaryAddress } =
-      mocAddresses;
+    let { pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
     // TODO: fix these mockAddresses
     // initializations
     await waitForTxConfirmation(
@@ -42,7 +41,6 @@ export function fixtureDeployGovernance(): () => Promise<{
             tcTokenAddress: mocTC.address,
             mocSettlementAddress: mockAddress,
             mocFeeFlowAddress: mocFeeFlowAddress,
-            mocInterestCollectorAddress: mocInterestCollectorAddress,
             mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
