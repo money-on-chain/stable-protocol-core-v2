@@ -395,6 +395,15 @@ contract MocCARC20 is MocCore {
     }
 
     /**
+     * @notice Refreshes the AC holdings for the Bucket
+     * @dev Intended to be use as notification after an RC20 AC transfer to this contract
+     */
+    function refreshACBalance() external {
+        // On this implementation, AC token balance has full correlation with nACcb
+        if (acBalanceOf(address(this)) - nACcb > 0) _depositAC(acBalanceOf(address(this)) - nACcb);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
