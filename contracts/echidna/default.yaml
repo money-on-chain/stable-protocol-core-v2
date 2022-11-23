@@ -1,3 +1,6 @@
+testMode: "property"
+#testMode: "assertion"
+
 #psender is the sender for property transactions; by default intentionally
 #the same as contract deployer
 psender: "0x00a329C0648769a73afAC7F9381e08fb43DBEA70"
@@ -47,10 +50,6 @@ quiet: false
 initialize: null
 #whether ot not to use the multi-abi mode of testing
 multi-abi: false
-#checkAsserts checks assertions
-checkAsserts: true
-#benchmarkMode enables benchmark mode
-benchmarkMode: false
 #timeout controls test timeout settings
 timeout: null
 #seed not defined by default, is the random seed
