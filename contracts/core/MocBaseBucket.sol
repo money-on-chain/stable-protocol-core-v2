@@ -391,6 +391,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     ) internal view returns (uint256 tpAvailableToMint) {
         // [PREC]
         uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
+        // TODO: rounding error
         // [PREC] = [PREC] * [PREC] / [PREC]
         uint256 pACtpEmaAdjusted = (ctargemaCA_ * pACtp_) / ctargemaTP_;
         // [PREC] = [PREC] * [PREC] / [PREC]
