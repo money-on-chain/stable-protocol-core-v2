@@ -72,6 +72,22 @@ contract EchidnaMocCoreTester {
 
         // initialize mocSettlement
         mocSettlement.initialize(address(governor), msg.sender, mocCARC20, 30 days, 2);
+
+        // add a Pegged Token
+        MocCore.PeggedTokenParams memory peggedTokenParams = MocCore.PeggedTokenParams({
+            tpTokenAddress: address(0),
+            priceProviderAddress: address(0),
+            tpCtarg: 5 * PRECISION,
+            tpMintFee: (5 * PRECISION) / 100, // 5%
+            tpRedeemFee: (5 * PRECISION) / 100, // 5%
+            tpEma: 212 * PRECISION,
+            tpEmaSf: (5 * PRECISION) / 100 // 0.05
+        });
+        addPeggedToken(peggedTokenParams, 235 ether);
+
+        // mint tokens to this contract
+        acToken.mint(address(this), 10000000 ether);
+        acToken.increaseAllowance(address(mocCARC20), 10000000 ether);
     }
 
     function addPeggedToken(MocCore.PeggedTokenParams memory peggedTokenParams_, uint256 price_) public {
@@ -91,14 +107,30 @@ contract EchidnaMocCoreTester {
     }
 
     function mintTC(uint256 qTC_, uint256 qACmax_) public {
-        acToken.mint(address(this), qACmax_);
-        acToken.increaseAllowance(address(mocCARC20), qACmax_);
+        // only run this if echidna has balance
+        if (acToken.balanceOf(address(this)) > 0) {
+            qACmax_ = qACmax_ % acToken.balanceOf(address(this));
+            if (qACmax_ > 0) {
+                uint256 tcPrice = mocCARC20.getPTCac();
+                // we don't want to revert if echidna sends insufficient qAC
+                qTC_ = qTC_ % ((qACmax_ * PRECISION) / tcPrice);
+                uint256 balanceSenderBefore = acToken.balanceOf(address(this));
+                uint256 coverageBefore = mocCARC20.getCglb();
+                try mocCARC20.mintTC(qTC_, qACmax_) returns (uint256 qACspent) {
+                    uint256 balanceSenderAfter = acToken.balanceOf(address(this));
+                    uint256 coverageAfter = mocCARC20.getCglb();
 
-        uint256 balanceSenderBefore = acToken.balanceOf(address(this));
-        mocCARC20.mintTC(qTC_, qACmax_);
-        uint256 balanceSenderAfter = acToken.balanceOf(address(this));
+                    // assert: sender balance should decrease by qAC spent
+                    assert(balanceSenderAfter == balanceSenderBefore - qACspent);
+                    // assert: during mintTC operation coverage always should increase
+                    // use tolerance 1 because possible rounding errors
+                    assert (coverageAfter - coverageBefore < 1);
 
-        assert(balanceSenderAfter < balanceSenderBefore);
+                } catch {
+                }
+                
+            }
+        }
     }
 
     function _deployProxy(address implementation) internal returns (address) {
