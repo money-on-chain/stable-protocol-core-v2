@@ -11,16 +11,20 @@ jobs:
         node-version: [16.15.0]
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}       
-      - run: npm ci
-      - run: npm run compile
-        uses: crytic/echidna-action@v2
-        with:
-          solc-version: 0.8.15
-          files: .
-          contract: EchidnaMocCoreTester
-          crytic-args: --hardhat-ignore-compile
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm ci
+    - name: Compile contracts
+      run: npm run compile
+    - name: Run Echidna
+      uses: crytic/echidna-action@v2
+      with:
+        solc-version: 0.7.6
+        files: .
+        contract: EchidnaMocCoreTester
+        crytic-args: --hardhat-ignore-compile
