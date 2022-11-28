@@ -1,6 +1,8 @@
 name: Echidna
 on: [push]
-
+env:
+  INFURA_API_KEY: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+  MNEMONIC: "here is where your twelve words mnemonic should be put my friend"
 jobs:
   build:
     name: Run Echidna
