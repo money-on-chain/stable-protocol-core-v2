@@ -30,3 +30,4 @@ jobs:
         files: .
         contract: EchidnaMocCoreTester
         crytic-args: --hardhat-ignore-compile
+        test-mode: assertion
