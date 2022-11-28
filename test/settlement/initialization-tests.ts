@@ -14,15 +14,13 @@ function mocSettlementInitialize(mocSettlement: MocSettlement, mocImpl: Address)
     mocPauserAddress = pauserAddress,
     mocImplAddress = mocImpl,
     bes = 0,
-    bmulcdj = 0,
   }: {
     mocGovernorAddress?: Address;
     mocPauserAddress?: Address;
     mocImplAddress?: Address;
     bes?: BigNumberish;
-    bmulcdj?: BigNumberish;
   } = {}) => {
-    return mocSettlement.initialize(mocGovernorAddress, mocPauserAddress, mocImplAddress, bes, bmulcdj);
+    return mocSettlement.initialize(mocGovernorAddress, mocPauserAddress, mocImplAddress, bes);
   };
 }
 
