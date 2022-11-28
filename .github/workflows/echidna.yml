@@ -26,7 +26,7 @@ jobs:
     - name: Run Echidna
       uses: crytic/echidna-action@v2
       with:
-        solc-version: 0.7.6
+        solc-version: 0.8.17
         files: .
         contract: EchidnaMocCoreTester
         crytic-args: --hardhat-ignore-compile
