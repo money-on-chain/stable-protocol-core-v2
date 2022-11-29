@@ -61,7 +61,7 @@ contract Stoppable is Governed {
     /**
      * @notice Returns true if paused
      */
-    function paused() public view returns (bool) {
+    function paused() external view returns (bool) {
         return _paused;
     }
 
@@ -69,7 +69,7 @@ contract Stoppable is Governed {
      * @notice Called by the owner to pause, triggers stopped state
      * @dev Should only be called by the pauser and when it is stoppable
      */
-    function pause() public notPaused {
+    function pause() external notPaused {
         if (msg.sender != pauser) revert OnlyPauser();
         if (!stoppable) revert Unstoppable();
         _paused = true;
@@ -79,7 +79,7 @@ contract Stoppable is Governed {
     /**
      * @notice Called by the owner to unpause, returns to normal state
      */
-    function unpause() public onlyPaused {
+    function unpause() external onlyPaused {
         if (msg.sender != pauser) revert OnlyPauser();
         _paused = false;
         emit Unpaused(msg.sender);
@@ -90,7 +90,7 @@ contract Stoppable is Governed {
      * it will no longer be so
      * @dev Should be called through governance
      */
-    function makeUnstoppable() public onlyAuthorizedChanger {
+    function makeUnstoppable() external onlyAuthorizedChanger {
         stoppable = false;
     }
 
@@ -99,7 +99,7 @@ contract Stoppable is Governed {
      * before making it unstoppable it will be paused again after calling this function
      * @dev Should be called through governance
      */
-    function makeStoppable() public onlyAuthorizedChanger {
+    function makeStoppable() external onlyAuthorizedChanger {
         stoppable = true;
     }
 
@@ -108,7 +108,7 @@ contract Stoppable is Governed {
      * @param newPauser_ Address of the new pauser
      * @dev Should be called through governance
      */
-    function setPauser(address newPauser_) public onlyAuthorizedChanger {
+    function setPauser(address newPauser_) external onlyAuthorizedChanger {
         pauser = newPauser_;
     }
 

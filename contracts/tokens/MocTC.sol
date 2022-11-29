@@ -52,7 +52,7 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
      *
      * - the caller must have the `PAUSER_ROLE`.
      */
-    function pause() public virtual onlyRole(PAUSER_ROLE) {
+    function pause() external virtual onlyRole(PAUSER_ROLE) {
         _pause();
     }
 

@@ -14,6 +14,11 @@ contract MocSettlement is MocUpgradable {
     // next settlement block
     uint256 public bns;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
@@ -40,8 +45,8 @@ contract MocSettlement is MocUpgradable {
         // check if it is in the corresponding block to execute the settlement
         if (block.number >= bns) {
             bns = block.number + bes;
-            mocCore.execSettlement();
             emit SettlementExecuted();
+            mocCore.execSettlement();
         }
     }
 

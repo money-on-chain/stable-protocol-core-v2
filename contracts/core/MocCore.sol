@@ -182,10 +182,10 @@ abstract contract MocCore is MocEma {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTC_, qACNeededtoMint, recipient_);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
-        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
 
@@ -215,10 +215,10 @@ abstract contract MocCore is MocEma {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(recipient_, qACtoRedeem, qACfee);
-        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
 
@@ -252,11 +252,11 @@ abstract contract MocCore is MocEma {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         // update bucket and mint
         _depositAndMintTP(i_, qTP_, qACNeededtoMint, recipient_);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
-        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
 
@@ -286,10 +286,10 @@ abstract contract MocCore is MocEma {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee);
         _withdrawAndBurnTP(i_, qTP_, qACtotalToRedeem, sender_);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(recipient_, qACtoRedeem, qACfee);
-        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
 
@@ -323,11 +323,11 @@ abstract contract MocCore is MocEma {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, recipient_);
         _depositAndMintTP(i_, qTP_, 0, recipient_);
         // transfers qAC to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
-        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
         return (qACtotalNeeded, qTCtoMint);
     }
 
@@ -378,11 +378,6 @@ abstract contract MocCore is MocEma {
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
 
-        _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
-        _withdrawAndBurnTP(i_, qTPtoRedeem, 0, sender_);
-
-        // transfers qAC to the recipient and distributes fees
-        _distOpResults(recipient_, qACtoRedeem, qACfee);
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
@@ -390,6 +385,12 @@ abstract contract MocCore is MocEma {
             uint256 qACtoRedeem_ = qACtoRedeem;
             emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem_, qACfee);
         }
+
+        _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
+        _withdrawAndBurnTP(i_, qTPtoRedeem, 0, sender_);
+
+        // transfers qAC to the recipient and distributes fees
+        _distOpResults(recipient_, qACtoRedeem, qACfee);
         return (qACtoRedeem, qTPtoRedeem);
     }
 
@@ -443,11 +444,6 @@ abstract contract MocCore is MocEma {
         qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
         if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
 
-        _depositAndMintTP(iTo_, qTPtoMint, 0, recipient_);
-        _withdrawAndBurnTP(iFrom_, qTP_, 0, sender_);
-
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
         // inside a block to avoid stack too deep error
         {
             uint8 iFrom = iFrom_;
@@ -455,6 +451,12 @@ abstract contract MocCore is MocEma {
             uint256 qTP = qTP_;
             emit TPSwappedForTP(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee);
         }
+
+        _depositAndMintTP(iTo_, qTPtoMint, 0, recipient_);
+        _withdrawAndBurnTP(iFrom_, qTP_, 0, sender_);
+
+        // transfer any qAC change to the sender and distribute fees
+        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
         return (qACfee, qTPtoMint);
     }
 
@@ -493,16 +495,18 @@ abstract contract MocCore is MocEma {
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACtotalToRedeem, swapTPforTCFee);
         if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
-        _withdrawAndBurnTP(i_, qTP_, 0, sender_);
-        _depositAndMintTC(qTCtoMint, 0, recipient_);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
+
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
             uint256 qTP = qTP_;
             emit TPSwappedForTC(i, sender_, recipient_, qTP, qTCtoMint, qACfee);
         }
+
+        _withdrawAndBurnTP(i_, qTP_, 0, sender_);
+        _depositAndMintTC(qTCtoMint, 0, recipient_);
+        // transfer any qAC change to the sender and distribute fees
+        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
         return (qACfee, qTCtoMint);
     }
 
@@ -550,16 +554,17 @@ abstract contract MocCore is MocEma {
         qACtotalNeeded = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
 
-        _withdrawAndBurnTC(qTC_, 0, sender_);
-        _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACtotalNeeded);
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
             uint256 qTC = qTC_;
             emit TCSwappedForTP(i, sender_, recipient_, qTC, qTPtoMint, qACtotalNeeded);
         }
+
+        _withdrawAndBurnTC(qTC_, 0, sender_);
+        _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
+        // transfer any qAC change to the sender and distribute fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACtotalNeeded);
         return (qACtotalNeeded, qTPtoMint);
     }
 
@@ -587,9 +592,9 @@ abstract contract MocCore is MocEma {
         tpTokens[i_].burn(sender_, qTP);
         // Given rounding errors, the last redeemer might receive a little less
         if (acBalanceOf(address(this)) < qACRedeemed) qACRedeemed = acBalanceOf(address(this));
+        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0);
         // transfer qAC to the recipient, reverts if fail
         acTransfer(recipient_, qACRedeemed);
-        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0);
     }
 
     /**
