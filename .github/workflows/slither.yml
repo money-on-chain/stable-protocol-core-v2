@@ -1,5 +1,5 @@
 name: Slither Analysis
-on: [push]
+on: [workflow_dispatch]
 env:
   INFURA_API_KEY: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
   MNEMONIC: "here is where your twelve words mnemonic should be put my friend"
