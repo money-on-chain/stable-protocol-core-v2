@@ -71,7 +71,7 @@ contract EchidnaMocCoreTester {
         mocCARC20.initialize(initializeParams);
 
         // initialize mocSettlement
-        mocSettlement.initialize(address(governor), msg.sender, mocCARC20, 30 days, 2);
+        mocSettlement.initialize(address(governor), msg.sender, mocCARC20, 30 days);
 
         // add a Pegged Token
         MocCore.PeggedTokenParams memory peggedTokenParams = MocCore.PeggedTokenParams({
@@ -111,25 +111,40 @@ contract EchidnaMocCoreTester {
             // we don't want to revert if echidna sends insufficient qAC
             qTC_ = qTC_ % ((qACmax_ * PRECISION) / tcPrice);
             uint256 acBalanceSenderBefore = acToken.balanceOf(address(this));
+            uint256 acBalanceMocFlowBefore = acToken.balanceOf(mocFeeFlow);
             uint256 tcBalanceSenderBefore = tcToken.balanceOf(address(this));
             uint256 coverageBefore = mocCARC20.getCglb();
             try mocCARC20.mintTC(qTC_, qACmax_) returns (uint256 qACspent) {
                 uint256 acBalanceSenderAfter = acToken.balanceOf(address(this));
+                uint256 acBalanceMocFlowAfter = acToken.balanceOf(mocFeeFlow);
                 uint256 tcBalanceSenderAfter = tcToken.balanceOf(address(this));
                 uint256 coverageAfter = mocCARC20.getCglb();
+                uint256 qACusedToMint = (qTC_ * tcPrice) / PRECISION;
+                uint256 fee = (qACusedToMint * mocCARC20.tcMintFee() * (PRECISION - mocCARC20.feeRetainer())) /
+                    (PRECISION * PRECISION);
 
+                // assert: qACspent should be qACusedToMint + qAC fee
+                assert(qACspent == (qACusedToMint * (PRECISION + mocCARC20.tcMintFee())) / PRECISION);
                 // assert: echidna AC balance should decrease by qAC spent
                 assert(acBalanceSenderAfter == acBalanceSenderBefore - qACspent);
+                // assert: Moc Flow balance should increase by qAC fee
+                assert(acBalanceMocFlowAfter - acBalanceMocFlowBefore - fee <= 1);
                 // assert: echidna TC balance should increase by qTC
                 assert(tcBalanceSenderAfter == tcBalanceSenderBefore + qTC_);
                 // assert: during mintTC operation coverage always should increase
                 // use tolerance 1 because possible rounding errors
                 assert(coverageAfter - coverageBefore < 1);
+                // assert: after mintTC operation coverage always should be above protected threshold
+                assert(coverageAfter >= mocCARC20.protThrld());
             } catch {}
         }
     }
 
     function _deployProxy(address implementation) internal returns (address) {
         return address(new ERC1967Proxy(implementation, ""));
+    }
+
+    function echidna_governor() public view returns (bool) {
+        return address(mocCARC20.governor()) == address(governor);
     }
 }

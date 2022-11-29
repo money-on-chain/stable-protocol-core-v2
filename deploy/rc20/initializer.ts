@@ -88,13 +88,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   );
 
   await waitForTxConfirmation(
-    MocSettlement.initialize(
-      governorAddress,
-      pauserAddress,
-      mocCARC20.address,
-      settlementParams.bes,
-      settlementParams.bmulcdj,
-    ),
+    MocSettlement.initialize(governorAddress, pauserAddress, mocCARC20.address, settlementParams.bes),
   );
 
   return hre.network.live; // prevents re execution on live networks
