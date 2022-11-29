@@ -128,6 +128,7 @@ contract EchidnaMocCoreTester {
                 // assert: echidna AC balance should decrease by qAC spent
                 assert(acBalanceSenderAfter == acBalanceSenderBefore - qACspent);
                 // assert: Moc Flow balance should increase by qAC fee
+                // use tolerance 1 because possible rounding errors
                 assert(acBalanceMocFlowAfter - acBalanceMocFlowBefore - fee <= 1);
                 // assert: echidna TC balance should increase by qTC
                 assert(tcBalanceSenderAfter == tcBalanceSenderBefore + qTC_);
@@ -142,9 +143,5 @@ contract EchidnaMocCoreTester {
 
     function _deployProxy(address implementation) internal returns (address) {
         return address(new ERC1967Proxy(implementation, ""));
-    }
-
-    function echidna_governor() public view returns (bool) {
-        return address(mocCARC20.governor()) == address(governor);
     }
 }
