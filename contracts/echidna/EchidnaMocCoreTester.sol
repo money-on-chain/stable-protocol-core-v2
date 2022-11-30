@@ -2,7 +2,6 @@ pragma solidity ^0.8.17;
 
 import "../collateral/collateralBag/MocCAWrapper.sol";
 import "../collateral/rc20/MocCARC20.sol";
-import "../MocSettlement.sol";
 import "../tokens/MocTC.sol";
 import "../tokens/MocRC20.sol";
 import "../mocks/upgradeability/GovernorMock.sol";
@@ -31,7 +30,6 @@ contract EchidnaMocCoreTester {
         mocAppreciationBeneficiary = address(2);
         governor = new GovernorMock();
         acToken = new ERC20Mock();
-        mocSettlement = MocSettlement(_deployProxy(address(new MocSettlement())));
         tcToken = MocTC(_deployProxy(address(new MocTC())));
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
 
@@ -42,7 +40,6 @@ contract EchidnaMocCoreTester {
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
                 tcTokenAddress: address(tcToken),
-                mocSettlementAddress: address(mocSettlement),
                 mocFeeFlowAddress: mocFeeFlow,
                 mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiary,
                 protThrld: 2 * PRECISION,
@@ -62,16 +59,14 @@ contract EchidnaMocCoreTester {
             initializeBaseBucketParams: initializeBaseBucketParams,
             governorAddress: address(governor),
             pauserAddress: msg.sender,
-            emaCalculationBlockSpan: 1 days
+            emaCalculationBlockSpan: 1 days,
+            bes: 30 days
         });
         MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
             initializeCoreParams: initializeCoreParams,
             acTokenAddress: address(acToken)
         });
         mocCARC20.initialize(initializeParams);
-
-        // initialize mocSettlement
-        mocSettlement.initialize(address(governor), msg.sender, mocCARC20, 30 days);
 
         // add a Pegged Token
         MocCore.PeggedTokenParams memory peggedTokenParams = MocCore.PeggedTokenParams({

@@ -4,7 +4,7 @@ import { MocCARC20__factory } from "../../../../typechain";
 import { GAS_LIMIT_PATCH, deployCollateralToken } from "../../../helpers/utils";
 import { getNetworkConfig } from "../../../../scripts/utils";
 
-const { coreParams, feeParams } = getNetworkConfig({ network: "hardhat" });
+const { coreParams, feeParams, settlementParams } = getNetworkConfig({ network: "hardhat" });
 
 describe("Feature: Check MocCARC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
@@ -33,7 +33,6 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
         initializeCoreParams: {
           initializeBaseBucketParams: {
             tcTokenAddress: mocTC.address,
-            mocSettlementAddress: deployer,
             mocFeeFlowAddress: deployer,
             mocAppreciationBeneficiaryAddress: deployer,
             protThrld: coreParams.protThrld,
@@ -52,6 +51,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
           governorAddress: governorMock.address,
           pauserAddress: deployer,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          bes: settlementParams.bes,
         },
         acTokenAddress: deployer,
       };

@@ -4,7 +4,6 @@ import "../interfaces/IMocRC20.sol";
 import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
-import "../MocSettlement.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
@@ -41,8 +40,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     struct InitializeBaseBucketParams {
         // Collateral Token contract address
         address tcTokenAddress;
-        // MocSettlement contract address
-        address mocSettlementAddress;
         // Moc Fee Flow contract address
         address mocFeeFlowAddress;
         // moc appreciation beneficiary Address
@@ -131,8 +128,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     address public mocFeeFlowAddress;
     // Moc appreciation beneficiary address
     address public mocAppreciationBeneficiaryAddress;
-    // MocSettlement contract
-    MocSettlement public mocSettlement;
 
     // ------- Storage Coverage Tracking -------
 
@@ -162,18 +157,11 @@ abstract contract MocBaseBucket is MocUpgradable {
         _;
     }
 
-    /// @notice functions with this modifier only can be called by settlement contract
-    modifier onlySettlement() {
-        if (msg.sender != address(mocSettlement)) revert OnlySettlement();
-        _;
-    }
-
     // ------- Initializer -------
     /**
      * @notice contract initializer
      * @param initializeBaseBucketParams_ contract initializer params
      * @dev   tcTokenAddress Collateral Token contract address
-     *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected coverage threshold [PREC]
@@ -209,7 +197,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
         mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
         mocAppreciationBeneficiaryAddress = initializeBaseBucketParams_.mocAppreciationBeneficiaryAddress;
-        mocSettlement = MocSettlement(initializeBaseBucketParams_.mocSettlementAddress);
         protThrld = initializeBaseBucketParams_.protThrld;
         liqThrld = initializeBaseBucketParams_.liqThrld;
         feeRetainer = initializeBaseBucketParams_.feeRetainer;

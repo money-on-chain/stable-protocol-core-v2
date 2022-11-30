@@ -6,8 +6,6 @@ import {
   MocCARC20__factory,
   MocRC20,
   MocRC20__factory,
-  MocSettlement,
-  MocSettlement__factory,
   PriceProviderMock,
 } from "../../typechain";
 import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
@@ -17,7 +15,6 @@ export function fixtureDeployedMocRC20(
   tpParams?: any,
 ): () => Promise<{
   mocImpl: MocCARC20;
-  mocSettlement: MocSettlement;
   mocCollateralToken: MocRC20;
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
@@ -30,13 +27,6 @@ export function fixtureDeployedMocRC20(
     const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
     if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
     const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
-
-    const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCARC20Proxy");
-    if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCARC20Proxy deployed.");
-    const mocSettlement: MocSettlement = MocSettlement__factory.connect(
-      deployedMocSettlementContractProxy.address,
-      signer,
-    );
 
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
     if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
@@ -54,7 +44,6 @@ export function fixtureDeployedMocRC20(
 
     return {
       mocImpl,
-      mocSettlement,
       mocCollateralToken,
       mocPeggedTokens,
       priceProviders,

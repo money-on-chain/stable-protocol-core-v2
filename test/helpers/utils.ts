@@ -209,7 +209,6 @@ export const ERRORS = {
   NOT_WHEN_PAUSED: "NotWhenPaused",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
   ONLY_PAUSER: "OnlyPauser",
-  ONLY_SETTLEMENT: "OnlySettlement",
   ONLY_WHILE_PAUSED: "OnlyWhilePaused",
   PEGGED_TOKEN_ALREADY_ADDED: "PeggedTokenAlreadyAdded",
   QAC_BELOW_MINIMUM: "QacBelowMinimumRequired",

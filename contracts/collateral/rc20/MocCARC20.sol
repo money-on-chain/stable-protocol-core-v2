@@ -31,7 +31,6 @@ contract MocCARC20 is MocCore {
      *      pauserAddress The address that is authorized to pause this contract
      *      acTokenAddress Collateral Asset Token contract address
      *      tcTokenAddress Collateral Token contract address
-     *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]

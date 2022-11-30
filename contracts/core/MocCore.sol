@@ -1,14 +1,14 @@
 pragma solidity ^0.8.17;
 
 import "../interfaces/IMocRC20.sol";
-import "./MocEma.sol";
+import "./MocSettlement.sol";
 
 /**
  * @title MocCore
  * @notice MocCore nucleates all the basic MoC functionality and tool set. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
-abstract contract MocCore is MocEma {
+abstract contract MocCore is MocSettlement {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
@@ -94,6 +94,8 @@ abstract contract MocCore is MocEma {
         address pauserAddress;
         // amount of blocks to wait between Pegged ema calculation
         uint256 emaCalculationBlockSpan;
+        // number of blocks between settlements
+        uint256 bes;
     }
 
     struct PeggedTokenParams {
@@ -121,7 +123,6 @@ abstract contract MocCore is MocEma {
      *        governorAddress The address that will define when a change contract is authorized
      *        pauserAddress_ The address that is authorized to pause this contract
      *        tcTokenAddress Collateral Token contract address
-     *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected state threshold [PREC]
@@ -134,11 +135,13 @@ abstract contract MocCore is MocEma {
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]]
      *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
+     *        bes number of blocks between settlements
      */
     function __MocCore_init(InitializeCoreParams calldata initializeCoreParams_) internal onlyInitializing {
         __MocUpgradable_init(initializeCoreParams_.governorAddress, initializeCoreParams_.pauserAddress);
         __MocBaseBucket_init_unchained(initializeCoreParams_.initializeBaseBucketParams);
         __MocEma_init_unchained(initializeCoreParams_.emaCalculationBlockSpan);
+        __MocSettlement_init_unchained(initializeCoreParams_.bes);
     }
 
     // ------- Internal Functions -------
@@ -963,7 +966,7 @@ abstract contract MocCore is MocEma {
      * @notice this function is executed during settlement.
      *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
-    function execSettlement() external onlySettlement notPaused {
+    function _execSettlement() internal override {
         _distributeSuccessFee();
     }
 
