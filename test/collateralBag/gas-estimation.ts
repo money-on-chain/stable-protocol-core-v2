@@ -2,6 +2,7 @@ import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation.behavior";
 import { fixtureDeployedMocCABag } from "./fixture";
 
+// Gets excluded from coverage by regEx "gas estimation"
 describe("Feature: MocCABag gas estimation", function () {
   describe("GIVEN a MocCABag implementation deployed", function () {
     const peggedTokenAmount = 15;
