@@ -14,6 +14,7 @@ const mintTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_1 = 1;
+  const TP_4 = 4;
   const TP_NON_EXISTENT = 5;
   const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
 
@@ -177,9 +178,8 @@ const mintTPBehavior = function () {
             expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
           });
           it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-            // assert with tolerance because rounding error in getTPAvailableToMint
-            assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0", 20);
-            assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_1), "TP 1", 20);
+            assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+            assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_1), "TP 1");
           });
         });
         describe("AND alice sends 2350000(exceeded amount) Asset to mint 23500 TP", function () {
@@ -583,11 +583,11 @@ const mintTPBehavior = function () {
           });
         });
 
-        describe("AND alice asks for mint TP 1", function () {
-          it("THEN there are 3914.12 TP 1 available to mint", async function () {
-            assertPrec("3914.123797408471588042", await mocContracts.mocImpl.getTPAvailableToMint(TP_1));
+        describe("AND alice asks for mint TP 1, which ctargemaTP is smaller than ctargemaCA", function () {
+          it("THEN there are 4220.76 TP 1 available to mint", async function () {
+            assertPrec("4220.766687516754535893", await mocContracts.mocImpl.getTPAvailableToMint(TP_1));
           });
-          describe("WHEN Alice tries to mint 3914.13 TP1", function () {
+          describe("WHEN Alice tries to mint 4220.77 TP1", function () {
             /*  
               nAC = 3100    
               nTP0 = 23500
@@ -595,16 +595,15 @@ const mintTPBehavior = function () {
               lckAC = 100
               ctargmeaCA = 5.54
               ctargemaTP1 = 4.166
-              => TP 1 available to mint = 3914.123797
+              => TP 1 available to mint = 4220.76
             */
             it("THEN tx reverts because there is not enough TP1 to mint", async function () {
-              await expect(mocFunctions.mintTP({ i: TP_1, from: alice, qTP: 3914.13 })).to.be.revertedWithCustomError(
-                mocContracts.mocImpl,
-                ERRORS.INSUFFICIENT_TP_TO_MINT,
-              );
+              await expect(
+                mocFunctions.mintTP({ i: TP_1, from: alice, qTP: "4220.766687516754535894" }),
+              ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
             });
           });
-          describe("WHEN Alice mints 3914.12 TP1", function () {
+          describe("WHEN Alice mints 4220.76 TP1", function () {
             /*  
               nAC = 3100    
               nTP0 = 23500
@@ -612,17 +611,17 @@ const mintTPBehavior = function () {
               lckAC = 100
               ctargmeaCA = 5.54
               ctargemaTP1 = 4.166
-              => TP 1 available to mint = 3914.123797
+              => TP 1 available to mint = 4220.76
             */
             let alicePrevTPBalance: Balance;
             beforeEach(async function () {
               alicePrevTPBalance = await mocFunctions.tpBalanceOf(TP_1, alice);
-              await mocFunctions.mintTP({ i: TP_1, from: alice, qTP: "3914.123797408471588042" });
+              await mocFunctions.mintTP({ i: TP_1, from: alice, qTP: "4220.766687516754535893" });
             });
-            it("THEN alice receives 3914.12 TP1", async function () {
+            it("THEN alice receives 4220.76 TP1", async function () {
               const aliceActualTPBalance = await mocFunctions.tpBalanceOf(TP_1, alice);
               const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
-              assertPrec("3914.123797408471588042", diff);
+              assertPrec("4220.766687516754535893", diff);
             });
             it("THEN coverage is still above ctargemaCA", async function () {
               const actualCoverage = await mocContracts.mocImpl.getCglb();
@@ -630,10 +629,8 @@ const mintTPBehavior = function () {
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-              // TODO: review this, now are failing because ctargemaCA is updated after
-              // minting TP 1, so you have new TPs available to mint
-              //assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
-              //assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_1));
+              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_1), "TP 1");
             });
           });
           describe("WHEN alice mints 525 TP 1", function () {
@@ -691,6 +688,57 @@ const mintTPBehavior = function () {
                   pEth(100 * 1.001),
                   pEth(100 * 0.001),
                 );
+            });
+          });
+        });
+        describe("AND alice asks for mint TP 4, which ctargemaTP is greater than ctargemaCA", function () {
+          it("THEN there are 2545.85 TP 4 available to mint", async function () {
+            assertPrec("2545.859271835502735400", await mocContracts.mocImpl.getTPAvailableToMint(TP_4));
+          });
+          describe("WHEN Alice tries to mint 2545.86 TP4", function () {
+            /*  
+              nAC = 3100    
+              nTP0 = 23500
+              nTP1 = 0
+              lckAC = 100
+              ctargmeaCA = 5.54
+              ctargemaTP4 = 6.25
+              => TP 4 available to mint = 2545.85
+            */
+            it("THEN tx reverts because there is not enough TP4 to mint", async function () {
+              await expect(
+                mocFunctions.mintTP({ i: TP_4, from: alice, qTP: "2545.859271835502735401" }),
+              ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
+            });
+          });
+          describe("WHEN Alice mints 2545.85 TP4", function () {
+            /*  
+              nAC = 3100    
+              nTP0 = 23500
+              nTP1 = 0
+              lckAC = 100
+              ctargmeaCA = 5.54
+              ctargemaTP4 = 6.25
+              => TP 4 available to mint = 2545.85
+            */
+            let alicePrevTPBalance: Balance;
+            beforeEach(async function () {
+              alicePrevTPBalance = await mocFunctions.tpBalanceOf(TP_4, alice);
+              await mocFunctions.mintTP({ i: TP_4, from: alice, qTP: "2545.859271835502735400" });
+            });
+            it("THEN alice receives 2545.85 TP4", async function () {
+              const aliceActualTPBalance = await mocFunctions.tpBalanceOf(TP_4, alice);
+              const diff = aliceActualTPBalance.sub(alicePrevTPBalance);
+              assertPrec("2545.859271835502735400", diff);
+            });
+            it("THEN coverage is still above ctargemaCA", async function () {
+              const actualCoverage = await mocContracts.mocImpl.getCglb();
+              const actualCtargemaCA = await mocContracts.mocImpl.callStatic.calcCtargemaCA();
+              expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
+            });
+            it("THEN there are 0 TP 0 and TP 4 available to mint", async function () {
+              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_4), "TP 4");
             });
           });
         });

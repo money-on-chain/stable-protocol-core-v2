@@ -351,6 +351,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 lckACemaAdjusted) {
+        if (ctargemaCA_ >= _getCglb(lckAC_, nACgain_)) return 0;
         // [PREC] = [N] * [PREC] - [PREC] * [N]
         return _getTotalACavailable(nACgain_) * PRECISION - ctargemaCA_ * lckAC_;
     }
@@ -389,17 +390,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 tpAvailableToMint) {
-        // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
-        // TODO: rounding error
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 pACtpEmaAdjusted = (ctargemaCA_ * pACtp_) / ctargemaTP_;
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 num = _mulPrec(lckACemaAdjusted, pACtpEmaAdjusted);
-        // [PREC] = [PREC] - [PREC]
-        uint256 den = ctargemaCA_ - ONE;
-        // [N] = [PREC] / [PREC]
-        return num / den;
+        // [N] = ([PREC] * [PREC] / [PREC]) / [PREC]
+        return ((_getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_) * pACtp_) / (ctargemaTP_ - ONE)) / PRECISION;
     }
 
     /**
