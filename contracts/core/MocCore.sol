@@ -182,10 +182,10 @@ abstract contract MocCore is MocEma {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTC_, qACNeededtoMint, recipient_);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
-        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
 
@@ -215,10 +215,10 @@ abstract contract MocCore is MocEma {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(recipient_, qACtoRedeem, qACfee);
-        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
 
@@ -252,11 +252,11 @@ abstract contract MocCore is MocEma {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         // update bucket and mint
         _depositAndMintTP(i_, qTP_, qACNeededtoMint, recipient_);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
-        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
 
@@ -286,10 +286,10 @@ abstract contract MocCore is MocEma {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
+        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee);
         _withdrawAndBurnTP(i_, qTP_, qACtotalToRedeem, sender_);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(recipient_, qACtoRedeem, qACfee);
-        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee);
         return qACtoRedeem;
     }
 
@@ -323,11 +323,11 @@ abstract contract MocCore is MocEma {
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, recipient_);
         _depositAndMintTP(i_, qTP_, 0, recipient_);
         // transfers qAC to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
-        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
         return (qACtotalNeeded, qTCtoMint);
     }
 
@@ -378,11 +378,6 @@ abstract contract MocCore is MocEma {
         qACtoRedeem = qACtotalToRedeem - qACfee;
         if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
 
-        _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
-        _withdrawAndBurnTP(i_, qTPtoRedeem, 0, sender_);
-
-        // transfers qAC to the recipient and distributes fees
-        _distOpResults(recipient_, qACtoRedeem, qACfee);
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
@@ -390,6 +385,12 @@ abstract contract MocCore is MocEma {
             uint256 qACtoRedeem_ = qACtoRedeem;
             emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem_, qACfee);
         }
+
+        _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
+        _withdrawAndBurnTP(i_, qTPtoRedeem, 0, sender_);
+
+        // transfers qAC to the recipient and distributes fees
+        _distOpResults(recipient_, qACtoRedeem, qACfee);
         return (qACtoRedeem, qTPtoRedeem);
     }
 
@@ -443,11 +444,6 @@ abstract contract MocCore is MocEma {
         qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
         if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
 
-        _depositAndMintTP(iTo_, qTPtoMint, 0, recipient_);
-        _withdrawAndBurnTP(iFrom_, qTP_, 0, sender_);
-
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
         // inside a block to avoid stack too deep error
         {
             uint8 iFrom = iFrom_;
@@ -455,6 +451,12 @@ abstract contract MocCore is MocEma {
             uint256 qTP = qTP_;
             emit TPSwappedForTP(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee);
         }
+
+        _depositAndMintTP(iTo_, qTPtoMint, 0, recipient_);
+        _withdrawAndBurnTP(iFrom_, qTP_, 0, sender_);
+
+        // transfer any qAC change to the sender and distribute fees
+        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
         return (qACfee, qTPtoMint);
     }
 
@@ -493,16 +495,18 @@ abstract contract MocCore is MocEma {
         // [N] = [N] * [PREC] / [PREC]
         qACfee = _mulPrec(qACtotalToRedeem, swapTPforTCFee);
         if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
-        _withdrawAndBurnTP(i_, qTP_, 0, sender_);
-        _depositAndMintTC(qTCtoMint, 0, recipient_);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
+
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
             uint256 qTP = qTP_;
             emit TPSwappedForTC(i, sender_, recipient_, qTP, qTCtoMint, qACfee);
         }
+
+        _withdrawAndBurnTP(i_, qTP_, 0, sender_);
+        _depositAndMintTC(qTCtoMint, 0, recipient_);
+        // transfer any qAC change to the sender and distribute fees
+        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
         return (qACfee, qTCtoMint);
     }
 
@@ -550,16 +554,17 @@ abstract contract MocCore is MocEma {
         qACtotalNeeded = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
 
-        _withdrawAndBurnTC(qTC_, 0, sender_);
-        _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACtotalNeeded);
         // inside a block to avoid stack too deep error
         {
             uint8 i = i_;
             uint256 qTC = qTC_;
             emit TCSwappedForTP(i, sender_, recipient_, qTC, qTPtoMint, qACtotalNeeded);
         }
+
+        _withdrawAndBurnTC(qTC_, 0, sender_);
+        _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
+        // transfer any qAC change to the sender and distribute fees
+        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACtotalNeeded);
         return (qACtotalNeeded, qTPtoMint);
     }
 
@@ -587,9 +592,9 @@ abstract contract MocCore is MocEma {
         tpTokens[i_].burn(sender_, qTP);
         // Given rounding errors, the last redeemer might receive a little less
         if (acBalanceOf(address(this)) < qACRedeemed) qACRedeemed = acBalanceOf(address(this));
+        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0);
         // transfer qAC to the recipient, reverts if fail
         acTransfer(recipient_, qACRedeemed);
-        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0);
     }
 
     /**
@@ -611,6 +616,101 @@ abstract contract MocCore is MocEma {
     }
 
     // ------- Public Functions -------
+
+    /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return qACRedeemed amount of AC sent to sender
+     */
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
+        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACRedeemed amount of AC sent to 'recipient_'
+     */
+    function redeemTCto(uint256 qTC_, uint256 qACmin_, address recipient_) external returns (uint256 qACRedeemed) {
+        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and receives Collateral Asset
+     * @param i_ Pegged Token index to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return qACRedeemed amount of AC sent to sender
+     */
+    function redeemTP(uint8 i_, uint256 qTP_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Collateral Asset
+     * @param i_ Pegged Token index to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACRedeemed amount of AC sent to 'recipient_'
+     */
+    function redeemTPto(
+        uint8 i_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACRedeemed) {
+        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
+     * @return qACRedeemed amount of AC sent to the sender
+     * @return qTPRedeemed amount of Pegged Token redeemed
+     */
+    function redeemTCandTP(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed) {
+        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, msg.sender);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACRedeemed amount of AC sent to the `recipient_`
+     * @return qTPRedeemed amount of Pegged Token redeemed
+     */
+    function redeemTCandTPto(
+        uint8 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed) {
+        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, recipient_);
+    }
 
     /**
      * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives

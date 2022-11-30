@@ -98,27 +98,6 @@ contract MocCARC20 is MocCore {
     }
 
     /**
-     * @notice caller sends Collateral Token and receives Collateral Asset
-     * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
-     * @return qACRedeemed amount of AC sent to sender
-     */
-    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
-    }
-
-    /**
-     * @notice caller sends Collateral Token and recipient receives Collateral Asset
-     * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
-     * @param recipient_ address who receives the Collateral Asset
-     * @return qACRedeemed amount of AC sent to 'recipient_'
-     */
-    function redeemTCto(uint256 qTC_, uint256 qACmin_, address recipient_) external returns (uint256 qACRedeemed) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
-    }
-
-    /**
      * @notice caller sends Collateral Asset and receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract 
      * @param i_ Pegged Token index to mint
@@ -148,34 +127,6 @@ contract MocCARC20 is MocCore {
     ) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
-    }
-
-    /**
-     * @notice caller sends Pegged Token and receives Collateral Asset
-     * @param i_ Pegged Token index to redeem
-     * @param qTP_ amount of Pegged Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
-     * @return qACRedeemed amount of AC sent to sender
-     */
-    function redeemTP(uint8 i_, uint256 qTP_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
-    }
-
-    /**
-     * @notice caller sends Pegged Token and recipient receives Collateral Asset
-     * @param i_ Pegged Token index to redeem
-     * @param qTP_ amount of Pegged Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
-     * @param recipient_ address who receives the Collateral Asset
-     * @return qACRedeemed amount of AC sent to 'recipient_'
-     */
-    function redeemTPto(
-        uint8 i_,
-        uint256 qTP_,
-        uint256 qACmin_,
-        address recipient_
-    ) external returns (uint256 qACRedeemed) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
     }
 
     /**
@@ -222,52 +173,6 @@ contract MocCARC20 is MocCore {
     ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTCandTPto(i_, qTP_, qACmax_, msg.sender, recipient_);
-    }
-
-    /**
-     * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
-     *  This operation is done without checking coverage
-     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
-     *  and global coverage are not modified.
-     *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to redeem
-     * @param qTP_ maximum amount of Pegged Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
-     * @return qACRedeemed amount of AC sent to the sender
-     * @return qTPRedeemed amount of Pegged Token redeemed
-     */
-    function redeemTCandTP(
-        uint8 i_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qACmin_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed) {
-        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, msg.sender);
-    }
-
-    /**
-     * @notice caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset
-     *  This operation is done without checking coverage
-     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
-     *  and global coverage are not modified.
-     *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to redeem
-     * @param qTP_ maximum amount of Pegged Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
-     * @param recipient_ address who receives the Collateral Asset
-     * @return qACRedeemed amount of AC sent to the `recipient_`
-     * @return qTPRedeemed amount of Pegged Token redeemed
-     */
-    function redeemTCandTPto(
-        uint8 i_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qACmin_,
-        address recipient_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed) {
-        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, recipient_);
     }
 
     /**

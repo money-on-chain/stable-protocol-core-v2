@@ -76,7 +76,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
     /**
      * @notice Returns the Pegged Token Params configurations that's going to be edited
      */
-    function getPeggedTokenParams() public view returns (MocCore.PeggedTokenParams memory) {
+    function getPeggedTokenParams() external view returns (MocCore.PeggedTokenParams memory) {
         return peggedTokenParams;
     }
 

@@ -31,7 +31,7 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
     /**
      * @notice Returns the Pegged Token Params configurations that's going to be added
      */
-    function getPeggedTokenParams() public view returns (MocCore.PeggedTokenParams memory) {
+    function getPeggedTokenParams() external view returns (MocCore.PeggedTokenParams memory) {
         return peggedTokenParams;
     }
 

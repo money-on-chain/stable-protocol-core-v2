@@ -571,10 +571,10 @@ abstract contract MocBaseBucket is MocUpgradable {
     function evalLiquidation() external notPaused {
         if (liqEnabled && !liquidated && isLiquidationReached()) {
             liquidated = true;
+            emit ContractLiquidated();
             tcToken.pause();
             // Freeze current Peg Price given the AC available
             settleLiquidationPrices();
-            emit ContractLiquidated();
         }
     }
 
