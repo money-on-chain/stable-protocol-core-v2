@@ -1,5 +1,3 @@
-const shell = require("shelljs");
-
 // The environment variables are loaded in hardhat.config.ts
 const mnemonic = process.env.MNEMONIC;
 if (!mnemonic) {
@@ -8,10 +6,6 @@ if (!mnemonic) {
 
 module.exports = {
   istanbulReporter: ["html", "lcov", "cobertura"],
-  onIstanbulComplete: async function (_config) {
-    // We need to do this because solcover generates bespoke artifacts.
-    shell.rm("-rf", "./artifacts");
-  },
   providerOptions: {
     mnemonic,
   },
