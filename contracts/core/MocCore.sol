@@ -164,6 +164,14 @@ abstract contract MocCore is MocSettlement {
     function acBalanceOf(address account) internal view virtual returns (uint256 balance);
 
     /**
+     * @notice hook before any AC reception involving operation
+     * @dev this function must be overridden by the AC implementation
+     * @param qAC_ amount of AC involved
+     */
+    /* solhint-disable-next-line no-empty-blocks */
+    function _onACNeededOperation(uint256 qAC_) internal virtual {}
+
+    /**
      * @notice mint Collateral Token in exchange for Collateral Asset
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
@@ -177,6 +185,7 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        _onACNeededOperation(qACmax_);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
         // calculates how many qAC are needed to mint TC and the qAC fee
@@ -241,6 +250,7 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        _onACNeededOperation(qACmax_);
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
@@ -317,6 +327,7 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
+        _onACNeededOperation(qACmax_);
         uint256 qACNeededtoMint;
         uint256 qACfee;
         uint256 pACtp = getPACtp(i_);
@@ -420,6 +431,7 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTPtoMint) {
+        _onACNeededOperation(qACmax_);
         if (iFrom_ == iTo_) revert InvalidValue();
         uint256 pACtpFrom = getPACtp(iFrom_);
         uint256 pACtpTo = getPACtp(iTo_);
@@ -482,6 +494,7 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTCtoMint) {
+        _onACNeededOperation(qACmax_);
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
@@ -532,6 +545,7 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTPtoMint) {
+        _onACNeededOperation(qACmax_);
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
