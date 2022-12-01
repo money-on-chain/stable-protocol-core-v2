@@ -196,9 +196,9 @@ const swapTCforTPBehavior = function () {
             .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(23500), pEth(100 * 0.01));
         });
       });
-      describe("AND there are 10000 TC more in the protocol", function () {
+      describe("AND there are 100000 TC more in the protocol", function () {
         beforeEach(async function () {
-          await mocFunctions.mintTC({ from: deployer, qTC: 10000 });
+          await mocFunctions.mintTC({ from: deployer, qTC: 100000 });
         });
         describe("WHEN alice tries to swap 3000.1 TC", function () {
           it("THEN tx reverts because alice doesn't have that much TC", async function () {
