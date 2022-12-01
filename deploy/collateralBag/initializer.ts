@@ -23,8 +23,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
-  const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
-  if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
+  const deployedTCContract = await deployments.getOrNull("CollateralTokenCABagProxy");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCABagProxy deployed.");
   const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
   const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
@@ -93,6 +93,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 };
 export default deployFunc;
 
-deployFunc.id = "Initialized_CARBag"; // id required to prevent re-execution
-deployFunc.tags = ["InitializerCARBag"];
-deployFunc.dependencies = ["MocCABag", "CollateralTokenCARBag", "MocCAWrapper", "WrappedCollateralAsset"];
+deployFunc.id = "Initialized_CABag"; // id required to prevent re-execution
+deployFunc.tags = ["InitializerCABag"];
+deployFunc.dependencies = ["MocCABag", "CollateralTokenCABag", "MocCAWrapper", "WrappedCollateralAsset"];

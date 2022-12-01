@@ -39,8 +39,8 @@ export function fixtureDeployedMocCABag(
     if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
     const mocWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
 
-    const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
-    if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
+    const deployedTCContract = await deployments.getOrNull("CollateralTokenCABagProxy");
+    if (!deployedTCContract) throw new Error("No CollateralTokenCABagProxy deployed.");
     const mocCollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
     const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAssetProxy");
