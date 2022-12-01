@@ -997,7 +997,7 @@ abstract contract MocCore is MocSettlement {
 
         IPriceProvider priceProvider = IPriceProvider(peggedTokenParams_.priceProviderAddress);
         if (peggedTokenIndex[address(tpToken)].exists) revert PeggedTokenAlreadyAdded();
-        uint8 newTPindex = uint8(tpTokens.length);
+        uint256 newTPindex = uint256(tpTokens.length);
         peggedTokenIndex[address(tpToken)] = PeggedTokenIndex({ index: newTPindex, exists: true });
 
         // set Pegged Token address

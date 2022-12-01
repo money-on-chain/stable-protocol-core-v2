@@ -32,7 +32,7 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     struct PeggedTokenIndex {
         // Pegged Token index
-        uint8 index;
+        uint256 index;
         // true if Pegged Token exists
         bool exists;
     }
