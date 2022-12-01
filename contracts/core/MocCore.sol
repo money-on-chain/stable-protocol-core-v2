@@ -13,7 +13,7 @@ abstract contract MocCore is MocSettlement {
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
     event TPMinted(
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -21,7 +21,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee_
     );
     event TPRedeemed(
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -29,8 +29,8 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee_
     );
     event TPSwappedForTP(
-        uint8 indexed iFrom_,
-        uint8 iTo_,
+        uint256 indexed iFrom_,
+        uint256 iTo_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTPfrom_,
@@ -38,7 +38,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee_
     );
     event TPSwappedForTC(
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -46,7 +46,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee_
     );
     event TCSwappedForTP(
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -54,7 +54,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee_
     );
     event TCandTPRedeemed(
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -63,7 +63,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee_
     );
     event TCandTPMinted(
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -71,7 +71,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qAC_,
         uint256 qACfee_
     );
-    event PeggedTokenChange(uint8 indexed i_, PeggedTokenParams peggedTokenParams_);
+    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     // ------- Custom Errors -------
     error PeggedTokenAlreadyAdded();
@@ -235,7 +235,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function _mintTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmax_,
         address sender_,
@@ -273,7 +273,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACtoRedeem amount of AC sent to `recipient_`
      */
     function _redeemTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmin_,
         address sender_,
@@ -311,7 +311,7 @@ abstract contract MocCore is MocSettlement {
      * @return qTCtoMint amount of Collateral Token minted
      */
     function _mintTCandTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmax_,
         address sender_,
@@ -350,7 +350,7 @@ abstract contract MocCore is MocSettlement {
      * @return qTPtoRedeem amount of Pegged Token redeemed
      */
     function _redeemTCandTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
@@ -383,7 +383,7 @@ abstract contract MocCore is MocSettlement {
 
         // inside a block to avoid stack too deep error
         {
-            uint8 i = i_;
+            uint256 i = i_;
             uint256 qTC = qTC_;
             uint256 qACtoRedeem_ = qACtoRedeem;
             emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem_, qACfee);
@@ -412,8 +412,8 @@ abstract contract MocCore is MocSettlement {
      * @return qTPtoMint amount of Pegged Token minted
      */
     function _swapTPforTPto(
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -449,8 +449,8 @@ abstract contract MocCore is MocSettlement {
 
         // inside a block to avoid stack too deep error
         {
-            uint8 iFrom = iFrom_;
-            uint8 iTo = iTo_;
+            uint256 iFrom = iFrom_;
+            uint256 iTo = iTo_;
             uint256 qTP = qTP_;
             emit TPSwappedForTP(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee);
         }
@@ -475,7 +475,7 @@ abstract contract MocCore is MocSettlement {
      * @return qTCtoMint amount of Collateral Token minted
      */
     function _swapTPforTCto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
@@ -501,7 +501,7 @@ abstract contract MocCore is MocSettlement {
 
         // inside a block to avoid stack too deep error
         {
-            uint8 i = i_;
+            uint256 i = i_;
             uint256 qTP = qTP_;
             emit TPSwappedForTC(i, sender_, recipient_, qTP, qTCtoMint, qACfee);
         }
@@ -525,7 +525,7 @@ abstract contract MocCore is MocSettlement {
      * @return qTPtoMint amount of Pegged Token minted
      */
     function _swapTCforTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -559,7 +559,7 @@ abstract contract MocCore is MocSettlement {
 
         // inside a block to avoid stack too deep error
         {
-            uint8 i = i_;
+            uint256 i = i_;
             uint256 qTC = qTC_;
             emit TCSwappedForTP(i, sender_, recipient_, qTC, qTPtoMint, qACtotalNeeded);
         }
@@ -580,7 +580,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
     function _liqRedeemTPTo(
-        uint8 i_,
+        uint256 i_,
         address sender_,
         address recipient_
     ) internal notPaused returns (uint256 qACRedeemed) {
@@ -648,7 +648,7 @@ abstract contract MocCore is MocSettlement {
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @return qACRedeemed amount of AC sent to sender
      */
-    function redeemTP(uint8 i_, uint256 qTP_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
+    function redeemTP(uint256 i_, uint256 qTP_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
         return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
     }
 
@@ -661,7 +661,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACRedeemed amount of AC sent to 'recipient_'
      */
     function redeemTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
@@ -683,7 +683,7 @@ abstract contract MocCore is MocSettlement {
      * @return qTPRedeemed amount of Pegged Token redeemed
      */
     function redeemTCandTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_
@@ -706,7 +706,7 @@ abstract contract MocCore is MocSettlement {
      * @return qTPRedeemed amount of Pegged Token redeemed
      */
     function redeemTCandTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
@@ -721,7 +721,7 @@ abstract contract MocCore is MocSettlement {
      * @param i_ Pegged Token index
      * @return qACRedeemed amount of AC sent to sender
      */
-    function liqRedeemTP(uint8 i_) external returns (uint256 qACRedeemed) {
+    function liqRedeemTP(uint256 i_) external returns (uint256 qACRedeemed) {
         return _liqRedeemTPTo(i_, msg.sender, msg.sender);
     }
 
@@ -732,7 +732,7 @@ abstract contract MocCore is MocSettlement {
      * @param recipient_ address who receives the AC
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
-    function liqRedeemTPto(uint8 i_, address recipient_) external returns (uint256 qACRedeemed) {
+    function liqRedeemTPto(uint256 i_, address recipient_) external returns (uint256 qACRedeemed) {
         return _liqRedeemTPTo(i_, msg.sender, recipient_);
     }
 
@@ -792,7 +792,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforMintTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 pACtp_
     ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
@@ -815,7 +815,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforRedeemTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 pACtp_
     ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
@@ -868,7 +868,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforRedeemTCandTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 pACtp_,
@@ -915,7 +915,7 @@ abstract contract MocCore is MocSettlement {
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      */
     function _evalTPavailableToMint(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 pACtp_,
         uint256 ctargemaCA_,
@@ -935,7 +935,7 @@ abstract contract MocCore is MocSettlement {
         uint256 mocGain;
         uint256 pegAmount = pegContainer.length;
         uint256[] memory tpToMint = new uint256[](pegAmount);
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+        for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = getPACtp(i);
             _updateTPtracking(i, pACtp);
             int256 iou = tpiou[i];
@@ -1039,7 +1039,7 @@ abstract contract MocCore is MocSettlement {
     function editPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
         PeggedTokenIndex memory ptIndex = peggedTokenIndex[peggedTokenParams_.tpTokenAddress];
         if (!ptIndex.exists) revert InvalidAddress();
-        uint8 i = ptIndex.index;
+        uint256 i = ptIndex.index;
         // if being edited, verifies it is a valid priceProvider
         if (peggedTokenParams_.priceProviderAddress != address(pegContainer[i].priceProvider)) {
             IPriceProvider priceProvider = IPriceProvider(peggedTokenParams_.priceProviderAddress);
@@ -1099,7 +1099,7 @@ abstract contract MocCore is MocSettlement {
      * @param i_ Pegged Token index
      * @return tpAvailableToMint [N]
      */
-    function getTPAvailableToMint(uint8 i_) external view returns (uint256 tpAvailableToMint) {
+    function getTPAvailableToMint(uint256 i_) external view returns (uint256 tpAvailableToMint) {
         uint256 pACtp = getPACtp(i_);
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         return _getTPAvailableToMint(_getCtargemaCA(), _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
@@ -1131,7 +1131,7 @@ abstract contract MocCore is MocSettlement {
      * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function getQACforRedeemTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_
     ) external view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));

@@ -104,7 +104,7 @@ contract MocCARC20 is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACtotalNeeded amount of AC used to mint qTP
      */
-    function mintTP(uint8 i_, uint256 qTP_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
+    function mintTP(uint256 i_, uint256 qTP_, uint256 qACmax_) external returns (uint256 qACtotalNeeded) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         return _mintTPto(i_, qTP_, qACmax_, msg.sender, msg.sender);
     }
@@ -119,7 +119,7 @@ contract MocCARC20 is MocCore {
      * @return qACtotalNeeded amount of AC used to mint qTP
      */
     function mintTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
@@ -142,7 +142,7 @@ contract MocCARC20 is MocCore {
      * @return qTCtoMint amount of Collateral Token minted
      */
     function mintTCandTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmax_
     ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
@@ -165,7 +165,7 @@ contract MocCARC20 is MocCore {
      * @return qTCtoMint amount of Collateral Token minted
      */
     function mintTCandTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
@@ -185,8 +185,8 @@ contract MocCARC20 is MocCore {
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTPforTP(
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_
@@ -207,8 +207,8 @@ contract MocCARC20 is MocCore {
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTPforTPto(
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -228,7 +228,7 @@ contract MocCARC20 is MocCore {
      * @return qTPMinted amount of Collateral Token minted
      */
     function swapTPforTC(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_
@@ -248,7 +248,7 @@ contract MocCARC20 is MocCore {
      * @return qTPMinted amount of Collateral Token minted
      */
     function swapTPforTCto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
@@ -268,7 +268,7 @@ contract MocCARC20 is MocCore {
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTCforTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_
@@ -288,7 +288,7 @@ contract MocCARC20 is MocCore {
      * @return qTPMinted amount of Pegged Token minted
      */
     function swapTCforTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
