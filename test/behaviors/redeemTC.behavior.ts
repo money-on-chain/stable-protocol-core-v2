@@ -190,29 +190,38 @@ const redeemTCBehavior = function () {
             });
           });
         });
+        it("THEN there are 254.58 TC available to redeem", async function () {
+          assertPrec("254.585927183550273540", await mocContracts.mocImpl.getTCAvailableToRedeem());
+        });
         describe("WHEN alice tries to redeem 254.59 TC", function () {
           it("THEN tx reverts because there is not enough TC available to redeem", async function () {
-            await expect(mocFunctions.redeemTC({ from: alice, qTC: 254.59 })).to.be.revertedWithCustomError(
-              mocContracts.mocImpl,
-              ERRORS.INSUFFICIENT_TC_TO_REDEEM,
-            );
+            await expect(
+              mocFunctions.redeemTC({ from: alice, qTC: "254.585927183550273541" }),
+            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TC_TO_REDEEM);
           });
         });
         describe("WHEN alice redeems 254.58 TC", function () {
+          let alicePrevTCBalance: Balance;
           let alicePrevACBalance: Balance;
           beforeEach(async function () {
+            alicePrevTCBalance = await mocFunctions.tcBalanceOf(alice);
             alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-            await mocFunctions.redeemTC({ from: alice, qTC: 254.58 });
+            await mocFunctions.redeemTC({ from: alice, qTC: "254.585927183550273540" });
+          });
+          it("THEN there 0 TC available to redeem", async function () {
+            assertPrec(0, await mocContracts.mocImpl.getTCAvailableToRedeem());
           });
           it("THEN alice balance decrease 254.58 TC", async function () {
-            assertPrec(300 - 254.58, await mocFunctions.tcBalanceOf(alice));
+            const aliceActualTCBalance = await mocFunctions.tcBalanceOf(alice);
+            const diff = alicePrevTCBalance.sub(aliceActualTCBalance);
+            assertPrec("254.585927183550273540", diff);
           });
           it("THEN alice balance increase 254.58 Asset - 5% for Moc Fee Flow", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(254.58 * 0.95, diff);
+            assertPrec("241.856630824372759863", diff);
           });
-          describe("AND bob mints 10 TC and 10 TP1, making TC available to redeem go to 3.974", function () {
+          describe("AND bob mints 10 TC and 10 TP1, making TC available to redeem go to 3.968", function () {
             beforeEach(async function () {
               await mocFunctions.mintTC({ from: bob, qTC: 10 });
               await mocFunctions.mintTP({ i: TP_1, from: bob, qTP: 10 });
@@ -223,29 +232,32 @@ const redeemTCBehavior = function () {
             nTP1 = 10
             lckAC = 11.9
             ctarg = 5.32
-            => TC available to redeem = 3.974
+            => TC available to redeem = 3.968
             */
-            describe("WHEN alice tries to redeem 3.975 TC", function () {
+            describe("WHEN alice tries to redeem 3.969 TC", function () {
               it("THEN tx reverts because there is not enough TC available to redeem", async function () {
-                await expect(mocFunctions.redeemTC({ from: alice, qTC: 3.975 })).to.be.revertedWithCustomError(
-                  mocContracts.mocImpl,
-                  ERRORS.INSUFFICIENT_TC_TO_REDEEM,
-                );
+                await expect(
+                  mocFunctions.redeemTC({ from: alice, qTC: "3.968253968253968262" }),
+                ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TC_TO_REDEEM);
               });
             });
-            describe("WHEN alice redeems 3.974 TC", function () {
+            describe("WHEN alice redeems 3.968 TC", function () {
+              let alicePrevTCBalance: Balance;
               let alicePrevACBalance: Balance;
               beforeEach(async function () {
+                alicePrevTCBalance = await mocFunctions.tcBalanceOf(alice);
                 alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-                await mocFunctions.redeemTC({ from: alice, qTC: 3.974 });
+                await mocFunctions.redeemTC({ from: alice, qTC: "3.968253968253968261" });
               });
-              it("THEN alice balance decrease 3.974 TC", async function () {
-                assertPrec(300 - 254.58 - 3.974, await mocFunctions.tcBalanceOf(alice));
+              it("THEN alice balance decrease 3.968 TC", async function () {
+                const aliceActualTCBalance = await mocFunctions.tcBalanceOf(alice);
+                const diff = alicePrevTCBalance.sub(aliceActualTCBalance);
+                assertPrec("3.968253968253968261", diff);
               });
-              it("THEN alice balance increase 3.974 Asset - 5% for Moc Fee Flow", async function () {
+              it("THEN alice balance increase 3.968 Asset - 5% for Moc Fee Flow", async function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
-                assertPrec("3.7753", diff);
+                assertPrec("3.769841269841269848", diff);
               });
             });
           });

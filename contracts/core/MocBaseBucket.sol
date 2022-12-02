@@ -340,7 +340,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice get amount of Collateral Asset locked by Pegged Token adjusted by EMA
+     * @notice get amount of Collateral Asset available considering how many are locked by Pegged Token adjusted by EMA
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
@@ -351,6 +351,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 lckACemaAdjusted) {
+        // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
+        if (_getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
         // [PREC] = [N] * [PREC] - [PREC] * [N]
         return _getTotalACavailable(nACgain_) * PRECISION - ctargemaCA_ * lckAC_;
     }
@@ -389,16 +391,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 tpAvailableToMint) {
-        // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 pACtpEmaAdjusted = (ctargemaCA_ * pACtp_) / ctargemaTP_;
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 num = _mulPrec(lckACemaAdjusted, pACtpEmaAdjusted);
-        // [PREC] = [PREC] - [PREC]
-        uint256 den = ctargemaCA_ - ONE;
-        // [N] = [PREC] / [PREC]
-        return num / den;
+        // [N] = ([PREC] * [PREC] / [PREC]) / [PREC]
+        return ((_getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_) * pACtp_) / (ctargemaTP_ - ONE)) / PRECISION;
     }
 
     /**
