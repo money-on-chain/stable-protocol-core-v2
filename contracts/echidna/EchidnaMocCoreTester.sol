@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract EchidnaMocCoreTester {
     uint256 internal constant PRECISION = 10 ** 18;
+    uint256 internal constant UINT256_MAX = ~uint256(0);
 
     uint256 internal constant MAX_PEGGED_TOKENS = 15;
 
@@ -25,6 +26,14 @@ contract EchidnaMocCoreTester {
     address internal mocAppreciationBeneficiary;
 
     uint256 internal totalPeggedTokensAdded;
+
+    struct TCData {
+        uint256 coverage;
+        uint256 tcPrice;
+        uint256 acBalanceSender;
+        uint256 acBalanceMocFlow;
+        uint256 tcBalanceSender;
+    }
 
     constructor() payable {
         mocFeeFlow = address(1);
@@ -84,6 +93,16 @@ contract EchidnaMocCoreTester {
             tpEmaSf: (5 * PRECISION) / 100 // 0.05
         });
         addPeggedToken(peggedTokenParams, 235 ether);
+
+        // mint TC tokens to echidna
+        acToken.mint(address(this), 30000 ether);
+        acToken.approve(address(mocCARC20), 30000 ether);
+        mocCARC20.mintTC(3000 ether, 30000 ether);
+
+        // mint TP 0 tokens to echidna
+        acToken.mint(address(this), 1000 ether);
+        acToken.approve(address(mocCARC20), 1000 ether);
+        mocCARC20.mintTP(0, 23500 ether, 1000 ether);
     }
 
     function addPeggedToken(MocCore.PeggedTokenParams memory peggedTokenParams_, uint256 price_) public {
@@ -104,44 +123,90 @@ contract EchidnaMocCoreTester {
 
     function mintTC(uint256 qTC_, uint256 qACmax_) public {
         if (qACmax_ > 0) {
+            uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tcMintFee());
             // mint tokens to this contract
-            acToken.mint(address(this), qACmax_);
-            acToken.increaseAllowance(address(mocCARC20), qACmax_);
-            uint256 tcPrice = mocCARC20.getPTCac();
+            acToken.mint(address(this), qACmaxIncludingFee);
+            acToken.increaseAllowance(address(mocCARC20), qACmaxIncludingFee);
+            TCData memory tcDataBefore = _getTCData();
             // we don't want to revert if echidna sends insufficient qAC
-            qTC_ = qTC_ % ((qACmax_ * PRECISION) / tcPrice);
-            uint256 acBalanceSenderBefore = acToken.balanceOf(address(this));
-            uint256 acBalanceMocFlowBefore = acToken.balanceOf(mocFeeFlow);
-            uint256 tcBalanceSenderBefore = tcToken.balanceOf(address(this));
-            uint256 coverageBefore = mocCARC20.getCglb();
-            try mocCARC20.mintTC(qTC_, qACmax_) returns (uint256 qACspent) {
-                uint256 acBalanceSenderAfter = acToken.balanceOf(address(this));
-                uint256 acBalanceMocFlowAfter = acToken.balanceOf(mocFeeFlow);
-                uint256 tcBalanceSenderAfter = tcToken.balanceOf(address(this));
-                uint256 coverageAfter = mocCARC20.getCglb();
-                uint256 qACusedToMint = (qTC_ * tcPrice) / PRECISION;
+            qTC_ = qTC_ % ((qACmax_ * PRECISION) / tcDataBefore.tcPrice);
+            bool shouldRevert = tcDataBefore.coverage < mocCARC20.protThrld();
+            bool reverted;
+            try mocCARC20.mintTC(qTC_, qACmaxIncludingFee) returns (uint256 qACspent) {
+                TCData memory tcDataAfter = _getTCData();
+                uint256 qACusedToMint = (qTC_ * tcDataBefore.tcPrice) / PRECISION;
                 uint256 fee = (qACusedToMint * mocCARC20.tcMintFee() * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
 
                 // assert: qACspent should be qACusedToMint + qAC fee
                 assert(qACspent == (qACusedToMint * (PRECISION + mocCARC20.tcMintFee())) / PRECISION);
                 // assert: echidna AC balance should decrease by qAC spent
-                assert(acBalanceSenderAfter == acBalanceSenderBefore - qACspent);
+                assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender - qACspent);
                 // assert: Moc Flow balance should increase by qAC fee
                 // use tolerance 1 because possible rounding errors
-                assert(acBalanceMocFlowAfter - acBalanceMocFlowBefore - fee <= 1);
+                assert(tcDataAfter.acBalanceMocFlow - tcDataBefore.acBalanceMocFlow - fee <= 1);
                 // assert: echidna TC balance should increase by qTC
-                assert(tcBalanceSenderAfter == tcBalanceSenderBefore + qTC_);
+                assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender + qTC_);
                 // assert: during mintTC operation coverage always should increase
-                // use tolerance 1 because possible rounding errors
-                assert(coverageAfter - coverageBefore < 1);
+                assert(tcDataAfter.coverage >= tcDataBefore.coverage);
                 // assert: after mintTC operation coverage always should be above protected threshold
-                assert(coverageAfter >= mocCARC20.protThrld());
-            } catch {}
+                assert(tcDataAfter.coverage >= mocCARC20.protThrld());
+                // assert: if mintTC should revert
+                assert(!shouldRevert);
+            } catch {
+                reverted = true;
+            }
+            if (shouldRevert) assert(reverted);
+        }
+    }
+
+    function redeemTC(uint256 qTC_) public {
+        TCData memory tcDataBefore = _getTCData();
+        if (tcDataBefore.tcBalanceSender > 0) {
+            // we don't want to revert if echidna tries to redeem qTC that don´t have
+            qTC_ = (qTC_ % tcDataBefore.tcBalanceSender) + 1;
+            bool shouldRevert = tcDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
+                qTC_ > mocCARC20.getTCAvailableToRedeem();
+            bool reverted;
+            // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
+            try mocCARC20.redeemTC(qTC_, 0) returns (uint256 qACRedeemed) {
+                TCData memory tcDataAfter = _getTCData();
+                uint256 qACTotalRedeemed = (qTC_ * tcDataBefore.tcPrice) / PRECISION;
+                uint256 fee = (qACTotalRedeemed * mocCARC20.tcRedeemFee() * (PRECISION - mocCARC20.feeRetainer())) /
+                    (PRECISION * PRECISION);
+                // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
+                assert(qACRedeemed - ((qACTotalRedeemed * PRECISION) / (PRECISION + mocCARC20.tcRedeemFee())) <= 1);
+                // assert: echidna AC balance should decrease by qAC redeemed
+                assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender + qACRedeemed);
+                // assert: Moc Flow balance should increase by qAC fee
+                // use tolerance 1 because possible rounding errors
+                assert(tcDataAfter.acBalanceMocFlow - tcDataBefore.acBalanceMocFlow - fee <= 1);
+                // assert: echidna TC balance should decrease by qTC
+                assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender - qTC_);
+                // assert: during redeemTC operation coverage always should decrease
+                assert(tcDataBefore.coverage >= tcDataAfter.coverage);
+                // assert: after redeemTC operation coverage always should be above ctargemaCA
+                assert(tcDataAfter.coverage >= mocCARC20.calcCtargemaCA());
+                // assert: if redeemTC should revert
+                assert(!shouldRevert);
+            } catch {
+                reverted = true;
+            }
+            if (shouldRevert) assert(reverted);
         }
     }
 
     function _deployProxy(address implementation) internal returns (address) {
         return address(new ERC1967Proxy(implementation, ""));
+    }
+
+    function _getTCData() internal view returns (TCData memory tcData) {
+        tcData = TCData({
+            coverage: mocCARC20.getCglb(),
+            tcPrice: mocCARC20.getPTCac(),
+            acBalanceSender: acToken.balanceOf(address(this)),
+            acBalanceMocFlow: acToken.balanceOf(mocFeeFlow),
+            tcBalanceSender: tcToken.balanceOf(address(this))
+        });
     }
 }
