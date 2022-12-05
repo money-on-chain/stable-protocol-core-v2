@@ -15,7 +15,7 @@ contract EchidnaMocCoreTester {
     uint256 internal constant PRECISION = 10 ** 18;
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
-    uint256 internal constant MAX_PEGGED_TOKENS = 15;
+    uint256 internal constant MAX_PEGGED_TOKENS = 5;
 
     MocCARC20 internal mocCARC20;
     MocSettlement internal mocSettlement;
@@ -33,6 +33,14 @@ contract EchidnaMocCoreTester {
         uint256 acBalanceSender;
         uint256 acBalanceMocFlow;
         uint256 tcBalanceSender;
+    }
+
+    struct TPData {
+        uint256 coverage;
+        uint256 tpPrice;
+        uint256 acBalanceSender;
+        uint256 acBalanceMocFlow;
+        uint256 tpBalanceSender;
     }
 
     constructor() payable {
@@ -196,6 +204,46 @@ contract EchidnaMocCoreTester {
         }
     }
 
+    function mintTP(uint256 i_, uint256 qTP_, uint256 qACmax_) public {
+        if (qACmax_ > 0) {
+            i_ = i_ % MAX_PEGGED_TOKENS;
+            uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tpMintFee(i_));
+            // mint tokens to this contract
+            acToken.mint(address(this), qACmaxIncludingFee);
+            acToken.increaseAllowance(address(mocCARC20), qACmaxIncludingFee);
+            TPData memory tpDataBefore = _getTPData(i_);
+            // we don't want to revert if echidna sends insufficient qAC
+            qTP_ = qTP_ % ((qACmax_ * tpDataBefore.tpPrice) / PRECISION);
+            bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA();
+            bool reverted;
+            try mocCARC20.mintTP(uint8(i_), qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
+                TPData memory tpDataAfter = _getTPData(i_);
+                uint256 qACusedToMint = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
+                uint256 fee = (qACusedToMint * mocCARC20.tpMintFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
+                    (PRECISION * PRECISION);
+
+                // assert: qACspent should be qACusedToMint + qAC fee
+                assert(qACspent == (qACusedToMint * (PRECISION + mocCARC20.tpMintFee(i_))) / PRECISION);
+                // assert: echidna AC balance should decrease by qAC spent
+                assert(tpDataAfter.acBalanceSender == tpDataBefore.acBalanceSender - qACspent);
+                // assert: Moc Flow balance should increase by qAC fee
+                // use tolerance 1 because possible rounding errors
+                assert(tpDataAfter.acBalanceMocFlow - tpDataBefore.acBalanceMocFlow - fee <= 1);
+                // assert: echidna TP balance should increase by qTP
+                assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);
+                // assert: during mintTP operation coverage always should decrease
+                assert(tpDataBefore.coverage >= tpDataAfter.coverage);
+                // assert: after mintTP operation coverage always should be above ctargemaCA
+                assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
+                // assert: if mintTC should revert
+                assert(!shouldRevert);
+            } catch {
+                reverted = true;
+            }
+            if (shouldRevert) assert(reverted);
+        }
+    }
+
     function _deployProxy(address implementation) internal returns (address) {
         return address(new ERC1967Proxy(implementation, ""));
     }
@@ -207,6 +255,16 @@ contract EchidnaMocCoreTester {
             acBalanceSender: acToken.balanceOf(address(this)),
             acBalanceMocFlow: acToken.balanceOf(mocFeeFlow),
             tcBalanceSender: tcToken.balanceOf(address(this))
+        });
+    }
+
+    function _getTPData(uint256 i_) internal view returns (TPData memory tpData) {
+        tpData = TPData({
+            coverage: mocCARC20.getCglb(),
+            tpPrice: mocCARC20.getPACtp(uint8(i_)),
+            acBalanceSender: acToken.balanceOf(address(this)),
+            acBalanceMocFlow: acToken.balanceOf(mocFeeFlow),
+            tpBalanceSender: mocCARC20.tpTokens(i_).balanceOf(address(this))
         });
     }
 }
