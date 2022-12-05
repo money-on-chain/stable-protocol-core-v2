@@ -55,6 +55,13 @@ abstract contract MocSettlement is MocEma {
     }
 
     /**
+     * @param bes_ number of blocks between settlements
+     **/
+    function setBes(uint256 bes_) external onlyAuthorizedChanger {
+        bes = bes_;
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps

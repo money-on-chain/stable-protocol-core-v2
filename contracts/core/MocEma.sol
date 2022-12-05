@@ -156,10 +156,10 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @param blockSpan Defines how many blocks should pass between BMA calculations
+     * @param blockSpan_ Defines how many blocks should pass between BMA calculations
      **/
-    function setEmaCalculationBlockSpan(uint256 blockSpan) external onlyAuthorizedChanger {
-        emaCalculationBlockSpan = blockSpan;
+    function setEmaCalculationBlockSpan(uint256 blockSpan_) external onlyAuthorizedChanger {
+        emaCalculationBlockSpan = blockSpan_;
     }
 
     /**
