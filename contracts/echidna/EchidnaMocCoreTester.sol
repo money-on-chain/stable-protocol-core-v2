@@ -175,7 +175,7 @@ contract EchidnaMocCoreTester {
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tcRedeemFee() * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
                 // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
-                assert(qACRedeemed - ((qACTotalRedeemed * PRECISION) / (PRECISION + mocCARC20.tcRedeemFee())) <= 1);
+                assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tcRedeemFee())) / PRECISION <= 1);
                 // assert: echidna AC balance should decrease by qAC redeemed
                 assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender + qACRedeemed);
                 // assert: Moc Flow balance should increase by qAC fee
