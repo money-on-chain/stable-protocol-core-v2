@@ -7,8 +7,6 @@ import {
   MocCAWrapper__factory,
   MocRC20,
   MocRC20__factory,
-  MocSettlement,
-  MocSettlement__factory,
   MocTC,
   MocTC__factory,
   PriceProviderMock,
@@ -22,7 +20,6 @@ export function fixtureDeployedMocCABag(
 ): () => Promise<{
   mocImpl: MocCARC20;
   mocWrapper: MocCAWrapper;
-  mocSettlement: MocSettlement;
   mocCollateralToken: MocTC;
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
@@ -42,13 +39,6 @@ export function fixtureDeployedMocCABag(
     if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
     const mocWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
 
-    const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCABagProxy");
-    if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCABagProxy deployed.");
-    const mocSettlement: MocSettlement = MocSettlement__factory.connect(
-      deployedMocSettlementContractProxy.address,
-      signer,
-    );
-
     const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
     if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
     const mocCollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
@@ -64,7 +54,6 @@ export function fixtureDeployedMocCABag(
     return {
       mocImpl,
       mocWrapper,
-      mocSettlement,
       mocCollateralToken,
       mocPeggedTokens,
       priceProviders,

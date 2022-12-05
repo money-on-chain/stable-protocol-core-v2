@@ -1,14 +1,16 @@
 pragma solidity ^0.8.17;
 
-import "./governance/MocUpgradable.sol";
-import "./core/MocCore.sol";
+import "./MocEma.sol";
 
-contract MocSettlement is MocUpgradable {
+/**
+ * @title MocSettlement
+ * @notice Moc Settlement, groups all functions, state and tracking relative to the settlement execution.
+ */
+abstract contract MocSettlement is MocEma {
     // ------- Events -------
     event SettlementExecuted();
+
     // ------- Storage -------
-    // MocCore contract
-    MocCore internal mocCore;
     // number of blocks between settlements
     uint256 public bes;
     // next settlement block
@@ -22,31 +24,25 @@ contract MocSettlement is MocUpgradable {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param governorAddress_ The address that will define when a change contract is authorized
-     * @param pauserAddress_ The address that is authorized to pause this contract
-     * @param mocCore_ MocCore contract address
      * @param bes_ number of blocks between settlements
      */
-    function initialize(
-        address governorAddress_,
-        address pauserAddress_,
-        MocCore mocCore_,
-        uint256 bes_
-    ) external initializer {
-        mocCore = mocCore_;
+    function __MocSettlement_init_unchained(uint256 bes_) internal onlyInitializing {
         bes = bes_;
         bns = block.number + bes_;
-        __MocUpgradable_init(governorAddress_, pauserAddress_);
     }
+
+    // ------- Internal abstract Functions -------
+
+    function _execSettlement() internal virtual;
 
     // ------- External Functions -------
 
-    function execSettlement() external {
+    function execSettlement() external notPaused {
         // check if it is in the corresponding block to execute the settlement
         if (block.number >= bns) {
             bns = block.number + bes;
             emit SettlementExecuted();
-            mocCore.execSettlement();
+            _execSettlement();
         }
     }
 
