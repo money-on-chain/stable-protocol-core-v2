@@ -214,7 +214,8 @@ contract EchidnaMocCoreTester {
             TPData memory tpDataBefore = _getTPData(i_);
             // we don't want to revert if echidna sends insufficient qAC
             qTP_ = qTP_ % ((qACmax_ * tpDataBefore.tpPrice) / PRECISION);
-            bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA();
+            bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
+                qTP_ > mocCARC20.getTPAvailableToMint(uint8(i_));
             bool reverted;
             try mocCARC20.mintTP(uint8(i_), qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
                 TPData memory tpDataAfter = _getTPData(i_);
