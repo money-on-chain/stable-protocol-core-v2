@@ -1,4 +1,4 @@
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { successFeeBehavior } from "../behaviors/successFee.behavior";
 import { tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
@@ -8,7 +8,7 @@ describe("Feature: MocCABag success fee distribution", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCABag(tpParams.length, tpParams);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsCARBag(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCABag(this.mocContracts);
     });
     successFeeBehavior();
   });
