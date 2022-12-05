@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
-import { mocAddresses } from "../../deploy-config/config";
+import { getNetworkConfig } from "../../scripts/utils";
 
 const mintTCandTPBehavior = function () {
   let mocContracts: any;
@@ -14,7 +14,7 @@ const mintTCandTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress } = mocAddresses["hardhat"];
+  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
 
   describe("Feature: joint Mint TC and TP operation", function () {
     beforeEach(async function () {
