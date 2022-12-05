@@ -235,7 +235,44 @@ contract EchidnaMocCoreTester {
                 assert(tpDataBefore.coverage >= tpDataAfter.coverage);
                 // assert: after mintTP operation coverage always should be above ctargemaCA
                 assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
-                // assert: if mintTC should revert
+                // assert: if mintTP should revert
+                assert(!shouldRevert);
+            } catch {
+                reverted = true;
+            }
+            if (shouldRevert) assert(reverted);
+        }
+    }
+
+    function redeemTP(uint256 i_, uint256 qTP_) public {
+        TPData memory tpDataBefore = _getTPData(i_);
+        if (tpDataBefore.tpBalanceSender > 0) {
+            i_ = i_ % MAX_PEGGED_TOKENS;
+            // we don't want to revert if echidna tries to redeem qTP that don´t have
+            qTP_ = (qTP_ % tpDataBefore.tpBalanceSender) + 1;
+            bool shouldRevert = tpDataBefore.coverage < mocCARC20.protThrld();
+            bool reverted;
+            // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
+            try mocCARC20.redeemTP(uint8(i_), qTP_, 0) returns (uint256 qACRedeemed) {
+                TPData memory tpDataAfter = _getTPData(i_);
+                uint256 qACTotalRedeemed = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
+                uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
+                    (PRECISION * PRECISION);
+                // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
+                // use tolerance 1 because possible rounding errors
+                assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tpRedeemFee(i_))) / PRECISION <= 1);
+                // assert: echidna AC balance should decrease by qAC redeemed
+                assert(tpDataAfter.acBalanceSender == tpDataBefore.acBalanceSender + qACRedeemed);
+                // assert: Moc Flow balance should increase by qAC fee
+                // use tolerance 1 because possible rounding errors
+                assert(tpDataAfter.acBalanceMocFlow - tpDataBefore.acBalanceMocFlow - fee <= 1);
+                // assert: echidna TP balance should decrease by qTP
+                assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender - qTP_);
+                // assert: during redeemTP operation coverage always should increase
+                assert(tpDataAfter.coverage >= tpDataBefore.coverage);
+                // assert: after redeemTP operation coverage always should be above protected threshold
+                assert(tpDataAfter.coverage >= mocCARC20.protThrld());
+                // assert: if redeemTP should revert
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
