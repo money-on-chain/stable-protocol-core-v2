@@ -33,6 +33,7 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
      *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *        in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
+     *      bes number of blocks between settlements
      */
     function initialize(InitializeCoreParams calldata initializeCoreParams_) external initializer {
         __MocCore_init(initializeCoreParams_);

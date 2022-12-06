@@ -3,7 +3,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { ERC20Mock, MocCAWrapper } from "../../typechain";
 import { ERRORS, deployAsset, pEth } from "../helpers/utils";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCABag } from "./fixture";
 
@@ -25,7 +25,7 @@ describe("Feature: MocCAWrapper unwrap", function () {
       // Set custom feeFlow address so that it can receive the funds
       await mocContracts.mocImpl.setMocFeeFlowAddress(mocFeeFlow);
 
-      mocFunctions = await mocFunctionsCARBag(mocContracts);
+      mocFunctions = await mocFunctionsCABag(mocContracts);
       ({ assets, mocWrapper } = mocContracts);
 
       await mocFunctions.mintTC({ from: alice, qTC: 1000, asset: assets[0] });

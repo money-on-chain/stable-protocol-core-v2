@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, pEth, ERRORS, mineUpTo } from "../helpers/utils";
+import { Balance, pEth, mineUpTo } from "../helpers/utils";
 import { getNetworkConfig } from "../../scripts/utils";
 
 const successFeeBehavior = function () {
@@ -45,21 +45,13 @@ const successFeeBehavior = function () {
         await mocFunctions.mintTC({ from: alice, qTC: 1000 });
         await Promise.all([23500, 105, 9345.8].map((qTP, i) => mocFunctions.mintTP({ i, from: alice, qTP })));
       });
-      describe("WHEN an unauthorized account executes the settlement function in Moc Core", function () {
-        it("THEN fails because only settlement contract can execute it", async function () {
-          await expect(mocContracts.mocImpl.execSettlement()).to.be.revertedWithCustomError(
-            mocContracts.mocImpl,
-            ERRORS.ONLY_SETTLEMENT,
-          );
-        });
-      });
       describe("AND settlement is executed without TP price variations", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
           await initializeBeforeBalances();
-          nextBlockSettlement = await mocContracts.mocSettlement.bns();
+          nextBlockSettlement = await mocContracts.mocImpl.bns();
           await mineUpTo(nextBlockSettlement);
-          tx = await mocContracts.mocSettlement.execSettlement();
+          tx = await mocContracts.mocImpl.execSettlement();
         });
         it("THEN TC price is still 1 because the TP prices had not changed", async function () {
           assertPrec(1, await mocContracts.mocImpl.getPTCac());
@@ -124,9 +116,9 @@ const successFeeBehavior = function () {
           */
           let tx: ContractTransaction;
           beforeEach(async function () {
-            nextBlockSettlement = await mocContracts.mocSettlement.bns();
+            nextBlockSettlement = await mocContracts.mocImpl.bns();
             await mineUpTo(nextBlockSettlement);
-            tx = await mocContracts.mocSettlement.execSettlement();
+            tx = await mocContracts.mocImpl.execSettlement();
           });
           it("THEN TC price didn´t change, it is 1.019", async function () {
             assertPrec("1.019333333333333333", await mocContracts.mocImpl.getPTCac());
@@ -213,9 +205,9 @@ const successFeeBehavior = function () {
             */
             let tx: ContractTransaction;
             beforeEach(async function () {
-              nextBlockSettlement = await mocContracts.mocSettlement.bns();
+              nextBlockSettlement = await mocContracts.mocImpl.bns();
               await mineUpTo(nextBlockSettlement);
-              tx = await mocContracts.mocSettlement.execSettlement();
+              tx = await mocContracts.mocImpl.execSettlement();
             });
             it("THEN TC price didn´t change, it is 1.0213", async function () {
               assertPrec("1.021333333333333333", await mocContracts.mocImpl.getPTCac());

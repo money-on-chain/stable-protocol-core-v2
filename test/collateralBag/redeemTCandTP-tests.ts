@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { ContractTransaction } from "ethers";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { redeemTCandTPBehavior } from "../behaviors/redeemTCandTP.behavior";
 import { deployAsset, ERRORS, pEth, tpParams } from "../helpers/utils";
 import { ERC20Mock, MocCAWrapper } from "../../typechain";
@@ -21,7 +21,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
       ({ alice, bob } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCABag(tpParams.length, tpParams);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsCARBag(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCABag(this.mocContracts);
       mocFunctions = this.mocFunctions;
       ({
         assets: [assetDefault],

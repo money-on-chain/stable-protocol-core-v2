@@ -11,7 +11,7 @@ import "./MocBaseBucket.sol";
  */
 abstract contract MocEma is MocBaseBucket {
     // ------- Events -------
-    event TPemaUpdated(uint8 indexed i_, uint256 oldTPema_, uint256 newTPema_);
+    event TPemaUpdated(uint256 indexed i_, uint256 oldTPema_, uint256 newTPema_);
 
     // ------- Structs -------
     struct EmaItem {
@@ -58,7 +58,7 @@ abstract contract MocEma is MocBaseBucket {
      * @param pACtp_ Pegged Token price [PREC]
      * @return ctargemaTP [PREC]
      */
-    function _getCtargemaTP(uint8 i_, uint256 pACtp_) internal view returns (uint256 ctargemaTP) {
+    function _getCtargemaTP(uint256 i_, uint256 pACtp_) internal view returns (uint256 ctargemaTP) {
         uint256 auxTPctarg = tpCtarg[i_];
         uint256 auxTpEma = tpEma[i_].ema;
         if (auxTpEma >= pACtp_) return auxTPctarg;
@@ -71,7 +71,7 @@ abstract contract MocEma is MocBaseBucket {
      * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
      * @param i_ Pegged Token index
      */
-    function updateTPema(uint8 i_) internal {
+    function updateTPema(uint256 i_) internal {
         EmaItem memory currentTPema = tpEma[i_];
         uint256 pACtp = getPACtp(i_);
         // [PREC²] = [PREC] * ([PREC] - [PREC])
@@ -98,7 +98,7 @@ abstract contract MocEma is MocBaseBucket {
         uint256 num;
         uint256 den;
         uint256 pegAmount = pegContainer.length;
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+        for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = getPACtp(i);
             (uint256 tpGain, ) = _getPnLTP(i, pACtp);
             // [PREC] = [N] * [PREC] * [PREC]  / [PREC]
@@ -148,7 +148,7 @@ abstract contract MocEma is MocBaseBucket {
     function updateEmas() public {
         if (shouldCalculateEma()) {
             uint256 pegAmount = pegContainer.length;
-            for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
                 updateTPema(i);
             }
             _updateNextEmaCalculation(emaCalculationBlockSpan);
@@ -156,10 +156,10 @@ abstract contract MocEma is MocBaseBucket {
     }
 
     /**
-     * @param blockSpan Defines how many blocks should pass between BMA calculations
+     * @param blockSpan_ Defines how many blocks should pass between BMA calculations
      **/
-    function setEmaCalculationBlockSpan(uint256 blockSpan) external onlyAuthorizedChanger {
-        emaCalculationBlockSpan = blockSpan;
+    function setEmaCalculationBlockSpan(uint256 blockSpan_) external onlyAuthorizedChanger {
+        emaCalculationBlockSpan = blockSpan_;
     }
 
     /**

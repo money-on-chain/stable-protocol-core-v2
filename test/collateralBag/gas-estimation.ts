@@ -1,4 +1,4 @@
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation.behavior";
 import { fixtureDeployedMocCABag } from "./fixture";
 
@@ -11,7 +11,7 @@ describe("Feature: MocCABag gas estimation", function () {
       beforeEach(async function () {
         const fixtureDeploy = fixtureDeployedMocCABag(peggedTokenAmount, undefined, assetAmount);
         this.mocContracts = await fixtureDeploy();
-        this.mocFunctions = await mocFunctionsCARBag(this.mocContracts);
+        this.mocFunctions = await mocFunctionsCABag(this.mocContracts);
       });
       gasEstimationBehavior();
     });
