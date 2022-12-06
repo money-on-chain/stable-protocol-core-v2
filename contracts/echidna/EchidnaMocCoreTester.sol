@@ -287,6 +287,7 @@ contract EchidnaMocCoreTester {
         acToken.approve(address(mocCARC20), qACmax);
         TPData memory tpDataBefore = _getTPData(i_);
         TCData memory tcDataBefore = _getTCData();
+        bool coverageShouldIncrease = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
         try mocCARC20.mintTCandTP(uint8(i_), qTP_, qACmax) returns (uint256 qACspent, uint256 qTC) {
             TCData memory tcDataAfter = _getTCData();
             TPData memory tpDataAfter = _getTPData(i_);
@@ -308,10 +309,17 @@ contract EchidnaMocCoreTester {
             assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender + qTC);
             // assert: echidna TP balance should increase by qTP
             assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);
-            // assert: during mintTCandTP operation coverage always should decrease
-            assert(tpDataBefore.coverage >= tpDataAfter.coverage);
-            // assert: after mintTCandTP operation coverage always should be above ctargemaCA
-            assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
+            if (coverageShouldIncrease) {
+                // assert: during mintTCandTP operation if coverage was below ctargemaCA then should increase
+                assert(tpDataBefore.coverage <= tpDataAfter.coverage);
+                // assert: during mintTCandTP operation if coverage should get closer to ctargemaCA
+                assert(tpDataAfter.coverage <= mocCARC20.calcCtargemaCA());
+            } else {
+                // assert: during mintTCandTP operation if coverage was above ctargemaCA then should decrease
+                assert(tpDataBefore.coverage >= tpDataAfter.coverage);
+                // assert: during mintTCandTP operation if coverage should get closer to ctargemaCA
+                assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
+            }
         } catch {}
     }
 
