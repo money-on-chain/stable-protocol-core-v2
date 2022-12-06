@@ -30,3 +30,4 @@ jobs:
         files: .
         contract: EchidnaMocCoreTester
         config: contracts/echidna/default.yaml
+        crytic-args: --hardhat-ignore-compile
