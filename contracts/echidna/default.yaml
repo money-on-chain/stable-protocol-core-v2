@@ -1,5 +1,4 @@
-testMode: "property"
-#testMode: "assertion"
+testMode: "assertion"
 
 #propMaxGas defines gas cost at which a property fails
 propMaxGas: 1000000000
