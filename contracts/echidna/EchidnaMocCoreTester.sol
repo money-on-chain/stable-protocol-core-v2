@@ -16,6 +16,7 @@ contract EchidnaMocCoreTester {
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
     uint256 internal constant MAX_PEGGED_TOKENS = 15;
+    uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
 
     MocCARC20 internal mocCARC20;
     MocSettlement internal mocSettlement;
@@ -111,13 +112,15 @@ contract EchidnaMocCoreTester {
         // initialize Pegged Token
         tpToken.initialize("TPToken", "TP", address(mocCARC20), governor);
         peggedTokenParams_.tpTokenAddress = address(tpToken);
+        price_ %= MAX_PRICE;
         peggedTokenParams_.priceProviderAddress = address(new PriceProviderMock(price_));
         mocCARC20.addPeggedToken(peggedTokenParams_);
         totalPeggedTokensAdded++;
     }
 
     function pokePrice(uint256 i_, uint256 price_) public {
-        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % MAX_PEGGED_TOKENS);
+        price_ %= MAX_PRICE;
+        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % totalPeggedTokensAdded);
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
 
@@ -176,7 +179,7 @@ contract EchidnaMocCoreTester {
                     (PRECISION * PRECISION);
                 // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
                 assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tcRedeemFee())) / PRECISION <= 1);
-                // assert: echidna AC balance should decrease by qAC redeemed
+                // assert: echidna AC balance should increase by qAC redeemed
                 assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender + qACRedeemed);
                 // assert: Moc Flow balance should increase by qAC fee
                 // use tolerance 1 because possible rounding errors

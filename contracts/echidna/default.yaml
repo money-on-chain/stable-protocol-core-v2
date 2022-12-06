@@ -30,3 +30,13 @@ cryticArgs: # If we add more dependencies they will need to be added as symlinks
   ] 
 #directory to save the corpus; by default is disabled
 corpusDir: "echidna/corpus"
+#filter the functions to test
+filterBlacklist: false
+filterFunctions: 
+  [
+    "EchidnaMocCoreTester.addPeggedToken(MocCore.PeggedTokenParams, uint256)",
+    "EchidnaMocCoreTester.pokePrice(uint256,uint256)", 
+    "EchidnaMocCoreTester.mintTC(uint256,uint256)", 
+    "EchidnaMocCoreTester.redeemTC(uint256)",
+    "EchidnaMocCoreTester.fallback()", 
+  ]
