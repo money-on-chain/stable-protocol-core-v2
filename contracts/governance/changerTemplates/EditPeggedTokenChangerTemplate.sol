@@ -25,8 +25,8 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
     MocCore public mocCore;
     IMocRC20 public tpToEdit;
     MocCore.PeggedTokenParams internal peggedTokenParams;
-    uint8 public paramSet;
-    uint8 public constant PARAMS_CHANGED = 1;
+    uint256 public paramSet;
+    uint256 public constant PARAMS_CHANGED = 1;
 
     /**
      * @notice Constructor
@@ -50,7 +50,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
         // Increase param set to allow execution
         paramSet++;
         // Fetched the pegged Token index by token address
-        (uint8 i, ) = mocCore.peggedTokenIndex(address(tpToEdit));
+        (uint256 i, ) = mocCore.peggedTokenIndex(address(tpToEdit));
         // Fetched all values for the given index
         (, uint256 emaSf) = mocCore.tpEma(i);
 
