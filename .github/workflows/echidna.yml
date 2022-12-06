@@ -29,5 +29,4 @@ jobs:
         solc-version: 0.8.17
         files: .
         contract: EchidnaMocCoreTester
-        crytic-args: --hardhat-ignore-compile
-        test-mode: assertion
+        config: contracts/echidna/default.yaml

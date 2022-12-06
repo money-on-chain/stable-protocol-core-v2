@@ -2,7 +2,6 @@ pragma solidity ^0.8.17;
 
 import "../collateral/collateralBag/MocCAWrapper.sol";
 import "../collateral/rc20/MocCARC20.sol";
-import "../MocSettlement.sol";
 import "../tokens/MocTC.sol";
 import "../tokens/MocRC20.sol";
 import "../mocks/upgradeability/GovernorMock.sol";
@@ -10,15 +9,16 @@ import "../mocks/ERC20Mock.sol";
 import "../mocks/PriceProviderMock.sol";
 import "../interfaces/IPriceProvider.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "hardhat/console.sol";
 
 contract EchidnaMocCoreTester {
     uint256 internal constant PRECISION = 10 ** 18;
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
     uint256 internal constant MAX_PEGGED_TOKENS = 5;
+    uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
 
     MocCARC20 internal mocCARC20;
-    MocSettlement internal mocSettlement;
     GovernorMock internal governor;
     MocTC internal tcToken;
     ERC20Mock internal acToken;
@@ -48,7 +48,6 @@ contract EchidnaMocCoreTester {
         mocAppreciationBeneficiary = address(2);
         governor = new GovernorMock();
         acToken = new ERC20Mock();
-        mocSettlement = MocSettlement(_deployProxy(address(new MocSettlement())));
         tcToken = MocTC(_deployProxy(address(new MocTC())));
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
 
@@ -59,7 +58,6 @@ contract EchidnaMocCoreTester {
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
                 tcTokenAddress: address(tcToken),
-                mocSettlementAddress: address(mocSettlement),
                 mocFeeFlowAddress: mocFeeFlow,
                 mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiary,
                 protThrld: 2 * PRECISION,
@@ -79,16 +77,14 @@ contract EchidnaMocCoreTester {
             initializeBaseBucketParams: initializeBaseBucketParams,
             governorAddress: address(governor),
             pauserAddress: msg.sender,
-            emaCalculationBlockSpan: 1 days
+            emaCalculationBlockSpan: 1 days,
+            bes: 30 days
         });
         MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
             initializeCoreParams: initializeCoreParams,
             acTokenAddress: address(acToken)
         });
         mocCARC20.initialize(initializeParams);
-
-        // initialize mocSettlement
-        mocSettlement.initialize(address(governor), msg.sender, mocCARC20, 30 days);
 
         // add a Pegged Token
         MocCore.PeggedTokenParams memory peggedTokenParams = MocCore.PeggedTokenParams({
@@ -119,13 +115,15 @@ contract EchidnaMocCoreTester {
         // initialize Pegged Token
         tpToken.initialize("TPToken", "TP", address(mocCARC20), governor);
         peggedTokenParams_.tpTokenAddress = address(tpToken);
+        price_ %= MAX_PRICE;
         peggedTokenParams_.priceProviderAddress = address(new PriceProviderMock(price_));
         mocCARC20.addPeggedToken(peggedTokenParams_);
         totalPeggedTokensAdded++;
     }
 
     function pokePrice(uint256 i_, uint256 price_) public {
-        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % MAX_PEGGED_TOKENS);
+        price_ %= MAX_PRICE;
+        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % totalPeggedTokensAdded);
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
 
@@ -183,8 +181,8 @@ contract EchidnaMocCoreTester {
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tcRedeemFee() * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
                 // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
-                assert(qACRedeemed - ((qACTotalRedeemed * PRECISION) / (PRECISION + mocCARC20.tcRedeemFee())) <= 1);
-                // assert: echidna AC balance should decrease by qAC redeemed
+                assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tcRedeemFee())) / PRECISION <= 1);
+                // assert: echidna AC balance should increase by qAC redeemed
                 assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender + qACRedeemed);
                 // assert: Moc Flow balance should increase by qAC fee
                 // use tolerance 1 because possible rounding errors

@@ -4,7 +4,6 @@ import "../interfaces/IMocRC20.sol";
 import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
-import "../MocSettlement.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
@@ -33,7 +32,7 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     struct PeggedTokenIndex {
         // Pegged Token index
-        uint8 index;
+        uint256 index;
         // true if Pegged Token exists
         bool exists;
     }
@@ -41,8 +40,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     struct InitializeBaseBucketParams {
         // Collateral Token contract address
         address tcTokenAddress;
-        // MocSettlement contract address
-        address mocSettlementAddress;
         // Moc Fee Flow contract address
         address mocFeeFlowAddress;
         // moc appreciation beneficiary Address
@@ -131,8 +128,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     address public mocFeeFlowAddress;
     // Moc appreciation beneficiary address
     address public mocAppreciationBeneficiaryAddress;
-    // MocSettlement contract
-    MocSettlement public mocSettlement;
 
     // ------- Storage Coverage Tracking -------
 
@@ -162,18 +157,11 @@ abstract contract MocBaseBucket is MocUpgradable {
         _;
     }
 
-    /// @notice functions with this modifier only can be called by settlement contract
-    modifier onlySettlement() {
-        if (msg.sender != address(mocSettlement)) revert OnlySettlement();
-        _;
-    }
-
     // ------- Initializer -------
     /**
      * @notice contract initializer
      * @param initializeBaseBucketParams_ contract initializer params
      * @dev   tcTokenAddress Collateral Token contract address
-     *        mocSettlementAddress MocSettlement contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected coverage threshold [PREC]
@@ -209,7 +197,6 @@ abstract contract MocBaseBucket is MocUpgradable {
         if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
         mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
         mocAppreciationBeneficiaryAddress = initializeBaseBucketParams_.mocAppreciationBeneficiaryAddress;
-        mocSettlement = MocSettlement(initializeBaseBucketParams_.mocSettlementAddress);
         protThrld = initializeBaseBucketParams_.protThrld;
         liqThrld = initializeBaseBucketParams_.liqThrld;
         feeRetainer = initializeBaseBucketParams_.feeRetainer;
@@ -269,7 +256,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param qTP_ amount of Pegged Token to add
      * @param qAC_ amount of Collateral Asset to add
      */
-    function _depositTP(uint8 i_, uint256 qTP_, uint256 qAC_) internal {
+    function _depositTP(uint256 i_, uint256 qTP_, uint256 qAC_) internal {
         pegContainer[i_].nTP += qTP_;
         _depositAC(qAC_);
     }
@@ -280,7 +267,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param qTP_ amount of Pegged Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
      */
-    function _withdrawTP(uint8 i_, uint256 qTP_, uint256 qAC_) internal {
+    function _withdrawTP(uint256 i_, uint256 qTP_, uint256 qAC_) internal {
         pegContainer[i_].nTP -= qTP_;
         nACcb -= qAC_;
     }
@@ -292,7 +279,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param qAC_ amount of Collateral Asset to add
      * @param recipient_ the account to mint tokens to
      */
-    function _depositAndMintTP(uint8 i_, uint256 qTP_, uint256 qAC_, address recipient_) internal {
+    function _depositAndMintTP(uint256 i_, uint256 qTP_, uint256 qAC_, address recipient_) internal {
         // add qTP and qAC to the Bucket
         _depositTP(i_, qTP_, qAC_);
         // mint qTP to the recipient
@@ -306,7 +293,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param qAC_ amount of Collateral Asset to subtract
      * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTP(uint8 i_, uint256 qTP_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_, address toBurnFrom_) internal {
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qAC_);
         // burn qTP from this address
@@ -424,12 +411,12 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256[] memory pACtps = new uint256[](pegAmount);
         // for each peg, calculates the proportion of AC reserves it's locked
 
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+        for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             pACtps[i] = getPACtp(i);
             // [N] = [N] * [PREC] / [PREC]
             lckAC += _divPrec(pegContainer[i].nTP, pACtps[i]);
         }
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+        for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             // [PREC] = [PREC] * [N] / [N];
             tpLiqPrices.push((pACtps[i] * lckAC) / totalACAvailable);
         }
@@ -440,7 +427,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param i_ Pegged Token index
      * @param pACtp_ Pegged Token price [PREC]
      */
-    function _updateTPtracking(uint8 i_, uint256 pACtp_) internal {
+    function _updateTPtracking(uint256 i_, uint256 pACtp_) internal {
         tpiou[i_] += _calcOtfPnLTP(i_, pACtp_);
         pACtpLstop[i_] = pACtp_;
     }
@@ -451,7 +438,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param pACtp_ Pegged Token price [PREC]
      * @return otfPnLtp [N]
      */
-    function _calcOtfPnLTP(uint8 i_, uint256 pACtp_) internal view returns (int256 otfPnLtp) {
+    function _calcOtfPnLTP(uint256 i_, uint256 pACtp_) internal view returns (int256 otfPnLtp) {
         // [PREC] = [N] * [PREC]
         uint256 nTP = pegContainer[i_].nTP * PRECISION;
         // [N] = [PREC] / [PREC] - [PREC] / [PREC]
@@ -465,7 +452,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return tpGain amount of Pegged Token to be minted during settlement [N]
      * @return adjPnLtpi total amount of P&L in Collateral Asset [N]
      */
-    function _getPnLTP(uint8 i_, uint256 pACtp_) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
+    function _getPnLTP(uint256 i_, uint256 pACtp_) internal view returns (uint256 tpGain, uint256 adjPnLtpi) {
         // [N] = [N] + [N]
         int256 adjPnLtpiAux = tpiou[i_] + _calcOtfPnLTP(i_, pACtp_);
         if (adjPnLtpiAux > 0) {
@@ -484,7 +471,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _getLckACandACgain() internal view returns (uint256 lckAC, uint256 nACgain) {
         uint256 pegAmount = pegContainer.length;
-        for (uint8 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+        for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = getPACtp(i);
             (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, pACtp);
             // [N] = ([N] + [N]) * [PREC] / [PREC]
@@ -576,7 +563,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function getPACtp(uint8 i_) public view virtual returns (uint256) {
+    function getPACtp(uint256 i_) public view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (bytes32 price, bool has) = priceProvider.peek();
         if (!has) revert InvalidPriceProvider(address(priceProvider));

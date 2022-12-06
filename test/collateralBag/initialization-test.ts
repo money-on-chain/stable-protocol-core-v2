@@ -1,14 +1,7 @@
 import { expect } from "chai";
 import { deployments, ethers } from "hardhat";
 import { getNetworkConfig } from "../../scripts/utils";
-import {
-  MocCARC20,
-  MocCARC20__factory,
-  MocCAWrapper,
-  MocCAWrapper__factory,
-  MocRC20,
-  MocSettlement,
-} from "../../typechain";
+import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocCAWrapper__factory, MocRC20 } from "../../typechain";
 import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
 import { mocInitialize } from "./initializers";
@@ -16,20 +9,13 @@ import { mocInitialize } from "./initializers";
 describe("Feature: MocCABag initialization", function () {
   let mocProxy: MocCARC20;
   let mocWrapper: MocCAWrapper;
-  let mocSettlement: MocSettlement;
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
   const { governorAddress, pauserAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
   before(async () => {
-    ({
-      mocImpl: mocProxy,
-      mocWrapper,
-      mocCollateralToken,
-      wcaToken,
-      mocSettlement,
-    } = await fixtureDeployedMocCABag(0)());
-    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address, mocSettlement.address);
+    ({ mocImpl: mocProxy, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeployedMocCABag(0)());
+    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address);
   });
   describe("GIVEN a MocCABag implementation deployed", () => {
     describe("WHEN initialize mocProxy again", async () => {
@@ -45,7 +31,7 @@ describe("Feature: MocCABag initialization", function () {
           ethers.provider.getSigner(),
         );
         await expect(
-          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address, mocSettlement.address)(),
+          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address)(),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
@@ -85,7 +71,7 @@ describe("Feature: MocCABag initialization", function () {
         adminAddress: proxy.address,
         governorAddress: await newMocImpl.governor(),
       });
-      newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address, mocSettlement.address);
+      newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address);
     });
     describe("WHEN it is initialized with invalid protThrld value", () => {
       it("THEN tx fails because protThrld is below ONE", async () => {

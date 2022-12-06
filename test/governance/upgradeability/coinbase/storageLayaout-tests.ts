@@ -4,7 +4,7 @@ import { MocCACoinbase__factory } from "../../../../typechain";
 import { GAS_LIMIT_PATCH, deployCollateralToken } from "../../../helpers/utils";
 import { getNetworkConfig } from "../../../../scripts/utils";
 
-const { coreParams, feeParams } = getNetworkConfig({ network: "hardhat" });
+const { coreParams, feeParams, settlementParams } = getNetworkConfig({ network: "hardhat" });
 
 describe("Feature: Check MocCoinbase storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
@@ -30,7 +30,6 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
       const initParams = {
         initializeBaseBucketParams: {
           tcTokenAddress: mocTC.address,
-          mocSettlementAddress: deployer,
           mocFeeFlowAddress: deployer,
           mocAppreciationBeneficiaryAddress: deployer,
           protThrld: coreParams.protThrld,
@@ -49,6 +48,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
         governorAddress: governorMock.address,
         pauserAddress: deployer,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+        bes: settlementParams.bes,
       };
       const mocImpl = MocCACoinbase__factory.connect(mocProxy.address, ethers.provider.getSigner());
       await mocImpl.initialize(initParams, { gasLimit: GAS_LIMIT_PATCH });

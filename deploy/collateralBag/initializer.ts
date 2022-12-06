@@ -8,8 +8,6 @@ import {
   MocCAWrapper__factory,
   MocRC20,
   MocRC20__factory,
-  MocSettlement,
-  MocSettlement__factory,
   MocTC,
   MocTC__factory,
 } from "../../typechain";
@@ -25,15 +23,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
-  const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCABagProxy");
-  if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCABagProxy deployed.");
-  const MocSettlement: MocSettlement = MocSettlement__factory.connect(
-    deployedMocSettlementContractProxy.address,
-    signer,
-  );
-
-  const deployedTCContract = await deployments.getOrNull("CollateralTokenCARBagProxy");
-  if (!deployedTCContract) throw new Error("No CollateralTokenCARBagProxy deployed.");
+  const deployedTCContract = await deployments.getOrNull("CollateralTokenCABagProxy");
+  if (!deployedTCContract) throw new Error("No CollateralTokenCABagProxy deployed.");
   const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
 
   const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
@@ -66,7 +57,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         initializeCoreParams: {
           initializeBaseBucketParams: {
             tcTokenAddress: CollateralToken.address,
-            mocSettlementAddress: MocSettlement.address,
             mocFeeFlowAddress,
             mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
@@ -85,6 +75,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           governorAddress,
           pauserAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          bes: settlementParams.bes,
         },
         acTokenAddress: WCAToken.address,
       },
@@ -98,20 +89,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     }),
   );
 
-  await waitForTxConfirmation(
-    MocSettlement.initialize(governorAddress, pauserAddress, mocCARC20.address, settlementParams.bes),
-  );
-
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 
-deployFunc.id = "Initialized_CARBag"; // id required to prevent re-execution
-deployFunc.tags = ["InitializerCARBag"];
-deployFunc.dependencies = [
-  "MocCABag",
-  "CollateralTokenCARBag",
-  "MocCAWrapper",
-  "WrappedCollateralAsset",
-  "MocSettlementCARBag",
-];
+deployFunc.id = "Initialized_CABag"; // id required to prevent re-execution
+deployFunc.tags = ["InitializerCABag"];
+deployFunc.dependencies = ["MocCABag", "CollateralTokenCABag", "MocCAWrapper", "WrappedCollateralAsset"];

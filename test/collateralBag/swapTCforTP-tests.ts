@@ -3,7 +3,7 @@ import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { ERC20Mock, MocCAWrapper } from "../../typechain";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { swapTCforTPBehavior } from "../behaviors/swapTCforTP.behavior";
 import { ERRORS, deployAsset, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
@@ -20,7 +20,7 @@ describe("Feature: MocCABag swap TC for TP", function () {
     beforeEach(async function () {
       ({ alice, bob } = await getNamedAccounts());
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
-      this.mocFunctions = await mocFunctionsCARBag(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCABag(this.mocContracts);
       mocFunctions = this.mocFunctions;
       ({
         assets: [assetDefault],

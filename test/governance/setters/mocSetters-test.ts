@@ -30,6 +30,13 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.emaCalculationBlockSpan()).to.be.equal(42);
       });
     });
+    // MocSettlement
+    describe(`WHEN setBes is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setBes(421);
+        expect(await mocProxy.bes()).to.be.equal(421);
+      });
+    });
     // MocBaseBucket
     describe(`WHEN setFeeRetainer is invoked`, () => {
       it("THEN the new value is assigned", async function () {
@@ -126,6 +133,11 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setEmaCalculationBlockSpan is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setEmaCalculationBlockSpan(42));
+      });
+    });
+    describe("WHEN setBes is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setBes(42));
       });
     });
     describe("WHEN setTcMintFee is invoked", () => {
