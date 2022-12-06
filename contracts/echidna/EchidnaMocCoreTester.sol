@@ -214,7 +214,7 @@ contract EchidnaMocCoreTester {
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
                 qTP_ > mocCARC20.getTPAvailableToMint(i_);
             bool reverted;
-            try mocCARC20.mintTP(0, qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
+            try mocCARC20.mintTP(i_, qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
                 TPData memory tpDataAfter = _getTPData(i_);
                 uint256 qACusedToMint = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACusedToMint * mocCARC20.tpMintFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
@@ -243,15 +243,15 @@ contract EchidnaMocCoreTester {
     }
 
     function redeemTP(uint256 i_, uint256 qTP_) public {
+        i_ = i_ % totalPeggedTokensAdded;
         TPData memory tpDataBefore = _getTPData(i_);
         if (tpDataBefore.tpBalanceSender > 0) {
-            i_ = i_ % MAX_PEGGED_TOKENS;
             // we don't want to revert if echidna tries to redeem qTP that don´t have
             qTP_ = (qTP_ % tpDataBefore.tpBalanceSender) + 1;
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.protThrld();
             bool reverted;
             // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
-            try mocCARC20.redeemTP(uint8(i_), qTP_, 0) returns (uint256 qACRedeemed) {
+            try mocCARC20.redeemTP(i_, qTP_, 0) returns (uint256 qACRedeemed) {
                 TPData memory tpDataAfter = _getTPData(i_);
                 uint256 qACTotalRedeemed = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /

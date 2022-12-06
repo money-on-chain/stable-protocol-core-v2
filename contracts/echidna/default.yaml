@@ -38,5 +38,6 @@ filterFunctions:
     "EchidnaMocCoreTester.mintTC(uint256,uint256)", 
     "EchidnaMocCoreTester.redeemTC(uint256)",
     "EchidnaMocCoreTester.mintTP(uint256,uint256,uint256)",
+    "EchidnaMocCoreTester.redeemTP(uint256,uint256)",
     "EchidnaMocCoreTester.fallback()", 
   ]
