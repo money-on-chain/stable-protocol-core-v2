@@ -9,6 +9,7 @@ import "../mocks/ERC20Mock.sol";
 import "../mocks/PriceProviderMock.sol";
 import "../interfaces/IPriceProvider.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "hardhat/console.sol";
 
 contract EchidnaMocCoreTester {
     uint256 internal constant PRECISION = 10 ** 18;

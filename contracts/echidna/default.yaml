@@ -26,10 +26,10 @@ sender: ["0x10000", "0x20000", "0x00a329C0648769a73afAC7F9381e08fb43DBEA70"]
 cryticArgs: # If we add more dependencies they will need to be added as symlinks here!
   [
     "--solc-remaps",
-    "@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/ @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/",
+    "hardhat/=../node_modules/hardhat/ @openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/ @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/",
   ] 
 #directory to save the corpus; by default is disabled
-corpusDir: "echidna/corpus"
+corpusDir: "corpus"
 #filter the functions to test
 filterBlacklist: false
 filterFunctions: 

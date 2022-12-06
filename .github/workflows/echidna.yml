@@ -31,3 +31,12 @@ jobs:
         contract: EchidnaMocCoreTester
         crytic-args: --hardhat-ignore-compile
         test-mode: assertion
+        filterBlacklist: false
+        filterFunctions: 
+          [
+            "EchidnaMocCoreTester.addPeggedToken(MocCore.PeggedTokenParams, uint256)",
+            "EchidnaMocCoreTester.pokePrice(uint256,uint256)", 
+            "EchidnaMocCoreTester.mintTC(uint256,uint256)", 
+            "EchidnaMocCoreTester.redeemTC(uint256)",
+            "EchidnaMocCoreTester.fallback()", 
+          ]
