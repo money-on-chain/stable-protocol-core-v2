@@ -214,7 +214,7 @@ contract EchidnaMocCoreTester {
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
                 qTP_ > mocCARC20.getTPAvailableToMint(i_);
             bool reverted;
-            try mocCARC20.mintTP(0, qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
+            try mocCARC20.mintTP(i_, qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
                 TPData memory tpDataAfter = _getTPData(i_);
                 uint256 qACusedToMint = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACusedToMint * mocCARC20.tpMintFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
