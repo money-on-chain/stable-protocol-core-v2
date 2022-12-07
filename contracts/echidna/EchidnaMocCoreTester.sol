@@ -29,10 +29,7 @@ contract EchidnaMocCoreTester {
 
     uint256 internal totalPeggedTokensAdded;
 
-    uint256 internal totalMintTCReverted;
-    uint256 internal totalRedeemTCReverted;
-    uint256 internal totalMintTPReverted;
-    uint256 internal totalRedeemTPReverted;
+    uint256 internal totalReverted;
 
     struct TCData {
         uint256 coverage;
@@ -168,11 +165,11 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
-                totalMintTCReverted++;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
-            // assert: max mintTC operations reverted
-            assert(totalMintTCReverted < MAX_TXS_REVERTED);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
@@ -207,11 +204,11 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
-                totalRedeemTCReverted++;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
-            // assert: max redeemTC operations reverted
-            assert(totalRedeemTCReverted < MAX_TXS_REVERTED);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
@@ -250,11 +247,11 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
-                totalMintTPReverted++;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
-            // assert: max mintTP operations reverted
-            assert(totalMintTPReverted < MAX_TXS_REVERTED);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
@@ -290,11 +287,11 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
-                totalRedeemTPReverted++;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
-            // assert: max redeemTP operations reverted
-            assert(totalRedeemTPReverted < MAX_TXS_REVERTED);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
