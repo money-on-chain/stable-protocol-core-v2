@@ -240,4 +240,16 @@ contract EchidnaMocCoreTester {
         return
             acToken.balanceOf(address(mocCARC20)) * mocCARC20.getCglb() >= mocCARC20.getPTCac() * tcToken.totalSupply();
     }
+
+    function echidna_storage_consistency() public returns (bool) {
+        mocCARC20.refreshACBalance();
+        bool nAccbIsOk = acToken.balanceOf(address(mocCARC20)) == mocCARC20.nACcb();
+        bool nTCcbIsOk = tcToken.totalSupply() == mocCARC20.nTCcb();
+        bool nTPIsOk = true;
+        for (uint256 i = 0; i < totalPeggedTokensAdded; i++) {
+            (uint256 nTP, ) = mocCARC20.pegContainer(i);
+            nTPIsOk = nTPIsOk && mocCARC20.tpTokens(i).totalSupply() == nTP;
+        }
+        return nAccbIsOk && nTCcbIsOk && nTPIsOk;
+    }
 }
