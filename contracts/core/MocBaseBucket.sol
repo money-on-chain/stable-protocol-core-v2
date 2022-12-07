@@ -501,8 +501,10 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _getPTCac(uint256 lckAC_, uint256 nACgain_) internal view returns (uint256 pTCac) {
         if (nTCcb == 0) return ONE;
+        uint256 totalACAvailable = _getTotalACavailable(nACgain_);
+        if (lckAC_ >= totalACAvailable) return 0;
         // [PREC] = ([N] - [N]) * [PREC]) / [N]
-        return _divPrec((_getTotalACavailable(nACgain_) - lckAC_), nTCcb);
+        return _divPrec((totalACAvailable - lckAC_), nTCcb);
     }
 
     /**
