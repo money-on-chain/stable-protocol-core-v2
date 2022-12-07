@@ -1,4 +1,4 @@
-testMode: "assertion"
+testMode: "property"
 
 #propMaxGas defines gas cost at which a property fails
 propMaxGas: 1000000000
@@ -31,12 +31,17 @@ cryticArgs: # If we add more dependencies they will need to be added as symlinks
 #directory to save the corpus; by default is disabled
 corpusDir: "corpus"
 #filter the functions to test
-filterBlacklist: false
+filterBlacklist: true
 filterFunctions: 
   [
-    "EchidnaMocCoreTester.addPeggedToken(MocCore.PeggedTokenParams, uint256)",
-    "EchidnaMocCoreTester.pokePrice(uint256,uint256)", 
-    "EchidnaMocCoreTester.mintTC(uint256,uint256)", 
-    "EchidnaMocCoreTester.redeemTC(uint256)",
-    "EchidnaMocCoreTester.fallback()", 
+    "EchidnaMocCoreTester.getPTCac()",
+    "EchidnaMocCoreTester.getCglb()", 
+    "EchidnaMocCoreTester.getTCAvailableToRedeem()", 
+    "EchidnaMocCoreTester.getTPAvailableToMint(uint256)",
+    "EchidnaMocCoreTester.getTotalACavailable()", 
+    "EchidnaMocCoreTester.getLeverageTC()", 
+    "EchidnaMocCoreTester.getQACforRedeemTP(uint256,uint256)", 
+    "EchidnaMocCoreTester.getPACtp(uint256)",
+    "EchidnaMocCoreTester.evalLiquidation()",
+    "EchidnaMocCoreTester.isLiquidationReached()"
   ]
