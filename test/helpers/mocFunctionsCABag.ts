@@ -308,7 +308,7 @@ const tpTransfer =
     return mocPeggedTokens[i].connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
-export const mocFunctionsCARBag = async ({
+export const mocFunctionsCABag = async ({
   mocWrapper,
   mocCollateralToken,
   assets,

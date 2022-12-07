@@ -12,7 +12,7 @@ abstract contract MocHelper {
 
     // Saves gas
     // https://github.com/KadenZipfel/gas-optimizations/blob/main/gas-saving-patterns/unchecked-arithmetic.md
-    function unchecked_inc(uint8 i) internal pure returns (uint8) {
+    function unchecked_inc(uint256 i) internal pure returns (uint256) {
         unchecked {
             return i + 1;
         }

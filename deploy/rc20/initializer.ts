@@ -1,14 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import {
-  MocCARC20,
-  MocCARC20__factory,
-  MocRC20,
-  MocRC20__factory,
-  MocSettlement,
-  MocSettlement__factory,
-} from "../../typechain";
+import { MocCARC20, MocCARC20__factory, MocRC20, MocRC20__factory } from "../../typechain";
 import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -21,13 +14,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
   if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
   const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
-
-  const deployedMocSettlementContractProxy = await deployments.getOrNull("MocSettlementCARC20Proxy");
-  if (!deployedMocSettlementContractProxy) throw new Error("No MocSettlementCARC20Proxy deployed.");
-  const MocSettlement: MocSettlement = MocSettlement__factory.connect(
-    deployedMocSettlementContractProxy.address,
-    signer,
-  );
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
@@ -61,7 +47,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         initializeCoreParams: {
           initializeBaseBucketParams: {
             tcTokenAddress: CollateralToken.address,
-            mocSettlementAddress: MocSettlement.address,
             mocFeeFlowAddress,
             mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
@@ -80,15 +65,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           governorAddress,
           pauserAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          bes: settlementParams.bes,
         },
         acTokenAddress: collateralAssetToken,
       },
       { gasLimit: GAS_LIMIT_PATCH },
     ),
-  );
-
-  await waitForTxConfirmation(
-    MocSettlement.initialize(governorAddress, pauserAddress, mocCARC20.address, settlementParams.bes),
   );
 
   return hre.network.live; // prevents re execution on live networks
@@ -97,4 +79,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARC20"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARC20"];
-deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20", "MocSettlementCARC20"];
+deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20"];

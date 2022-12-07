@@ -2,7 +2,6 @@ pragma solidity ^0.8.17;
 
 import "../collateral/collateralBag/MocCAWrapper.sol";
 import "../collateral/rc20/MocCARC20.sol";
-import "../MocSettlement.sol";
 import "../tokens/MocTC.sol";
 import "../tokens/MocRC20.sol";
 import "../mocks/upgradeability/GovernorMock.sol";
@@ -10,15 +9,18 @@ import "../mocks/ERC20Mock.sol";
 import "../mocks/PriceProviderMock.sol";
 import "../interfaces/IPriceProvider.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "hardhat/console.sol";
 
 contract EchidnaMocCoreTester {
     uint256 internal constant PRECISION = 10 ** 18;
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
     uint256 internal constant MAX_PEGGED_TOKENS = 5;
+    uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
+    // this value must be consistent with seqLen in default.yaml config file
+    uint256 internal constant MAX_TXS_REVERTED = 50;
 
     MocCARC20 internal mocCARC20;
-    MocSettlement internal mocSettlement;
     GovernorMock internal governor;
     MocTC internal tcToken;
     ERC20Mock internal acToken;
@@ -26,6 +28,8 @@ contract EchidnaMocCoreTester {
     address internal mocAppreciationBeneficiary;
 
     uint256 internal totalPeggedTokensAdded;
+
+    uint256 internal totalReverted;
 
     struct TCData {
         uint256 coverage;
@@ -48,7 +52,6 @@ contract EchidnaMocCoreTester {
         mocAppreciationBeneficiary = address(2);
         governor = new GovernorMock();
         acToken = new ERC20Mock();
-        mocSettlement = MocSettlement(_deployProxy(address(new MocSettlement())));
         tcToken = MocTC(_deployProxy(address(new MocTC())));
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
 
@@ -59,7 +62,6 @@ contract EchidnaMocCoreTester {
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
                 tcTokenAddress: address(tcToken),
-                mocSettlementAddress: address(mocSettlement),
                 mocFeeFlowAddress: mocFeeFlow,
                 mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiary,
                 protThrld: 2 * PRECISION,
@@ -79,16 +81,14 @@ contract EchidnaMocCoreTester {
             initializeBaseBucketParams: initializeBaseBucketParams,
             governorAddress: address(governor),
             pauserAddress: msg.sender,
-            emaCalculationBlockSpan: 1 days
+            emaCalculationBlockSpan: 1 days,
+            bes: 30 days
         });
         MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
             initializeCoreParams: initializeCoreParams,
             acTokenAddress: address(acToken)
         });
         mocCARC20.initialize(initializeParams);
-
-        // initialize mocSettlement
-        mocSettlement.initialize(address(governor), msg.sender, mocCARC20, 30 days);
 
         // add a Pegged Token
         MocCore.PeggedTokenParams memory peggedTokenParams = MocCore.PeggedTokenParams({
@@ -120,13 +120,15 @@ contract EchidnaMocCoreTester {
         // initialize Pegged Token
         tpToken.initialize("TPToken", "TP", address(mocCARC20), governor);
         peggedTokenParams_.tpTokenAddress = address(tpToken);
+        price_ %= MAX_PRICE;
         peggedTokenParams_.priceProviderAddress = address(new PriceProviderMock(price_));
         mocCARC20.addPeggedToken(peggedTokenParams_);
         totalPeggedTokensAdded++;
     }
 
     function pokePrice(uint256 i_, uint256 price_) public {
-        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % MAX_PEGGED_TOKENS);
+        price_ %= MAX_PRICE;
+        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % totalPeggedTokensAdded);
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
 
@@ -163,8 +165,11 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
@@ -183,8 +188,8 @@ contract EchidnaMocCoreTester {
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tcRedeemFee() * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
                 // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
-                assert(qACRedeemed - ((qACTotalRedeemed * PRECISION) / (PRECISION + mocCARC20.tcRedeemFee())) <= 1);
-                // assert: echidna AC balance should decrease by qAC redeemed
+                assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tcRedeemFee())) / PRECISION <= 1);
+                // assert: echidna AC balance should increase by qAC redeemed
                 assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender + qACRedeemed);
                 // assert: Moc Flow balance should increase by qAC fee
                 // use tolerance 1 because possible rounding errors
@@ -199,23 +204,27 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
     function mintTP(uint256 i_, uint256 qTP_, uint256 qACmax_) public {
         if (qACmax_ > 0) {
-            i_ = i_ % MAX_PEGGED_TOKENS;
+            i_ = i_ % totalPeggedTokensAdded;
             uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tpMintFee(i_));
             // approve tokens to MocCore
             acToken.approve(address(mocCARC20), qACmaxIncludingFee);
             TPData memory tpDataBefore = _getTPData(i_);
             // we don't want to revert if echidna sends insufficient qAC
             qTP_ = qTP_ % ((qACmax_ * tpDataBefore.tpPrice) / PRECISION);
-            bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA();
+            bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
+                qTP_ > mocCARC20.getTPAvailableToMint(i_);
             bool reverted;
-            try mocCARC20.mintTP(uint8(i_), qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
+            try mocCARC20.mintTP(i_, qTP_, qACmaxIncludingFee) returns (uint256 qACspent) {
                 TPData memory tpDataAfter = _getTPData(i_);
                 uint256 qACusedToMint = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACusedToMint * mocCARC20.tpMintFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
@@ -238,13 +247,16 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 
     function redeemTP(uint256 i_, uint256 qTP_) public {
-        i_ = i_ % MAX_PEGGED_TOKENS;
+        i_ = i_ % totalPeggedTokensAdded;
         TPData memory tpDataBefore = _getTPData(i_);
         if (tpDataBefore.tpBalanceSender > 0) {
             // we don't want to revert if echidna tries to redeem qTP that don´t have
@@ -252,7 +264,7 @@ contract EchidnaMocCoreTester {
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.protThrld();
             bool reverted;
             // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
-            try mocCARC20.redeemTP(uint8(i_), qTP_, 0) returns (uint256 qACRedeemed) {
+            try mocCARC20.redeemTP(i_, qTP_, 0) returns (uint256 qACRedeemed) {
                 TPData memory tpDataAfter = _getTPData(i_);
                 uint256 qACTotalRedeemed = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
@@ -275,8 +287,11 @@ contract EchidnaMocCoreTester {
                 assert(!shouldRevert);
             } catch {
                 reverted = true;
+                totalReverted++;
             }
             if (shouldRevert) assert(reverted);
+            // assert: max txs reverted in a seqLen
+            assert(totalReverted < MAX_TXS_REVERTED);
         }
     }
 

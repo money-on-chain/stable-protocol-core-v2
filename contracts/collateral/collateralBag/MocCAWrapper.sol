@@ -27,7 +27,7 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TPMintedWithWrapper(
         address asset_,
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -35,7 +35,7 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TPRedeemedWithWrapper(
         address asset_,
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -43,7 +43,7 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TCandTPMintedWithWrapper(
         address asset_,
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -52,7 +52,7 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TCandTPRedeemedWithWrapper(
         address asset_,
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -61,8 +61,8 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TPSwappedForTPWithWrapper(
         address asset_,
-        uint8 indexed iFrom_,
-        uint8 iTo_,
+        uint256 indexed iFrom_,
+        uint256 iTo_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTPfrom_,
@@ -71,7 +71,7 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TPSwappedForTCWithWrapper(
         address asset_,
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -80,7 +80,7 @@ contract MocCAWrapper is MocUpgradable {
     );
     event TCSwappedForTPWithWrapper(
         address asset_,
-        uint8 indexed i_,
+        uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -97,7 +97,7 @@ contract MocCAWrapper is MocUpgradable {
     // ------- Structs -------
     struct AssetIndex {
         // asset index
-        uint8 index;
+        uint256 index;
         // true if asset token exists
         bool exists;
     }
@@ -281,7 +281,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _mintTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qAssetMax_,
         address sender_,
@@ -311,7 +311,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _redeemTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qAssetMin_,
         address sender_,
@@ -350,7 +350,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _mintTCandTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qAssetMax_,
         address sender_,
@@ -368,7 +368,7 @@ contract MocCAWrapper is MocUpgradable {
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
-            uint8 i = i_;
+            uint256 i = i_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
             emit TCandTPMintedWithWrapper(assetAddress, i, sender_, recipient_, qTCminted, qTP, qAssetUsed);
@@ -392,7 +392,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _redeemTCandTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qAssetMin_,
@@ -437,8 +437,8 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _swapTPforTPto(
         address assetAddress_,
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qAssetMax_,
@@ -466,8 +466,8 @@ contract MocCAWrapper is MocUpgradable {
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
-            uint8 iFrom = iFrom_;
-            uint8 iTo = iTo_;
+            uint256 iFrom = iFrom_;
+            uint256 iTo = iTo_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
             emit TPSwappedForTPWithWrapper(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qTPMinted, qAssetUsed);
@@ -487,7 +487,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _swapTPforTCto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qAssetMax_,
@@ -508,7 +508,7 @@ contract MocCAWrapper is MocUpgradable {
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
-            uint8 i = i_;
+            uint256 i = i_;
             uint256 qTP = qTP_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
             emit TPSwappedForTCWithWrapper(assetAddress, i, sender_, recipient_, qTP, qTCMinted, qAssetUsed);
@@ -528,7 +528,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function _swapTCforTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qAssetMax_,
@@ -549,7 +549,7 @@ contract MocCAWrapper is MocUpgradable {
         // inside a block to avoid stack too deep error
         {
             address assetAddress = assetAddress_;
-            uint8 i = i_;
+            uint256 i = i_;
             uint256 qTC = qTC_;
             uint256 qAssetUsed = qAssetMax_ - assetUnused;
             emit TCSwappedForTPWithWrapper(assetAddress, i, sender_, recipient_, qTC, qTPMinted, qAssetUsed);
@@ -618,7 +618,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 assetsLength = assets.length;
         uint256 totalCurrency;
         // loop through all assets to calculate the total amount of currency held
-        for (uint8 i = 0; i < assetsLength; i = unchecked_inc(i)) {
+        for (uint256 i = 0; i < assetsLength; i = unchecked_inc(i)) {
             IERC20 asset = assets[i];
             // get asset balance
             uint256 assetBalance = asset.balanceOf(address(this));
@@ -659,7 +659,7 @@ contract MocCAWrapper is MocUpgradable {
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
         if (!assetIndex[address(asset_)].exists) {
-            assetIndex[address(asset_)] = AssetIndex({ index: uint8(assets.length), exists: true });
+            assetIndex[address(asset_)] = AssetIndex({ index: uint256(assets.length), exists: true });
             assets.push(asset_);
         }
         priceProviderMap[address(asset_)] = priceProvider_;
@@ -720,7 +720,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ amount of Collateral Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
-    function mintTP(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMax_) external {
+    function mintTP(address assetAddress_, uint256 i_, uint256 qTP_, uint256 qAssetMax_) external {
         _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
     }
 
@@ -733,7 +733,13 @@ contract MocCAWrapper is MocUpgradable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      */
-    function mintTPto(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMax_, address recipient_) external {
+    function mintTPto(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address recipient_
+    ) external {
         _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
     }
 
@@ -745,7 +751,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ amount of Pegged Token to redeem
      * @param qAssetMin_ minimum Asset amount that sender expects to be received
      */
-    function redeemTP(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMin_) external {
+    function redeemTP(address assetAddress_, uint256 i_, uint256 qTP_, uint256 qAssetMin_) external {
         _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, msg.sender, false);
     }
 
@@ -760,7 +766,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function redeemTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qAssetMin_,
         address recipient_
@@ -774,7 +780,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param assetAddress_ Asset contract address
      * @param i_ Pegged Token index
      */
-    function liqRedeemTP(address assetAddress_, uint8 i_) external {
+    function liqRedeemTP(address assetAddress_, uint256 i_) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, msg.sender, true);
     }
@@ -786,7 +792,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param i_ Pegged Token index
      * @param recipient_ address who receives the Asset
      */
-    function liqRedeemTPto(address assetAddress_, uint8 i_, address recipient_) external {
+    function liqRedeemTPto(address assetAddress_, uint256 i_, address recipient_) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
         _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
     }
@@ -803,7 +809,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ amount of Pegged Token to mint
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
-    function mintTCandTP(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qAssetMax_) external {
+    function mintTCandTP(address assetAddress_, uint256 i_, uint256 qTP_, uint256 qAssetMax_) external {
         _mintTCandTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
     }
 
@@ -822,7 +828,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function mintTCandTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qAssetMax_,
         address recipient_
@@ -843,7 +849,7 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
      */
-    function redeemTCandTP(address assetAddress_, uint8 i_, uint256 qTC_, uint256 qTP_, uint256 qAssetMin_) external {
+    function redeemTCandTP(address assetAddress_, uint256 i_, uint256 qTC_, uint256 qTP_, uint256 qAssetMin_) external {
         _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, msg.sender);
     }
 
@@ -863,7 +869,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function redeemTCandTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qAssetMin_,
@@ -884,8 +890,8 @@ contract MocCAWrapper is MocUpgradable {
      */
     function swapTPforTP(
         address assetAddress_,
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qAssetMax_
@@ -906,8 +912,8 @@ contract MocCAWrapper is MocUpgradable {
      */
     function swapTPforTPto(
         address assetAddress_,
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qAssetMax_,
@@ -925,7 +931,13 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      */
-    function swapTPforTC(address assetAddress_, uint8 i_, uint256 qTP_, uint256 qTCmin_, uint256 qAssetMax_) external {
+    function swapTPforTC(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qAssetMax_
+    ) external {
         _swapTPforTCto(assetAddress_, i_, qTP_, qTCmin_, qAssetMax_, msg.sender, msg.sender);
     }
 
@@ -941,7 +953,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function swapTPforTCto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qAssetMax_,
@@ -959,7 +971,13 @@ contract MocCAWrapper is MocUpgradable {
      * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
      * @param qAssetMax_ maximum amount of Asset that can be spent in fees
      */
-    function swapTCforTP(address assetAddress_, uint8 i_, uint256 qTC_, uint256 qTPmin_, uint256 qAssetMax_) external {
+    function swapTCforTP(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_
+    ) external {
         _swapTCforTPto(assetAddress_, i_, qTC_, qTPmin_, qAssetMax_, msg.sender, msg.sender);
     }
 
@@ -975,7 +993,7 @@ contract MocCAWrapper is MocUpgradable {
      */
     function swapTCforTPto(
         address assetAddress_,
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qAssetMax_,

@@ -4,7 +4,7 @@ import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
 import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 
-const { coreParams, feeParams, mocAddresses } = getNetworkConfig({ network: "hardhat" });
+const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkConfig({ network: "hardhat" });
 
 export function fixtureDeployGovernance(): () => Promise<{
   governor: Contract;
@@ -30,16 +30,12 @@ export function fixtureDeployGovernance(): () => Promise<{
       governorAddress: governor.address,
     });
 
-    const mockAddress = deployer;
     let { pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
-    // TODO: fix these mockAddresses
-    // initializations
     await waitForTxConfirmation(
       mocCACoinbase.initialize(
         {
           initializeBaseBucketParams: {
             tcTokenAddress: mocTC.address,
-            mocSettlementAddress: mockAddress,
             mocFeeFlowAddress: mocFeeFlowAddress,
             mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
@@ -58,6 +54,7 @@ export function fixtureDeployGovernance(): () => Promise<{
           governorAddress: governor.address,
           pauserAddress: pauserAddress,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          bes: settlementParams.bes,
         },
         { gasLimit: GAS_LIMIT_PATCH },
       ),

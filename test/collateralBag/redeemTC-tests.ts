@@ -3,7 +3,7 @@ import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
-import { mocFunctionsCARBag } from "../helpers/mocFunctionsCARBag";
+import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { redeemTCBehavior } from "../behaviors/redeemTC.behavior";
 import { Balance, ERRORS, deployAsset, deployPriceProvider, pEth, tpParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
@@ -22,7 +22,7 @@ describe("Feature: MocCABag redeem TC", function () {
     beforeEach(async function () {
       ({ deployer, alice, bob } = await getNamedAccounts());
       this.mocContracts = await fixtureDeployedMocCABag(tpParams.length, tpParams)();
-      mocFunctions = await mocFunctionsCARBag(this.mocContracts);
+      mocFunctions = await mocFunctionsCABag(this.mocContracts);
       this.mocFunctions = mocFunctions;
       ({
         assets: [assetDefault],
