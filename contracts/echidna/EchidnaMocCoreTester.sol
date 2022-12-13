@@ -114,20 +114,22 @@ contract EchidnaMocCoreTester {
         mocCARC20.mintTP(0, 23500 ether, 1000 ether);
     }
 
-    function addPeggedToken(MocCore.PeggedTokenParams memory peggedTokenParams_, uint256 price_) public {
+    function addPeggedToken(MocCore.PeggedTokenParams memory peggedTokenParams_, uint96 price_) public {
         require(totalPeggedTokensAdded < MAX_PEGGED_TOKENS, "max TP already added");
         MocRC20 tpToken = MocRC20(_deployProxy(address(new MocRC20())));
         // initialize Pegged Token
         tpToken.initialize("TPToken", "TP", address(mocCARC20), governor);
         peggedTokenParams_.tpTokenAddress = address(tpToken);
-        price_ %= MAX_PRICE;
+        // price not 0
+        price_++;
         peggedTokenParams_.priceProviderAddress = address(new PriceProviderMock(price_));
         mocCARC20.addPeggedToken(peggedTokenParams_);
         totalPeggedTokensAdded++;
     }
 
-    function pokePrice(uint256 i_, uint256 price_) public {
-        price_ %= MAX_PRICE;
+    function pokePrice(uint256 i_, uint96 price_) public {
+        // price not 0
+        price_++;
         (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % totalPeggedTokensAdded);
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
@@ -295,6 +297,33 @@ contract EchidnaMocCoreTester {
         }
     }
 
+    function operTCWithoutBalance(uint256 qTC_) public {
+        TCData memory tcDataBefore = _getTCData();
+        uint256 qACmax = ((qTC_ * tcDataBefore.tcPrice) / PRECISION) - 1;
+        acToken.increaseAllowance(address(mocCARC20), qACmax);
+        // mintTC with insufficient qAC
+        try mocCARC20.mintTC(qTC_, qACmax) {
+            assert(false);
+        } catch {
+            // assert: tx should revert always
+            assert(true);
+        }
+        if (tcDataBefore.tcBalanceSender < qTC_) {
+            // redeemTC with insufficient qTC
+            try mocCARC20.redeemTC(qTC_, 0) {
+                assert(false);
+            } catch {
+                // assert: tx should revert always
+                assert(true);
+            }
+        }
+        TCData memory tcDataAfter = _getTCData();
+        // assert: echidna AC balance should be the same
+        assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender);
+        // assert: echidna TC balance should be the same
+        assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender);
+    }
+
     function _deployProxy(address implementation) internal returns (address) {
         return address(new ERC1967Proxy(implementation, ""));
     }
@@ -317,5 +346,22 @@ contract EchidnaMocCoreTester {
             acBalanceMocFlow: acToken.balanceOf(mocFeeFlow),
             tpBalanceSender: mocCARC20.tpTokens(i_).balanceOf(address(this))
         });
+    }
+
+    function echidna_balance_not_drained() public view returns (bool) {
+        return
+            acToken.balanceOf(address(mocCARC20)) * mocCARC20.getCglb() >= mocCARC20.getPTCac() * tcToken.totalSupply();
+    }
+
+    function echidna_storage_consistency() public returns (bool) {
+        mocCARC20.refreshACBalance();
+        bool nAccbIsOk = acToken.balanceOf(address(mocCARC20)) == mocCARC20.nACcb();
+        bool nTCcbIsOk = tcToken.totalSupply() == mocCARC20.nTCcb();
+        bool nTPIsOk = true;
+        for (uint256 i = 0; i < totalPeggedTokensAdded; i++) {
+            (uint256 nTP, ) = mocCARC20.pegContainer(i);
+            nTPIsOk = nTPIsOk && mocCARC20.tpTokens(i).totalSupply() == nTP;
+        }
+        return nAccbIsOk && nTCcbIsOk && nTPIsOk;
     }
 }
