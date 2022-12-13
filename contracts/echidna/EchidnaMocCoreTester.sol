@@ -242,6 +242,7 @@ contract EchidnaMocCoreTester {
             }
             if (shouldRevert) assert(reverted);
         }
+    }
 
     function operTCWithoutBalance(uint256 qTC_) public {
         TCData memory tcDataBefore = _getTCData();
@@ -292,6 +293,7 @@ contract EchidnaMocCoreTester {
             acBalanceMocFlow: acToken.balanceOf(mocFeeFlow),
             tpBalanceSender: mocCARC20.tpTokens(i_).balanceOf(address(this))
         });
+    }
 
     function echidna_balance_not_drained() public view returns (bool) {
         return
