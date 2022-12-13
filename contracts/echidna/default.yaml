@@ -26,8 +26,7 @@ cryticArgs: # If we add more dependencies they will need to be added as symlinks
   [
     "--solc-remaps",
     "hardhat/=../node_modules/hardhat/ @openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/ @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/",
-    --hardhat-ignore-compile,
-  ] 
+    ] 
 #directory to save the corpus; by default is disabled
 corpusDir: "corpus"
 #filter the functions to test
