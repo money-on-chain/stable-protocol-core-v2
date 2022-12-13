@@ -72,10 +72,14 @@ contract MocCARC20 is MocCore {
     /**
      * @notice hook before any AC reception involving operation, as dealing with an RC20 Token
      * we need to transfer the AC amount from the user, to the contract
-     * @param qAC_ amount of AC involved
+     * param qACMax_ max amount of AC available
+     * @param qACNeeded_ amount of AC needed
+     * @return change amount needed to be return to the sender after the operation is complete
      */
-    function _onACNeededOperation(uint256 qAC_) internal override {
-        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qAC_);
+    function _onACNeededOperation(uint256 /*qACMax_*/, uint256 qACNeeded_) internal override returns (uint256 change) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACNeeded_);
+        // As we are transferring the exact needed amount, change is zero
+        change = 0;
     }
 
     // ------- External Functions -------

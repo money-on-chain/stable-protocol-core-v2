@@ -60,6 +60,17 @@ contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
         return account.balance;
     }
 
+    /**
+     * @notice hook before any AC reception involving operation, as dealing with an RC20 Token
+     * we need to transfer the AC amount from the user, to the contract
+     * @param qACMax_ max amount of AC available
+     * @param qACNeeded_ amount of AC needed
+     * @return change amount needed to be return to the sender after the operation is complete
+     */
+    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal pure override returns (uint256 change) {
+        change = qACMax_ - qACNeeded_;
+    }
+
     // ------- External Functions -------
 
     /**
