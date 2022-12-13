@@ -250,7 +250,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
-        _onACNeededOperation(qACmax_);
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
@@ -268,6 +267,7 @@ abstract contract MocCore is MocSettlement {
         emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         // update bucket and mint
         _depositAndMintTP(i_, qTP_, qACNeededtoMint, recipient_);
+        _onACNeededOperation(qACmax_);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
         return qACtotalNeeded;
