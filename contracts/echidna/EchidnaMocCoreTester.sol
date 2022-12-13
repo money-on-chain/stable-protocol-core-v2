@@ -97,7 +97,7 @@ contract EchidnaMocCoreTester {
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
 
-    function mintTC(uint256 qTC_, uint256 qACmax_) public {
+    function mintTC(uint256 qTC_, uint256 qACmax_) public virtual {
         if (qACmax_ > 0) {
             // mint tokens to this contract
             acToken.mint(address(this), qACmax_);

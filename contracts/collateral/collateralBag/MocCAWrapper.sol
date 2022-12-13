@@ -199,7 +199,7 @@ contract MocCAWrapper is MocUpgradable {
     function _convertTokenToAsset(
         address assetAddress_,
         uint256 wcaTokenAmount_
-    ) internal view returns (uint256 assetAmount) {
+    ) internal view returns (uint256 assetAmount, uint256 wcaTokenAmount) {
         // get the wrapped token price = totalCurrency / wcaTokenTotalSupply
         // [PREC]
         uint256 wcaTokenPrice = getTokenPrice();
@@ -208,7 +208,9 @@ contract MocCAWrapper is MocUpgradable {
         uint256 currencyNeeded = wcaTokenPrice * wcaTokenAmount_;
         // divide currencyNeeded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
-        return currencyNeeded / _getAssetPrice(assetAddress_);
+        assetAmount = currencyNeeded / _getAssetPrice(assetAddress_);
+        wcaTokenAmount_ = _convertAssetToToken(assetAddress_, assetAmount);
+        return (assetAmount, wcaTokenAmount_);
     }
 
     /**
@@ -597,7 +599,7 @@ contract MocCAWrapper is MocUpgradable {
         address recipient_
     ) internal returns (uint256 assetAmount) {
         // calculate the equivalent amount of Asset
-        assetAmount = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
+        (assetAmount, wcaTokenAmount_) = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
         if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
         // burns the wcaToken for this user, will fail if insufficient funds
         wcaToken.burn(sender_, wcaTokenAmount_);
