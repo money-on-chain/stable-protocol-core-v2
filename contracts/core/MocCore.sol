@@ -185,7 +185,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
-        _onACNeededOperation(qACmax_);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
         // calculates how many qAC are needed to mint TC and the qAC fee
@@ -197,6 +196,7 @@ abstract contract MocCore is MocSettlement {
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTC_, qACNeededtoMint, recipient_);
         // transfers any AC change to the sender and distributes fees
+        _onACNeededOperation(qACmax_);
         _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
         return qACtotalNeeded;
     }
