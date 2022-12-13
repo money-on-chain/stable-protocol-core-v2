@@ -9,6 +9,7 @@ node_modules/
 typechain/
 profiles/
 docs/
+contracts/crytic-export/
 .gitlab/
 .vscode/
 
