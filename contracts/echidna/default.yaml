@@ -13,7 +13,7 @@ codeSize: 245760
 #TODO: increase this number
 testLimit: 10000
 #seqLen defines how many transactions are in a test sequence
-seqLen: 200
+seqLen: 300
 #shrinkLimit determines how much effort is spent shrinking failing sequences
 shrinkLimit: 5000
 #coverage controls coverage guided testing
