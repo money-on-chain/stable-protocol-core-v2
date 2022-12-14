@@ -340,7 +340,7 @@ contract EchidnaMocCoreTester {
                 // assert: during mintTCandTP operation if coverage should get closer to ctargemaCA
                 assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
             }
-        } catch {                
+        } catch {
             totalReverted++;
         }
         // assert: max txs reverted in a seqLen

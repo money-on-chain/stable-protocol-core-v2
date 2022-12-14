@@ -31,3 +31,4 @@ jobs:
         contract: EchidnaMocCoreTester
         config: contracts/echidna/default.yaml
         test-mode: assertion
+        crytic-args: --hardhat-ignore-compile
