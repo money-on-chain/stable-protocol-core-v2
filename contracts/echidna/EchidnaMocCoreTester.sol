@@ -336,7 +336,9 @@ contract EchidnaMocCoreTester {
             } else {
                 // assert: during mintTCandTP operation if coverage was above ctargemaCA then should decrease
                 // use tolerance 1 because possible rounding errors
-                assert(SignedMath.abs(int256(tpDataBefore.coverage) - int256(tpDataAfter.coverage)) <= 1);
+                assert(
+                    tpDataBefore.coverage >= tpDataAfter.coverage || tpDataAfter.coverage - tpDataBefore.coverage <= 1
+                );
                 // assert: during mintTCandTP operation if coverage should get closer to ctargemaCA
                 assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
             }
