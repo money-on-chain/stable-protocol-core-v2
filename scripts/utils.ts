@@ -1,7 +1,7 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatNetworkUserConfig } from "hardhat/types/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
-import { coreParams, settlementParams, feeParams, mocAddresses } from "../deploy-config/config";
+import { networkConfig } from "../deploy-config/config";
 
 export const GAS_LIMIT_PATCH = 30000000;
 
@@ -49,5 +49,5 @@ export const deployUUPSArtifact = async ({
 };
 
 export const getNetworkConfig = ({ network }: { network: string }) => {
-  return { coreParams, settlementParams, feeParams, mocAddresses: mocAddresses[network as keyof typeof mocAddresses] };
+  return networkConfig[network as keyof typeof networkConfig];
 };
