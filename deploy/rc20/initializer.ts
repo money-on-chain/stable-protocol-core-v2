@@ -8,7 +8,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
   const network = hre.network.name;
-  const { coreParams, settlementParams, feeParams, mocAddresses } = getNetworkConfig({ network });
+  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig({ network });
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
@@ -37,9 +37,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     collateralAssetToken = deployedERC20MockContract.address;
   }
 
+  console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize("CollateralToken", "CollateralToken", deployedMocContract.address, governorAddress),
+    CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress),
   );
   await waitForTxConfirmation(
     mocCARC20.initialize(
@@ -72,7 +73,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );
-
+  console.log("initialization completed!");
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;

@@ -16,7 +16,7 @@ import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
   const network = hre.network.name;
-  const { coreParams, settlementParams, feeParams, mocAddresses } = getNetworkConfig({ network });
+  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig({ network });
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
@@ -43,9 +43,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     governorAddress = (await governorMockFactory.deploy()).address;
   }
 
+  console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize("CollateralToken", "CollateralToken", deployedMocContract.address, governorAddress),
+    CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress),
   );
   await waitForTxConfirmation(
     WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress),
@@ -82,13 +83,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       { gasLimit: GAS_LIMIT_PATCH },
     ),
   );
-
   await waitForTxConfirmation(
     MocCAWrapper.initialize(governorAddress, pauserAddress, mocCARC20.address, WCAToken.address, {
       gasLimit: GAS_LIMIT_PATCH,
     }),
   );
-
+  console.log("initialization completed!");
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;

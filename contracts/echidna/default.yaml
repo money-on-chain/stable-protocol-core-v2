@@ -1,5 +1,4 @@
 testMode: "property"
-#testMode: "assertion"
 
 #propMaxGas defines gas cost at which a property fails
 propMaxGas: 1000000000
@@ -12,9 +11,9 @@ codeSize: 245760
 #testLimit is the number of test sequences to run
 #testLimit: 50000
 #TODO: increase this number
-testLimit: 50000
+testLimit: 10000
 #seqLen defines how many transactions are in a test sequence
-seqLen: 200
+seqLen: 300
 #shrinkLimit determines how much effort is spent shrinking failing sequences
 shrinkLimit: 5000
 #coverage controls coverage guided testing
@@ -26,7 +25,22 @@ sender: ["0x10000", "0x20000", "0x00a329C0648769a73afAC7F9381e08fb43DBEA70"]
 cryticArgs: # If we add more dependencies they will need to be added as symlinks here!
   [
     "--solc-remaps",
-    "@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/ @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/",
-  ] 
+    "hardhat/=../node_modules/hardhat/ @openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/ @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/",
+    ] 
 #directory to save the corpus; by default is disabled
-corpusDir: "echidna/corpus"
+corpusDir: "corpus"
+#filter the functions to test
+filterBlacklist: true
+filterFunctions: 
+  [
+    "EchidnaMocCoreTester.getPTCac()",
+    "EchidnaMocCoreTester.getCglb()", 
+    "EchidnaMocCoreTester.getTCAvailableToRedeem()", 
+    "EchidnaMocCoreTester.getTPAvailableToMint(uint256)",
+    "EchidnaMocCoreTester.getTotalACavailable()", 
+    "EchidnaMocCoreTester.getLeverageTC()", 
+    "EchidnaMocCoreTester.getQACforRedeemTP(uint256,uint256)", 
+    "EchidnaMocCoreTester.getPACtp(uint256)",
+    "EchidnaMocCoreTester.evalLiquidation()",
+    "EchidnaMocCoreTester.isLiquidationReached()"
+  ]

@@ -209,6 +209,7 @@ contract MocCAWrapper is MocUpgradable {
         // divide currencyNeeded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
         assetAmount = currencyNeeded / _getAssetPrice(assetAddress_);
+        // convert back to wcaToken to align decimal places and avoir rounding error
         wcaTokenAmount_ = _convertAssetToToken(assetAddress_, assetAmount);
         return (assetAmount, wcaTokenAmount_);
     }

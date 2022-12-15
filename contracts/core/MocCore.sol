@@ -166,10 +166,11 @@ abstract contract MocCore is MocSettlement {
     /**
      * @notice hook before any AC reception involving operation
      * @dev this function must be overridden by the AC implementation
-     * @param qAC_ amount of AC involved
+     * @param qACMax_ max amount of AC available
+     * @param qACNeeded_ amount of AC needed
+     * @return change amount needed to be return to the sender after the operation is complete
      */
-    /* solhint-disable-next-line no-empty-blocks */
-    function _onACNeededOperation(uint256 qAC_) internal virtual {}
+    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal virtual returns (uint256 change);
 
     /**
      * @notice mint Collateral Token in exchange for Collateral Asset
@@ -185,7 +186,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
-        _onACNeededOperation(qACmax_);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
         // calculates how many qAC are needed to mint TC and the qAC fee
@@ -196,8 +196,9 @@ abstract contract MocCore is MocSettlement {
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTC_, qACNeededtoMint, recipient_);
+        uint256 acChange = _onACNeededOperation(qACmax_, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
+        _distOpResults(sender_, acChange, qACfee);
         return qACtotalNeeded;
     }
 
@@ -250,7 +251,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
-        _onACNeededOperation(qACmax_);
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
@@ -268,8 +268,9 @@ abstract contract MocCore is MocSettlement {
         emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
         // update bucket and mint
         _depositAndMintTP(i_, qTP_, qACNeededtoMint, recipient_);
+        uint256 acChange = _onACNeededOperation(qACmax_, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
+        _distOpResults(sender_, acChange, qACfee);
         return qACtotalNeeded;
     }
 
@@ -327,7 +328,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
-        _onACNeededOperation(qACmax_);
         uint256 qACNeededtoMint;
         uint256 qACfee;
         uint256 pACtp = getPACtp(i_);
@@ -340,8 +340,9 @@ abstract contract MocCore is MocSettlement {
         emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, recipient_);
         _depositAndMintTP(i_, qTP_, 0, recipient_);
+        uint256 acChange = _onACNeededOperation(qACmax_, qACtotalNeeded);
         // transfers qAC to the sender and distributes fees
-        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACfee);
+        _distOpResults(sender_, acChange, qACfee);
         return (qACtotalNeeded, qTCtoMint);
     }
 
@@ -431,7 +432,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTPtoMint) {
-        _onACNeededOperation(qACmax_);
         if (iFrom_ == iTo_) revert InvalidValue();
         uint256 pACtpFrom = getPACtp(iFrom_);
         uint256 pACtpTo = getPACtp(iTo_);
@@ -470,8 +470,10 @@ abstract contract MocCore is MocSettlement {
         _depositAndMintTP(iTo_, qTPtoMint, 0, recipient_);
         _withdrawAndBurnTP(iFrom_, qTP_, 0, sender_);
 
+        // AC is only used to pay fees
+        uint256 acChange = _onACNeededOperation(qACmax_, qACfee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
+        _distOpResults(sender_, acChange, qACfee);
         return (qACfee, qTPtoMint);
     }
 
@@ -494,7 +496,6 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTCtoMint) {
-        _onACNeededOperation(qACmax_);
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
@@ -521,8 +522,10 @@ abstract contract MocCore is MocSettlement {
 
         _withdrawAndBurnTP(i_, qTP_, 0, sender_);
         _depositAndMintTC(qTCtoMint, 0, recipient_);
+        // AC is only used to pay fees
+        uint256 acChange = _onACNeededOperation(qACmax_, qACfee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACfee, qACfee);
+        _distOpResults(sender_, acChange, qACfee);
         return (qACfee, qTCtoMint);
     }
 
@@ -534,7 +537,7 @@ abstract contract MocCore is MocSettlement {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of AC used to pay fee
+     * @return qACfee amount of AC used to pay fee
      * @return qTPtoMint amount of Pegged Token minted
      */
     function _swapTCforTPto(
@@ -544,8 +547,7 @@ abstract contract MocCore is MocSettlement {
         uint256 qACmax_,
         address sender_,
         address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTPtoMint) {
-        _onACNeededOperation(qACmax_);
+    ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTPtoMint) {
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
         uint256 ctargemaCA = calcCtargemaCA();
@@ -568,21 +570,24 @@ abstract contract MocCore is MocSettlement {
 
         // calculates qAC to be charged as fee
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalNeeded = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
-        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        qACfee = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
+        if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
 
         // inside a block to avoid stack too deep error
         {
             uint256 i = i_;
             uint256 qTC = qTC_;
-            emit TCSwappedForTP(i, sender_, recipient_, qTC, qTPtoMint, qACtotalNeeded);
+            emit TCSwappedForTP(i, sender_, recipient_, qTC, qTPtoMint, qACfee);
         }
 
         _withdrawAndBurnTC(qTC_, 0, sender_);
         _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
+
+        // AC is only used to pay fees
+        uint256 acChange = _onACNeededOperation(qACmax_, qACfee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, qACmax_ - qACtotalNeeded, qACtotalNeeded);
-        return (qACtotalNeeded, qTPtoMint);
+        _distOpResults(sender_, acChange, qACfee);
+        return (qACfee, qTPtoMint);
     }
 
     /**
