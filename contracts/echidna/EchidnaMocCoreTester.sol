@@ -327,6 +327,8 @@ contract EchidnaMocCoreTester {
             // assert: echidna TP balance should increase by qTP
             assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);
             if (coverageShouldIncrease) {
+                // assert: coverage should increase
+                assert(tpDataAfter.coverage >= tpDataBefore.coverage);
                 // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from below
                 assert(tpDataAfter.coverage <= mocCARC20.calcCtargemaCA());
             } else {
