@@ -9,7 +9,6 @@ import "../mocks/ERC20Mock.sol";
 import "../mocks/PriceProviderMock.sol";
 import "../interfaces/IPriceProvider.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import "hardhat/console.sol";
 
 contract EchidnaMocCoreTester {
@@ -19,7 +18,7 @@ contract EchidnaMocCoreTester {
     uint256 internal constant MAX_PEGGED_TOKENS = 5;
     uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
     // this value must be consistent with seqLen in default.yaml config file
-    uint256 internal constant MAX_TXS_REVERTED = 100000;
+    uint256 internal constant MAX_TXS_REVERTED = 75;
 
     MocCARC20 internal mocCARC20;
     GovernorMock internal governor;
@@ -317,7 +316,7 @@ contract EchidnaMocCoreTester {
                 (PRECISION * PRECISION);
             // assert: qACspent should be qACusedToMint + qAC fee
             // use tolerance 1 because possible rounding errors
-            /*assert(qACspent - (qACusedToMint * (PRECISION + mocCARC20.mintTCandTPFee())) / PRECISION <= 1);
+            assert(qACspent - (qACusedToMint * (PRECISION + mocCARC20.mintTCandTPFee())) / PRECISION <= 100);
             // assert: echidna AC balance should decrease by qAC spent
             assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender - qACspent);
             // assert: Moc Flow balance should increase by qAC fee
@@ -326,27 +325,19 @@ contract EchidnaMocCoreTester {
             // assert: echidna TC balance should increase by qTC
             assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender + qTC);
             // assert: echidna TP balance should increase by qTP
-            assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);*/
+            assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);
             if (coverageShouldIncrease) {
-                // assert: during mintTCandTP operation if coverage was below ctargemaCA then should increase
-                // use tolerance 1 because possible rounding errors
-                assert(SignedMath.abs(int256(tpDataAfter.coverage) - int256(tpDataBefore.coverage)) <= 1);
-                // assert: during mintTCandTP operation if coverage should get closer to ctargemaCA
+                // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from below
                 assert(tpDataAfter.coverage <= mocCARC20.calcCtargemaCA());
             } else {
-                // assert: during mintTCandTP operation if coverage was above ctargemaCA then should decrease
-                // use tolerance 1 because possible rounding errors
-                assert(
-                    tpDataBefore.coverage >= tpDataAfter.coverage || tpDataAfter.coverage - tpDataBefore.coverage <= 1
-                );
-                // assert: during mintTCandTP operation if coverage should get closer to ctargemaCA
+                // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from above
                 assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
             }
         } catch {
             totalReverted++;
         }
         // assert: max txs reverted in a seqLen
-        //assert(totalReverted < MAX_TXS_REVERTED);
+        assert(totalReverted < MAX_TXS_REVERTED);
     }
 
     function operTCWithoutBalance(uint256 qTC_) public {

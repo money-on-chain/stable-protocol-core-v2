@@ -23,6 +23,16 @@ jobs:
       run: npm ci
     - name: Compile contracts
       run: npm run compile
+    - name: Run Echidna Property Mode
+      uses: crytic/echidna-action@v2
+      with:
+        solc-version: 0.8.17
+        files: .
+        contract: EchidnaMocCoreTester
+        config: contracts/echidna/default.yaml
+        test-mode: property
+        test-limit: 20000
+        crytic-args: --hardhat-ignore-compile
     - name: Run Echidna Assertion Mode
       uses: crytic/echidna-action@v2
       with:
@@ -31,5 +41,5 @@ jobs:
         contract: EchidnaMocCoreTester
         config: contracts/echidna/default.yaml
         test-mode: assertion
-        test-limit: 50000
+        test-limit: 20000
         crytic-args: --hardhat-ignore-compile
