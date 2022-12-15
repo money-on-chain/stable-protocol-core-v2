@@ -266,6 +266,16 @@ const mintTCBehavior = function () {
           });
         });
       });
+      describe("AND Pegged Token has been revaluated making lckAC bigger than total AC in the protocol", function () {
+        beforeEach(async function () {
+          await mocFunctions.pokePrice(TP_0, "0.000000000000000001");
+        });
+        it("THEN TC price is 0", async function () {
+          // this test is just to cover when lckAC > TotalACavailable and the TC price is forced
+          // to 0 to avoid math underflow
+          assertPrec(0, await mocContracts.mocImpl.getPTCac());
+        });
+      });
     });
   });
 };
