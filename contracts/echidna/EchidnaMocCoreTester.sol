@@ -1,6 +1,5 @@
 pragma solidity ^0.8.17;
 
-import "../collateral/collateralBag/MocCAWrapper.sol";
 import "../collateral/rc20/MocCARC20.sol";
 import "../tokens/MocTC.sol";
 import "../tokens/MocRC20.sol";
@@ -175,7 +174,7 @@ contract EchidnaMocCoreTester {
         }
     }
 
-    function redeemTC(uint256 qTC_) public {
+    function redeemTC(uint256 qTC_) public virtual {
         TCData memory tcDataBefore = _getTCData();
         if (tcDataBefore.tcBalanceSender > 0) {
             // we don't want to revert if echidna tries to redeem qTC that don´t have
