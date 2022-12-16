@@ -18,7 +18,7 @@ contract EchidnaMocCoreTester {
     uint256 internal constant MAX_PEGGED_TOKENS = 5;
     uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
     // this value must be consistent with seqLen in default.yaml config file
-    uint256 internal constant MAX_TXS_REVERTED = 50;
+    uint256 internal constant MAX_TXS_REVERTED = 75;
 
     MocCARC20 internal mocCARC20;
     GovernorMock internal governor;
@@ -295,6 +295,51 @@ contract EchidnaMocCoreTester {
             // assert: max txs reverted in a seqLen
             assert(totalReverted < MAX_TXS_REVERTED);
         }
+    }
+
+    function mintTCandTP(uint256 i_, uint256 qTP_) public {
+        i_ = i_ % totalPeggedTokensAdded;
+        // approve max tokens to MocCore
+        uint256 qACmax = acToken.balanceOf(address(this));
+        acToken.approve(address(mocCARC20), qACmax);
+        TPData memory tpDataBefore = _getTPData(i_);
+        TCData memory tcDataBefore = _getTCData();
+        bool coverageShouldIncrease = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
+        try mocCARC20.mintTCandTP(uint8(i_), qTP_, qACmax) returns (uint256 qACspent, uint256 qTC) {
+            TCData memory tcDataAfter = _getTCData();
+            TPData memory tpDataAfter = _getTPData(i_);
+            uint256 qACusedToMint = (qTP_ * PRECISION) /
+                tpDataBefore.tpPrice +
+                (qTC * tcDataBefore.tcPrice) /
+                PRECISION;
+            uint256 fee = (qACusedToMint * mocCARC20.mintTCandTPFee() * (PRECISION - mocCARC20.feeRetainer())) /
+                (PRECISION * PRECISION);
+            // assert: qACspent should be qACusedToMint + qAC fee
+            // use tolerance 1 because possible rounding errors
+            assert(qACspent - (qACusedToMint * (PRECISION + mocCARC20.mintTCandTPFee())) / PRECISION <= 100);
+            // assert: echidna AC balance should decrease by qAC spent
+            assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender - qACspent);
+            // assert: Moc Flow balance should increase by qAC fee
+            // use tolerance 1 because possible rounding errors
+            assert(tcDataAfter.acBalanceMocFlow - tcDataBefore.acBalanceMocFlow - fee <= 1);
+            // assert: echidna TC balance should increase by qTC
+            assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender + qTC);
+            // assert: echidna TP balance should increase by qTP
+            assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);
+            if (coverageShouldIncrease) {
+                // assert: coverage should increase
+                assert(tpDataAfter.coverage >= tpDataBefore.coverage);
+                // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from below
+                assert(tpDataAfter.coverage <= mocCARC20.calcCtargemaCA());
+            } else {
+                // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from above
+                assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
+            }
+        } catch {
+            totalReverted++;
+        }
+        // assert: max txs reverted in a seqLen
+        assert(totalReverted < MAX_TXS_REVERTED);
     }
 
     function operTCWithoutBalance(uint256 qTC_) public {
