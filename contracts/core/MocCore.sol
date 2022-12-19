@@ -332,6 +332,9 @@ abstract contract MocCore is MocSettlement {
         uint256 qACfee;
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
+        // evaluates that the system is not below the liquidation threshold
+        // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
+        _evalCoverage(liqThrld);
         (qTCtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qTP_, pACtp);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
@@ -370,14 +373,16 @@ abstract contract MocCore is MocSettlement {
     ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
         uint256 pACtp = getPACtp(i_);
         _updateTPtracking(i_, pACtp);
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        // evaluates that the system is not below the liquidation threshold
+        // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld);
         // calculate how many TP are needed to redeem TC and not change coverage
         // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
         // pTCac = (totalACavailable - lckAC) / nTCcb
         // cglb = totalACavailable / lckAC => cglb - 1 = (totalACavailable - lckAC) / lckAC
-        // pTCac = (qTC * pACtp * (totalACavailable - lckAC) / nTCcb) / ((totalACavailable - lckAC) / lckAC)
+        // qTPtoRedeem = (qTC * pACtp * (totalACavailable - lckAC) / nTCcb) / ((totalACavailable - lckAC) / lckAC)
         // So, we can simplify (totalACavailable - lckAC)
-        // pTCac = (qTC * pACtp * lckAC) / nTCcb
+        // qTPtoRedeem = (qTC * pACtp * lckAC) / nTCcb
         // [N] = ([N] * [N] * [PREC] / [N]) /  [PREC]
         qTPtoRedeem = ((qTC_ * lckAC * pACtp) / nTCcb) / PRECISION;
 

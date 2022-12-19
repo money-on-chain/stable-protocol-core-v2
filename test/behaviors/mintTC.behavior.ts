@@ -267,13 +267,16 @@ const mintTCBehavior = function () {
         });
       });
       describe("AND Pegged Token has been revaluated making lckAC bigger than total AC in the protocol", function () {
+        // this test is to check that tx doesn´t fail because underflow doing totalACAvailable - lckAC
         beforeEach(async function () {
-          await mocFunctions.pokePrice(TP_0, "0.000000000000000001");
+          await mocFunctions.pokePrice(TP_0, "0.00000001");
         });
-        it("THEN TC price is 0", async function () {
-          // this test is just to cover when lckAC > TotalACavailable and the TC price is forced
-          // to 0 to avoid math underflow
-          assertPrec(0, await mocContracts.mocImpl.getPTCac());
+        it("THEN tx reverts because coverage is below the protected threshold", async function () {
+          expect((await mocContracts.mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
+          await expect(mocFunctions.mintTC({ from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+            mocContracts.mocImpl,
+            ERRORS.LOW_COVERAGE,
+          );
         });
       });
     });
