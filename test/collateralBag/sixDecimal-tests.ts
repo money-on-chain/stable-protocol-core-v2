@@ -33,8 +33,8 @@ describe("Feature: MocCAWrapper with six decimal based asset", function () {
       // Both assets has the same price (= 1)
       const priceProviderUSDC = await deployPriceProvider(pEth(1));
       // We need to shift this price provider value 12 places, to get to 18 parity
-      const shiftedPriceProviderUSDC = await shifterFactory.deploy(priceProviderUSDC.address, 12);
-      await mocWrapper.addOrEditAsset(USDC.address, shiftedPriceProviderUSDC.address);
+      const shiftedPriceProviderUSDC = await shifterFactory.deploy(priceProviderUSDC.address, await USDC.decimals());
+      await mocWrapper.addOrEditAsset(USDC.address, shiftedPriceProviderUSDC.address, await USDC.decimals());
     });
     describe("WHEN minting 1 wei TC", () => {
       const qTC = 1;

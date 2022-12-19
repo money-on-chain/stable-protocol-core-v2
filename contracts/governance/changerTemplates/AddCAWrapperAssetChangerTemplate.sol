@@ -2,6 +2,7 @@ pragma solidity 0.8.17;
 
 import "../../interfaces/IChangeContract.sol";
 import "../../collateral/collateralBag/MocCAWrapper.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**
   @title AddCAWrapperAssetChangerTemplate
@@ -9,6 +10,7 @@ import "../../collateral/collateralBag/MocCAWrapper.sol";
   governance system. It allows the addition of a new Asset to the MocCAWrapper.
  */
 contract AddCAWrapperAssetChangerTemplate is IChangeContract {
+    error InvalidAssetDecimals();
     // ------- Storage -------
 
     // target contract
@@ -25,6 +27,7 @@ contract AddCAWrapperAssetChangerTemplate is IChangeContract {
     @param priceProvider_ priceProvider for this asset
   */
     constructor(MocCAWrapper mocCAWrapper_, IERC20 asset_, IPriceProvider priceProvider_) {
+        if (IERC20Metadata(address(asset_)).decimals() > 18) revert InvalidAssetDecimals();
         mocCAWrapper = mocCAWrapper_;
         asset = asset_;
         priceProvider = priceProvider_;
@@ -36,6 +39,6 @@ contract AddCAWrapperAssetChangerTemplate is IChangeContract {
     because it is not its responsability in the current architecture
    */
     function execute() external {
-        mocCAWrapper.addOrEditAsset(asset, priceProvider);
+        mocCAWrapper.addOrEditAsset(asset, priceProvider, IERC20Metadata(address(asset)).decimals());
     }
 }

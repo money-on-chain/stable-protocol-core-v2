@@ -183,7 +183,7 @@ export async function deployAndAddAssets(
   for (let i = 0; i < amountAsset; i++) {
     const asset = await deployAsset();
     const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address);
+    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
     assets.push(asset);
     assetPriceProviders.push(priceProvider);
   }

@@ -2,7 +2,7 @@ pragma solidity ^0.8.17;
 
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
@@ -676,8 +676,13 @@ contract MocCAWrapper is MocUpgradable {
      * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
      * @param priceProvider_ Asset Price Provider contract address
+     * @param assetDecimals_ Asset decimal places
      */
-    function addOrEditAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
+    function addOrEditAsset(
+        IERC20 asset_,
+        IPriceProvider priceProvider_,
+        uint8 assetDecimals_
+    ) external onlyAuthorizedChanger {
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
@@ -685,7 +690,7 @@ contract MocCAWrapper is MocUpgradable {
             assetIndex[address(asset_)] = AssetIndex({
                 index: uint256(assets.length),
                 exists: true,
-                shift: 18 - int8(IERC20Metadata(address(asset_)).decimals())
+                shift: 18 - int8(assetDecimals_)
             });
             assets.push(asset_);
         }

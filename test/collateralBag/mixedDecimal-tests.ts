@@ -39,7 +39,7 @@ describe("Feature: MocCAWrapper with different decimal based assets", function (
       const priceProvider8 = await deployPriceProvider(pEth(1));
       // We need to shift this price provider value 10 places, to get to 18 parity
       const shiftedPriceProvider8 = await shifterFactory.deploy(priceProvider8.address, 10);
-      await mocWrapper.addOrEditAsset(asset8.address, shiftedPriceProvider8.address);
+      await mocWrapper.addOrEditAsset(asset8.address, shiftedPriceProvider8.address, await asset8.decimals());
 
       asset24 = await deployAsset();
       await asset24.setDecimals(24);
@@ -47,7 +47,7 @@ describe("Feature: MocCAWrapper with different decimal based assets", function (
       const priceProvider24 = await deployPriceProvider(pEth(1));
       // We need to shift this price provider value -6 places, to get to 18 parity
       const shiftedPriceProvider24 = await shifterFactory.deploy(priceProvider24.address, -6);
-      await mocWrapper.addOrEditAsset(asset24.address, shiftedPriceProvider24.address);
+      await mocWrapper.addOrEditAsset(asset24.address, shiftedPriceProvider24.address, await asset24.decimals());
     });
     describe("WHEN minting using equivalent value of asset 18 and 8, the results are the same", () => {
       before(async function () {
