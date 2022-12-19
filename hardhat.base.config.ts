@@ -121,6 +121,7 @@ const config: HardhatUserConfig = {
     path: "./docs",
     clear: true,
     runOnCompile: false,
+    except: ["^contracts/echidna/", "^contracts/mocks/"],
   },
   contractSizer: {
     alphaSort: true,
