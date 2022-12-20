@@ -112,7 +112,7 @@ describe("Feature: MocCABag redeem TP", function () {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(0.9));
-          await mocFunctions.addOrEditAsset(newAsset, newPriceProvider);
+          await mocFunctions.addOrEditAsset(newAsset, newPriceProvider, 18);
           // add stock of the new asset to the collateral bag
           await mocFunctions.mintTC({ from: deployer, qTC: 1000, asset: newAsset });
         });
@@ -134,7 +134,7 @@ describe("Feature: MocCABag redeem TP", function () {
         beforeEach(async () => {
           newAsset = await deployAsset();
           newPriceProvider = await deployPriceProvider(pEth(1.1));
-          await mocFunctions.addOrEditAsset(newAsset, newPriceProvider);
+          await mocFunctions.addOrEditAsset(newAsset, newPriceProvider, 18);
           // add stock of the new asset to the collateral bag
           await mocFunctions.mintTC({ from: deployer, qTC: 1000, asset: newAsset });
         });

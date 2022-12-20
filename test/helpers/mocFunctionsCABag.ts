@@ -284,7 +284,7 @@ const tpBalanceOf = mocPeggedTokens => async (i, account) => mocPeggedTokens[i].
 
 // add an asset to the MocCABag whitelist with its respective price provider
 const addOrEditAsset = mocWrapper => async (asset, priceProvider) => {
-  return mocWrapper.addOrEditAsset(asset.address, priceProvider.address);
+  return mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
 };
 const pokePrice = priceProviders => async (i, newPrice) => priceProviders[i].poke(pEth(newPrice));
 
