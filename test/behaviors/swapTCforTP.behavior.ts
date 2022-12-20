@@ -342,6 +342,19 @@ const swapTCforTPBehavior = function () {
             });
           });
         });
+        describe("AND Pegged Token has been revaluated making lckAC bigger than total AC in the protocol", function () {
+          // this test is to check that tx doesn´t fail because underflow doing totalACAvailable - lckAC
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(TP_0, "0.00000001");
+          });
+          it("THEN tx reverts because coverage is below the protected threshold", async function () {
+            expect((await mocContracts.mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
+            await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+              mocContracts.mocImpl,
+              ERRORS.LOW_COVERAGE,
+            );
+          });
+        });
       });
     });
   });
