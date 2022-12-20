@@ -9,7 +9,7 @@ coverage/
 dist/
 lib/
 node_modules/
-/typechain/
+typechain/
 profiles/
 bytecodes/
 corpus/
