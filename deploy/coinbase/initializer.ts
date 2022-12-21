@@ -8,23 +8,14 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const network = hre.network.name;
   const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig({ network });
   const signer = ethers.provider.getSigner();
+
   const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
   if (!deployedMocContractProxy) throw new Error("No MocCACoinbaseProxy deployed.");
-  const mocCACoinbaseArtifact = await hre.artifacts.readArtifact("MocCACoinbase");
-  const MocCACoinbase = await ethers.getContractAtFromArtifact(
-    mocCACoinbaseArtifact,
-    deployedMocContractProxy.address,
-    signer,
-  );
+  const MocCACoinbase = await ethers.getContractAt("MocCACoinbase", deployedMocContractProxy.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbaseProxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
-  const collateralTokenArtifact = await hre.artifacts.readArtifact("MocTC");
-  const CollateralToken = await ethers.getContractAtFromArtifact(
-    collateralTokenArtifact,
-    deployedTCContract.address,
-    signer,
-  );
+  const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
