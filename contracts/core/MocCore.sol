@@ -186,8 +186,9 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        uint256[] memory pACtps = _getPACtps();
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
         // calculates how many qAC are needed to mint TC and the qAC fee
         (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC, nACgain);
         qACtotalNeeded = qACNeededtoMint + qACfee;
@@ -216,10 +217,10 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
-        uint256 ctargemaCA = calcCtargemaCA();
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
         _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
         // calculate how many total qAC are redeemed and how many correspond for fee
@@ -251,12 +252,12 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
-        uint256 pACtp = getPACtp(i_);
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
+        uint256 pACtp = pACtps[i_];
         _updateTPtracking(i_, pACtp);
-        uint256 ctargemaCA = calcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough TP available to mint, reverts if it's not
         _evalTPavailableToMint(i_, qTP_, pACtp, ctargemaCA, lckAC, nACgain);
         // calculate how many qAC are needed to mint TP and the qAC fee
@@ -290,10 +291,11 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
-        uint256 pACtp = getPACtp(i_);
+        uint256[] memory pACtps = _getPACtps();
+        uint256 pACtp = pACtps[i_];
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to redeem TP, reverts if it's not
-        _evalCoverage(protThrld);
+        _evalCoverage(protThrld, pACtps);
         // calculate how many total qAC are redeemed and how many correspond for fee
         (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTP(i_, qTP_, pACtp);
         // if is 0 reverts because it is trying to redeem an amount below precision
@@ -330,12 +332,13 @@ abstract contract MocCore is MocSettlement {
     ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
         uint256 qACNeededtoMint;
         uint256 qACfee;
-        uint256 pACtp = getPACtp(i_);
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
+        uint256 pACtp = pACtps[i_];
         _updateTPtracking(i_, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
-        _evalCoverage(liqThrld);
-        (qTCtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qTP_, pACtp);
+        _evalCoverage(liqThrld, pACtps);
+        (qTCtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qTP_, pACtp, ctargemaCA, pACtps);
         qACtotalNeeded = qACNeededtoMint + qACfee;
         if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
@@ -372,11 +375,12 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
-        uint256 pACtp = getPACtp(i_);
+        uint256[] memory pACtps = _getPACtps();
+        uint256 pACtp = pACtps[i_];
         _updateTPtracking(i_, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
         // calculate how many TP are needed to redeem TC and not change coverage
         // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
         // pTCac = (totalACavailable - lckAC) / nTCcb
@@ -451,10 +455,10 @@ abstract contract MocCore is MocSettlement {
 
         // if ctargemaTPto > ctargemaTPfrom we need to check coverage
         if (_getCtargemaTP(iTo_, pACtpTo) > _getCtargemaTP(iFrom_, pACtpFrom)) {
-            uint256 ctargemaCA = calcCtargemaCA();
+            (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
             // evaluates whether or not the system coverage is healthy enough to mint TP
             // given the target coverage adjusted by the moving average, reverts if it's not
-            (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
+            (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
             // evaluates if there are enough TP available to mint, reverts if it's not
             _evalTPavailableToMint(iTo_, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
         }
@@ -501,10 +505,11 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTCtoMint) {
-        uint256 pACtp = getPACtp(i_);
+        uint256[] memory pACtps = _getPACtps();
+        uint256 pACtp = pACtps[i_];
         _updateTPtracking(i_, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
         // calculate how many total qAC are redeemed and how many correspond for fee
         (uint256 qACtotalToRedeem, ) = _calcQACforRedeemTP(i_, qTP_, pACtp);
         // calculate how many qTC can mint with the given qAC
@@ -553,12 +558,11 @@ abstract contract MocCore is MocSettlement {
         address sender_,
         address recipient_
     ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTPtoMint) {
-        uint256 pACtp = getPACtp(i_);
-        _updateTPtracking(i_, pACtp);
-        uint256 ctargemaCA = calcCtargemaCA();
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
+        _updateTPtracking(i_, pACtps[i_]);
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
         _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
         // calculate how many total qAC are redeemed and how many correspond for fee
@@ -568,9 +572,13 @@ abstract contract MocCore is MocSettlement {
         // calculate how many qTP can mint with the given qAC
         // qTPtoMint = qTC * pTCac * pACtp
         // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
-        qTPtoMint = ((qTC_ * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
+        qTPtoMint = ((qTC_ * (_getTotalACavailable(nACgain) - lckAC) * pACtps[i_]) / nTCcb) / PRECISION;
         // evaluates if there are enough TP available to mint, reverts if it's not
-        _evalTPavailableToMint(i_, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
+        // inside a block to avoid stack too deep error
+        {
+            uint256 pACtp = pACtps[i_];
+            _evalTPavailableToMint(i_, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
+        }
         if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
 
         // calculates qAC to be charged as fee
@@ -864,13 +872,15 @@ abstract contract MocCore is MocSettlement {
      */
     function _calcQACforMintTCandTP(
         uint256 qTP_,
-        uint256 pACtp_
+        uint256 pACtp_,
+        uint256 ctargemaCA_,
+        uint256[] memory pACtps_
     ) internal view returns (uint256 qTCtoMint, uint256 qACNeededtoMint, uint256 qACfee) {
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
+        (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps_);
         uint256 pTCac = _getPTCac(lckAC, nACgain);
         // calculate how many TC are needed to mint TP and total qAC used for mint both
         // [N] = [N] * ([PREC] - [PREC]) / [PREC]
-        qACNeededtoMint = (qTP_ * (_getCtargemaCA() - ONE)) / pACtp_;
+        qACNeededtoMint = (qTP_ * (ctargemaCA_ - ONE)) / pACtp_;
         // [N] = [N] *  [PREC] / [PREC]
         qTCtoMint = _divPrec(qACNeededtoMint, pTCac);
         // [N] = [N] + [N] *  [PREC] / [PREC]
@@ -1111,8 +1121,9 @@ abstract contract MocCore is MocSettlement {
      * @return tcAvailableToRedeem [N]
      */
     function getTCAvailableToRedeem() external view returns (uint256 tcAvailableToRedeem) {
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-        return _getTCAvailableToRedeem(_getCtargemaCA(), lckAC, nACgain);
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _calcCtargemaCA();
+        (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps);
+        return _getTCAvailableToRedeem(ctargemaCA, lckAC, nACgain);
     }
 
     /**
@@ -1124,9 +1135,10 @@ abstract contract MocCore is MocSettlement {
      * @return tpAvailableToMint [N]
      */
     function getTPAvailableToMint(uint256 i_) external view returns (uint256 tpAvailableToMint) {
-        uint256 pACtp = getPACtp(i_);
-        (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
-        return _getTPAvailableToMint(_getCtargemaCA(), _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _calcCtargemaCA();
+        uint256 pACtp = pACtps[i_];
+        (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps);
+        return _getTPAvailableToMint(ctargemaCA, _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
     }
 
     /**

@@ -29,6 +29,21 @@ abstract contract MocEma is MocBaseBucket {
     // amount of blocks to wait for next ema calculation
     uint256 public emaCalculationBlockSpan;
 
+    /**
+     * @notice calculates exponential moving average of the value of a Pegged Token
+     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
+     * @param currentTPema_ current Ema value
+     * @param pACtp_ current tp AC price
+     */
+    function __calcNewEma(EmaItem memory currentTPema_, uint256 pACtp_) private pure returns (uint256) {
+        // [PREC²] = [PREC] * ([PREC] - [PREC])
+        uint256 term1 = currentTPema_.ema * (ONE - currentTPema_.sf);
+        // [PREC²] = [PREC] * [PREC]
+        uint256 term2 = currentTPema_.sf * pACtp_;
+        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
+        return (term1 + term2) / PRECISION;
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
@@ -61,6 +76,7 @@ abstract contract MocEma is MocBaseBucket {
     function _getCtargemaTP(uint256 i_, uint256 pACtp_) internal view returns (uint256 ctargemaTP) {
         uint256 auxTPctarg = tpCtarg[i_];
         uint256 auxTpEma = tpEma[i_].ema;
+        if (shouldCalculateEma()) auxTpEma = __calcNewEma(tpEma[i_], pACtp_);
         if (auxTpEma >= pACtp_) return auxTPctarg;
         // [PREC] = [PREC] * [PREC] / [PREC]
         return (auxTPctarg * pACtp_) / auxTpEma;
@@ -68,18 +84,12 @@ abstract contract MocEma is MocBaseBucket {
 
     /**
      * @notice update exponential moving average of the value of a Pegged Token
-     * @dev more information of EMA calculation https://en.wikipedia.org/wiki/Exponential_smoothing
      * @param i_ Pegged Token index
      */
     function updateTPema(uint256 i_) internal {
         EmaItem memory currentTPema = tpEma[i_];
         uint256 pACtp = getPACtp(i_);
-        // [PREC²] = [PREC] * ([PREC] - [PREC])
-        uint256 term1 = currentTPema.ema * (ONE - currentTPema.sf);
-        // [PREC²] = [PREC] * [PREC]
-        uint256 term2 = currentTPema.sf * pACtp;
-        // [PREC] = ([PREC²] + [PREC²]) / [PREC]
-        uint256 newEma = (term1 + term2) / PRECISION;
+        uint256 newEma = __calcNewEma(currentTPema, pACtp);
         // save new ema value to storage
         tpEma[i_].ema = newEma;
         emit TPemaUpdated(i_, currentTPema.ema, newEma);
@@ -88,18 +98,22 @@ abstract contract MocEma is MocBaseBucket {
     // ------- Public Functions -------
 
     /**
-     * @notice get last calculated target coverage adjusted by all Pegged Token's to
-     *  Collateral Asset rate moving average
-     * @dev qAC = nTP / pACtp
+     * @notice calculates CA target coverage, adjusted by all Pegged Token's to
+     *  Collateral Asset last stored moving average price
+     * @dev WARN: if EMA are not up to date, the resulting coverage might not reflect real spot value
+     *      qAC = (nTP + tpGain) / pACtp
      *      ctargemaCA = ∑(ctargemaTP * qAC) / ∑(qAC)
      * @return ctargemaCA [PREC]
+     * @return pACtps array of all AC prices for each TP, with [PREC]
      */
-    function _getCtargemaCA() internal view returns (uint256 ctargemaCA) {
+    function _calcCtargemaCA() internal view returns (uint256 ctargemaCA, uint256[] memory pACtps) {
         uint256 num;
         uint256 den;
         uint256 pegAmount = pegContainer.length;
+        pACtps = new uint256[](pegAmount);
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
             uint256 pACtp = getPACtp(i);
+            pACtps[i] = pACtp;
             (uint256 tpGain, ) = _getPnLTP(i, pACtp);
             // [PREC] = [N] * [PREC] * [PREC]  / [PREC]
             uint256 qAC = _divPrec((pegContainer[i].nTP + tpGain) * PRECISION, pACtp);
@@ -111,11 +125,25 @@ abstract contract MocEma is MocBaseBucket {
         // we must return a default value when all nTP are 0
         if (den == 0) {
             unchecked {
-                return protThrld * 2;
+                return (protThrld * 2, pACtps);
             }
         }
         // [PREC] = ([PREC]^2) / [PREC]
         ctargemaCA = num / den;
+    }
+
+    /**
+     * @notice make sure Ema is up to date, and calculates target coverage adjusted by all Pegged Token's
+     * to Collateral Asset rate moving average
+     * @dev qAC = nTP / pACtp
+     *      ctargemaCA = ∑(ctargemaTP * qAC) / ∑(qAC)
+     * @return ctargemaCA [PREC]
+     * @return pACtps array of all AC prices for each TP, with [PREC]
+     */
+    function _updateEmasAndCalcCtargemaCA() internal returns (uint256 ctargemaCA, uint256[] memory pACtps) {
+        // Make sure EMAs are up to date for all the pegs, in the, unlikely, scenario they hadn't been updated already
+        updateEmas();
+        return _calcCtargemaCA();
     }
 
     // ------- Public Functions -------
@@ -126,10 +154,8 @@ abstract contract MocEma is MocBaseBucket {
      *      ctargemaCA = ∑(ctargemaTP * qAC) / ∑(qAC)
      * @return ctargemaCA [PREC]
      */
-    function calcCtargemaCA() public returns (uint256 ctargemaCA) {
-        // Make sure EMAs are up to date for all the pegs
-        updateEmas();
-        return _getCtargemaCA();
+    function calcCtargemaCA() external view returns (uint256 ctargemaCA) {
+        (ctargemaCA, ) = _calcCtargemaCA();
     }
 
     /**
