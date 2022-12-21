@@ -2,14 +2,14 @@
 .coverage_artifacts/
 .coverage_cache/
 .coverage_contracts/
-artifacts/
+/artifacts/
 build/
 cache/
 coverage/
 dist/
 lib/
 node_modules/
-typechain/
+/typechain/
 profiles/
 bytecodes/
 corpus/
