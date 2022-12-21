@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { MocCARC20, MocCARC20__factory, MocRC20, MocRC20__factory } from "../../typechain";
 import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -13,11 +12,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
   if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
-  const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const mocCARC20 = await ethers.getContractAt("MocCARC20", deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
-  const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
+  const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";

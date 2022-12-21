@@ -1,16 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import {
-  MocCARC20,
-  MocCARC20__factory,
-  MocCAWrapper,
-  MocCAWrapper__factory,
-  MocRC20,
-  MocRC20__factory,
-  MocTC,
-  MocTC__factory,
-} from "../../typechain";
 import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -21,19 +11,19 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
   if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
-  const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const mocCARC20 = await ethers.getContractAt("MocCARC20", deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCABagProxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCABagProxy deployed.");
-  const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
+  const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
   const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
   if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
-  const MocCAWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
+  const MocCAWrapper = await ethers.getContractAt("MocCAWrapper", deployedMocCAWrapperContract.address, signer);
 
   const deployedWCAContract = await deployments.getOrNull("WrappedCollateralAssetProxy");
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");
-  const WCAToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
+  const WCAToken = await ethers.getContractAt("MocRC20", deployedWCAContract.address, signer);
 
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 

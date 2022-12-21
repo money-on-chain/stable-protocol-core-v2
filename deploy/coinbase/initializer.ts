@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { MocCACoinbase, MocCACoinbase__factory, MocTC, MocTC__factory } from "../../typechain";
 import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -12,11 +11,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
   if (!deployedMocContractProxy) throw new Error("No MocCACoinbaseProxy deployed.");
-  const MocCACoinbase: MocCACoinbase = MocCACoinbase__factory.connect(deployedMocContractProxy.address, signer);
+  const MocCACoinbase = await ethers.getContractAt("MocCACoinbase", deployedMocContractProxy.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCoinbaseProxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
-  const CollateralToken: MocTC = MocTC__factory.connect(deployedTCContract.address, signer);
+  const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 

@@ -90,7 +90,7 @@
     "mythril:Greeter": "sudo docker run -it -v $(pwd):/tmp mythril/myth -v4 a -f /tmp/bytecodes/Greeter --max-depth 50",
     "mythril": "npx ts-node ./scripts/bytecodes-extractor.ts && npm run mythril:Greeter",
     "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
-    "export": "hardhat export-artifacts export/artifacts",
-    "copy-dts": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/typechain/contracts/**/*.js export/deploy && copyfiles -u 1 dist/typechain/factories/contracts/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy && copyfiles -u 1 dist/deploy-config/config.js export/deploy"
+    "export": "hardhat export-artifacts export/artifacts && npm run copy-dist",
+    "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy && copyfiles -u 1 dist/deploy-config/config.js export/deploy"
   }
 }
