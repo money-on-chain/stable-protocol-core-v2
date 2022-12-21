@@ -56,7 +56,7 @@
   "types": "types/index.d.ts",
   "files": [
     "/contracts",
-    "/deploy"
+    "/export"
   ],
   "keywords": [
     "blockchain",
