@@ -9,6 +9,7 @@ import {
   MocRC20,
   MocRC20__factory,
   MocTC,
+  ERC777Mock,
   MocTC__factory,
   PriceProviderMock,
 } from "../../typechain";
@@ -182,6 +183,29 @@ export async function deployAndAddAssets(
   const assetPriceProviders: Array<PriceProviderMock> = [];
   for (let i = 0; i < amountAsset; i++) {
     const asset = await deployAsset();
+    const priceProvider = await deployPriceProvider(pEth(1));
+    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
+    assets.push(asset);
+    assetPriceProviders.push(priceProvider);
+  }
+  return { assets, assetPriceProviders };
+}
+
+export async function deployAssetERC777(): Promise<ERC777Mock> {
+  const factory = await ethers.getContractFactory("ERC777Mock");
+  const { deployer } = await getNamedAccounts();
+  const asset = await factory.deploy([deployer]);
+  return asset;
+}
+
+export async function deployAndAddAssetsERC777(
+  mocWrapper: MocCAWrapper,
+  amountAsset: number,
+): Promise<{ assets: ERC777Mock[]; assetPriceProviders: PriceProviderMock[] }> {
+  const assets: Array<ERC777Mock> = [];
+  const assetPriceProviders: Array<PriceProviderMock> = [];
+  for (let i = 0; i < amountAsset; i++) {
+    const asset = await deployAssetERC777();
     const priceProvider = await deployPriceProvider(pEth(1));
     await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
     assets.push(asset);

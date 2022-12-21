@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
  * @title MocCACoinbase: Moc Collateral Asset Coinbase
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
-contract MocCACoinbase is MocCore, ReentrancyGuardUpgradeable {
+contract MocCACoinbase is MocCore {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

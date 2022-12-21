@@ -3,13 +3,14 @@ pragma solidity ^0.8.17;
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
  * @notice Wraps a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
  *  Moc Collateral Asset Bag protocol implementation
  */
-contract MocCAWrapper is MocUpgradable {
+contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
     // ------- Events -------
     event TCMintedWithWrapper(
         address asset_,
@@ -618,7 +619,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qAssetMin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 assetAmount) {
+    ) internal nonReentrant returns (uint256 assetAmount) {
         // calculate the equivalent amount of Asset
         (assetAmount, wcaTokenAmount_) = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
         if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
