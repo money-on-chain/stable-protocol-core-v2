@@ -126,7 +126,11 @@ contract EchidnaMocWrapperTester {
         uint8 decimals = decimals_ % 24;
         asset.setDecimals(decimals);
 
-        mocWrapper.addOrEditAsset(asset, new PriceProviderShifter(new PriceProviderMock(1 ether), int8(18 - decimals)));
+        mocWrapper.addOrEditAsset(
+            asset,
+            new PriceProviderShifter(new PriceProviderMock(1 ether), int8(18 - decimals)),
+            decimals
+        );
         assetsAdded.push(asset);
     }
 
