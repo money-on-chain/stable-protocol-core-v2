@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, network, _a, coreParams, settlementParams, feeParams, ctParams, mocAddresses, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
+    var deployments, network, _a, coreParams, settlementParams, feeParams, ctParams, mocAddresses, signer, deployedMocContractProxy, mocCACoinbaseArtifact, MocCACoinbase, deployedTCContract, collateralTokenArtifact, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -52,31 +52,37 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 deployedMocContractProxy = _b.sent();
                 if (!deployedMocContractProxy)
                     throw new Error("No MocCACoinbaseProxy deployed.");
-                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocCACoinbase", deployedMocContractProxy.address, signer)];
+                return [4 /*yield*/, hre.artifacts.readArtifact("MocCACoinbase")];
             case 2:
+                mocCACoinbaseArtifact = _b.sent();
+                return [4 /*yield*/, hardhat_1.ethers.getContractAtFromArtifact(mocCACoinbaseArtifact, deployedMocContractProxy.address, signer)];
+            case 3:
                 MocCACoinbase = _b.sent();
                 return [4 /*yield*/, deployments.getOrNull("CollateralTokenCoinbaseProxy")];
-            case 3:
+            case 4:
                 deployedTCContract = _b.sent();
                 if (!deployedTCContract)
                     throw new Error("No CollateralTokenCoinbaseProxy deployed.");
-                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocTC", deployedTCContract.address, signer)];
-            case 4:
+                return [4 /*yield*/, hre.artifacts.readArtifact("MocTC")];
+            case 5:
+                collateralTokenArtifact = _b.sent();
+                return [4 /*yield*/, hardhat_1.ethers.getContractAtFromArtifact(collateralTokenArtifact, deployedTCContract.address, signer)];
+            case 6:
                 CollateralToken = _b.sent();
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!(network == "hardhat")) return [3 /*break*/, 7];
+                if (!(network == "hardhat")) return [3 /*break*/, 9];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
-            case 5:
+            case 7:
                 governorMockFactory = _b.sent();
                 return [4 /*yield*/, governorMockFactory.deploy()];
-            case 6:
+            case 8:
                 governorAddress = (_b.sent()).address;
-                _b.label = 7;
-            case 7:
+                _b.label = 9;
+            case 9:
                 console.log("initializing...");
                 // initializations
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, MocCACoinbase.address, governorAddress))];
-            case 8:
+            case 10:
                 // initializations
                 _b.sent();
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.initialize({
@@ -102,7 +108,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
                         bes: settlementParams.bes,
                     }, { gasLimit: utils_1.GAS_LIMIT_PATCH }))];
-            case 9:
+            case 11:
                 _b.sent();
                 console.log("initialization completed!");
                 return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
