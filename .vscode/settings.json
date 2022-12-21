@@ -4,7 +4,7 @@
     ],
     "mocha.files.glob": "test/**/*.ts",
     "cSpell.enableFiletypes": [
-        "solidity"
+        "solidity", "markdown"
     ],
     "cSpell.words": [
         "PREC",
