@@ -78,6 +78,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // WARN: On RC20 implementation, this correlates with contract acBalance
     uint256 public nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
+    // this variable is not used and is reserved for a future upgrade of the protocol
     uint256 internal nACioucb;
 
     // Collateral Token
@@ -401,7 +402,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function settleLiquidationPrices() internal {
         // Total amount of AC available to be redeemed
-        uint256 totalACAvailable = nACcb + nACioucb;
+        uint256 totalACAvailable = nACcb;
         if (totalACAvailable == 0) return;
         uint256 pegAmount = pegContainer.length;
         // this could be get by getLckAC(), but given the prices are needed after,
@@ -489,8 +490,8 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return totalACavailable [N]
      */
     function _getTotalACavailable(uint256 nACgain_) internal view returns (uint256 totalACavailable) {
-        // [N] = [N] + [N] - [N]
-        return nACcb + nACioucb - nACgain_;
+        // [N] = [N] - [N]
+        return nACcb - nACgain_;
     }
 
     /**
