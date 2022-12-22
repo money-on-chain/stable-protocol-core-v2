@@ -957,7 +957,7 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
      * @notice distribute appreciation factor to beneficiary and success fee to Moc Fee Flow
      */
     function _distributeSuccessFee() internal {
-        uint256 mocGain;
+        uint256 mocGain = 0;
         uint256 pegAmount = pegContainer.length;
         uint256[] memory tpToMint = new uint256[](pegAmount);
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {

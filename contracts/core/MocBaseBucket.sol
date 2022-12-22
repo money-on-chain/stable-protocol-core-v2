@@ -650,6 +650,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param mocFeeFlowAddress_ moc Fee Flow new contract address
      */
     function setMocFeeFlowAddress(address mocFeeFlowAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
         mocFeeFlowAddress = mocFeeFlowAddress_;
     }
 
@@ -660,6 +661,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function setMocAppreciationBeneficiaryAddress(
         address mocAppreciationBeneficiaryAddress_
     ) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
         mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
     }
 

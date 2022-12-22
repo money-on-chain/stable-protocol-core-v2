@@ -109,6 +109,7 @@ contract Stoppable is Governed {
      * @dev Should be called through governance
      */
     function setPauser(address newPauser_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
         pauser = newPauser_;
     }
 
