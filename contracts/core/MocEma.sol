@@ -1,4 +1,4 @@
-pragma solidity ^0.8.17;
+pragma solidity 0.8.16;
 
 import "../interfaces/IMocRC20.sol";
 import "./MocBaseBucket.sol";

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.17;
+pragma solidity 0.8.16;
 
 import "../collateral/rc20/MocCARC20.sol";
 import "../tokens/MocTC.sol";
