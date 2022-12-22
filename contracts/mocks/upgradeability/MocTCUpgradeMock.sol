@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
 // This contract is not intended to be used in a production system
