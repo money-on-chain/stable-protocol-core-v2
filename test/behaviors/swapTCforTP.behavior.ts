@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -14,7 +14,7 @@ const swapTCforTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
 
   let tx: ContractTransaction;
   let alicePrevTCBalance: Balance;

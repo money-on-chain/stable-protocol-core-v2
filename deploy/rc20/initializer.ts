@@ -8,7 +8,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
   const network = hre.network.name;
-  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig({ network });
+  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig(hre).deployParameters;
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");

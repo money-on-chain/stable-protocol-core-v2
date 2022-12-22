@@ -1,4 +1,4 @@
-import { deployments, getNamedAccounts } from "hardhat";
+import hre, { deployments, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 import memoizee from "memoizee";
 
@@ -6,7 +6,7 @@ import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
 import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 
-const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkConfig({ network: "hardhat" });
+const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkConfig(hre).deployParameters;
 
 export const fixtureDeployGovernance = memoizee(
   (): (() => Promise<{

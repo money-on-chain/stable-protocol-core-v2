@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -16,7 +16,7 @@ const mintTPBehavior = function () {
   const TP_1 = 1;
   const TP_4 = 4;
   const TP_NON_EXISTENT = 5;
-  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
 
   describe("Feature: mint Pegged Token", function () {
     beforeEach(async function () {

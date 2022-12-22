@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { deployments, ethers } from "hardhat";
+import hre, { deployments, ethers } from "hardhat";
 import { getNetworkConfig } from "../../scripts/utils";
 import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocCAWrapper__factory, MocRC20 } from "../../typechain";
 import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
@@ -12,7 +12,7 @@ describe("Feature: MocCABag initialization", function () {
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
-  const { governorAddress, pauserAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
+  const { governorAddress, pauserAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
   before(async () => {
     ({ mocImpl: mocProxy, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeployedMocCABag(0)());
     mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address);

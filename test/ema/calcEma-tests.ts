@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { BigNumber, ContractTransaction } from "ethers";
@@ -9,7 +9,7 @@ import { assertPrec } from "../helpers/assertHelper";
 import { getNetworkConfig } from "../../scripts/utils";
 import { fixtureDeployedMocCoinbase } from "./../coinbase/fixture";
 
-const { coreParams } = getNetworkConfig({ network: "hardhat" });
+const { coreParams } = getNetworkConfig(hre).deployParameters;
 
 describe("Feature: Ema Calculation", function () {
   let mocFunctions: any;

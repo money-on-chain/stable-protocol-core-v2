@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -13,7 +13,7 @@ const redeemTCBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
   const TP_1 = 1;
-  const mocFeeFlow = getNetworkConfig({ network: "hardhat" }).mocAddresses.mocFeeFlowAddress;
+  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
 
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {
@@ -74,7 +74,7 @@ const redeemTCBehavior = function () {
         let mocFeeFlowPrevACBalance: Balance;
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.redeemTC({ from: alice, qTC: 300 });
         });
         it("THEN alice has 0 TC", async function () {
@@ -84,7 +84,7 @@ const redeemTCBehavior = function () {
           assertPrec(0, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
         });
         it("THEN Moc Fee Flow balance increase 5% of 300 AC", async function () {
-          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(300 * 0.05, diff);
         });
@@ -124,7 +124,7 @@ const redeemTCBehavior = function () {
         let mocFeeFlowPrevACBalance: Balance;
         beforeEach(async function () {
           bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
-          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 300 });
         });
         it("THEN alice has 0 TC", async function () {
@@ -134,7 +134,7 @@ const redeemTCBehavior = function () {
           assertPrec(0, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
         });
         it("THEN Moc Fee Flow balance increase 5% of 300 AC", async function () {
-          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(300 * 0.05, diff);
         });

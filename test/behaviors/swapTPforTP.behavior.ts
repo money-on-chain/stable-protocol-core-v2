@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { BigNumber, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -17,7 +17,7 @@ const swapTPforTPBehavior = function () {
   const TP_4 = 4;
   const TP_NON_EXISTENT = 5;
 
-  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
 
   let coverageBefore: BigNumber;
   let tx: ContractTransaction;

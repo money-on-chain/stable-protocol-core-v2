@@ -16,7 +16,7 @@ import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
   const network = hre.network.name;
-  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig({ network });
+  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkConfig(hre).deployParameters;
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCABagProxy");

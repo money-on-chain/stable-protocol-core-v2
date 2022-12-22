@@ -1,7 +1,6 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatNetworkUserConfig } from "hardhat/types/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
-import { networkConfig } from "../deploy-config/config";
 
 export const GAS_LIMIT_PATCH = 30000000;
 
@@ -10,13 +9,6 @@ export const waitForTxConfirmation = async (
   confirmations: number = 1,
 ): Promise<ContractReceipt> => {
   return (await tx).wait(confirmations);
-};
-
-// Note that the deployments are saved as if the network name is localhost
-// See https://github.com/wighawag/hardhat-deploy#flags-1
-export const getProperConfig = (hre: HardhatRuntimeEnvironment): HardhatNetworkUserConfig => {
-  const network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
-  return hre.config.networks[network] as HardhatNetworkUserConfig;
 };
 
 export const deployUUPSArtifact = async ({
@@ -48,6 +40,7 @@ export const deployUUPSArtifact = async ({
   console.log(`${artifactBaseName} ERC1967Proxy deployed at ${deployProxyResult.address}`);
 };
 
-export const getNetworkConfig = ({ network }: { network: string }) => {
-  return networkConfig[network as keyof typeof networkConfig];
+export const getNetworkConfig = (hre: HardhatRuntimeEnvironment): HardhatNetworkUserConfig => {
+  const network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
+  return hre.config.networks[network] as HardhatNetworkUserConfig;
 };

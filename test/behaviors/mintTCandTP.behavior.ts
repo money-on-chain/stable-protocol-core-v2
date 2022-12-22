@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { BigNumber, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -14,7 +14,7 @@ const mintTCandTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
 
   describe("Feature: joint Mint TC and TP operation", function () {
     beforeEach(async function () {
