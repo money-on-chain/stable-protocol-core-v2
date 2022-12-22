@@ -229,6 +229,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         int8 shift = assetIndex[assetAddress_].shift;
         truncated = value_;
         if (shift > 0) {
+            // slither-disable-next-line divide-before-multiply
             truncated /= 10 ** uint8(shift);
             truncated *= 10 ** uint8(shift);
         }
