@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // slither-disable-next-line solc-version
-pragma solidity ^0.8.17;
+pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 

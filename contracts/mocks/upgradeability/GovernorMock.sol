@@ -1,4 +1,4 @@
-pragma solidity 0.8.17;
+pragma solidity 0.8.16;
 
 import "../../interfaces/IGovernor.sol";
 import "../../interfaces/IChangeContract.sol";
