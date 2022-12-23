@@ -29,8 +29,8 @@ describe("Feature: MocCAWrapper unwrap", function () {
       ({ assets, mocWrapper } = mocContracts);
 
       await mocFunctions.mintTC({ from: alice, qTC: 1000, asset: assets[0] });
-      await mocFunctions.mintTP({ i: 0, from: bob, qTP: 100, asset: assets[0] });
-      await mocFunctions.mintTP({ i: 0, from: bob, qTP: 100, asset: assets[1] });
+      await mocFunctions.mintTP({ from: bob, qTP: 100, asset: assets[0] });
+      await mocFunctions.mintTP({ from: bob, qTP: 100, asset: assets[1] });
     });
     describe("WHEN tries to unwraps using an asset not whitelisted", () => {
       let assetNotWhitelisted: ERC20Mock;

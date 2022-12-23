@@ -95,8 +95,6 @@ abstract contract MocEma is MocBaseBucket {
         emit TPemaUpdated(i_, currentTPema.ema, newEma);
     }
 
-    // ------- Public Functions -------
-
     /**
      * @notice calculates CA target coverage, adjusted by all Pegged Token's to
      *  Collateral Asset last stored moving average price

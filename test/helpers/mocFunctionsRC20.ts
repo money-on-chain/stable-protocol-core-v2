@@ -98,7 +98,7 @@ const redeemTPto =
 
 const mintTCandTP =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -110,7 +110,7 @@ const mintTCandTP =
 
 const mintTCandTPto =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, to, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, to, qTP, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -122,7 +122,7 @@ const mintTCandTPto =
 
 const redeemTCandTP =
   mocImpl =>
-  async ({ i, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
+  async ({ i = 0, from, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -134,7 +134,7 @@ const redeemTCandTP =
 
 const redeemTCandTPto =
   mocImpl =>
-  async ({ i, from, to, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
+  async ({ i = 0, from, to, qTC, qTP, qACmin = 0, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -186,7 +186,7 @@ const swapTPforTPto =
 
 const swapTPforTC =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, qTP, qTCmin = 0, qACmax = qTP * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, qTP, qTCmin = 0, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -199,7 +199,7 @@ const swapTPforTC =
 
 const swapTPforTCto =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, to, qTP, qTCmin = 0, qACmax = qTP * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, to, qTP, qTCmin = 0, qACmax = qTP * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -212,7 +212,7 @@ const swapTPforTCto =
 
 const swapTCforTP =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTC = pEth(qTC);
@@ -225,7 +225,7 @@ const swapTCforTP =
 
 const swapTCforTPto =
   (mocImpl, collateralAsset) =>
-  async ({ i, from, to, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
+  async ({ i = 0, from, to, qTC, qTPmin = 0, qACmax = qTC * 10, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTC = pEth(qTC);
