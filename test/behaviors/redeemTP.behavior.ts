@@ -1,10 +1,10 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
-import { getNetworkConfig } from "../../scripts/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 const redeemTPBehavior = function () {
   let mocContracts: any;
@@ -15,7 +15,7 @@ const redeemTPBehavior = function () {
   const TP_2 = 2;
   const TP_NON_EXISTENT = 5;
 
-  const { mocFeeFlowAddress } = getNetworkConfig({ network: "hardhat" }).mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {

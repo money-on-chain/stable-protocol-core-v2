@@ -1,10 +1,10 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
-import { getNetworkConfig } from "../../scripts/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 const mintTCBehavior = function () {
   let mocContracts: any;
@@ -13,7 +13,7 @@ const mintTCBehavior = function () {
   let alice: Address;
   let bob: Address;
   const TP_0 = 0;
-  const mocFeeFlow = getNetworkConfig({ network: "hardhat" }).mocAddresses.mocFeeFlowAddress;
+  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
   describe("Feature: mint Collateral Token", function () {
     beforeEach(async function () {
@@ -58,7 +58,7 @@ const mintTCBehavior = function () {
         assertPrec(100, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
       });
       it("THEN Moc Fee Flow balance increase 5% of 100 AC", async function () {
-        assertPrec(100 * 0.05, await mocFunctions.acBalanceOf(mocFeeFlow));
+        assertPrec(100 * 0.05, await mocFunctions.acBalanceOf(mocFeeFlowAddress));
       });
       it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
         const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
@@ -92,7 +92,7 @@ const mintTCBehavior = function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           alicePrevTCBalance = await mocFunctions.tcBalanceOf(alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
-          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           await mocFunctions.mintTC({ from: alice, qTC: 100 });
         });
         it("THEN alice receives 100 TC", async function () {
@@ -106,7 +106,7 @@ const mintTCBehavior = function () {
           assertPrec(100, diff);
         });
         it("THEN Moc Fee Flow balance increase 5% of 100 AC", async function () {
-          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlow);
+          const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
           assertPrec(100 * 0.05, diff);
         });
@@ -132,7 +132,7 @@ const mintTCBehavior = function () {
         assertPrec(101, await mocFunctions.acBalanceOf(mocContracts.mocImpl.address));
       });
       it("THEN Moc Fee Flow balance increase 4% of 100 AC", async function () {
-        assertPrec(100 * 0.04, await mocFunctions.acBalanceOf(mocFeeFlow));
+        assertPrec(100 * 0.04, await mocFunctions.acBalanceOf(mocFeeFlowAddress));
       });
       it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
         const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);

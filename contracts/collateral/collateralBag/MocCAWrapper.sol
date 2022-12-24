@@ -3,13 +3,14 @@ pragma solidity ^0.8.17;
 import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
  * @notice Wraps a collection of ERC20 stablecoins to a token which is used as Collateral Asset by
  *  Moc Collateral Asset Bag protocol implementation
  */
-contract MocCAWrapper is MocUpgradable {
+contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
     // ------- Events -------
     event TCMintedWithWrapper(
         address asset_,
@@ -100,6 +101,8 @@ contract MocCAWrapper is MocUpgradable {
         uint256 index;
         // true if asset token exists
         bool exists;
+        // how many decimals differs from 18. Eg: if decimals are 6, shift is 12
+        int8 shift;
     }
 
     // ------- Storage -------
@@ -209,9 +212,28 @@ contract MocCAWrapper is MocUpgradable {
         // divide currencyNeeded by asset price to get how many assets we need
         // [N] = [PREC] / [PREC]
         assetAmount = currencyNeeded / _getAssetPrice(assetAddress_);
-        // convert back to wcaToken to align decimal places and avoir rounding error
-        wcaTokenAmount_ = _convertAssetToToken(assetAddress_, assetAmount);
+        // truncate wcaToken amount to align decimal places and avoid rounding error
+        wcaTokenAmount_ = _truncate(assetAddress_, wcaTokenAmount_);
         return (assetAmount, wcaTokenAmount_);
+    }
+
+    /**
+     * @notice truncate amount of decimals corresponding to the Asset shift value
+     * @dev this is necessary to avoid rounding errors when dealing with Assets with decimal places less than 18
+     *  Eg: Asset decimals = 6; value = 10999999 => truncated = 10999900
+     * @param assetAddress_ Asset contract address
+     * @param value_ number to truncate
+     * @return truncated value truncated
+     */
+    function _truncate(address assetAddress_, uint256 value_) internal view returns (uint256 truncated) {
+        int8 shift = assetIndex[assetAddress_].shift;
+        truncated = value_;
+        if (shift > 0) {
+            // slither-disable-next-line divide-before-multiply
+            truncated /= 10 ** uint8(shift);
+            truncated *= 10 ** uint8(shift);
+        }
+        return truncated;
     }
 
     /**
@@ -598,7 +620,7 @@ contract MocCAWrapper is MocUpgradable {
         uint256 qAssetMin_,
         address sender_,
         address recipient_
-    ) internal returns (uint256 assetAmount) {
+    ) internal nonReentrant returns (uint256 assetAmount) {
         // calculate the equivalent amount of Asset
         (assetAmount, wcaTokenAmount_) = _convertTokenToAsset(assetAddress_, wcaTokenAmount_);
         if (assetAmount < qAssetMin_) revert QacBelowMinimumRequired(qAssetMin_, assetAmount);
@@ -656,13 +678,22 @@ contract MocCAWrapper is MocUpgradable {
      * @notice adds an asset to the whitelist, or modifies PriceProvider if already exists
      * @param asset_ Asset contract address
      * @param priceProvider_ Asset Price Provider contract address
+     * @param assetDecimals_ Asset decimal places
      */
-    function addOrEditAsset(IERC20 asset_, IPriceProvider priceProvider_) external onlyAuthorizedChanger {
+    function addOrEditAsset(
+        IERC20 asset_,
+        IPriceProvider priceProvider_,
+        uint8 assetDecimals_
+    ) external onlyAuthorizedChanger {
         // verifies it is a valid priceProvider
         (, bool has) = priceProvider_.peek();
         if (!has) revert InvalidAddress();
         if (!assetIndex[address(asset_)].exists) {
-            assetIndex[address(asset_)] = AssetIndex({ index: uint256(assets.length), exists: true });
+            assetIndex[address(asset_)] = AssetIndex({
+                index: uint256(assets.length),
+                exists: true,
+                shift: 18 - int8(assetDecimals_)
+            });
             assets.push(asset_);
         }
         priceProviderMap[address(asset_)] = priceProvider_;

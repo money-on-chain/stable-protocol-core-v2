@@ -1,11 +1,11 @@
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, pEth, mineUpTo } from "../helpers/utils";
-import { getNetworkConfig } from "../../scripts/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 const successFeeBehavior = function () {
   let mocContracts: any;
@@ -15,9 +15,8 @@ const successFeeBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_2 = 2;
-  const { mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = getNetworkConfig({
-    network: "hardhat",
-  }).mocAddresses;
+  const { mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = getNetworkDeployParams(hre).mocAddresses;
+
   let mocPrevACBalance: Balance;
   let mocFeeFlowPrevACBalance: Balance;
   let mocApprecBenefPrevTPsBalance: Balance[];
