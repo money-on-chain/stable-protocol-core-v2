@@ -92,6 +92,6 @@
     "mythril": "npx ts-node ./scripts/bytecodes-extractor.ts && npm run mythril:Greeter",
     "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
     "export": "hardhat export-artifacts export/artifacts && tsc && npm run copy-dist",
-    "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy && copyfiles -u 1 dist/deploy-config/config.js export/deploy"
+    "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy"
   }
 }

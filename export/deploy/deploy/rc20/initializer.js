@@ -48,7 +48,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 1:
                 deployer = (_b.sent()).deployer;
                 network = hre.network.name;
-                _a = (0, utils_1.getNetworkConfig)({ network: network }), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, mocAddresses = _a.mocAddresses;
+                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, mocAddresses = _a.mocAddresses;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCARC20Proxy")];
             case 2:

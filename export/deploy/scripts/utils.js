@@ -36,8 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getNetworkConfig = exports.deployUUPSArtifact = exports.getProperConfig = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
-var config_1 = require("../deploy-config/config");
+exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
 exports.GAS_LIMIT_PATCH = 30000000;
 var waitForTxConfirmation = function (tx, confirmations) {
     if (confirmations === void 0) { confirmations = 1; }
@@ -51,13 +50,6 @@ var waitForTxConfirmation = function (tx, confirmations) {
     });
 };
 exports.waitForTxConfirmation = waitForTxConfirmation;
-// Note that the deployments are saved as if the network name is localhost
-// See https://github.com/wighawag/hardhat-deploy#flags-1
-var getProperConfig = function (hre) {
-    var network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
-    return hre.config.networks[network];
-};
-exports.getProperConfig = getProperConfig;
 var deployUUPSArtifact = function (_a) {
     var hre = _a.hre, artifactBaseName = _a.artifactBaseName, contract = _a.contract;
     return __awaiter(void 0, void 0, void 0, function () {
@@ -94,9 +86,9 @@ var deployUUPSArtifact = function (_a) {
     });
 };
 exports.deployUUPSArtifact = deployUUPSArtifact;
-var getNetworkConfig = function (_a) {
-    var network = _a.network;
-    return config_1.networkConfig[network];
+var getNetworkDeployParams = function (hre) {
+    var network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
+    return hre.config.networks[network].deployParameters;
 };
-exports.getNetworkConfig = getNetworkConfig;
+exports.getNetworkDeployParams = getNetworkDeployParams;
 //# sourceMappingURL=utils.js.map

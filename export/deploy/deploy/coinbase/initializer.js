@@ -39,50 +39,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, network, _a, coreParams, settlementParams, feeParams, ctParams, mocAddresses, signer, deployedMocContractProxy, mocCACoinbaseArtifact, MocCACoinbase, deployedTCContract, collateralTokenArtifact, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
+    var deployments, network, _a, coreParams, settlementParams, feeParams, ctParams, mocAddresses, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 deployments = hre.deployments;
                 network = hre.network.name;
-                _a = (0, utils_1.getNetworkConfig)({ network: network }), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, mocAddresses = _a.mocAddresses;
+                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, mocAddresses = _a.mocAddresses;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCACoinbaseProxy")];
             case 1:
                 deployedMocContractProxy = _b.sent();
                 if (!deployedMocContractProxy)
                     throw new Error("No MocCACoinbaseProxy deployed.");
-                return [4 /*yield*/, hre.artifacts.readArtifact("MocCACoinbase")];
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocCACoinbase", deployedMocContractProxy.address, signer)];
             case 2:
-                mocCACoinbaseArtifact = _b.sent();
-                return [4 /*yield*/, hardhat_1.ethers.getContractAtFromArtifact(mocCACoinbaseArtifact, deployedMocContractProxy.address, signer)];
-            case 3:
                 MocCACoinbase = _b.sent();
                 return [4 /*yield*/, deployments.getOrNull("CollateralTokenCoinbaseProxy")];
-            case 4:
+            case 3:
                 deployedTCContract = _b.sent();
                 if (!deployedTCContract)
                     throw new Error("No CollateralTokenCoinbaseProxy deployed.");
-                return [4 /*yield*/, hre.artifacts.readArtifact("MocTC")];
-            case 5:
-                collateralTokenArtifact = _b.sent();
-                return [4 /*yield*/, hardhat_1.ethers.getContractAtFromArtifact(collateralTokenArtifact, deployedTCContract.address, signer)];
-            case 6:
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocTC", deployedTCContract.address, signer)];
+            case 4:
                 CollateralToken = _b.sent();
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!(network == "hardhat")) return [3 /*break*/, 9];
+                if (!(network == "hardhat")) return [3 /*break*/, 7];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
-            case 7:
+            case 5:
                 governorMockFactory = _b.sent();
                 return [4 /*yield*/, governorMockFactory.deploy()];
-            case 8:
+            case 6:
                 governorAddress = (_b.sent()).address;
-                _b.label = 9;
-            case 9:
+                _b.label = 7;
+            case 7:
                 console.log("initializing...");
                 // initializations
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, MocCACoinbase.address, governorAddress))];
-            case 10:
+            case 8:
                 // initializations
                 _b.sent();
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.initialize({
@@ -108,7 +102,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
                         bes: settlementParams.bes,
                     }, { gasLimit: utils_1.GAS_LIMIT_PATCH }))];
-            case 11:
+            case 9:
                 _b.sent();
                 console.log("initialization completed!");
                 return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
