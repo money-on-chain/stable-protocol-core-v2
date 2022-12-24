@@ -81,7 +81,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             tpParams.tpParams[i].name,
             tpParams.tpParams[i].symbol,
             MocCACoinbase.address,
-            governorAddress,
+            mocAddresses.governorAddress,
           ),
         );
         console.log(`Adding ${tpParams.tpParams[i].name} as PeggedToken ${i}...`);
@@ -99,8 +99,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       }
     }
     console.log("Renouncing temp governance...");
-    await waitForTxConfirmation(MocCACoinbase.changeGovernor(governorAddress));
-    console.log(`mocCACoinbase governor is now: ${governorAddress}`);
+    await waitForTxConfirmation(MocCACoinbase.changeGovernor(mocAddresses.governorAddress));
+    console.log(`mocCACoinbase governor is now: ${mocAddresses.governorAddress}`);
   }
   return hre.network.live; // prevents re execution on live networks
 };
