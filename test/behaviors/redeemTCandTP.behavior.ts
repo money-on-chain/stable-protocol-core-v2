@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
-import { getNetworkConfig } from "../../scripts/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 const redeemTCandTPBehavior = function () {
   let mocContracts: any;
@@ -14,7 +14,7 @@ const redeemTCandTPBehavior = function () {
   let bob: Address;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
   let coverageBefore: BigNumber;
   let tcPriceBefore: BigNumber;

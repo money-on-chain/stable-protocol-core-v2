@@ -3,10 +3,10 @@ import { Contract } from "ethers";
 import memoizee from "memoizee";
 
 import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH, getNetworkConfig, waitForTxConfirmation } from "../../../../scripts/utils";
+import { GAS_LIMIT_PATCH, getNetworkDeployParams, waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 
-const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkConfig(hre).deployParameters;
+const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDeployParams(hre);
 
 export const fixtureDeployGovernance = memoizee(
   (): (() => Promise<{

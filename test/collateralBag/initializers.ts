@@ -2,9 +2,9 @@ import hre from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { BigNumberish } from "ethers";
 import { MocCARC20 } from "../../typechain";
-import { getNetworkConfig } from "../../scripts/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
-const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkConfig(hre).deployParameters;
+const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDeployParams(hre);
 
 const { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 

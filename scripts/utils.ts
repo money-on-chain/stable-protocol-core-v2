@@ -1,5 +1,4 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
-import { HardhatNetworkUserConfig } from "hardhat/types/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
 export const GAS_LIMIT_PATCH = 30000000;
@@ -40,7 +39,7 @@ export const deployUUPSArtifact = async ({
   console.log(`${artifactBaseName} ERC1967Proxy deployed at ${deployProxyResult.address}`);
 };
 
-export const getNetworkConfig = (hre: HardhatRuntimeEnvironment): HardhatNetworkUserConfig => {
+export const getNetworkDeployParams = (hre: HardhatRuntimeEnvironment) => {
   const network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
-  return hre.config.networks[network] as HardhatNetworkUserConfig;
+  return hre.config.networks[network].deployParameters;
 };

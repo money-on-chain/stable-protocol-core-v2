@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
-import { getNetworkConfig } from "../../scripts/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 const swapTPforTPBehavior = function () {
   let mocContracts: any;
@@ -17,7 +17,7 @@ const swapTPforTPBehavior = function () {
   const TP_4 = 4;
   const TP_NON_EXISTENT = 5;
 
-  const { mocFeeFlowAddress } = getNetworkConfig(hre).deployParameters.mocAddresses;
+  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
   let coverageBefore: BigNumber;
   let tx: ContractTransaction;
