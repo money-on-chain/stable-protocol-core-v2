@@ -39,13 +39,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, network, _a, coreParams, settlementParams, feeParams, ctParams, mocAddresses, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, i, mocRC20TP, mocRC20Proxy;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 deployments = hre.deployments;
-                network = hre.network.name;
-                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, mocAddresses = _a.mocAddresses;
+                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, mocAddresses = _a.mocAddresses;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCACoinbaseProxy")];
             case 1:
@@ -64,7 +63,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 4:
                 CollateralToken = _b.sent();
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!(network == "hardhat")) return [3 /*break*/, 7];
+                if (!!hre.network.tags.mainnet) return [3 /*break*/, 7];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
             case 5:
                 governorMockFactory = _b.sent();
@@ -107,7 +106,51 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 9:
                 _b.sent();
                 console.log("initialization completed!");
-                return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                if (!hre.network.tags.testnet) return [3 /*break*/, 19];
+                if (!tpParams) return [3 /*break*/, 17];
+                i = 0;
+                _b.label = 10;
+            case 10:
+                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 17];
+                return [4 /*yield*/, (0, utils_1.deployUUPSArtifact)({ hre: hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" })];
+            case 11:
+                _b.sent();
+                return [4 /*yield*/, deployments.getOrNull(tpParams.tpParams[i].name + "Proxy")];
+            case 12:
+                mocRC20TP = _b.sent();
+                if (!mocRC20TP)
+                    throw new Error("No ".concat(tpParams.tpParams[i].name, " deployed"));
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocRC20", mocRC20TP.address, signer)];
+            case 13:
+                mocRC20Proxy = _b.sent();
+                console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, MocCACoinbase.address, governorAddress))];
+            case 14:
+                _b.sent();
+                console.log("Adding ".concat(tpParams.tpParams[i].name, " as PeggedToken ").concat(i, "..."));
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.addPeggedToken({
+                        tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
+                        priceProviderAddress: tpParams.tpParams[i].priceProvider,
+                        tpCtarg: tpParams.tpParams[i].ctarg,
+                        tpMintFee: tpParams.tpParams[i].mintFee,
+                        tpRedeemFee: tpParams.tpParams[i].redeemFee,
+                        tpEma: tpParams.tpParams[i].initialEma,
+                        tpEmaSf: tpParams.tpParams[i].smoothingFactor,
+                    }))];
+            case 15:
+                _b.sent();
+                _b.label = 16;
+            case 16:
+                i++;
+                return [3 /*break*/, 10];
+            case 17:
+                console.log("Renouncing temp governance...");
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.changeGovernor(governorAddress))];
+            case 18:
+                _b.sent();
+                console.log("mocCACoinbase governor is now: ".concat(governorAddress));
+                _b.label = 19;
+            case 19: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };

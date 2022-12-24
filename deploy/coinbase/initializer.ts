@@ -1,12 +1,16 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { GAS_LIMIT_PATCH, getNetworkDeployParams, waitForTxConfirmation } from "../../scripts/utils";
+import {
+  deployUUPSArtifact,
+  GAS_LIMIT_PATCH,
+  getNetworkDeployParams,
+  waitForTxConfirmation,
+} from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const network = hre.network.name;
-  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses } = getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
@@ -20,7 +24,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
   // For testing environment, we use Mock helper contracts
-  if (network == "hardhat") {
+  if (!hre.network.tags.mainnet) {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorAddress = (await governorMockFactory.deploy()).address;
   }
@@ -62,6 +66,42 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     ),
   );
   console.log("initialization completed!");
+  // for testnet we add some Pegged Token and then transfer governance to the real governor
+  if (hre.network.tags.testnet) {
+    if (tpParams) {
+      for (let i = 0; i < tpParams.tpParams.length; i++) {
+        await deployUUPSArtifact({ hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" });
+        const mocRC20TP = await deployments.getOrNull(tpParams.tpParams[i].name + "Proxy");
+        if (!mocRC20TP) throw new Error(`No ${tpParams.tpParams[i].name} deployed`);
+
+        const mocRC20Proxy = await ethers.getContractAt("MocRC20", mocRC20TP.address, signer);
+        console.log(`Initializing ${tpParams.tpParams[i].name} PeggedToken...`);
+        await waitForTxConfirmation(
+          mocRC20Proxy.initialize(
+            tpParams.tpParams[i].name,
+            tpParams.tpParams[i].symbol,
+            MocCACoinbase.address,
+            governorAddress,
+          ),
+        );
+        console.log(`Adding ${tpParams.tpParams[i].name} as PeggedToken ${i}...`);
+        await waitForTxConfirmation(
+          MocCACoinbase.addPeggedToken({
+            tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
+            priceProviderAddress: tpParams.tpParams[i].priceProvider,
+            tpCtarg: tpParams.tpParams[i].ctarg,
+            tpMintFee: tpParams.tpParams[i].mintFee,
+            tpRedeemFee: tpParams.tpParams[i].redeemFee,
+            tpEma: tpParams.tpParams[i].initialEma,
+            tpEmaSf: tpParams.tpParams[i].smoothingFactor,
+          }),
+        );
+      }
+    }
+    console.log("Renouncing temp governance...");
+    await waitForTxConfirmation(MocCACoinbase.changeGovernor(governorAddress));
+    console.log(`mocCACoinbase governor is now: ${governorAddress}`);
+  }
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;

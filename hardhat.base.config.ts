@@ -24,6 +24,34 @@ const PCT_BASE = BigNumber.from((1e18).toString());
 const DAY_BLOCK_SPAN = 2880;
 const MONTH_BLOCK_SPAN = DAY_BLOCK_SPAN * 30;
 
+type TPParams = {
+  // token name
+  name: string;
+  // token symbol
+  symbol: string;
+  // Pegged Token price provider contract address
+  priceProvider: Address;
+  // Pegged Token target coverage [PREC]
+  ctarg: BigNumber;
+  // additional fee pct applied on mint [PREC]
+  mintFee: BigNumber;
+  // additional fee pct applied on redeem [PREC]
+  redeemFee: BigNumber;
+  // initial Pegged Token exponential moving average [PREC]
+  initialEma: BigNumber;
+  // Pegged Token smoothing factor [PREC]
+  smoothingFactor: BigNumber;
+};
+
+type AssetParams = {
+  // Asset contract address
+  asset: Address;
+  // Asset Price Provider contract address
+  priveProvider: Address;
+  // Asset decimal places
+  decimals: number;
+};
+
 type DeployParameters = {
   coreParams: {
     // protected coverage threshold [PREC]
@@ -64,6 +92,14 @@ type DeployParameters = {
     name: string;
     // collateral token symbols
     symbol: string;
+  };
+  // only for initialization in testnet
+  tpParams?: {
+    tpParams: TPParams[];
+  };
+  // only for initialization in testnet and for collateral bag implementation
+  assetParams?: {
+    assetParams: AssetParams[];
   };
   mocAddresses: {
     // the address that will define when a change contract is authorized
@@ -180,6 +216,7 @@ const config: HardhatUserConfig = {
           mocAppreciationBeneficiaryAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
         },
       },
+      tags: ["local"],
     },
     goerli: createTestnetConfig("goerli"),
     kovan: createTestnetConfig("kovan"),
