@@ -39,7 +39,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress),
+    CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress, {
+      gasLimit: GAS_LIMIT_PATCH,
+    }),
   );
   await waitForTxConfirmation(
     mocCARC20.initialize(

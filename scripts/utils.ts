@@ -1,7 +1,7 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
-export const GAS_LIMIT_PATCH = 30000000;
+export const GAS_LIMIT_PATCH = 6800000;
 
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,

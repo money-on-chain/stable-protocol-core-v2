@@ -91,11 +91,15 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 11:
                 console.log("initializing...");
                 // initializations
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 12:
                 // initializations
                 _b.sent();
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 13:
                 _b.sent();
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.initialize({

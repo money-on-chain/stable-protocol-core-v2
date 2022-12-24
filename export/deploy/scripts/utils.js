@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
-exports.GAS_LIMIT_PATCH = 30000000;
+exports.GAS_LIMIT_PATCH = 6800000;
 var waitForTxConfirmation = function (tx, confirmations) {
     if (confirmations === void 0) { confirmations = 1; }
     return __awaiter(void 0, void 0, void 0, function () {
