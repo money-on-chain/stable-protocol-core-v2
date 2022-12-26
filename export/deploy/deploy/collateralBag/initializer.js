@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, i, priceProvider, shifterFactory, shiftedPriceProvider;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -135,47 +135,15 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 15:
                 _b.sent();
                 console.log("initialization completed!");
-                if (!hre.network.tags.testnet) return [3 /*break*/, 25];
-                return [4 /*yield*/, (0, utils_1.deployAndAddPeggedToken)(hre, mocAddresses.governorAddress, mocCARC20, tpParams)];
+                if (!hre.network.tags.testnet) return [3 /*break*/, 18];
+                return [4 /*yield*/, (0, utils_1.addPeggedTokensAndChangeGovernor)(hre, mocAddresses.governorAddress, mocCARC20, tpParams)];
             case 16:
                 _b.sent();
-                if (!assetParams) return [3 /*break*/, 23];
-                i = 0;
-                _b.label = 17;
+                return [4 /*yield*/, (0, utils_1.addAssetsAndChangeGovernor)(hre, mocAddresses.governorAddress, MocCAWrapper, assetParams)];
             case 17:
-                if (!(i < assetParams.assetParams.length)) return [3 /*break*/, 23];
-                console.log("Adding ".concat(assetParams.assetParams[i].assetAddress, " as Asset ").concat(i, "..."));
-                priceProvider = assetParams.assetParams[i].priceProvider;
-                if (!(assetParams.assetParams[i].decimals < 18)) return [3 /*break*/, 20];
-                console.log("Deploying price provider shifter");
-                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderShifter")];
-            case 18:
-                shifterFactory = _b.sent();
-                return [4 /*yield*/, shifterFactory.deploy(assetParams.assetParams[i].priceProvider, 18 - assetParams.assetParams[i].decimals)];
-            case 19:
-                shiftedPriceProvider = _b.sent();
-                priceProvider = shiftedPriceProvider.address;
-                console.log("price provider shifter deployed at: ".concat(priceProvider));
-                _b.label = 20;
-            case 20: return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.addOrEditAsset(assetParams.assetParams[i].assetAddress, priceProvider, assetParams.assetParams[i].decimals, {
-                    gasLimit: utils_1.GAS_LIMIT_PATCH,
-                }))];
-            case 21:
                 _b.sent();
-                _b.label = 22;
-            case 22:
-                i++;
-                return [3 /*break*/, 17];
-            case 23:
-                console.log("Renouncing temp governance...");
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.changeGovernor(mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
-                    }))];
-            case 24:
-                _b.sent();
-                console.log("MocCAWrapper governor is now: ".concat(mocAddresses.governorAddress));
-                _b.label = 25;
-            case 25: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                _b.label = 18;
+            case 18: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };

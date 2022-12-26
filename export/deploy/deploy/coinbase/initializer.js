@@ -107,7 +107,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 _b.sent();
                 console.log("initialization completed!");
                 if (!hre.network.tags.testnet) return [3 /*break*/, 11];
-                return [4 /*yield*/, (0, utils_1.deployAndAddPeggedToken)(hre, mocAddresses.governorAddress, MocCACoinbase, tpParams)];
+                return [4 /*yield*/, (0, utils_1.addPeggedTokensAndChangeGovernor)(hre, mocAddresses.governorAddress, MocCACoinbase, tpParams)];
             case 10:
                 _b.sent();
                 _b.label = 11;

@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deployAndAddPeggedToken = exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
+exports.addAssetsAndChangeGovernor = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
 var hardhat_1 = require("hardhat");
 exports.GAS_LIMIT_PATCH = 6800000;
 var waitForTxConfirmation = function (tx, confirmations) {
@@ -92,18 +92,18 @@ var getNetworkDeployParams = function (hre) {
     return hre.config.networks[network].deployParameters;
 };
 exports.getNetworkDeployParams = getNetworkDeployParams;
-var deployAndAddPeggedToken = function (hre, governorAddress, mocCore, tpParams) { return __awaiter(void 0, void 0, void 0, function () {
+var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, tpParams) { return __awaiter(void 0, void 0, void 0, function () {
     var deployments, signer, i, mocRC20TP, mocRC20Proxy;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                if (!tpParams) return [3 /*break*/, 9];
+                if (!tpParams) return [3 /*break*/, 8];
                 deployments = hre.deployments;
                 signer = hardhat_1.ethers.provider.getSigner();
                 i = 0;
                 _a.label = 1;
             case 1:
-                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 9];
+                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 8];
                 return [4 /*yield*/, (0, exports.deployUUPSArtifact)({ hre: hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" })];
             case 2:
                 _a.sent();
@@ -135,20 +135,66 @@ var deployAndAddPeggedToken = function (hre, governorAddress, mocCore, tpParams)
                     }))];
             case 6:
                 _a.sent();
+                _a.label = 7;
+            case 7:
+                i++;
+                return [3 /*break*/, 1];
+            case 8:
                 console.log("Renouncing temp governance...");
                 return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocCore.changeGovernor(governorAddress, {
                         gasLimit: exports.GAS_LIMIT_PATCH,
                     }))];
-            case 7:
+            case 9:
                 _a.sent();
                 console.log("mocCore governor is now: ".concat(governorAddress));
-                _a.label = 8;
-            case 8:
-                i++;
-                return [3 /*break*/, 1];
-            case 9: return [2 /*return*/];
+                return [2 /*return*/];
         }
     });
 }); };
-exports.deployAndAddPeggedToken = deployAndAddPeggedToken;
+exports.addPeggedTokensAndChangeGovernor = addPeggedTokensAndChangeGovernor;
+var addAssetsAndChangeGovernor = function (hre, governorAddress, mocWrapper, assetParams) { return __awaiter(void 0, void 0, void 0, function () {
+    var i, priceProvider, shifterFactory, shiftedPriceProvider;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                if (!assetParams) return [3 /*break*/, 7];
+                i = 0;
+                _a.label = 1;
+            case 1:
+                if (!(i < assetParams.assetParams.length)) return [3 /*break*/, 7];
+                console.log("Adding ".concat(assetParams.assetParams[i].assetAddress, " as Asset ").concat(i, "..."));
+                priceProvider = assetParams.assetParams[i].priceProvider;
+                if (!(assetParams.assetParams[i].decimals < 18)) return [3 /*break*/, 4];
+                console.log("Deploying price provider shifter");
+                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderShifter")];
+            case 2:
+                shifterFactory = _a.sent();
+                return [4 /*yield*/, shifterFactory.deploy(assetParams.assetParams[i].priceProvider, 18 - assetParams.assetParams[i].decimals)];
+            case 3:
+                shiftedPriceProvider = _a.sent();
+                priceProvider = shiftedPriceProvider.address;
+                console.log("price provider shifter deployed at: ".concat(priceProvider));
+                _a.label = 4;
+            case 4: return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocWrapper.addOrEditAsset(assetParams.assetParams[i].assetAddress, priceProvider, assetParams.assetParams[i].decimals, {
+                    gasLimit: exports.GAS_LIMIT_PATCH,
+                }))];
+            case 5:
+                _a.sent();
+                _a.label = 6;
+            case 6:
+                i++;
+                return [3 /*break*/, 1];
+            case 7:
+                console.log("Renouncing temp governance...");
+                return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocWrapper.changeGovernor(governorAddress, {
+                        gasLimit: exports.GAS_LIMIT_PATCH,
+                    }))];
+            case 8:
+                _a.sent();
+                console.log("MocCAWrapper governor is now: ".concat(governorAddress));
+                return [2 /*return*/];
+        }
+    });
+}); };
+exports.addAssetsAndChangeGovernor = addAssetsAndChangeGovernor;
 //# sourceMappingURL=utils.js.map

@@ -45,7 +45,7 @@ export const getNetworkDeployParams = (hre: HardhatRuntimeEnvironment) => {
   return hre.config.networks[network].deployParameters;
 };
 
-export const deployAndAddPeggedToken = async (
+export const addPeggedTokensAndChangeGovernor = async (
   hre: HardhatRuntimeEnvironment,
   governorAddress: string,
   mocCore: any,
@@ -89,13 +89,54 @@ export const deployAndAddPeggedToken = async (
           },
         ),
       );
-      console.log("Renouncing temp governance...");
-      await waitForTxConfirmation(
-        mocCore.changeGovernor(governorAddress, {
-          gasLimit: GAS_LIMIT_PATCH,
-        }),
-      );
-      console.log(`mocCore governor is now: ${governorAddress}`);
     }
   }
+  console.log("Renouncing temp governance...");
+  await waitForTxConfirmation(
+    mocCore.changeGovernor(governorAddress, {
+      gasLimit: GAS_LIMIT_PATCH,
+    }),
+  );
+  console.log(`mocCore governor is now: ${governorAddress}`);
+};
+
+export const addAssetsAndChangeGovernor = async (
+  hre: HardhatRuntimeEnvironment,
+  governorAddress: string,
+  mocWrapper: any,
+  assetParams: any,
+) => {
+  if (assetParams) {
+    for (let i = 0; i < assetParams.assetParams.length; i++) {
+      console.log(`Adding ${assetParams.assetParams[i].assetAddress} as Asset ${i}...`);
+      let priceProvider = assetParams.assetParams[i].priceProvider;
+      if (assetParams.assetParams[i].decimals < 18) {
+        console.log("Deploying price provider shifter");
+        const shifterFactory = await ethers.getContractFactory("PriceProviderShifter");
+        const shiftedPriceProvider = await shifterFactory.deploy(
+          assetParams.assetParams[i].priceProvider,
+          18 - assetParams.assetParams[i].decimals,
+        );
+        priceProvider = shiftedPriceProvider.address;
+        console.log(`price provider shifter deployed at: ${priceProvider}`);
+      }
+      await waitForTxConfirmation(
+        mocWrapper.addOrEditAsset(
+          assetParams.assetParams[i].assetAddress,
+          priceProvider,
+          assetParams.assetParams[i].decimals,
+          {
+            gasLimit: GAS_LIMIT_PATCH,
+          },
+        ),
+      );
+    }
+  }
+  console.log("Renouncing temp governance...");
+  await waitForTxConfirmation(
+    mocWrapper.changeGovernor(governorAddress, {
+      gasLimit: GAS_LIMIT_PATCH,
+    }),
+  );
+  console.log(`MocCAWrapper governor is now: ${governorAddress}`);
 };

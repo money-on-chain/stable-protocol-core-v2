@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
 import {
-  deployAndAddPeggedToken,
+  addPeggedTokensAndChangeGovernor,
   GAS_LIMIT_PATCH,
   getNetworkDeployParams,
   waitForTxConfirmation,
@@ -68,7 +68,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initialization completed!");
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
-    await deployAndAddPeggedToken(hre, mocAddresses.governorAddress, MocCACoinbase, tpParams);
+    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, MocCACoinbase, tpParams);
   }
   return hre.network.live; // prevents re execution on live networks
 };
