@@ -67,13 +67,13 @@ const shouldBehaveLikeLiquidable = function () {
           await expect(this.mocFunctions.redeemTC({ from: alice, qTC: 1 })).to.be.reverted;
         });
         it("THEN even if prices are restored, bob cannot mintTP", async function () {
-          await expect(this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+          await expect(this.mocFunctions.mintTP({ from: bob, qTP: 1 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.LIQUIDATED,
           );
         });
         it("THEN even if prices are restored, bob cannot redeemTP", async function () {
-          await expect(this.mocFunctions.redeemTP({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+          await expect(this.mocFunctions.redeemTP({ from: bob, qTP: 1 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.LIQUIDATED,
           );
@@ -84,7 +84,7 @@ const shouldBehaveLikeLiquidable = function () {
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.LIQUIDATED);
         });
         it("THEN even if prices are restored, bob cannot swapTPforTC", async function () {
-          await expect(this.mocFunctions.swapTPforTC({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+          await expect(this.mocFunctions.swapTPforTC({ from: bob, qTP: 1 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.LIQUIDATED,
           );
@@ -92,15 +92,15 @@ const shouldBehaveLikeLiquidable = function () {
         it("THEN even if prices are restored, bob cannot swapTCforTP", async function () {
           // errorless revert assert here because, depending on implementation, redeem might fail
           // before actually executing swapTCforTP but on moving TC assets and hitting paused revert
-          await expect(this.mocFunctions.swapTCforTP({ i: 0, from: bob, qTC: 1 })).to.be.reverted;
+          await expect(this.mocFunctions.swapTCforTP({ from: bob, qTC: 1 })).to.be.reverted;
         });
         it("THEN even if prices are restored, bob cannot redeemTCandTP", async function () {
           // errorless revert assert here because, depending on implementation, redeem might fail
           // before actually executing redeemTC but on moving TC assets and hitting paused revert
-          await expect(this.mocFunctions.redeemTCandTP({ i: 0, from: bob, qTC: 1, qTP: 1 })).to.be.reverted;
+          await expect(this.mocFunctions.redeemTCandTP({ from: bob, qTC: 1, qTP: 1 })).to.be.reverted;
         });
         it("THEN even if prices are restored, bob cannot mintTCandTP", async function () {
-          await expect(this.mocFunctions.mintTCandTP({ i: 0, from: bob, qTP: 1 })).to.be.revertedWithCustomError(
+          await expect(this.mocFunctions.mintTCandTP({ from: bob, qTP: 1 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.LIQUIDATED,
           );
@@ -111,7 +111,7 @@ const shouldBehaveLikeLiquidable = function () {
             [bobPrevAssetBalance, charliePrevAssetBalance, otherUserPrevAssetBalance] = await Promise.all(
               [bob, charlie, otherUser].map(account => this.mocFunctions.assetBalanceOf(account)),
             );
-            await this.mocFunctions.liqRedeemTP({ i: 0, from: bob });
+            await this.mocFunctions.liqRedeemTP({ from: bob });
             tx = await this.mocFunctions.liqRedeemTPto({ i: 1, from: charlie, to: otherUser });
           });
           it("THEN theirs TP are burned", async function () {

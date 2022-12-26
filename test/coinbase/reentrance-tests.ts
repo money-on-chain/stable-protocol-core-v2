@@ -27,7 +27,7 @@ describe("Feature: MocCoinbase reentrance tests", () => {
       // mint TC to reentrance attacker contract
       await mocFunctions.mintTCto({ from: deployer, to: reentrancyAttacker.address, qTC: 1000 });
       // mint TP to reentrance attacker contract
-      await mocFunctions.mintTPto({ i: 0, from: deployer, to: reentrancyAttacker.address, qTP: 100 });
+      await mocFunctions.mintTPto({ from: deployer, to: reentrancyAttacker.address, qTP: 100 });
 
       reentracyAttack = async (op: string, overrides?: any) => {
         overrides

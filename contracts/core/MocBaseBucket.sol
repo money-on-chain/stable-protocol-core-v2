@@ -1,4 +1,5 @@
-pragma solidity ^0.8.17;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.16;
 
 import "../interfaces/IMocRC20.sol";
 import "../tokens/MocTC.sol";
@@ -386,11 +387,15 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice evaluates whether or not the coverage is over the cThrld_, reverts if below
      * @param cThrld_ coverage threshold to check for [PREC]
+     * @param pACtps_ array of all AC prices for each TP, with [PREC]
      * @return lckAC amount of Collateral Asset locked by Pegged Tokens [PREC]
      * @return nACgain amount of collateral asset to be distributed during settlement [N]
      */
-    function _evalCoverage(uint256 cThrld_) internal view returns (uint256 lckAC, uint256 nACgain) {
-        (lckAC, nACgain) = _getLckACandACgain();
+    function _evalCoverage(
+        uint256 cThrld_,
+        uint256[] memory pACtps_
+    ) internal view returns (uint256 lckAC, uint256 nACgain) {
+        (lckAC, nACgain) = _calcLckACandACgain(pACtps_);
         uint256 cglb = _getCglb(lckAC, nACgain);
         // check if coverage is above the given threshold
         if (cglb <= cThrld_) revert LowCoverage(cglb, cThrld_);
@@ -471,9 +476,21 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return nACgain [N]
      */
     function _getLckACandACgain() internal view returns (uint256 lckAC, uint256 nACgain) {
+        uint256[] memory pACtps = _getPACtps();
+        return _calcLckACandACgain(pACtps);
+    }
+
+    /**
+     * @notice calculates the amount of Collateral Asset locked by Pegged Token and
+     *  amount of collateral asset to be distributed during settlement
+     * @param pACtps_ array of all AC prices for each TP, with [PREC]
+     * @return lckAC [N]
+     * @return nACgain [N]
+     */
+    function _calcLckACandACgain(uint256[] memory pACtps_) internal view returns (uint256 lckAC, uint256 nACgain) {
         uint256 pegAmount = pegContainer.length;
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 pACtp = getPACtp(i);
+            uint256 pACtp = pACtps_[i];
             (uint256 tpGain, uint256 adjPnLtpi) = _getPnLTP(i, pACtp);
             // [N] = ([N] + [N]) * [PREC] / [PREC]
             lckAC += _divPrec(pegContainer[i].nTP + tpGain, pACtp);
@@ -569,6 +586,18 @@ abstract contract MocBaseBucket is MocUpgradable {
         (bytes32 price, bool has) = priceProvider.peek();
         if (!has) revert InvalidPriceProvider(address(priceProvider));
         return uint256(price);
+    }
+
+    /**
+     * @notice gets all TP prices
+     * @return pACtps All tps prices [PREC]
+     */
+    function _getPACtps() internal view returns (uint256[] memory pACtps) {
+        uint256 pegAmount = pegContainer.length;
+        pACtps = new uint256[](pegAmount);
+        for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
+            pACtps[i] = getPACtp(i);
+        }
     }
 
     // ------- Only Authorized Changer Functions -------

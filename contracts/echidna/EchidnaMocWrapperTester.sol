@@ -1,4 +1,5 @@
-pragma solidity ^0.8.17;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.16;
 
 import "../collateral/collateralBag/MocCAWrapper.sol";
 import "../tokens/MocTC.sol";
