@@ -150,6 +150,14 @@ then, execute this command
 
 for more information [here](https://github.com/ConsenSys/mythril)
 
+## Deployment
+
+Although it is possible, this repo is not intended to be used for deploying, so there is a command to export all the artifacts and deployment scripts.
+
+`npm run export`
+
+After that, artifacts and deployments scripts are copied to the export folder. In another repo you can install them as a github package, configure them as external deploy in hardhat config and set all the deployment parameters. For testnet deployments you can initialize the protocol with Pegged Tokens, and in the collateral bag implementation add Assets too.
+
 ## Built With
 
 * [Hardhat](https://hardhat.org/) - Task runner
