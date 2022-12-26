@@ -39,12 +39,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, network, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, i, mocRC20TP, mocRC20Proxy;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, i, mocRC20TP, mocRC20Proxy;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 deployments = hre.deployments;
-                network = hre.network.name;
                 _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, mocAddresses = _a.mocAddresses;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCABagProxy")];
@@ -80,7 +79,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 8:
                 WCAToken = _b.sent();
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!(network == "hardhat")) return [3 /*break*/, 11];
+                if (!!hre.network.tags.mainnet) return [3 /*break*/, 11];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
             case 9:
                 governorMockFactory = _b.sent();

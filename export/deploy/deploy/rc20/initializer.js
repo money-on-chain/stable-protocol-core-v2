@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, getNamedAccounts, deployer, network, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, collateralAssetToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, deployedERC20MockContract, i, mocRC20TP, mocRC20Proxy;
+    var deployments, getNamedAccounts, deployer, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, collateralAssetToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, deployedERC20MockContract, i, mocRC20TP, mocRC20Proxy;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -47,7 +47,6 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 return [4 /*yield*/, getNamedAccounts()];
             case 1:
                 deployer = (_b.sent()).deployer;
-                network = hre.network.name;
                 _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, mocAddresses = _a.mocAddresses;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCARC20Proxy")];
@@ -68,7 +67,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 CollateralToken = _b.sent();
                 collateralAssetToken = "";
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!(network === "hardhat")) return [3 /*break*/, 9];
+                if (!!hre.network.tags.mainnet) return [3 /*break*/, 9];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
             case 6:
                 governorMockFactory = _b.sent();

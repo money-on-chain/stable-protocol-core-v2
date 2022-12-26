@@ -11,7 +11,6 @@ import {
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
-  const network = hre.network.name;
   const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses } = getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
@@ -29,7 +28,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
   // for tests we deploy a Collateral Asset and Governor Mock
-  if (network === "hardhat") {
+  if (!hre.network.tags.mainnet) {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorAddress = (await governorMockFactory.deploy()).address;
 
