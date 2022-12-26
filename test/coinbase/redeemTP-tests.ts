@@ -34,7 +34,7 @@ describe("Feature: MocCoinbase redeem TP", function () {
           // add collateral
           await mocFunctions.mintTC({ from: deployer, qTC: 300 });
           // mint TP to non payable contract
-          await mocFunctions.mintTPto({ i: 0, from: deployer, to: nonPayable.address, qTP: 100 });
+          await mocFunctions.mintTPto({ from: deployer, to: nonPayable.address, qTP: 100 });
           const data = mocImpl.interface.encodeFunctionData("redeemTP", [0, pEth(1), 0]);
           await expect(nonPayable.forward(mocImpl.address, data)).to.be.revertedWithCustomError(
             mocImpl,
@@ -47,9 +47,9 @@ describe("Feature: MocCoinbase redeem TP", function () {
           // add collateral
           await mocFunctions.mintTC({ from: deployer, qTC: 300 });
           // mint TP to deployer
-          await mocFunctions.mintTP({ i: 0, from: deployer, qTP: 100 });
+          await mocFunctions.mintTP({ from: deployer, qTP: 100 });
           await expect(
-            mocFunctions.redeemTPto({ i: 0, from: deployer, to: nonPayable.address, qTP: 100 }),
+            mocFunctions.redeemTPto({ from: deployer, to: nonPayable.address, qTP: 100 }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.TRANSFER_FAIL);
         });
       });

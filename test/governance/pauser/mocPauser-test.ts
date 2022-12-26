@@ -149,12 +149,12 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     });
     describe(`WHEN someone tries to swapTPforTC`, () => {
       it("THEN it fails, as the system is paused", async function () {
-        await expectPauseRevert(mocFunctions.swapTPforTC({ i: 0, from: alice, qTP: 3 }));
+        await expectPauseRevert(mocFunctions.swapTPforTC({ from: alice, qTP: 3 }));
       });
     });
     describe(`WHEN someone tries to swapTCforTP`, () => {
       it("THEN it fails, as the system is paused", async function () {
-        await expectPauseRevert(mocFunctions.swapTCforTP({ i: 0, from: alice, qTC: 3 }));
+        await expectPauseRevert(mocFunctions.swapTCforTP({ from: alice, qTC: 3 }));
       });
     });
     describe(`WHEN someone tries to redeemTCandTP`, () => {
@@ -164,7 +164,7 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     });
     describe(`WHEN someone tries to mintTCandTP`, () => {
       it("THEN it fails, as the system is paused", async function () {
-        await expectPauseRevert(mocFunctions.mintTCandTP({ i: 0, from: alice, qTP: 3 }));
+        await expectPauseRevert(mocFunctions.mintTCandTP({ from: alice, qTP: 3 }));
       });
     });
   });

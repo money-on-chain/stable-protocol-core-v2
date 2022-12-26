@@ -53,7 +53,6 @@ describe("Feature: Ema Calculation", function () {
     const fixtureDeploy = fixtureDeployedMocCoinbase(peggedAmount, tpParams);
     ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
     mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
-    this.mocFunctions = mocFunctions;
   });
   describe("GIVEN a MocCoinbase implementation deployed with two Pegged Tokens", function () {
     describe("WHEN pegged price changes, but update ema is evaluated before time", function () {
@@ -81,6 +80,7 @@ describe("Feature: Ema Calculation", function () {
           }
           expect(await mocImpl.shouldCalculateEma()).to.be.false;
         };
+        await mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 15 });
       });
       it("THEN shouldCalculateEma returns true", async function () {
         expect(await mocImpl.shouldCalculateEma()).to.be.true;
@@ -91,10 +91,27 @@ describe("Feature: Ema Calculation", function () {
           await assertUpdatedEmas(tx);
         });
       });
+      describe("WHEN redeemTC is invoked", function () {
+        it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
+          const tx = await mocFunctions.redeemTC({ from: alice, qTC: 2 });
+          await assertUpdatedEmas(tx);
+        });
+      });
       describe("WHEN mintTP is invoked", function () {
-        it("THEN new Ema values are assigned as it's triggered by the operation", async function () {
-          await this.mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 15 });
-          const tx = await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 1 });
+        it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
+          const tx = await mocFunctions.mintTP({ from: bob, qTP: 1 });
+          await assertUpdatedEmas(tx);
+        });
+      });
+      describe("WHEN mintTCandTP is invoked", function () {
+        it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
+          const tx = await mocFunctions.mintTCandTP({ from: bob, qTP: 1 });
+          await assertUpdatedEmas(tx);
+        });
+      });
+      describe("WHEN swapTCforTP is invoked", function () {
+        it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
+          const tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 1 });
           await assertUpdatedEmas(tx);
         });
       });
