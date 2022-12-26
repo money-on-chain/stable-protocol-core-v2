@@ -154,7 +154,9 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 19:
                 mocRC20Proxy = _b.sent();
                 console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, mocCARC20.address, mocAddresses.governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, mocCARC20.address, mocAddresses.governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 20:
                 _b.sent();
                 console.log("Adding ".concat(tpParams.tpParams[i].name, " as PeggedToken ").concat(i, "..."));
@@ -166,6 +168,8 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                         tpRedeemFee: tpParams.tpParams[i].redeemFee,
                         tpEma: tpParams.tpParams[i].initialEma,
                         tpEmaSf: tpParams.tpParams[i].smoothingFactor,
+                    }, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
             case 21:
                 _b.sent();
@@ -175,11 +179,15 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 return [3 /*break*/, 16];
             case 23:
                 console.log("Renouncing temp governance...");
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.changeGovernor(mocAddresses.governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.changeGovernor(mocAddresses.governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 24:
                 _b.sent();
                 console.log("mocCARC20 governor is now: ".concat(mocAddresses.governorAddress));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.changeGovernor(mocAddresses.governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.changeGovernor(mocAddresses.governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 25:
                 _b.sent();
                 console.log("MocCAWrapper governor is now: ".concat(mocAddresses.governorAddress));

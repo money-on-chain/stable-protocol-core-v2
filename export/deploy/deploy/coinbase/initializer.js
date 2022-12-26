@@ -124,7 +124,9 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 13:
                 mocRC20Proxy = _b.sent();
                 console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, MocCACoinbase.address, mocAddresses.governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, MocCACoinbase.address, mocAddresses.governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 14:
                 _b.sent();
                 console.log("Adding ".concat(tpParams.tpParams[i].name, " as PeggedToken ").concat(i, "..."));
@@ -136,6 +138,8 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                         tpRedeemFee: tpParams.tpParams[i].redeemFee,
                         tpEma: tpParams.tpParams[i].initialEma,
                         tpEmaSf: tpParams.tpParams[i].smoothingFactor,
+                    }, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
             case 15:
                 _b.sent();
@@ -145,7 +149,9 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 return [3 /*break*/, 10];
             case 17:
                 console.log("Renouncing temp governance...");
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.changeGovernor(mocAddresses.governorAddress))];
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.changeGovernor(mocAddresses.governorAddress, {
+                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                    }))];
             case 18:
                 _b.sent();
                 console.log("mocCACoinbase governor is now: ".concat(mocAddresses.governorAddress));

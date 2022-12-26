@@ -96,24 +96,36 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             tpParams.tpParams[i].symbol,
             mocCARC20.address,
             mocAddresses.governorAddress,
+            {
+              gasLimit: GAS_LIMIT_PATCH,
+            },
           ),
         );
         console.log(`Adding ${tpParams.tpParams[i].name} as PeggedToken ${i}...`);
         await waitForTxConfirmation(
-          mocCARC20.addPeggedToken({
-            tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
-            priceProviderAddress: tpParams.tpParams[i].priceProvider,
-            tpCtarg: tpParams.tpParams[i].ctarg,
-            tpMintFee: tpParams.tpParams[i].mintFee,
-            tpRedeemFee: tpParams.tpParams[i].redeemFee,
-            tpEma: tpParams.tpParams[i].initialEma,
-            tpEmaSf: tpParams.tpParams[i].smoothingFactor,
-          }),
+          mocCARC20.addPeggedToken(
+            {
+              tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
+              priceProviderAddress: tpParams.tpParams[i].priceProvider,
+              tpCtarg: tpParams.tpParams[i].ctarg,
+              tpMintFee: tpParams.tpParams[i].mintFee,
+              tpRedeemFee: tpParams.tpParams[i].redeemFee,
+              tpEma: tpParams.tpParams[i].initialEma,
+              tpEmaSf: tpParams.tpParams[i].smoothingFactor,
+            },
+            {
+              gasLimit: GAS_LIMIT_PATCH,
+            },
+          ),
         );
       }
     }
     console.log("Renouncing temp governance...");
-    await waitForTxConfirmation(mocCARC20.changeGovernor(mocAddresses.governorAddress));
+    await waitForTxConfirmation(
+      mocCARC20.changeGovernor(mocAddresses.governorAddress, {
+        gasLimit: GAS_LIMIT_PATCH,
+      }),
+    );
     console.log(`mocCARC20 governor is now: ${mocAddresses.governorAddress}`);
   }
   return hre.network.live; // prevents re execution on live networks
