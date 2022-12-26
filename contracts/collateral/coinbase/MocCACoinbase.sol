@@ -21,7 +21,6 @@ contract MocCACoinbase is MocCore {
      * @dev governorAddress The address that will define when a change contract is authorized
      *      pauserAddress The address that is authorized to pause this contract
      *      tcTokenAddress Collateral Token contract address
-     *      mocSettlementAddress MocSettlement contract address
      *      mocFeeFlowAddress Moc Fee Flow contract address
      *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *      protThrld protected state threshold [PREC]
