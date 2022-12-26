@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, i, mocRC20TP, mocRC20Proxy, i, priceProvider, shifterFactory, shiftedPriceProvider;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, i, priceProvider, shifterFactory, shiftedPriceProvider;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -79,7 +79,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 8:
                 WCAToken = _b.sent();
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!!hre.network.tags.mainnet) return [3 /*break*/, 11];
+                if (!(hre.network.tags.testnet || hre.network.tags.local)) return [3 /*break*/, 11];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
             case 9:
                 governorMockFactory = _b.sent();
@@ -90,13 +90,13 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 11:
                 console.log("initializing...");
                 // initializations
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress, {
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
             case 12:
                 // initializations
                 _b.sent();
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress, {
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
             case 13:
@@ -135,91 +135,53 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 15:
                 _b.sent();
                 console.log("initialization completed!");
-                if (!hre.network.tags.testnet) return [3 /*break*/, 33];
-                if (!tpParams) return [3 /*break*/, 23];
-                i = 0;
-                _b.label = 16;
+                if (!hre.network.tags.testnet) return [3 /*break*/, 26];
+                return [4 /*yield*/, (0, utils_1.deployAndAddPeggedToken)(hre, mocAddresses.governorAddress, mocCARC20, tpParams)];
             case 16:
-                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 23];
-                return [4 /*yield*/, (0, utils_1.deployUUPSArtifact)({ hre: hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" })];
+                _b.sent();
+                if (!assetParams) return [3 /*break*/, 23];
+                i = 0;
+                _b.label = 17;
             case 17:
-                _b.sent();
-                return [4 /*yield*/, deployments.getOrNull(tpParams.tpParams[i].name + "Proxy")];
+                if (!(i < assetParams.assetParams.length)) return [3 /*break*/, 23];
+                console.log("Adding ".concat(assetParams.assetParams[i].assetAddress, " as Asset ").concat(i, "..."));
+                priceProvider = assetParams.assetParams[i].priceProvider;
+                if (!(assetParams.assetParams[i].decimals < 18)) return [3 /*break*/, 20];
+                console.log("Deploying price provider shifter");
+                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderShifter")];
             case 18:
-                mocRC20TP = _b.sent();
-                if (!mocRC20TP)
-                    throw new Error("No ".concat(tpParams.tpParams[i].name, " deployed"));
-                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocRC20", mocRC20TP.address, signer)];
+                shifterFactory = _b.sent();
+                return [4 /*yield*/, shifterFactory.deploy(assetParams.assetParams[i].priceProvider, 18 - assetParams.assetParams[i].decimals)];
             case 19:
-                mocRC20Proxy = _b.sent();
-                console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, mocCARC20.address, mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
-                    }))];
-            case 20:
-                _b.sent();
-                console.log("Adding ".concat(tpParams.tpParams[i].name, " as PeggedToken ").concat(i, "..."));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.addPeggedToken({
-                        tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
-                        priceProviderAddress: tpParams.tpParams[i].priceProvider,
-                        tpCtarg: tpParams.tpParams[i].ctarg,
-                        tpMintFee: tpParams.tpParams[i].mintFee,
-                        tpRedeemFee: tpParams.tpParams[i].redeemFee,
-                        tpEma: tpParams.tpParams[i].initialEma,
-                        tpEmaSf: tpParams.tpParams[i].smoothingFactor,
-                    }, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
-                    }))];
+                shiftedPriceProvider = _b.sent();
+                priceProvider = shiftedPriceProvider.address;
+                console.log("price provider shifter deployed at: ".concat(priceProvider));
+                _b.label = 20;
+            case 20: return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.addOrEditAsset(assetParams.assetParams[i].assetAddress, priceProvider, assetParams.assetParams[i].decimals, {
+                    gasLimit: utils_1.GAS_LIMIT_PATCH,
+                }))];
             case 21:
                 _b.sent();
                 _b.label = 22;
             case 22:
                 i++;
-                return [3 /*break*/, 16];
+                return [3 /*break*/, 17];
             case 23:
-                if (!assetParams) return [3 /*break*/, 30];
-                i = 0;
-                _b.label = 24;
-            case 24:
-                if (!(i < assetParams.assetParams.length)) return [3 /*break*/, 30];
-                console.log("Adding ".concat(assetParams.assetParams[i].assetAddress, " as Asset ").concat(i, "..."));
-                priceProvider = assetParams.assetParams[i].priceProvider;
-                if (!(assetParams.assetParams[i].decimals < 18)) return [3 /*break*/, 27];
-                console.log("Deploying price provider shifter");
-                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderShifter")];
-            case 25:
-                shifterFactory = _b.sent();
-                return [4 /*yield*/, shifterFactory.deploy(assetParams.assetParams[i].priceProvider, 18 - assetParams.assetParams[i].decimals)];
-            case 26:
-                shiftedPriceProvider = _b.sent();
-                priceProvider = shiftedPriceProvider.address;
-                console.log("price provider shifter deployed at: ".concat(priceProvider));
-                _b.label = 27;
-            case 27: return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.addOrEditAsset(assetParams.assetParams[i].assetAddress, priceProvider, assetParams.assetParams[i].decimals, {
-                    gasLimit: utils_1.GAS_LIMIT_PATCH,
-                }))];
-            case 28:
-                _b.sent();
-                _b.label = 29;
-            case 29:
-                i++;
-                return [3 /*break*/, 24];
-            case 30:
                 console.log("Renouncing temp governance...");
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.changeGovernor(mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
-            case 31:
+            case 24:
                 _b.sent();
                 console.log("mocCARC20 governor is now: ".concat(mocAddresses.governorAddress));
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.changeGovernor(mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
-            case 32:
+            case 25:
                 _b.sent();
                 console.log("MocCAWrapper governor is now: ".concat(mocAddresses.governorAddress));
-                _b.label = 33;
-            case 33: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                _b.label = 26;
+            case 26: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };

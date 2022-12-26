@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, getNamedAccounts, deployer, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, collateralAssetToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, deployedERC20MockContract, i, mocRC20TP, mocRC20Proxy;
+    var deployments, getNamedAccounts, deployer, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, collateralAssetToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory, deployedERC20MockContract;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -67,7 +67,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 CollateralToken = _b.sent();
                 collateralAssetToken = "";
                 governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!!hre.network.tags.mainnet) return [3 /*break*/, 9];
+                if (!(hre.network.tags.testnet || hre.network.tags.local)) return [3 /*break*/, 9];
                 return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
             case 6:
                 governorMockFactory = _b.sent();
@@ -86,7 +86,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 9:
                 console.log("initializing...");
                 // initializations
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress, {
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
             case 10:
@@ -121,57 +121,19 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 11:
                 _b.sent();
                 console.log("initialization completed!");
-                if (!hre.network.tags.testnet) return [3 /*break*/, 21];
-                if (!tpParams) return [3 /*break*/, 19];
-                i = 0;
-                _b.label = 12;
+                if (!hre.network.tags.testnet) return [3 /*break*/, 14];
+                return [4 /*yield*/, (0, utils_1.deployAndAddPeggedToken)(hre, mocAddresses.governorAddress, mocCARC20, tpParams)];
             case 12:
-                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 19];
-                return [4 /*yield*/, (0, utils_1.deployUUPSArtifact)({ hre: hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" })];
-            case 13:
                 _b.sent();
-                return [4 /*yield*/, deployments.getOrNull(tpParams.tpParams[i].name + "Proxy")];
-            case 14:
-                mocRC20TP = _b.sent();
-                if (!mocRC20TP)
-                    throw new Error("No ".concat(tpParams.tpParams[i].name, " deployed"));
-                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocRC20", mocRC20TP.address, signer)];
-            case 15:
-                mocRC20Proxy = _b.sent();
-                console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, mocCARC20.address, mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
-                    }))];
-            case 16:
-                _b.sent();
-                console.log("Adding ".concat(tpParams.tpParams[i].name, " as PeggedToken ").concat(i, "..."));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.addPeggedToken({
-                        tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
-                        priceProviderAddress: tpParams.tpParams[i].priceProvider,
-                        tpCtarg: tpParams.tpParams[i].ctarg,
-                        tpMintFee: tpParams.tpParams[i].mintFee,
-                        tpRedeemFee: tpParams.tpParams[i].redeemFee,
-                        tpEma: tpParams.tpParams[i].initialEma,
-                        tpEmaSf: tpParams.tpParams[i].smoothingFactor,
-                    }, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
-                    }))];
-            case 17:
-                _b.sent();
-                _b.label = 18;
-            case 18:
-                i++;
-                return [3 /*break*/, 12];
-            case 19:
                 console.log("Renouncing temp governance...");
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.changeGovernor(mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
-            case 20:
+            case 13:
                 _b.sent();
                 console.log("mocCARC20 governor is now: ".concat(mocAddresses.governorAddress));
-                _b.label = 21;
-            case 21: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                _b.label = 14;
+            case 14: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };

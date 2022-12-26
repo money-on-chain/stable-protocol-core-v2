@@ -63,8 +63,8 @@
       "type": "function"
     }
   ],
-  "bytecode": "0x608060405234801561001057600080fd5b5060405161043c38038061043c83398101604081905261002f91610061565b6000805460ff909216600160a01b026001600160a81b03199092166001600160a01b03909316929092171790556100ae565b6000806040838503121561007457600080fd5b82516001600160a01b038116811461008b57600080fd5b8092505060208301518060000b81146100a357600080fd5b809150509250929050565b61037f806100bd6000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806312fc41ca1461004657806359e02dd714610073578063b888879e14610090575b600080fd5b6000805461005b91600160a01b909104900b81565b60405160009190910b81526020015b60405180910390f35b61007b6100bb565b6040805192835290151560208301520161006a565b6000546100a3906001600160a01b031681565b6040516001600160a01b03909116815260200161006a565b60008054604080516359e02dd760e01b8152815184936001600160a01b0316926359e02dd792600480820193918290030181865afa158015610101573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061012591906101ab565b60008054929450909250600160a01b909104810b1315610168576000805461015891600160a01b909104900b600a6102dc565b61016290836102f2565b91509091565b60008054600160a01b9004810b12156101a7576000805461019291600160a01b909104900b610309565b61019d90600a6102dc565b6101629083610327565b9091565b600080604083850312156101be57600080fd5b82519150602083015180151581146101d557600080fd5b809150509250929050565b634e487b7160e01b600052601160045260246000fd5b600181815b80851115610231578160001904821115610217576102176101e0565b8085161561022457918102915b93841c93908002906101fb565b509250929050565b600082610248575060016102d6565b81610255575060006102d6565b816001811461026b576002811461027557610291565b60019150506102d6565b60ff841115610286576102866101e0565b50506001821b6102d6565b5060208310610133831016604e8410600b84101617156102b4575081810a6102d6565b6102be83836101f6565b80600019048211156102d2576102d26101e0565b0290505b92915050565b60006102eb60ff841683610239565b9392505050565b80820281158282048414176102d6576102d66101e0565b600081810b6080810161031e5761031e6101e0565b60000392915050565b60008261034457634e487b7160e01b600052601260045260246000fd5b50049056fea264697066735822122043180cbe397369638af36cf919d218d540e2198fe4bcb2ed08e81dee8b4830f764736f6c63430008110033",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100415760003560e01c806312fc41ca1461004657806359e02dd714610073578063b888879e14610090575b600080fd5b6000805461005b91600160a01b909104900b81565b60405160009190910b81526020015b60405180910390f35b61007b6100bb565b6040805192835290151560208301520161006a565b6000546100a3906001600160a01b031681565b6040516001600160a01b03909116815260200161006a565b60008054604080516359e02dd760e01b8152815184936001600160a01b0316926359e02dd792600480820193918290030181865afa158015610101573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061012591906101ab565b60008054929450909250600160a01b909104810b1315610168576000805461015891600160a01b909104900b600a6102dc565b61016290836102f2565b91509091565b60008054600160a01b9004810b12156101a7576000805461019291600160a01b909104900b610309565b61019d90600a6102dc565b6101629083610327565b9091565b600080604083850312156101be57600080fd5b82519150602083015180151581146101d557600080fd5b809150509250929050565b634e487b7160e01b600052601160045260246000fd5b600181815b80851115610231578160001904821115610217576102176101e0565b8085161561022457918102915b93841c93908002906101fb565b509250929050565b600082610248575060016102d6565b81610255575060006102d6565b816001811461026b576002811461027557610291565b60019150506102d6565b60ff841115610286576102866101e0565b50506001821b6102d6565b5060208310610133831016604e8410600b84101617156102b4575081810a6102d6565b6102be83836101f6565b80600019048211156102d2576102d26101e0565b0290505b92915050565b60006102eb60ff841683610239565b9392505050565b80820281158282048414176102d6576102d66101e0565b600081810b6080810161031e5761031e6101e0565b60000392915050565b60008261034457634e487b7160e01b600052601260045260246000fd5b50049056fea264697066735822122043180cbe397369638af36cf919d218d540e2198fe4bcb2ed08e81dee8b4830f764736f6c63430008110033",
+  "bytecode": "0x608060405234801561001057600080fd5b5060405161044438038061044483398101604081905261002f91610061565b6000805460ff909216600160a01b026001600160a81b03199092166001600160a01b03909316929092171790556100ae565b6000806040838503121561007457600080fd5b82516001600160a01b038116811461008b57600080fd5b8092505060208301518060000b81146100a357600080fd5b809150509250929050565b610387806100bd6000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806312fc41ca1461004657806359e02dd714610073578063b888879e14610090575b600080fd5b6000805461005b91600160a01b909104900b81565b60405160009190910b81526020015b60405180910390f35b61007b6100bb565b6040805192835290151560208301520161006a565b6000546100a3906001600160a01b031681565b6040516001600160a01b03909116815260200161006a565b60008054604080516359e02dd760e01b8152815184936001600160a01b0316926359e02dd792600480820193918290030181865afa158015610101573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061012591906101ab565b60008054929450909250600160a01b909104810b1315610168576000805461015891600160a01b909104900b600a6102dc565b61016290836102f2565b91509091565b60008054600160a01b9004810b12156101a7576000805461019291600160a01b909104900b610311565b61019d90600a6102dc565b610162908361032f565b9091565b600080604083850312156101be57600080fd5b82519150602083015180151581146101d557600080fd5b809150509250929050565b634e487b7160e01b600052601160045260246000fd5b600181815b80851115610231578160001904821115610217576102176101e0565b8085161561022457918102915b93841c93908002906101fb565b509250929050565b600082610248575060016102d6565b81610255575060006102d6565b816001811461026b576002811461027557610291565b60019150506102d6565b60ff841115610286576102866101e0565b50506001821b6102d6565b5060208310610133831016604e8410600b84101617156102b4575081810a6102d6565b6102be83836101f6565b80600019048211156102d2576102d26101e0565b0290505b92915050565b60006102eb60ff841683610239565b9392505050565b600081600019048311821515161561030c5761030c6101e0565b500290565b600081810b60808101610326576103266101e0565b60000392915050565b60008261034c57634e487b7160e01b600052601260045260246000fd5b50049056fea2646970667358221220558f78616468fb4bbeaba1c97f38c60a53e23d2e388ccbc6697ca0cfbac4bb7b64736f6c63430008100033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100415760003560e01c806312fc41ca1461004657806359e02dd714610073578063b888879e14610090575b600080fd5b6000805461005b91600160a01b909104900b81565b60405160009190910b81526020015b60405180910390f35b61007b6100bb565b6040805192835290151560208301520161006a565b6000546100a3906001600160a01b031681565b6040516001600160a01b03909116815260200161006a565b60008054604080516359e02dd760e01b8152815184936001600160a01b0316926359e02dd792600480820193918290030181865afa158015610101573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061012591906101ab565b60008054929450909250600160a01b909104810b1315610168576000805461015891600160a01b909104900b600a6102dc565b61016290836102f2565b91509091565b60008054600160a01b9004810b12156101a7576000805461019291600160a01b909104900b610311565b61019d90600a6102dc565b610162908361032f565b9091565b600080604083850312156101be57600080fd5b82519150602083015180151581146101d557600080fd5b809150509250929050565b634e487b7160e01b600052601160045260246000fd5b600181815b80851115610231578160001904821115610217576102176101e0565b8085161561022457918102915b93841c93908002906101fb565b509250929050565b600082610248575060016102d6565b81610255575060006102d6565b816001811461026b576002811461027557610291565b60019150506102d6565b60ff841115610286576102866101e0565b50506001821b6102d6565b5060208310610133831016604e8410600b84101617156102b4575081810a6102d6565b6102be83836101f6565b80600019048211156102d2576102d26101e0565b0290505b92915050565b60006102eb60ff841683610239565b9392505050565b600081600019048311821515161561030c5761030c6101e0565b500290565b600081810b60808101610326576103266101e0565b60000392915050565b60008261034c57634e487b7160e01b600052601260045260246000fd5b50049056fea2646970667358221220558f78616468fb4bbeaba1c97f38c60a53e23d2e388ccbc6697ca0cfbac4bb7b64736f6c63430008100033",
   "linkReferences": {},
   "deployedLinkReferences": {},
   "devdoc": {
@@ -84,13 +84,13 @@
   "evm": {
     "bytecode": {
       "functionDebugData": {
-        "@_19772": {
+        "@_20020": {
           "entryPoint": null,
-          "id": 19772,
+          "id": 20020,
           "parameterSlots": 2,
           "returnSlots": 0
         },
-        "abi_decode_tuple_t_contract$_IPriceProvider_$18655t_int8_fromMemory": {
+        "abi_decode_tuple_t_contract$_IPriceProvider_$18903t_int8_fromMemory": {
           "entryPoint": 97,
           "id": null,
           "parameterSlots": 2,
@@ -513,7 +513,7 @@
                     }
                   ]
                 },
-                "name": "abi_decode_tuple_t_contract$_IPriceProvider_$18655t_int8_fromMemory",
+                "name": "abi_decode_tuple_t_contract$_IPriceProvider_$18903t_int8_fromMemory",
                 "nodeType": "YulFunctionDefinition",
                 "parameters": [
                   {
@@ -547,33 +547,33 @@
               }
             ]
           },
-          "contents": "{\n    { }\n    function abi_decode_tuple_t_contract$_IPriceProvider_$18655t_int8_fromMemory(headStart, dataEnd) -> value0, value1\n    {\n        if slt(sub(dataEnd, headStart), 64) { revert(0, 0) }\n        let value := mload(headStart)\n        if iszero(eq(value, and(value, sub(shl(160, 1), 1)))) { revert(0, 0) }\n        value0 := value\n        let value_1 := mload(add(headStart, 32))\n        if iszero(eq(value_1, signextend(0, value_1))) { revert(0, 0) }\n        value1 := value_1\n    }\n}",
+          "contents": "{\n    { }\n    function abi_decode_tuple_t_contract$_IPriceProvider_$18903t_int8_fromMemory(headStart, dataEnd) -> value0, value1\n    {\n        if slt(sub(dataEnd, headStart), 64) { revert(0, 0) }\n        let value := mload(headStart)\n        if iszero(eq(value, and(value, sub(shl(160, 1), 1)))) { revert(0, 0) }\n        value0 := value\n        let value_1 := mload(add(headStart, 32))\n        if iszero(eq(value_1, signextend(0, value_1))) { revert(0, 0) }\n        value1 := value_1\n    }\n}",
           "id": 80,
           "language": "Yul",
           "name": "#utility.yul"
         }
       ],
       "linkReferences": {},
-      "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x40 MLOAD PUSH2 0x43C CODESIZE SUB DUP1 PUSH2 0x43C DUP4 CODECOPY DUP2 ADD PUSH1 0x40 DUP2 SWAP1 MSTORE PUSH2 0x2F SWAP2 PUSH2 0x61 JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0xFF SWAP1 SWAP3 AND PUSH1 0x1 PUSH1 0xA0 SHL MUL PUSH1 0x1 PUSH1 0x1 PUSH1 0xA8 SHL SUB NOT SWAP1 SWAP3 AND PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB SWAP1 SWAP4 AND SWAP3 SWAP1 SWAP3 OR OR SWAP1 SSTORE PUSH2 0xAE JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH1 0x40 DUP4 DUP6 SUB SLT ISZERO PUSH2 0x74 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 MLOAD PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB DUP2 AND DUP2 EQ PUSH2 0x8B JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP3 POP POP PUSH1 0x20 DUP4 ADD MLOAD DUP1 PUSH1 0x0 SIGNEXTEND DUP2 EQ PUSH2 0xA3 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP2 POP POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH2 0x37F DUP1 PUSH2 0xBD PUSH1 0x0 CODECOPY PUSH1 0x0 RETURN INVALID PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH2 0x41 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x12FC41CA EQ PUSH2 0x46 JUMPI DUP1 PUSH4 0x59E02DD7 EQ PUSH2 0x73 JUMPI DUP1 PUSH4 0xB888879E EQ PUSH2 0x90 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH2 0x5B SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x0 SWAP2 SWAP1 SWAP2 SIGNEXTEND DUP2 MSTORE PUSH1 0x20 ADD JUMPDEST PUSH1 0x40 MLOAD DUP1 SWAP2 SUB SWAP1 RETURN JUMPDEST PUSH2 0x7B PUSH2 0xBB JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP3 DUP4 MSTORE SWAP1 ISZERO ISZERO PUSH1 0x20 DUP4 ADD MSTORE ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH2 0xA3 SWAP1 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB SWAP1 SWAP2 AND DUP2 MSTORE PUSH1 0x20 ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x40 DUP1 MLOAD PUSH4 0x59E02DD7 PUSH1 0xE0 SHL DUP2 MSTORE DUP2 MLOAD DUP5 SWAP4 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND SWAP3 PUSH4 0x59E02DD7 SWAP3 PUSH1 0x4 DUP1 DUP3 ADD SWAP4 SWAP2 DUP3 SWAP1 SUB ADD DUP2 DUP7 GAS STATICCALL ISZERO DUP1 ISZERO PUSH2 0x101 JUMPI RETURNDATASIZE PUSH1 0x0 DUP1 RETURNDATACOPY RETURNDATASIZE PUSH1 0x0 REVERT JUMPDEST POP POP POP POP PUSH1 0x40 MLOAD RETURNDATASIZE PUSH1 0x1F NOT PUSH1 0x1F DUP3 ADD AND DUP3 ADD DUP1 PUSH1 0x40 MSTORE POP DUP2 ADD SWAP1 PUSH2 0x125 SWAP2 SWAP1 PUSH2 0x1AB JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD SWAP3 SWAP5 POP SWAP1 SWAP3 POP PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV DUP2 SIGNEXTEND SGT ISZERO PUSH2 0x168 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x158 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x2F2 JUMP JUMPDEST SWAP2 POP SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 DIV DUP2 SIGNEXTEND SLT ISZERO PUSH2 0x1A7 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x192 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH2 0x309 JUMP JUMPDEST PUSH2 0x19D SWAP1 PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x327 JUMP JUMPDEST SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH1 0x40 DUP4 DUP6 SUB SLT ISZERO PUSH2 0x1BE JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 MLOAD SWAP2 POP PUSH1 0x20 DUP4 ADD MLOAD DUP1 ISZERO ISZERO DUP2 EQ PUSH2 0x1D5 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP2 POP POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x11 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST PUSH1 0x1 DUP2 DUP2 JUMPDEST DUP1 DUP6 GT ISZERO PUSH2 0x231 JUMPI DUP2 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x217 JUMPI PUSH2 0x217 PUSH2 0x1E0 JUMP JUMPDEST DUP1 DUP6 AND ISZERO PUSH2 0x224 JUMPI SWAP2 DUP2 MUL SWAP2 JUMPDEST SWAP4 DUP5 SHR SWAP4 SWAP1 DUP1 MUL SWAP1 PUSH2 0x1FB JUMP JUMPDEST POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x248 JUMPI POP PUSH1 0x1 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH2 0x255 JUMPI POP PUSH1 0x0 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH1 0x1 DUP2 EQ PUSH2 0x26B JUMPI PUSH1 0x2 DUP2 EQ PUSH2 0x275 JUMPI PUSH2 0x291 JUMP JUMPDEST PUSH1 0x1 SWAP2 POP POP PUSH2 0x2D6 JUMP JUMPDEST PUSH1 0xFF DUP5 GT ISZERO PUSH2 0x286 JUMPI PUSH2 0x286 PUSH2 0x1E0 JUMP JUMPDEST POP POP PUSH1 0x1 DUP3 SHL PUSH2 0x2D6 JUMP JUMPDEST POP PUSH1 0x20 DUP4 LT PUSH2 0x133 DUP4 LT AND PUSH1 0x4E DUP5 LT PUSH1 0xB DUP5 LT AND OR ISZERO PUSH2 0x2B4 JUMPI POP DUP2 DUP2 EXP PUSH2 0x2D6 JUMP JUMPDEST PUSH2 0x2BE DUP4 DUP4 PUSH2 0x1F6 JUMP JUMPDEST DUP1 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x2D2 JUMPI PUSH2 0x2D2 PUSH2 0x1E0 JUMP JUMPDEST MUL SWAP1 POP JUMPDEST SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 PUSH2 0x2EB PUSH1 0xFF DUP5 AND DUP4 PUSH2 0x239 JUMP JUMPDEST SWAP4 SWAP3 POP POP POP JUMP JUMPDEST DUP1 DUP3 MUL DUP2 ISZERO DUP3 DUP3 DIV DUP5 EQ OR PUSH2 0x2D6 JUMPI PUSH2 0x2D6 PUSH2 0x1E0 JUMP JUMPDEST PUSH1 0x0 DUP2 DUP2 SIGNEXTEND PUSH1 0x80 DUP2 ADD PUSH2 0x31E JUMPI PUSH2 0x31E PUSH2 0x1E0 JUMP JUMPDEST PUSH1 0x0 SUB SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x344 JUMPI PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x12 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST POP DIV SWAP1 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 NUMBER XOR 0xC 0xBE CODECOPY PUSH20 0x69638AF36CF919D218D540E2198FE4BCB2ED08E8 SAR 0xEE DUP12 BASEFEE ADDRESS 0xF7 PUSH5 0x736F6C6343 STOP ADDMOD GT STOP CALLER ",
-      "sourceMap": "217:877:78:-:0;;;623:127;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;689:13;:30;;729:14;;;;-1:-1:-1;;;729:14:78;-1:-1:-1;;;;;;729:14:78;;;-1:-1:-1;;;;;689:30:78;;;729:14;;;;;;;217:877;;14:475:80;114:6;122;175:2;163:9;154:7;150:23;146:32;143:52;;;191:1;188;181:12;143:52;217:16;;-1:-1:-1;;;;;262:31:80;;252:42;;242:70;;308:1;305;298:12;242:70;331:5;321:15;;;381:2;370:9;366:18;360:25;430:7;427:1;416:22;407:7;404:35;394:63;;453:1;450;443:12;394:63;476:7;466:17;;;14:475;;;;;:::o;:::-;217:877:78;;;;;;"
+      "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x40 MLOAD PUSH2 0x444 CODESIZE SUB DUP1 PUSH2 0x444 DUP4 CODECOPY DUP2 ADD PUSH1 0x40 DUP2 SWAP1 MSTORE PUSH2 0x2F SWAP2 PUSH2 0x61 JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0xFF SWAP1 SWAP3 AND PUSH1 0x1 PUSH1 0xA0 SHL MUL PUSH1 0x1 PUSH1 0x1 PUSH1 0xA8 SHL SUB NOT SWAP1 SWAP3 AND PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB SWAP1 SWAP4 AND SWAP3 SWAP1 SWAP3 OR OR SWAP1 SSTORE PUSH2 0xAE JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH1 0x40 DUP4 DUP6 SUB SLT ISZERO PUSH2 0x74 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 MLOAD PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB DUP2 AND DUP2 EQ PUSH2 0x8B JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP3 POP POP PUSH1 0x20 DUP4 ADD MLOAD DUP1 PUSH1 0x0 SIGNEXTEND DUP2 EQ PUSH2 0xA3 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP2 POP POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH2 0x387 DUP1 PUSH2 0xBD PUSH1 0x0 CODECOPY PUSH1 0x0 RETURN INVALID PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH2 0x41 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x12FC41CA EQ PUSH2 0x46 JUMPI DUP1 PUSH4 0x59E02DD7 EQ PUSH2 0x73 JUMPI DUP1 PUSH4 0xB888879E EQ PUSH2 0x90 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH2 0x5B SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x0 SWAP2 SWAP1 SWAP2 SIGNEXTEND DUP2 MSTORE PUSH1 0x20 ADD JUMPDEST PUSH1 0x40 MLOAD DUP1 SWAP2 SUB SWAP1 RETURN JUMPDEST PUSH2 0x7B PUSH2 0xBB JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP3 DUP4 MSTORE SWAP1 ISZERO ISZERO PUSH1 0x20 DUP4 ADD MSTORE ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH2 0xA3 SWAP1 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB SWAP1 SWAP2 AND DUP2 MSTORE PUSH1 0x20 ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x40 DUP1 MLOAD PUSH4 0x59E02DD7 PUSH1 0xE0 SHL DUP2 MSTORE DUP2 MLOAD DUP5 SWAP4 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND SWAP3 PUSH4 0x59E02DD7 SWAP3 PUSH1 0x4 DUP1 DUP3 ADD SWAP4 SWAP2 DUP3 SWAP1 SUB ADD DUP2 DUP7 GAS STATICCALL ISZERO DUP1 ISZERO PUSH2 0x101 JUMPI RETURNDATASIZE PUSH1 0x0 DUP1 RETURNDATACOPY RETURNDATASIZE PUSH1 0x0 REVERT JUMPDEST POP POP POP POP PUSH1 0x40 MLOAD RETURNDATASIZE PUSH1 0x1F NOT PUSH1 0x1F DUP3 ADD AND DUP3 ADD DUP1 PUSH1 0x40 MSTORE POP DUP2 ADD SWAP1 PUSH2 0x125 SWAP2 SWAP1 PUSH2 0x1AB JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD SWAP3 SWAP5 POP SWAP1 SWAP3 POP PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV DUP2 SIGNEXTEND SGT ISZERO PUSH2 0x168 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x158 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x2F2 JUMP JUMPDEST SWAP2 POP SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 DIV DUP2 SIGNEXTEND SLT ISZERO PUSH2 0x1A7 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x192 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH2 0x311 JUMP JUMPDEST PUSH2 0x19D SWAP1 PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x32F JUMP JUMPDEST SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH1 0x40 DUP4 DUP6 SUB SLT ISZERO PUSH2 0x1BE JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 MLOAD SWAP2 POP PUSH1 0x20 DUP4 ADD MLOAD DUP1 ISZERO ISZERO DUP2 EQ PUSH2 0x1D5 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP2 POP POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x11 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST PUSH1 0x1 DUP2 DUP2 JUMPDEST DUP1 DUP6 GT ISZERO PUSH2 0x231 JUMPI DUP2 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x217 JUMPI PUSH2 0x217 PUSH2 0x1E0 JUMP JUMPDEST DUP1 DUP6 AND ISZERO PUSH2 0x224 JUMPI SWAP2 DUP2 MUL SWAP2 JUMPDEST SWAP4 DUP5 SHR SWAP4 SWAP1 DUP1 MUL SWAP1 PUSH2 0x1FB JUMP JUMPDEST POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x248 JUMPI POP PUSH1 0x1 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH2 0x255 JUMPI POP PUSH1 0x0 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH1 0x1 DUP2 EQ PUSH2 0x26B JUMPI PUSH1 0x2 DUP2 EQ PUSH2 0x275 JUMPI PUSH2 0x291 JUMP JUMPDEST PUSH1 0x1 SWAP2 POP POP PUSH2 0x2D6 JUMP JUMPDEST PUSH1 0xFF DUP5 GT ISZERO PUSH2 0x286 JUMPI PUSH2 0x286 PUSH2 0x1E0 JUMP JUMPDEST POP POP PUSH1 0x1 DUP3 SHL PUSH2 0x2D6 JUMP JUMPDEST POP PUSH1 0x20 DUP4 LT PUSH2 0x133 DUP4 LT AND PUSH1 0x4E DUP5 LT PUSH1 0xB DUP5 LT AND OR ISZERO PUSH2 0x2B4 JUMPI POP DUP2 DUP2 EXP PUSH2 0x2D6 JUMP JUMPDEST PUSH2 0x2BE DUP4 DUP4 PUSH2 0x1F6 JUMP JUMPDEST DUP1 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x2D2 JUMPI PUSH2 0x2D2 PUSH2 0x1E0 JUMP JUMPDEST MUL SWAP1 POP JUMPDEST SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 PUSH2 0x2EB PUSH1 0xFF DUP5 AND DUP4 PUSH2 0x239 JUMP JUMPDEST SWAP4 SWAP3 POP POP POP JUMP JUMPDEST PUSH1 0x0 DUP2 PUSH1 0x0 NOT DIV DUP4 GT DUP3 ISZERO ISZERO AND ISZERO PUSH2 0x30C JUMPI PUSH2 0x30C PUSH2 0x1E0 JUMP JUMPDEST POP MUL SWAP1 JUMP JUMPDEST PUSH1 0x0 DUP2 DUP2 SIGNEXTEND PUSH1 0x80 DUP2 ADD PUSH2 0x326 JUMPI PUSH2 0x326 PUSH2 0x1E0 JUMP JUMPDEST PUSH1 0x0 SUB SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x34C JUMPI PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x12 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST POP DIV SWAP1 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 SSTORE DUP16 PUSH25 0x616468FB4BBEABA1C97F38C60A53E23D2E388CCBC6697CA0CF 0xBA 0xC4 0xBB PUSH28 0x64736F6C634300081000330000000000000000000000000000000000 ",
+      "sourceMap": "255:877:78:-:0;;;661:127;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;727:13;:30;;767:14;;;;-1:-1:-1;;;767:14:78;-1:-1:-1;;;;;;767:14:78;;;-1:-1:-1;;;;;727:30:78;;;767:14;;;;;;;255:877;;14:475:80;114:6;122;175:2;163:9;154:7;150:23;146:32;143:52;;;191:1;188;181:12;143:52;217:16;;-1:-1:-1;;;;;262:31:80;;252:42;;242:70;;308:1;305;298:12;242:70;331:5;321:15;;;381:2;370:9;366:18;360:25;430:7;427:1;416:22;407:7;404:35;394:63;;453:1;450;443:12;394:63;476:7;466:17;;;14:475;;;;;:::o;:::-;255:877:78;;;;;;"
     },
     "deployedBytecode": {
       "functionDebugData": {
-        "@peek_19832": {
+        "@peek_20080": {
           "entryPoint": 187,
-          "id": 19832,
+          "id": 20080,
           "parameterSlots": 0,
           "returnSlots": 2
         },
-        "@priceProvider_19752": {
+        "@priceProvider_20000": {
           "entryPoint": null,
-          "id": 19752,
+          "id": 20000,
           "parameterSlots": 0,
           "returnSlots": 0
         },
-        "@shift_19754": {
+        "@shift_20002": {
           "entryPoint": null,
-          "id": 19754,
+          "id": 20002,
           "parameterSlots": 0,
           "returnSlots": 0
         },
@@ -589,7 +589,7 @@
           "parameterSlots": 3,
           "returnSlots": 1
         },
-        "abi_encode_tuple_t_contract$_IPriceProvider_$18655__to_t_address__fromStack_reversed": {
+        "abi_encode_tuple_t_contract$_IPriceProvider_$18903__to_t_address__fromStack_reversed": {
           "entryPoint": null,
           "id": null,
           "parameterSlots": 2,
@@ -602,7 +602,7 @@
           "returnSlots": 1
         },
         "checked_div_t_uint256": {
-          "entryPoint": 807,
+          "entryPoint": 815,
           "id": null,
           "parameterSlots": 2,
           "returnSlots": 1
@@ -632,7 +632,7 @@
           "returnSlots": 1
         },
         "negate_t_int8": {
-          "entryPoint": 777,
+          "entryPoint": 785,
           "id": null,
           "parameterSlots": 1,
           "returnSlots": 1
@@ -1048,7 +1048,7 @@
                     }
                   ]
                 },
-                "name": "abi_encode_tuple_t_contract$_IPriceProvider_$18655__to_t_address__fromStack_reversed",
+                "name": "abi_encode_tuple_t_contract$_IPriceProvider_$18903__to_t_address__fromStack_reversed",
                 "nodeType": "YulFunctionDefinition",
                 "parameters": [
                   {
@@ -2507,41 +2507,9 @@
                   "src": "2610:116:80",
                   "statements": [
                     {
-                      "nodeType": "YulAssignment",
-                      "src": "2620:20:80",
-                      "value": {
-                        "arguments": [
-                          {
-                            "name": "x",
-                            "nodeType": "YulIdentifier",
-                            "src": "2635:1:80"
-                          },
-                          {
-                            "name": "y",
-                            "nodeType": "YulIdentifier",
-                            "src": "2638:1:80"
-                          }
-                        ],
-                        "functionName": {
-                          "name": "mul",
-                          "nodeType": "YulIdentifier",
-                          "src": "2631:3:80"
-                        },
-                        "nodeType": "YulFunctionCall",
-                        "src": "2631:9:80"
-                      },
-                      "variableNames": [
-                        {
-                          "name": "product",
-                          "nodeType": "YulIdentifier",
-                          "src": "2620:7:80"
-                        }
-                      ]
-                    },
-                    {
                       "body": {
                         "nodeType": "YulBlock",
-                        "src": "2698:22:80",
+                        "src": "2669:22:80",
                         "statements": [
                           {
                             "expression": {
@@ -2549,13 +2517,13 @@
                               "functionName": {
                                 "name": "panic_error_0x11",
                                 "nodeType": "YulIdentifier",
-                                "src": "2700:16:80"
+                                "src": "2671:16:80"
                               },
                               "nodeType": "YulFunctionCall",
-                              "src": "2700:18:80"
+                              "src": "2671:18:80"
                             },
                             "nodeType": "YulExpressionStatement",
-                            "src": "2700:18:80"
+                            "src": "2671:18:80"
                           }
                         ]
                       },
@@ -2568,74 +2536,119 @@
                                   {
                                     "name": "x",
                                     "nodeType": "YulIdentifier",
-                                    "src": "2669:1:80"
+                                    "src": "2641:1:80"
                                   }
                                 ],
                                 "functionName": {
                                   "name": "iszero",
                                   "nodeType": "YulIdentifier",
-                                  "src": "2662:6:80"
+                                  "src": "2634:6:80"
                                 },
                                 "nodeType": "YulFunctionCall",
-                                "src": "2662:9:80"
+                                "src": "2634:9:80"
+                              }
+                            ],
+                            "functionName": {
+                              "name": "iszero",
+                              "nodeType": "YulIdentifier",
+                              "src": "2627:6:80"
+                            },
+                            "nodeType": "YulFunctionCall",
+                            "src": "2627:17:80"
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "name": "y",
+                                "nodeType": "YulIdentifier",
+                                "src": "2649:1:80"
                               },
                               {
                                 "arguments": [
                                   {
-                                    "name": "y",
-                                    "nodeType": "YulIdentifier",
-                                    "src": "2676:1:80"
-                                  },
-                                  {
                                     "arguments": [
                                       {
-                                        "name": "product",
-                                        "nodeType": "YulIdentifier",
-                                        "src": "2683:7:80"
-                                      },
-                                      {
-                                        "name": "x",
-                                        "nodeType": "YulIdentifier",
-                                        "src": "2692:1:80"
+                                        "kind": "number",
+                                        "nodeType": "YulLiteral",
+                                        "src": "2660:1:80",
+                                        "type": "",
+                                        "value": "0"
                                       }
                                     ],
                                     "functionName": {
-                                      "name": "div",
+                                      "name": "not",
                                       "nodeType": "YulIdentifier",
-                                      "src": "2679:3:80"
+                                      "src": "2656:3:80"
                                     },
                                     "nodeType": "YulFunctionCall",
-                                    "src": "2679:15:80"
+                                    "src": "2656:6:80"
+                                  },
+                                  {
+                                    "name": "x",
+                                    "nodeType": "YulIdentifier",
+                                    "src": "2664:1:80"
                                   }
                                 ],
                                 "functionName": {
-                                  "name": "eq",
+                                  "name": "div",
                                   "nodeType": "YulIdentifier",
-                                  "src": "2673:2:80"
+                                  "src": "2652:3:80"
                                 },
                                 "nodeType": "YulFunctionCall",
-                                "src": "2673:22:80"
+                                "src": "2652:14:80"
                               }
                             ],
                             "functionName": {
-                              "name": "or",
+                              "name": "gt",
                               "nodeType": "YulIdentifier",
-                              "src": "2659:2:80"
+                              "src": "2646:2:80"
                             },
                             "nodeType": "YulFunctionCall",
-                            "src": "2659:37:80"
+                            "src": "2646:21:80"
                           }
                         ],
                         "functionName": {
-                          "name": "iszero",
+                          "name": "and",
                           "nodeType": "YulIdentifier",
-                          "src": "2652:6:80"
+                          "src": "2623:3:80"
                         },
                         "nodeType": "YulFunctionCall",
-                        "src": "2652:45:80"
+                        "src": "2623:45:80"
                       },
                       "nodeType": "YulIf",
-                      "src": "2649:71:80"
+                      "src": "2620:71:80"
+                    },
+                    {
+                      "nodeType": "YulAssignment",
+                      "src": "2700:20:80",
+                      "value": {
+                        "arguments": [
+                          {
+                            "name": "x",
+                            "nodeType": "YulIdentifier",
+                            "src": "2715:1:80"
+                          },
+                          {
+                            "name": "y",
+                            "nodeType": "YulIdentifier",
+                            "src": "2718:1:80"
+                          }
+                        ],
+                        "functionName": {
+                          "name": "mul",
+                          "nodeType": "YulIdentifier",
+                          "src": "2711:3:80"
+                        },
+                        "nodeType": "YulFunctionCall",
+                        "src": "2711:9:80"
+                      },
+                      "variableNames": [
+                        {
+                          "name": "product",
+                          "nodeType": "YulIdentifier",
+                          "src": "2700:7:80"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -3017,7 +3030,7 @@
               }
             ]
           },
-          "contents": "{\n    { }\n    function abi_encode_tuple_t_int8__to_t_int8__fromStack_reversed(headStart, value0) -> tail\n    {\n        tail := add(headStart, 32)\n        mstore(headStart, signextend(0, value0))\n    }\n    function abi_encode_tuple_t_bytes32_t_bool__to_t_bytes32_t_bool__fromStack_reversed(headStart, value1, value0) -> tail\n    {\n        tail := add(headStart, 64)\n        mstore(headStart, value0)\n        mstore(add(headStart, 32), iszero(iszero(value1)))\n    }\n    function abi_encode_tuple_t_contract$_IPriceProvider_$18655__to_t_address__fromStack_reversed(headStart, value0) -> tail\n    {\n        tail := add(headStart, 32)\n        mstore(headStart, and(value0, sub(shl(160, 1), 1)))\n    }\n    function abi_decode_tuple_t_bytes32t_bool_fromMemory(headStart, dataEnd) -> value0, value1\n    {\n        if slt(sub(dataEnd, headStart), 64) { revert(0, 0) }\n        value0 := mload(headStart)\n        let value := mload(add(headStart, 32))\n        if iszero(eq(value, iszero(iszero(value)))) { revert(0, 0) }\n        value1 := value\n    }\n    function panic_error_0x11()\n    {\n        mstore(0, shl(224, 0x4e487b71))\n        mstore(4, 0x11)\n        revert(0, 0x24)\n    }\n    function checked_exp_helper(_base, exponent) -> power, base\n    {\n        let power_1 := 1\n        power := power_1\n        base := _base\n        for { } gt(exponent, power_1) { }\n        {\n            if gt(base, div(not(0), base)) { panic_error_0x11() }\n            if and(exponent, power_1) { power := mul(power, base) }\n            base := mul(base, base)\n            exponent := shr(power_1, exponent)\n        }\n    }\n    function checked_exp_unsigned(base, exponent) -> power\n    {\n        if iszero(exponent)\n        {\n            power := 1\n            leave\n        }\n        if iszero(base)\n        {\n            power := 0\n            leave\n        }\n        switch base\n        case 1 {\n            power := 1\n            leave\n        }\n        case 2 {\n            if gt(exponent, 255) { panic_error_0x11() }\n            power := shl(exponent, 1)\n            leave\n        }\n        if or(and(lt(base, 11), lt(exponent, 78)), and(lt(base, 307), lt(exponent, 32)))\n        {\n            power := exp(base, exponent)\n            leave\n        }\n        let power_1, base_1 := checked_exp_helper(base, exponent)\n        if gt(power_1, div(not(0), base_1)) { panic_error_0x11() }\n        power := mul(power_1, base_1)\n    }\n    function checked_exp_t_uint256_t_uint8(base, exponent) -> power\n    {\n        power := checked_exp_unsigned(base, and(exponent, 0xff))\n    }\n    function checked_mul_t_uint256(x, y) -> product\n    {\n        product := mul(x, y)\n        if iszero(or(iszero(x), eq(y, div(product, x)))) { panic_error_0x11() }\n    }\n    function negate_t_int8(value) -> ret\n    {\n        let value_1 := signextend(0, value)\n        if eq(value_1, not(127)) { panic_error_0x11() }\n        ret := sub(0, value_1)\n    }\n    function checked_div_t_uint256(x, y) -> r\n    {\n        if iszero(y)\n        {\n            mstore(0, shl(224, 0x4e487b71))\n            mstore(4, 0x12)\n            revert(0, 0x24)\n        }\n        r := div(x, y)\n    }\n}",
+          "contents": "{\n    { }\n    function abi_encode_tuple_t_int8__to_t_int8__fromStack_reversed(headStart, value0) -> tail\n    {\n        tail := add(headStart, 32)\n        mstore(headStart, signextend(0, value0))\n    }\n    function abi_encode_tuple_t_bytes32_t_bool__to_t_bytes32_t_bool__fromStack_reversed(headStart, value1, value0) -> tail\n    {\n        tail := add(headStart, 64)\n        mstore(headStart, value0)\n        mstore(add(headStart, 32), iszero(iszero(value1)))\n    }\n    function abi_encode_tuple_t_contract$_IPriceProvider_$18903__to_t_address__fromStack_reversed(headStart, value0) -> tail\n    {\n        tail := add(headStart, 32)\n        mstore(headStart, and(value0, sub(shl(160, 1), 1)))\n    }\n    function abi_decode_tuple_t_bytes32t_bool_fromMemory(headStart, dataEnd) -> value0, value1\n    {\n        if slt(sub(dataEnd, headStart), 64) { revert(0, 0) }\n        value0 := mload(headStart)\n        let value := mload(add(headStart, 32))\n        if iszero(eq(value, iszero(iszero(value)))) { revert(0, 0) }\n        value1 := value\n    }\n    function panic_error_0x11()\n    {\n        mstore(0, shl(224, 0x4e487b71))\n        mstore(4, 0x11)\n        revert(0, 0x24)\n    }\n    function checked_exp_helper(_base, exponent) -> power, base\n    {\n        let power_1 := 1\n        power := power_1\n        base := _base\n        for { } gt(exponent, power_1) { }\n        {\n            if gt(base, div(not(0), base)) { panic_error_0x11() }\n            if and(exponent, power_1) { power := mul(power, base) }\n            base := mul(base, base)\n            exponent := shr(power_1, exponent)\n        }\n    }\n    function checked_exp_unsigned(base, exponent) -> power\n    {\n        if iszero(exponent)\n        {\n            power := 1\n            leave\n        }\n        if iszero(base)\n        {\n            power := 0\n            leave\n        }\n        switch base\n        case 1 {\n            power := 1\n            leave\n        }\n        case 2 {\n            if gt(exponent, 255) { panic_error_0x11() }\n            power := shl(exponent, 1)\n            leave\n        }\n        if or(and(lt(base, 11), lt(exponent, 78)), and(lt(base, 307), lt(exponent, 32)))\n        {\n            power := exp(base, exponent)\n            leave\n        }\n        let power_1, base_1 := checked_exp_helper(base, exponent)\n        if gt(power_1, div(not(0), base_1)) { panic_error_0x11() }\n        power := mul(power_1, base_1)\n    }\n    function checked_exp_t_uint256_t_uint8(base, exponent) -> power\n    {\n        power := checked_exp_unsigned(base, and(exponent, 0xff))\n    }\n    function checked_mul_t_uint256(x, y) -> product\n    {\n        if and(iszero(iszero(x)), gt(y, div(not(0), x))) { panic_error_0x11() }\n        product := mul(x, y)\n    }\n    function negate_t_int8(value) -> ret\n    {\n        let value_1 := signextend(0, value)\n        if eq(value_1, not(127)) { panic_error_0x11() }\n        ret := sub(0, value_1)\n    }\n    function checked_div_t_uint256(x, y) -> r\n    {\n        if iszero(y)\n        {\n            mstore(0, shl(224, 0x4e487b71))\n            mstore(4, 0x12)\n            revert(0, 0x24)\n        }\n        r := div(x, y)\n    }\n}",
           "id": 80,
           "language": "Yul",
           "name": "#utility.yul"
@@ -3025,12 +3038,12 @@
       ],
       "immutableReferences": {},
       "linkReferences": {},
-      "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH2 0x41 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x12FC41CA EQ PUSH2 0x46 JUMPI DUP1 PUSH4 0x59E02DD7 EQ PUSH2 0x73 JUMPI DUP1 PUSH4 0xB888879E EQ PUSH2 0x90 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH2 0x5B SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x0 SWAP2 SWAP1 SWAP2 SIGNEXTEND DUP2 MSTORE PUSH1 0x20 ADD JUMPDEST PUSH1 0x40 MLOAD DUP1 SWAP2 SUB SWAP1 RETURN JUMPDEST PUSH2 0x7B PUSH2 0xBB JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP3 DUP4 MSTORE SWAP1 ISZERO ISZERO PUSH1 0x20 DUP4 ADD MSTORE ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH2 0xA3 SWAP1 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB SWAP1 SWAP2 AND DUP2 MSTORE PUSH1 0x20 ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x40 DUP1 MLOAD PUSH4 0x59E02DD7 PUSH1 0xE0 SHL DUP2 MSTORE DUP2 MLOAD DUP5 SWAP4 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND SWAP3 PUSH4 0x59E02DD7 SWAP3 PUSH1 0x4 DUP1 DUP3 ADD SWAP4 SWAP2 DUP3 SWAP1 SUB ADD DUP2 DUP7 GAS STATICCALL ISZERO DUP1 ISZERO PUSH2 0x101 JUMPI RETURNDATASIZE PUSH1 0x0 DUP1 RETURNDATACOPY RETURNDATASIZE PUSH1 0x0 REVERT JUMPDEST POP POP POP POP PUSH1 0x40 MLOAD RETURNDATASIZE PUSH1 0x1F NOT PUSH1 0x1F DUP3 ADD AND DUP3 ADD DUP1 PUSH1 0x40 MSTORE POP DUP2 ADD SWAP1 PUSH2 0x125 SWAP2 SWAP1 PUSH2 0x1AB JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD SWAP3 SWAP5 POP SWAP1 SWAP3 POP PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV DUP2 SIGNEXTEND SGT ISZERO PUSH2 0x168 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x158 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x2F2 JUMP JUMPDEST SWAP2 POP SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 DIV DUP2 SIGNEXTEND SLT ISZERO PUSH2 0x1A7 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x192 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH2 0x309 JUMP JUMPDEST PUSH2 0x19D SWAP1 PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x327 JUMP JUMPDEST SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH1 0x40 DUP4 DUP6 SUB SLT ISZERO PUSH2 0x1BE JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 MLOAD SWAP2 POP PUSH1 0x20 DUP4 ADD MLOAD DUP1 ISZERO ISZERO DUP2 EQ PUSH2 0x1D5 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP2 POP POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x11 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST PUSH1 0x1 DUP2 DUP2 JUMPDEST DUP1 DUP6 GT ISZERO PUSH2 0x231 JUMPI DUP2 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x217 JUMPI PUSH2 0x217 PUSH2 0x1E0 JUMP JUMPDEST DUP1 DUP6 AND ISZERO PUSH2 0x224 JUMPI SWAP2 DUP2 MUL SWAP2 JUMPDEST SWAP4 DUP5 SHR SWAP4 SWAP1 DUP1 MUL SWAP1 PUSH2 0x1FB JUMP JUMPDEST POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x248 JUMPI POP PUSH1 0x1 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH2 0x255 JUMPI POP PUSH1 0x0 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH1 0x1 DUP2 EQ PUSH2 0x26B JUMPI PUSH1 0x2 DUP2 EQ PUSH2 0x275 JUMPI PUSH2 0x291 JUMP JUMPDEST PUSH1 0x1 SWAP2 POP POP PUSH2 0x2D6 JUMP JUMPDEST PUSH1 0xFF DUP5 GT ISZERO PUSH2 0x286 JUMPI PUSH2 0x286 PUSH2 0x1E0 JUMP JUMPDEST POP POP PUSH1 0x1 DUP3 SHL PUSH2 0x2D6 JUMP JUMPDEST POP PUSH1 0x20 DUP4 LT PUSH2 0x133 DUP4 LT AND PUSH1 0x4E DUP5 LT PUSH1 0xB DUP5 LT AND OR ISZERO PUSH2 0x2B4 JUMPI POP DUP2 DUP2 EXP PUSH2 0x2D6 JUMP JUMPDEST PUSH2 0x2BE DUP4 DUP4 PUSH2 0x1F6 JUMP JUMPDEST DUP1 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x2D2 JUMPI PUSH2 0x2D2 PUSH2 0x1E0 JUMP JUMPDEST MUL SWAP1 POP JUMPDEST SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 PUSH2 0x2EB PUSH1 0xFF DUP5 AND DUP4 PUSH2 0x239 JUMP JUMPDEST SWAP4 SWAP3 POP POP POP JUMP JUMPDEST DUP1 DUP3 MUL DUP2 ISZERO DUP3 DUP3 DIV DUP5 EQ OR PUSH2 0x2D6 JUMPI PUSH2 0x2D6 PUSH2 0x1E0 JUMP JUMPDEST PUSH1 0x0 DUP2 DUP2 SIGNEXTEND PUSH1 0x80 DUP2 ADD PUSH2 0x31E JUMPI PUSH2 0x31E PUSH2 0x1E0 JUMP JUMPDEST PUSH1 0x0 SUB SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x344 JUMPI PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x12 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST POP DIV SWAP1 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 NUMBER XOR 0xC 0xBE CODECOPY PUSH20 0x69638AF36CF919D218D540E2198FE4BCB2ED08E8 SAR 0xEE DUP12 BASEFEE ADDRESS 0xF7 PUSH5 0x736F6C6343 STOP ADDMOD GT STOP CALLER ",
-      "sourceMap": "217:877:78:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;556:17;;;;;;-1:-1:-1;;;556:17:78;;;;;;;;;;100:4:80;172:21;;;;154:40;;142:2;127:18;556:17:78;;;;;;;;806:286;;;:::i;:::-;;;;373:25:80;;;441:14;;434:22;429:2;414:18;;407:50;346:18;806:286:78;205:258:80;304:35:78;;;;;-1:-1:-1;;;;;304:35:78;;;;;;-1:-1:-1;;;;;656:32:80;;;638:51;;626:2;611:18;304:35:78;468:227:80;806:286:78;845:13;905;;:20;;;-1:-1:-1;;;905:20:78;;;;845:13;;-1:-1:-1;;;;;905:13:78;;:18;;:20;;;;;;;;;;;:13;:20;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;947:1;939:5;;885:40;;-1:-1:-1;885:40:78;;-1:-1:-1;;;;939:5:78;;;;;:9;935:150;;;995:5;;;983:18;;-1:-1:-1;;;995:5:78;;;;;983:2;:18;:::i;:::-;966:35;;974:5;966:35;:::i;:::-;958:44;-1:-1:-1;806:286:78;;:::o;935:150::-;1029:1;1021:5;;-1:-1:-1;;;1021:5:78;;;;:9;1017:68;;;1078:5;;;1077:6;;-1:-1:-1;;;1078:5:78;;;;;1077:6;:::i;:::-;1065:19;;:2;:19;:::i;:::-;1048:36;;1056:5;1048:36;:::i;1017:68::-;806:286;;:::o;700:338:80:-;776:6;784;837:2;825:9;816:7;812:23;808:32;805:52;;;853:1;850;843:12;805:52;882:9;876:16;866:26;;935:2;924:9;920:18;914:25;982:5;975:13;968:21;961:5;958:32;948:60;;1004:1;1001;994:12;948:60;1027:5;1017:15;;;700:338;;;;;:::o;1043:127::-;1104:10;1099:3;1095:20;1092:1;1085:31;1135:4;1132:1;1125:15;1159:4;1156:1;1149:15;1175:422;1264:1;1307:5;1264:1;1321:270;1342:7;1332:8;1329:21;1321:270;;;1401:4;1397:1;1393:6;1389:17;1383:4;1380:27;1377:53;;;1410:18;;:::i;:::-;1460:7;1450:8;1446:22;1443:55;;;1480:16;;;;1443:55;1559:22;;;;1519:15;;;;1321:270;;;1325:3;1175:422;;;;;:::o;1602:806::-;1651:5;1681:8;1671:80;;-1:-1:-1;1722:1:80;1736:5;;1671:80;1770:4;1760:76;;-1:-1:-1;1807:1:80;1821:5;;1760:76;1852:4;1870:1;1865:59;;;;1938:1;1933:130;;;;1845:218;;1865:59;1895:1;1886:10;;1909:5;;;1933:130;1970:3;1960:8;1957:17;1954:43;;;1977:18;;:::i;:::-;-1:-1:-1;;2033:1:80;2019:16;;2048:5;;1845:218;;2147:2;2137:8;2134:16;2128:3;2122:4;2119:13;2115:36;2109:2;2099:8;2096:16;2091:2;2085:4;2082:12;2078:35;2075:77;2072:159;;;-1:-1:-1;2184:19:80;;;2216:5;;2072:159;2263:34;2288:8;2282:4;2263:34;:::i;:::-;2333:6;2329:1;2325:6;2321:19;2312:7;2309:32;2306:58;;;2344:18;;:::i;:::-;2382:20;;-1:-1:-1;1602:806:80;;;;;:::o;2413:140::-;2471:5;2500:47;2541:4;2531:8;2527:19;2521:4;2500:47;:::i;:::-;2491:56;2413:140;-1:-1:-1;;;2413:140:80:o;2558:168::-;2631:9;;;2662;;2679:15;;;2673:22;;2659:37;2649:71;;2700:18;;:::i;2731:179::-;2764:3;2797:20;;;2829:21;;;2826:47;;2853:18;;:::i;:::-;2893:1;2889:15;;2731:179;-1:-1:-1;;2731:179:80:o;2915:217::-;2955:1;2981;2971:132;;3025:10;3020:3;3016:20;3013:1;3006:31;3060:4;3057:1;3050:15;3088:4;3085:1;3078:15;2971:132;-1:-1:-1;3117:9:80;;2915:217::o"
+      "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH2 0x10 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH2 0x41 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x12FC41CA EQ PUSH2 0x46 JUMPI DUP1 PUSH4 0x59E02DD7 EQ PUSH2 0x73 JUMPI DUP1 PUSH4 0xB888879E EQ PUSH2 0x90 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH2 0x5B SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x0 SWAP2 SWAP1 SWAP2 SIGNEXTEND DUP2 MSTORE PUSH1 0x20 ADD JUMPDEST PUSH1 0x40 MLOAD DUP1 SWAP2 SUB SWAP1 RETURN JUMPDEST PUSH2 0x7B PUSH2 0xBB JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP3 DUP4 MSTORE SWAP1 ISZERO ISZERO PUSH1 0x20 DUP4 ADD MSTORE ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH2 0xA3 SWAP1 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND DUP2 JUMP JUMPDEST PUSH1 0x40 MLOAD PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB SWAP1 SWAP2 AND DUP2 MSTORE PUSH1 0x20 ADD PUSH2 0x6A JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x40 DUP1 MLOAD PUSH4 0x59E02DD7 PUSH1 0xE0 SHL DUP2 MSTORE DUP2 MLOAD DUP5 SWAP4 PUSH1 0x1 PUSH1 0x1 PUSH1 0xA0 SHL SUB AND SWAP3 PUSH4 0x59E02DD7 SWAP3 PUSH1 0x4 DUP1 DUP3 ADD SWAP4 SWAP2 DUP3 SWAP1 SUB ADD DUP2 DUP7 GAS STATICCALL ISZERO DUP1 ISZERO PUSH2 0x101 JUMPI RETURNDATASIZE PUSH1 0x0 DUP1 RETURNDATACOPY RETURNDATASIZE PUSH1 0x0 REVERT JUMPDEST POP POP POP POP PUSH1 0x40 MLOAD RETURNDATASIZE PUSH1 0x1F NOT PUSH1 0x1F DUP3 ADD AND DUP3 ADD DUP1 PUSH1 0x40 MSTORE POP DUP2 ADD SWAP1 PUSH2 0x125 SWAP2 SWAP1 PUSH2 0x1AB JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD SWAP3 SWAP5 POP SWAP1 SWAP3 POP PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV DUP2 SIGNEXTEND SGT ISZERO PUSH2 0x168 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x158 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x2F2 JUMP JUMPDEST SWAP2 POP SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 DIV DUP2 SIGNEXTEND SLT ISZERO PUSH2 0x1A7 JUMPI PUSH1 0x0 DUP1 SLOAD PUSH2 0x192 SWAP2 PUSH1 0x1 PUSH1 0xA0 SHL SWAP1 SWAP2 DIV SWAP1 SIGNEXTEND PUSH2 0x311 JUMP JUMPDEST PUSH2 0x19D SWAP1 PUSH1 0xA PUSH2 0x2DC JUMP JUMPDEST PUSH2 0x162 SWAP1 DUP4 PUSH2 0x32F JUMP JUMPDEST SWAP1 SWAP2 JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH1 0x40 DUP4 DUP6 SUB SLT ISZERO PUSH2 0x1BE JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP3 MLOAD SWAP2 POP PUSH1 0x20 DUP4 ADD MLOAD DUP1 ISZERO ISZERO DUP2 EQ PUSH2 0x1D5 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP1 SWAP2 POP POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x11 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST PUSH1 0x1 DUP2 DUP2 JUMPDEST DUP1 DUP6 GT ISZERO PUSH2 0x231 JUMPI DUP2 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x217 JUMPI PUSH2 0x217 PUSH2 0x1E0 JUMP JUMPDEST DUP1 DUP6 AND ISZERO PUSH2 0x224 JUMPI SWAP2 DUP2 MUL SWAP2 JUMPDEST SWAP4 DUP5 SHR SWAP4 SWAP1 DUP1 MUL SWAP1 PUSH2 0x1FB JUMP JUMPDEST POP SWAP3 POP SWAP3 SWAP1 POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x248 JUMPI POP PUSH1 0x1 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH2 0x255 JUMPI POP PUSH1 0x0 PUSH2 0x2D6 JUMP JUMPDEST DUP2 PUSH1 0x1 DUP2 EQ PUSH2 0x26B JUMPI PUSH1 0x2 DUP2 EQ PUSH2 0x275 JUMPI PUSH2 0x291 JUMP JUMPDEST PUSH1 0x1 SWAP2 POP POP PUSH2 0x2D6 JUMP JUMPDEST PUSH1 0xFF DUP5 GT ISZERO PUSH2 0x286 JUMPI PUSH2 0x286 PUSH2 0x1E0 JUMP JUMPDEST POP POP PUSH1 0x1 DUP3 SHL PUSH2 0x2D6 JUMP JUMPDEST POP PUSH1 0x20 DUP4 LT PUSH2 0x133 DUP4 LT AND PUSH1 0x4E DUP5 LT PUSH1 0xB DUP5 LT AND OR ISZERO PUSH2 0x2B4 JUMPI POP DUP2 DUP2 EXP PUSH2 0x2D6 JUMP JUMPDEST PUSH2 0x2BE DUP4 DUP4 PUSH2 0x1F6 JUMP JUMPDEST DUP1 PUSH1 0x0 NOT DIV DUP3 GT ISZERO PUSH2 0x2D2 JUMPI PUSH2 0x2D2 PUSH2 0x1E0 JUMP JUMPDEST MUL SWAP1 POP JUMPDEST SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 PUSH2 0x2EB PUSH1 0xFF DUP5 AND DUP4 PUSH2 0x239 JUMP JUMPDEST SWAP4 SWAP3 POP POP POP JUMP JUMPDEST PUSH1 0x0 DUP2 PUSH1 0x0 NOT DIV DUP4 GT DUP3 ISZERO ISZERO AND ISZERO PUSH2 0x30C JUMPI PUSH2 0x30C PUSH2 0x1E0 JUMP JUMPDEST POP MUL SWAP1 JUMP JUMPDEST PUSH1 0x0 DUP2 DUP2 SIGNEXTEND PUSH1 0x80 DUP2 ADD PUSH2 0x326 JUMPI PUSH2 0x326 PUSH2 0x1E0 JUMP JUMPDEST PUSH1 0x0 SUB SWAP3 SWAP2 POP POP JUMP JUMPDEST PUSH1 0x0 DUP3 PUSH2 0x34C JUMPI PUSH4 0x4E487B71 PUSH1 0xE0 SHL PUSH1 0x0 MSTORE PUSH1 0x12 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST POP DIV SWAP1 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 SSTORE DUP16 PUSH25 0x616468FB4BBEABA1C97F38C60A53E23D2E388CCBC6697CA0CF 0xBA 0xC4 0xBB PUSH28 0x64736F6C634300081000330000000000000000000000000000000000 ",
+      "sourceMap": "255:877:78:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;594:17;;;;;;-1:-1:-1;;;594:17:78;;;;;;;;;;100:4:80;172:21;;;;154:40;;142:2;127:18;594:17:78;;;;;;;;844:286;;;:::i;:::-;;;;373:25:80;;;441:14;;434:22;429:2;414:18;;407:50;346:18;844:286:78;205:258:80;342:35:78;;;;;-1:-1:-1;;;;;342:35:78;;;;;;-1:-1:-1;;;;;656:32:80;;;638:51;;626:2;611:18;342:35:78;468:227:80;844:286:78;883:13;943;;:20;;;-1:-1:-1;;;943:20:78;;;;883:13;;-1:-1:-1;;;;;943:13:78;;:18;;:20;;;;;;;;;;;:13;:20;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;985:1;977:5;;923:40;;-1:-1:-1;923:40:78;;-1:-1:-1;;;;977:5:78;;;;;:9;973:150;;;1033:5;;;1021:18;;-1:-1:-1;;;1033:5:78;;;;;1021:2;:18;:::i;:::-;1004:35;;1012:5;1004:35;:::i;:::-;996:44;-1:-1:-1;844:286:78;;:::o;973:150::-;1067:1;1059:5;;-1:-1:-1;;;1059:5:78;;;;:9;1055:68;;;1116:5;;;1115:6;;-1:-1:-1;;;1116:5:78;;;;;1115:6;:::i;:::-;1103:19;;:2;:19;:::i;:::-;1086:36;;1094:5;1086:36;:::i;1055:68::-;844:286;;:::o;700:338:80:-;776:6;784;837:2;825:9;816:7;812:23;808:32;805:52;;;853:1;850;843:12;805:52;882:9;876:16;866:26;;935:2;924:9;920:18;914:25;982:5;975:13;968:21;961:5;958:32;948:60;;1004:1;1001;994:12;948:60;1027:5;1017:15;;;700:338;;;;;:::o;1043:127::-;1104:10;1099:3;1095:20;1092:1;1085:31;1135:4;1132:1;1125:15;1159:4;1156:1;1149:15;1175:422;1264:1;1307:5;1264:1;1321:270;1342:7;1332:8;1329:21;1321:270;;;1401:4;1397:1;1393:6;1389:17;1383:4;1380:27;1377:53;;;1410:18;;:::i;:::-;1460:7;1450:8;1446:22;1443:55;;;1480:16;;;;1443:55;1559:22;;;;1519:15;;;;1321:270;;;1325:3;1175:422;;;;;:::o;1602:806::-;1651:5;1681:8;1671:80;;-1:-1:-1;1722:1:80;1736:5;;1671:80;1770:4;1760:76;;-1:-1:-1;1807:1:80;1821:5;;1760:76;1852:4;1870:1;1865:59;;;;1938:1;1933:130;;;;1845:218;;1865:59;1895:1;1886:10;;1909:5;;;1933:130;1970:3;1960:8;1957:17;1954:43;;;1977:18;;:::i;:::-;-1:-1:-1;;2033:1:80;2019:16;;2048:5;;1845:218;;2147:2;2137:8;2134:16;2128:3;2122:4;2119:13;2115:36;2109:2;2099:8;2096:16;2091:2;2085:4;2082:12;2078:35;2075:77;2072:159;;;-1:-1:-1;2184:19:80;;;2216:5;;2072:159;2263:34;2288:8;2282:4;2263:34;:::i;:::-;2333:6;2329:1;2325:6;2321:19;2312:7;2309:32;2306:58;;;2344:18;;:::i;:::-;2382:20;;-1:-1:-1;1602:806:80;;;;;:::o;2413:140::-;2471:5;2500:47;2541:4;2531:8;2527:19;2521:4;2500:47;:::i;:::-;2491:56;2413:140;-1:-1:-1;;;2413:140:80:o;2558:168::-;2598:7;2664:1;2660;2656:6;2652:14;2649:1;2646:21;2641:1;2634:9;2627:17;2623:45;2620:71;;;2671:18;;:::i;:::-;-1:-1:-1;2711:9:80;;2558:168::o;2731:179::-;2764:3;2797:20;;;2829:21;;;2826:47;;2853:18;;:::i;:::-;2893:1;2889:15;;2731:179;-1:-1:-1;;2731:179:80:o;2915:217::-;2955:1;2981;2971:132;;3025:10;3020:3;3016:20;3013:1;3006:31;3060:4;3057:1;3050:15;3088:4;3085:1;3078:15;2971:132;-1:-1:-1;3117:9:80;;2915:217::o"
     },
     "gasEstimates": {
       "creation": {
-        "codeDepositCost": "179000",
+        "codeDepositCost": "180600",
         "executionCost": "infinite",
         "totalCost": "infinite"
       },
@@ -3046,19 +3059,19 @@
       "shift()": "12fc41ca"
     }
   },
-  "metadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IPriceProvider\",\"name\":\"priceProvider_\",\"type\":\"address\"},{\"internalType\":\"int8\",\"name\":\"shift_\",\"type\":\"int8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"peek\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"price\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"hasPrice\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"priceProvider\",\"outputs\":[{\"internalType\":\"contract IPriceProvider\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shift\",\"outputs\":[{\"internalType\":\"int8\",\"name\":\"\",\"type\":\"int8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"This simple contract, wraps a IPriceProvider and shift the returned price value in either direction.\",\"kind\":\"dev\",\"methods\":{\"peek()\":{\"params\":{\"price\":\"assetPrice\",\"valid\":\"true if the price is valid\"}}},\"title\":\"PriceProviderShifter\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"constructor\":{\"notice\":\"constructor\"},\"peek()\":{\"notice\":\"returns the given `price` for the asset if `valid`\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/utils/PriceProviderShifter.sol\":\"PriceProviderShifter\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IPriceProvider.sol\":{\"content\":\"pragma solidity ^0.8.17;\\n\\n/**\\n * @title IPriceFeed\\n * @notice Amphiraos-Oracle Interface for peeking the price of a given asset\\n * @dev https://github.com/money-on-chain/Amphiraos-Oracle\\n */\\ninterface IPriceProvider {\\n    /**\\n     * @notice returns the given `price` for the asset if `valid`\\n     * @param price assetPrice\\n     * @param valid true if the price is valid\\n     */\\n    function peek() external view returns (bytes32 price, bool valid);\\n}\\n\",\"keccak256\":\"0x608d34e95c4f1953560527cf57f4d405ebe66d66e6d94c8dcca2ed07465123f9\"},\"contracts/utils/PriceProviderShifter.sol\":{\"content\":\"pragma solidity ^0.8.17;\\n\\nimport \\\"../interfaces/IPriceProvider.sol\\\";\\n\\n/**\\n  @title PriceProviderShifter\\n  @dev This simple contract, wraps a IPriceProvider and shift the returned price value in either direction.\\n  */\\ncontract PriceProviderShifter is IPriceProvider {\\n    // The target price Provider\\n    IPriceProvider public priceProvider;\\n    // The shift we want to apply, positive to multiply, negative to divide\\n    // Example: if \\\"shift = 3\\\", a 123000 value is converted to 123000000\\n    //          If \\\"shift = -3\\\", a 123000 is converted to 123\\n    int8 public shift;\\n\\n    /**\\n     * @notice constructor\\n     */\\n    constructor(IPriceProvider priceProvider_, int8 shift_) {\\n        priceProvider = priceProvider_;\\n        shift = shift_;\\n    }\\n\\n    /**\\n     * @inheritdoc IPriceProvider\\n     */\\n    function peek() external view returns (bytes32 price, bool hasPrice) {\\n        (price, hasPrice) = priceProvider.peek();\\n        if (shift > 0) price = bytes32(uint256(price) * 10 ** uint8(shift));\\n        else if (shift < 0) price = bytes32(uint256(price) / 10 ** uint8(-shift));\\n    }\\n}\\n\",\"keccak256\":\"0x4f49481143446753171ae27701f9ac3c424285ee9228a34a67f1e068d97b70fb\"}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.16+commit.07a7930e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IPriceProvider\",\"name\":\"priceProvider_\",\"type\":\"address\"},{\"internalType\":\"int8\",\"name\":\"shift_\",\"type\":\"int8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"peek\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"price\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"hasPrice\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"priceProvider\",\"outputs\":[{\"internalType\":\"contract IPriceProvider\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shift\",\"outputs\":[{\"internalType\":\"int8\",\"name\":\"\",\"type\":\"int8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"This simple contract, wraps a IPriceProvider and shift the returned price value in either direction.\",\"kind\":\"dev\",\"methods\":{\"peek()\":{\"params\":{\"price\":\"assetPrice\",\"valid\":\"true if the price is valid\"}}},\"title\":\"PriceProviderShifter\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"constructor\":{\"notice\":\"constructor\"},\"peek()\":{\"notice\":\"returns the given `price` for the asset if `valid`\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/utils/PriceProviderShifter.sol\":\"PriceProviderShifter\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IPriceProvider.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity 0.8.16;\\n\\n/**\\n * @title IPriceFeed\\n * @notice Amphiraos-Oracle Interface for peeking the price of a given asset\\n * @dev https://github.com/money-on-chain/Amphiraos-Oracle\\n */\\ninterface IPriceProvider {\\n    /**\\n     * @notice returns the given `price` for the asset if `valid`\\n     * @param price assetPrice\\n     * @param valid true if the price is valid\\n     */\\n    function peek() external view returns (bytes32 price, bool valid);\\n}\\n\",\"keccak256\":\"0xac60fc67c5e9e81c630146ef2e916084ccbca8e392e33f8ff84f0e65de21a89a\",\"license\":\"UNLICENSED\"},\"contracts/utils/PriceProviderShifter.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity 0.8.16;\\n\\nimport \\\"../interfaces/IPriceProvider.sol\\\";\\n\\n/**\\n  @title PriceProviderShifter\\n  @dev This simple contract, wraps a IPriceProvider and shift the returned price value in either direction.\\n  */\\ncontract PriceProviderShifter is IPriceProvider {\\n    // The target price Provider\\n    IPriceProvider public priceProvider;\\n    // The shift we want to apply, positive to multiply, negative to divide\\n    // Example: if \\\"shift = 3\\\", a 123000 value is converted to 123000000\\n    //          If \\\"shift = -3\\\", a 123000 is converted to 123\\n    int8 public shift;\\n\\n    /**\\n     * @notice constructor\\n     */\\n    constructor(IPriceProvider priceProvider_, int8 shift_) {\\n        priceProvider = priceProvider_;\\n        shift = shift_;\\n    }\\n\\n    /**\\n     * @inheritdoc IPriceProvider\\n     */\\n    function peek() external view returns (bytes32 price, bool hasPrice) {\\n        (price, hasPrice) = priceProvider.peek();\\n        if (shift > 0) price = bytes32(uint256(price) * 10 ** uint8(shift));\\n        else if (shift < 0) price = bytes32(uint256(price) / 10 ** uint8(-shift));\\n    }\\n}\\n\",\"keccak256\":\"0xc496b3ecc447b01cb53b02532f33d4aee831e9127c505a98244f8c8dec0ac633\",\"license\":\"UNLICENSED\"}},\"version\":1}",
   "storageLayout": {
     "storage": [
       {
-        "astId": 19752,
+        "astId": 20000,
         "contract": "contracts/utils/PriceProviderShifter.sol:PriceProviderShifter",
         "label": "priceProvider",
         "offset": 0,
         "slot": "0",
-        "type": "t_contract(IPriceProvider)18655"
+        "type": "t_contract(IPriceProvider)18903"
       },
       {
-        "astId": 19754,
+        "astId": 20002,
         "contract": "contracts/utils/PriceProviderShifter.sol:PriceProviderShifter",
         "label": "shift",
         "offset": 20,
@@ -3067,7 +3080,7 @@
       }
     ],
     "types": {
-      "t_contract(IPriceProvider)18655": {
+      "t_contract(IPriceProvider)18903": {
         "encoding": "inplace",
         "label": "contract IPriceProvider",
         "numberOfBytes": "20"

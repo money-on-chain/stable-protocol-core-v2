@@ -36,7 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
+exports.deployAndAddPeggedToken = exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
+var hardhat_1 = require("hardhat");
 exports.GAS_LIMIT_PATCH = 6800000;
 var waitForTxConfirmation = function (tx, confirmations) {
     if (confirmations === void 0) { confirmations = 1; }
@@ -91,4 +92,56 @@ var getNetworkDeployParams = function (hre) {
     return hre.config.networks[network].deployParameters;
 };
 exports.getNetworkDeployParams = getNetworkDeployParams;
+var deployAndAddPeggedToken = function (hre, governorAddress, mocCore, tpParams) { return __awaiter(void 0, void 0, void 0, function () {
+    var deployments, signer, i, mocRC20TP, mocRC20Proxy;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                if (!tpParams) return [3 /*break*/, 8];
+                deployments = hre.deployments;
+                signer = hardhat_1.ethers.provider.getSigner();
+                i = 0;
+                _a.label = 1;
+            case 1:
+                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 8];
+                return [4 /*yield*/, (0, exports.deployUUPSArtifact)({ hre: hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" })];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, deployments.getOrNull(tpParams.tpParams[i].name + "Proxy")];
+            case 3:
+                mocRC20TP = _a.sent();
+                if (!mocRC20TP)
+                    throw new Error("No ".concat(tpParams.tpParams[i].name, " deployed"));
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocRC20", mocRC20TP.address, signer)];
+            case 4:
+                mocRC20Proxy = _a.sent();
+                console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
+                return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, mocCore.address, governorAddress, {
+                        gasLimit: exports.GAS_LIMIT_PATCH,
+                    }))];
+            case 5:
+                _a.sent();
+                console.log("Adding ".concat(tpParams.tpParams[i].name, " as PeggedToken ").concat(i, "..."));
+                return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocCore.addPeggedToken({
+                        tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
+                        priceProviderAddress: tpParams.tpParams[i].priceProvider,
+                        tpCtarg: tpParams.tpParams[i].ctarg,
+                        tpMintFee: tpParams.tpParams[i].mintFee,
+                        tpRedeemFee: tpParams.tpParams[i].redeemFee,
+                        tpEma: tpParams.tpParams[i].initialEma,
+                        tpEmaSf: tpParams.tpParams[i].smoothingFactor,
+                    }, {
+                        gasLimit: exports.GAS_LIMIT_PATCH,
+                    }))];
+            case 6:
+                _a.sent();
+                _a.label = 7;
+            case 7:
+                i++;
+                return [3 /*break*/, 1];
+            case 8: return [2 /*return*/];
+        }
+    });
+}); };
+exports.deployAndAddPeggedToken = deployAndAddPeggedToken;
 //# sourceMappingURL=utils.js.map

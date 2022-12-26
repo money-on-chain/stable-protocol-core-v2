@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
 import {
-  deployUUPSArtifact,
+  deployAndAddPeggedToken,
   GAS_LIMIT_PATCH,
   getNetworkDeployParams,
   waitForTxConfirmation,
@@ -33,7 +33,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
   // for tests only, we deploy a necessary Mocks
-  if (!hre.network.tags.mainnet) {
+  if (hre.network.tags.testnet || hre.network.tags.local) {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorAddress = (await governorMockFactory.deploy()).address;
   }
@@ -41,14 +41,26 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress, {
-      gasLimit: GAS_LIMIT_PATCH,
-    }),
+    CollateralToken.initialize(
+      ctParams.name,
+      ctParams.symbol,
+      deployedMocContract.address,
+      mocAddresses.governorAddress,
+      {
+        gasLimit: GAS_LIMIT_PATCH,
+      },
+    ),
   );
   await waitForTxConfirmation(
-    WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress, {
-      gasLimit: GAS_LIMIT_PATCH,
-    }),
+    WCAToken.initialize(
+      "WrappedCollateralAsset",
+      "WCA",
+      deployedMocCAWrapperContract.address,
+      mocAddresses.governorAddress,
+      {
+        gasLimit: GAS_LIMIT_PATCH,
+      },
+    ),
   );
 
   await waitForTxConfirmation(
@@ -90,44 +102,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initialization completed!");
   // for testnet we add some Pegged Token and Assets and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
-    if (tpParams) {
-      for (let i = 0; i < tpParams.tpParams.length; i++) {
-        await deployUUPSArtifact({ hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" });
-        const mocRC20TP = await deployments.getOrNull(tpParams.tpParams[i].name + "Proxy");
-        if (!mocRC20TP) throw new Error(`No ${tpParams.tpParams[i].name} deployed`);
-
-        const mocRC20Proxy = await ethers.getContractAt("MocRC20", mocRC20TP.address, signer);
-        console.log(`Initializing ${tpParams.tpParams[i].name} PeggedToken...`);
-        await waitForTxConfirmation(
-          mocRC20Proxy.initialize(
-            tpParams.tpParams[i].name,
-            tpParams.tpParams[i].symbol,
-            mocCARC20.address,
-            mocAddresses.governorAddress,
-            {
-              gasLimit: GAS_LIMIT_PATCH,
-            },
-          ),
-        );
-        console.log(`Adding ${tpParams.tpParams[i].name} as PeggedToken ${i}...`);
-        await waitForTxConfirmation(
-          mocCARC20.addPeggedToken(
-            {
-              tpTokenAddress: mocRC20Proxy.address.toLowerCase(),
-              priceProviderAddress: tpParams.tpParams[i].priceProvider,
-              tpCtarg: tpParams.tpParams[i].ctarg,
-              tpMintFee: tpParams.tpParams[i].mintFee,
-              tpRedeemFee: tpParams.tpParams[i].redeemFee,
-              tpEma: tpParams.tpParams[i].initialEma,
-              tpEmaSf: tpParams.tpParams[i].smoothingFactor,
-            },
-            {
-              gasLimit: GAS_LIMIT_PATCH,
-            },
-          ),
-        );
-      }
-    }
+    await deployAndAddPeggedToken(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
     if (assetParams) {
       for (let i = 0; i < assetParams.assetParams.length; i++) {
         console.log(`Adding ${assetParams.assetParams[i].assetAddress} as Asset ${i}...`);
