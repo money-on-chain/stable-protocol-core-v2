@@ -79,7 +79,7 @@ To check the code statically you can use the Ethereum Security Toolbox made by T
 
 #### Slither
 
-##### Default option
+##### Docker Default option
 
 First, get the last docker image
 
@@ -89,7 +89,7 @@ Then, you could just run the default checking executing
 
 `npm run security-default`
 
-##### Flexible option
+##### Docker Flexible option
 
 Or if you want more flexibility, first execute the command
 
@@ -103,6 +103,20 @@ cd project
 ```
 
 so that you can use the tools there installed.
+
+##### Local option
+
+First, install slither
+
+`pip3 install slither-analyzer`
+
+then run 
+
+`npm run slither`
+
+slither will execute the static analysis using the configuration at slither.config.json
+
+for more information [here](https://github.com/crytic/slither)
 
 #### Echidna
 
@@ -118,6 +132,8 @@ after finishing, a coverage folder will be created containing a copy of the sour
 
 the configuration file default.yalm allows users to choose EVM and test generation parameters
 
+##### Docker option
+
 First, get the last docker image
 
 `docker pull trailofbits/eth-security-toolbox`
@@ -126,9 +142,29 @@ compile contracts
 
 `npm run compile`
 
-then, execute this command passing contract name as argument
+then, to execute in assertion mode run this command passing file and contract name as argument
 
-`npm run echidna --contract=EchidnaTester`
+`npm run echidna-docker-assertion --file=echidna/EchidnaMocCoreTester.sol --contract=EchidnaMocCoreTester`
+
+or to execute in property mode run this command passing file and contract name as argument
+
+`npm run echidna-docker-property --file=echidna/EchidnaMocCoreTester.sol --contract=EchidnaMocCoreTester`
+
+##### Local option
+
+First, install echidna
+
+`brew install echidna`
+
+then, to execute in assertion mode run this command passing contract name as argument
+
+`npm run echidna-assertion --contract=EchidnaMocCoreTester`
+
+or to execute in property mode run this command passing contract name as argument
+
+`npm run echidna-property --contract=EchidnaMocCoreTester`
+
+echidna will execute fuzzing tests using the configuration at echidna/default.yaml
 
 for more information [here](https://github.com/crytic/echidna)
 
