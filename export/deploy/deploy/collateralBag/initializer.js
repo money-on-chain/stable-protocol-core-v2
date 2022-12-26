@@ -135,7 +135,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
             case 15:
                 _b.sent();
                 console.log("initialization completed!");
-                if (!hre.network.tags.testnet) return [3 /*break*/, 26];
+                if (!hre.network.tags.testnet) return [3 /*break*/, 25];
                 return [4 /*yield*/, (0, utils_1.deployAndAddPeggedToken)(hre, mocAddresses.governorAddress, mocCARC20, tpParams)];
             case 16:
                 _b.sent();
@@ -168,20 +168,14 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 return [3 /*break*/, 17];
             case 23:
                 console.log("Renouncing temp governance...");
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(mocCARC20.changeGovernor(mocAddresses.governorAddress, {
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.changeGovernor(mocAddresses.governorAddress, {
                         gasLimit: utils_1.GAS_LIMIT_PATCH,
                     }))];
             case 24:
                 _b.sent();
-                console.log("mocCARC20 governor is now: ".concat(mocAddresses.governorAddress));
-                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.changeGovernor(mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
-                    }))];
-            case 25:
-                _b.sent();
                 console.log("MocCAWrapper governor is now: ".concat(mocAddresses.governorAddress));
-                _b.label = 26;
-            case 26: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                _b.label = 25;
+            case 25: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };

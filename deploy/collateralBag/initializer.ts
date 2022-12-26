@@ -131,12 +131,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     }
     console.log("Renouncing temp governance...");
     await waitForTxConfirmation(
-      mocCARC20.changeGovernor(mocAddresses.governorAddress, {
-        gasLimit: GAS_LIMIT_PATCH,
-      }),
-    );
-    console.log(`mocCARC20 governor is now: ${mocAddresses.governorAddress}`);
-    await waitForTxConfirmation(
       MocCAWrapper.changeGovernor(mocAddresses.governorAddress, {
         gasLimit: GAS_LIMIT_PATCH,
       }),

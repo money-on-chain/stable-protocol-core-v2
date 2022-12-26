@@ -88,13 +88,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
     await deployAndAddPeggedToken(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
-    console.log("Renouncing temp governance...");
-    await waitForTxConfirmation(
-      mocCARC20.changeGovernor(mocAddresses.governorAddress, {
-        gasLimit: GAS_LIMIT_PATCH,
-      }),
-    );
-    console.log(`mocCARC20 governor is now: ${mocAddresses.governorAddress}`);
   }
   return hre.network.live; // prevents re execution on live networks
 };

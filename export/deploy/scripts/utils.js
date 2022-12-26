@@ -97,13 +97,13 @@ var deployAndAddPeggedToken = function (hre, governorAddress, mocCore, tpParams)
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                if (!tpParams) return [3 /*break*/, 8];
+                if (!tpParams) return [3 /*break*/, 9];
                 deployments = hre.deployments;
                 signer = hardhat_1.ethers.provider.getSigner();
                 i = 0;
                 _a.label = 1;
             case 1:
-                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 8];
+                if (!(i < tpParams.tpParams.length)) return [3 /*break*/, 9];
                 return [4 /*yield*/, (0, exports.deployUUPSArtifact)({ hre: hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" })];
             case 2:
                 _a.sent();
@@ -135,11 +135,18 @@ var deployAndAddPeggedToken = function (hre, governorAddress, mocCore, tpParams)
                     }))];
             case 6:
                 _a.sent();
-                _a.label = 7;
+                console.log("Renouncing temp governance...");
+                return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocCore.changeGovernor(governorAddress, {
+                        gasLimit: exports.GAS_LIMIT_PATCH,
+                    }))];
             case 7:
+                _a.sent();
+                console.log("mocCore governor is now: ".concat(governorAddress));
+                _a.label = 8;
+            case 8:
                 i++;
                 return [3 /*break*/, 1];
-            case 8: return [2 /*return*/];
+            case 9: return [2 /*return*/];
         }
     });
 }); };

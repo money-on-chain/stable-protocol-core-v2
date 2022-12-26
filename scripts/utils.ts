@@ -89,6 +89,13 @@ export const deployAndAddPeggedToken = async (
           },
         ),
       );
+      console.log("Renouncing temp governance...");
+      await waitForTxConfirmation(
+        mocCore.changeGovernor(governorAddress, {
+          gasLimit: GAS_LIMIT_PATCH,
+        }),
+      );
+      console.log(`mocCore governor is now: ${governorAddress}`);
     }
   }
 };
