@@ -10,7 +10,8 @@ import {
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses } =
+    getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
@@ -87,7 +88,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     }),
   );
   console.log("initialization completed!");
-  // for testnet we add some Pegged Token and then transfer governance to the real governor
+  // for testnet we add some Pegged Token and Assets and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
     if (tpParams) {
       for (let i = 0; i < tpParams.tpParams.length; i++) {
@@ -120,6 +121,32 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
               tpEma: tpParams.tpParams[i].initialEma,
               tpEmaSf: tpParams.tpParams[i].smoothingFactor,
             },
+            {
+              gasLimit: GAS_LIMIT_PATCH,
+            },
+          ),
+        );
+      }
+    }
+    if (assetParams) {
+      for (let i = 0; i < assetParams.assetParams.length; i++) {
+        console.log(`Adding ${assetParams.assetParams[i].assetAddress} as Asset ${i}...`);
+        let priceProvider = assetParams.assetParams[i].priceProvider;
+        if (assetParams.assetParams[i].decimals < 18) {
+          console.log("Deploying price provider shifter");
+          const shifterFactory = await ethers.getContractFactory("PriceProviderShifter");
+          const shiftedPriceProvider = await shifterFactory.deploy(
+            assetParams.assetParams[i].priceProvider,
+            18 - assetParams.assetParams[i].decimals,
+          );
+          priceProvider = shiftedPriceProvider.address;
+          console.log(`price provider shifter deployed at: ${priceProvider}`);
+        }
+        await waitForTxConfirmation(
+          MocCAWrapper.addOrEditAsset(
+            assetParams.assetParams[i].assetAddress,
+            priceProvider,
+            assetParams.assetParams[i].decimals,
             {
               gasLimit: GAS_LIMIT_PATCH,
             },

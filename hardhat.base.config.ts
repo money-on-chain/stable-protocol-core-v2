@@ -45,9 +45,9 @@ type TPParams = {
 
 type AssetParams = {
   // Asset contract address
-  asset: Address;
+  assetAddress: Address;
   // Asset Price Provider contract address
-  priveProvider: Address;
+  priceProvider: Address;
   // Asset decimal places
   decimals: number;
 };
