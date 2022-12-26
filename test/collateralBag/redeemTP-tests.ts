@@ -101,7 +101,7 @@ describe("Feature: MocCABag redeem TP", function () {
           it("THEN tx fails because invalid price provider", async () => {
             await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2350 })).to.be.revertedWithCustomError(
               mocWrapper,
-              ERRORS.INVALID_PRICE_PROVIDER,
+              ERRORS.MISSING_PROVIDER_PRICE,
             );
           });
         });

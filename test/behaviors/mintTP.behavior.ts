@@ -60,7 +60,7 @@ const mintTPBehavior = function () {
           it("THEN tx reverts because invalid price provider", async function () {
             await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
               mocContracts.mocImpl,
-              ERRORS.INVALID_PRICE_PROVIDER,
+              ERRORS.MISSING_PROVIDER_PRICE,
             );
           });
         });

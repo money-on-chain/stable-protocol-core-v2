@@ -46,7 +46,7 @@ const swapTPforTPBehavior = function () {
           it("THEN tx reverts because invalid price provider", async function () {
             await expect(
               mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23500 }),
-            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_PRICE_PROVIDER);
+            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.MISSING_PROVIDER_PRICE);
           });
         });
       });
@@ -58,7 +58,7 @@ const swapTPforTPBehavior = function () {
           it("THEN tx reverts because invalid price provider", async function () {
             await expect(
               mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23500 }),
-            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_PRICE_PROVIDER);
+            ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.MISSING_PROVIDER_PRICE);
           });
         });
       });

@@ -16,7 +16,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     event ContractLiquidated();
 
     // ------- Custom Errors -------
-    error InvalidPriceProvider(address priceProviderAddress_);
+    error MissingProviderPrice(address priceProviderAddress_);
     error TransferFailed();
     error Liquidated();
     error OnlyWhenLiquidated();
@@ -583,7 +583,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function getPACtp(uint256 i_) public view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (bytes32 price, bool has) = priceProvider.peek();
-        if (!has) revert InvalidPriceProvider(address(priceProvider));
+        if (!has) revert MissingProviderPrice(address(priceProvider));
         return uint256(price);
     }
 

@@ -96,7 +96,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
           it("THEN tx fails because invalid price provider", async () => {
             await expect(
               mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 2350 }),
-            ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_PRICE_PROVIDER);
+            ).to.be.revertedWithCustomError(mocWrapper, ERRORS.MISSING_PROVIDER_PRICE);
           });
         });
       });
