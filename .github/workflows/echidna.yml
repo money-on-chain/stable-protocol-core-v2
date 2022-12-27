@@ -31,7 +31,7 @@ jobs:
         contract: EchidnaMocCoreTester
         config: contracts/echidna/default.yaml
         test-mode: property
-        test-limit: 20000
+        test-limit: 15000
         crytic-args: --hardhat-ignore-compile
     - name: Run Echidna Assertion Mode
       uses: crytic/echidna-action@v2
@@ -41,5 +41,5 @@ jobs:
         contract: EchidnaMocCoreTester
         config: contracts/echidna/default.yaml
         test-mode: assertion
-        test-limit: 20000
+        test-limit: 15000
         crytic-args: --hardhat-ignore-compile
