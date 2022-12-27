@@ -644,7 +644,6 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         // [N] = [PREC] * [N] / [PREC]
         uint256 qACfeeRetained = _mulPrec(feeRetainer, qACfee_);
         // Increase collateral in the retain amount
-        // TODO: review after issue #99 is completed
         nACcb += qACfeeRetained;
         // transfer qAC leftover fees to Fee Flow
         acTransfer(mocFeeFlowAddress, qACfee_ - qACfeeRetained);
