@@ -21,7 +21,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     error Liquidated();
     error OnlyWhenLiquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
-    error OnlySettlement();
 
     // ------- Structs -------
     struct PegContainerItem {
