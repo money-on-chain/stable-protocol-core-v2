@@ -4,7 +4,7 @@ env:
   INFURA_API_KEY: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
   MNEMONIC: "here is where your twelve words mnemonic should be put my friend"
 jobs:
-  build:
+  assertion:
     name: Run Echidna Assertion
     runs-on: ubuntu-latest
 
@@ -33,7 +33,7 @@ jobs:
         test-mode: assertion
         test-limit: 20000
         crytic-args: --hardhat-ignore-compile
-  build:
+  property:
     name: Run Echidna Property
     runs-on: ubuntu-latest
 
