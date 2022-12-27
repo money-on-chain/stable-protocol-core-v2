@@ -62,7 +62,7 @@ describe("Feature: MocCABag mint TC", function () {
         it("THEN tx fails because invalid price provider", async () => {
           await expect(mocFunctions.mintTC({ from: alice, qTC: 10 })).to.be.revertedWithCustomError(
             mocWrapper,
-            ERRORS.INVALID_PRICE_PROVIDER,
+            ERRORS.MISSING_PROVIDER_PRICE,
           );
         });
       });

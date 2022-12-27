@@ -92,7 +92,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
     event AssetModified(address indexed assetAddress_, address priceProviderAddress);
 
     // ------- Custom Errors -------
-    error InvalidPriceProvider(address priceProviderAddress_);
+    error MissingProviderPrice(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
 
@@ -169,7 +169,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      */
     function _getAssetPrice(address assetAddress_) internal view returns (uint256) {
         (bytes32 price, bool has) = priceProviderMap[assetAddress_].peek();
-        if (!has) revert InvalidPriceProvider(address(priceProviderMap[assetAddress_]));
+        if (!has) revert MissingProviderPrice(address(priceProviderMap[assetAddress_]));
         return uint256(price);
     }
 
