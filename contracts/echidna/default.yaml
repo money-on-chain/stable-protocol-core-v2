@@ -9,7 +9,7 @@ balanceAddr: 0xffffffffffffffffffffffff
 #codeSize max code size for deployed contratcs (default 24576, per EIP-170)
 codeSize: 245760
 #testLimit is the number of test sequences to run
-testLimit: 15000
+testLimit: 20000
 #seqLen defines how many transactions are in a test sequence
 seqLen: 300
 #shrinkLimit determines how much effort is spent shrinking failing sequences
