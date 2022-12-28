@@ -6,7 +6,7 @@ actor Alice
 Alice -> DoC : approve(MocWrapper, qACmax)
 Alice -> MocWrapper : mintTC(DoC.address, qTC, qACmax)
 MocWrapper -> MocWrapper : calculate WACNeeded
-MocWrapper -> TokenWCA : mintTC(MocWrapper, WACNeeded)
+MocWrapper -> TokenWCA : mint(MocWrapper, WACNeeded)
 MocWrapper -> DoC : transferFrom(Alice, MocWrapper, qACmax)
 MocWrapper -> MocCore : mintTCTo(qTC, WACNeeded, Alice)
 MocCore -> TokenWCA : transfer(Moc Flow, fees)

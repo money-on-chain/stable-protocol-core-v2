@@ -36,6 +36,10 @@ The total USD amount is 290 USD, and the total supply of TokenWCA is 290 tokens,
 100 riff at 1:0.9 USD
 The total USD amount is 280 USD, but since the total supply of TokenWCA is still 290 tokens, the price of TokenWCA decreases to 1:0.96, and the user who held 145 tokens now has 140 USD. This MocWrapper contract will primarily be used by the MocRC20 protocol so that a user can mint and redeem TC and TP tokens by contributing stablecoins to the collateral bag.
 
+#### Price providers
+
+It is often necessary to ask an oracle for the price of the Pegged Token in relation to the Collateral Asset (pACtp). In the case of the collateral bag model, where the Collateral Asset is a wrapped token representing all the USD accumulated by different stablecoins, the oracles will need to take an extra step to convert to the current price of the wrapped token held by the Moc Wrapper contract. They will need to consult off-chain to make the adjustment and directly provide MoC with the spot price of the Pegged Token in relation to it.
+
 
 #### Basics operations flows
 
