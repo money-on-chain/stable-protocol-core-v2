@@ -48,14 +48,16 @@
     "ts-generator": "0.1.1",
     "ts-node": "10.9.1",
     "typechain": "8.1.1",
-    "typescript": "4.8.4"
+    "typescript": "4.8.4",
+    "copyfiles": "2.4.1"
   },
   "comments": {
     "dependencies": "hardhat-solhint and hardhat-prettier includes old versions, that's why specific dependencies are added"
   },
   "types": "types/index.d.ts",
   "files": [
-    "/contracts"
+    "/contracts",
+    "/export"
   ],
   "keywords": [
     "blockchain",
@@ -88,6 +90,8 @@
     "report:gas": "REPORT_GAS=true hardhat test",
     "mythril:Greeter": "sudo docker run -it -v $(pwd):/tmp mythril/myth -v4 a -f /tmp/bytecodes/Greeter --max-depth 50",
     "mythril": "npx ts-node ./scripts/bytecodes-extractor.ts && npm run mythril:Greeter",
-    "storage-layout": "npx ts-node ./scripts/storage-layout.ts"
+    "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
+    "export": "hardhat export-artifacts export/artifacts && tsc && npm run copy-dist",
+    "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy && copyfiles -u 1 scripts/types.ts export/types"
   }
 }

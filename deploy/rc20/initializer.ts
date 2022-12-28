@@ -1,23 +1,26 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { MocCARC20, MocCARC20__factory, MocRC20, MocRC20__factory } from "../../typechain";
-import { GAS_LIMIT_PATCH, getNetworkDeployParams, waitForTxConfirmation } from "../../scripts/utils";
+import {
+  addPeggedTokensAndChangeGovernor,
+  GAS_LIMIT_PATCH,
+  getNetworkDeployParams,
+  waitForTxConfirmation,
+} from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
-  const network = hre.network.name;
-  const { coreParams, settlementParams, feeParams, ctParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses } = getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
   if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
-  const mocCARC20: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+  const mocCARC20 = await ethers.getContractAt("MocCARC20", deployedMocContract.address, signer);
 
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
-  const CollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
+  const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
@@ -25,7 +28,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
   // for tests we deploy a Collateral Asset and Governor Mock
-  if (network === "hardhat") {
+  if (hre.network.tags.testnet || hre.network.tags.local) {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorAddress = (await governorMockFactory.deploy()).address;
 
@@ -40,7 +43,15 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, governorAddress),
+    CollateralToken.initialize(
+      ctParams.name,
+      ctParams.symbol,
+      deployedMocContract.address,
+      mocAddresses.governorAddress,
+      {
+        gasLimit: GAS_LIMIT_PATCH,
+      },
+    ),
   );
   await waitForTxConfirmation(
     mocCARC20.initialize(
@@ -74,6 +85,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     ),
   );
   console.log("initialization completed!");
+  // for testnet we add some Pegged Token and then transfer governance to the real governor
+  if (hre.network.tags.testnet) {
+    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
+  }
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;

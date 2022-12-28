@@ -150,6 +150,20 @@ then, execute this command
 
 for more information [here](https://github.com/ConsenSys/mythril)
 
+## Deployment
+
+This solution has a fully functional deploy mechanism following [hardhat deploy](https://github.com/wighawag/hardhat-deploy) standard. But implementation agnostic as it is, it also allows external repositories to define custom network configurations and execute deploys using them.
+In that case, you can use the command:  
+
+`npm run export`
+
+After that, artifacts and deployments scripts are copied to the export folder. In another repo you can install them as a github package, configure them as external deploy in hardhat config and set all the deployment parameters. 
+You can configure a network as `testnet` using [tags](https://github.com/wighawag/hardhat-deploy#tags) mechanism, that will allow you to: 
+1. deploy and initialize the protocol using a governor mocked to skip governance system
+2. initialize the protocol with Pegged Tokens 
+3. in collateral bag implementation add Assets to mocWrapper
+4. transfer governance to the real governor
+
 ## Built With
 
 * [Hardhat](https://hardhat.org/) - Task runner
