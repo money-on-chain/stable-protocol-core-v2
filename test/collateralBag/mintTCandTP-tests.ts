@@ -36,9 +36,10 @@ describe("Feature: MocCABag mint TC and TP", function () {
         assetNotWhitelisted = await deployAsset();
       });
       it("THEN tx fails because asset is invalid", async () => {
-        await expect(
-          mocWrapper.redeemTCandTP(assetNotWhitelisted.address, TP_0, 10, 10, 10),
-        ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
+        await expect(mocWrapper.mintTCandTP(assetNotWhitelisted.address, TP_0, 10, 10)).to.be.revertedWithCustomError(
+          mocWrapper,
+          ERRORS.INVALID_ADDRESS,
+        );
       });
     });
     describe("WHEN alice mints 23500 TP 0", () => {

@@ -2,7 +2,8 @@ import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
 
-export const GAS_LIMIT_PATCH = 6800000;
+// TODO: fix this using a different value for each network: issue#181
+export const GAS_LIMIT_PATCH = 30000000;
 
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,

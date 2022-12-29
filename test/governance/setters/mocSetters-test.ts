@@ -140,6 +140,11 @@ describe("Feature: Verify that all config settings are protected by governance",
         await expectRevertNotAuthorized(mocProxy.setBes(42));
       });
     });
+    describe("WHEN setFeeRetainer is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setFeeRetainer(42));
+      });
+    });
     describe("WHEN setTcMintFee is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setTcMintFee(42));
