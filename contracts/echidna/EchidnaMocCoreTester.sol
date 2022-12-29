@@ -393,9 +393,18 @@ contract EchidnaMocCoreTester {
         });
     }
 
-    function echidna_balance_not_drained() public view returns (bool) {
-        return
-            acToken.balanceOf(address(mocCARC20)) * mocCARC20.getCglb() >= mocCARC20.getPTCac() * tcToken.totalSupply();
+    function echidna_balance_not_drained() public returns (bool) {
+        // if lckAC > totalACavailable, getPTCac() will fail because underflow
+        // when that occur the protocol can not be operated because it is in low coverage(< 1)
+        bool succeed;
+        try mocCARC20.getPTCac() {
+            succeed =
+                acToken.balanceOf(address(mocCARC20)) * mocCARC20.getCglb() >=
+                mocCARC20.getPTCac() * tcToken.totalSupply();
+        } catch {
+            succeed = mocCARC20.getCglb() < PRECISION;
+        }
+        return succeed;
     }
 
     function echidna_storage_consistency() public returns (bool) {

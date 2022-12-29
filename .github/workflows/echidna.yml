@@ -4,8 +4,37 @@ env:
   INFURA_API_KEY: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
   MNEMONIC: "here is where your twelve words mnemonic should be put my friend"
 jobs:
-  build:
-    name: Run Echidna
+  assertion:
+    name: Run Echidna Assertion
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.15.0]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm ci
+    - name: Compile contracts
+      run: npm run compile
+    - name: Run Echidna Assertion Mode
+      uses: crytic/echidna-action@v2
+      with:
+        solc-version: 0.8.16
+        files: .
+        contract: EchidnaMocCoreTester
+        config: contracts/echidna/default.yaml
+        test-mode: assertion
+        test-limit: 20000
+        crytic-args: --hardhat-ignore-compile
+  property:
+    name: Run Echidna Property
     runs-on: ubuntu-latest
 
     strategy:
@@ -31,15 +60,5 @@ jobs:
         contract: EchidnaMocCoreTester
         config: contracts/echidna/default.yaml
         test-mode: property
-        test-limit: 20000
-        crytic-args: --hardhat-ignore-compile
-    - name: Run Echidna Assertion Mode
-      uses: crytic/echidna-action@v2
-      with:
-        solc-version: 0.8.16
-        files: .
-        contract: EchidnaMocCoreTester
-        config: contracts/echidna/default.yaml
-        test-mode: assertion
         test-limit: 20000
         crytic-args: --hardhat-ignore-compile
