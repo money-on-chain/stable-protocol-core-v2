@@ -38,7 +38,8 @@ The total USD amount is 280 USD, but since the total supply of TokenWCA is still
 
 #### Price providers
 
-It is often necessary to ask an oracle for the price of the Pegged Token in relation to the Collateral Asset (pACtp). In the case of the collateral bag model, where the Collateral Asset is a wrapped token representing all the USD accumulated by different stablecoins, the oracles will need to take an extra step to convert to the current price of the wrapped token held by the Moc Wrapper contract. They will need to consult off-chain to make the adjustment and directly provide MoC with the spot price of the Pegged Token in relation to it.
+As mentioned before, price providers are a key part of the Moc system. Without a reliable Oracle, nothing can work as designed. The Moc CA Wrapper option is no exception, but it has the peculiarity of using a token (WCAToken) as collateral, which was tailor-designed to represent a collateral "bag" of stablecoins. Each of these stablecoins is pegged to a single external asset, most likely the USD. However, even if under normal conditions the CA price should gravitate around a 1:1 ratio with the USD, that is not ubiquitous as the WCAToken has its own independent value. Therefore, when price providers for the MoCWrapper option report a price, they should do so in relation to the WCAToken, rather than the underlying asset.
+To account for this, oracles will need to take an extra step to adjust the pACtp rate to the current price of the wrapped token held by the MoC Wrapper contract. They can either consult off-chain sources to obtain the spot price of the pegged token in relation to the WCAToken, or they can make an extra internal dynamic call to the wrapper contracts to determine the price. From the perspective of the MoC Core, this process is transparent, as it always receives the price as a relation to its CA, the WCAToken in this case.
 
 
 #### Basics operations flows
