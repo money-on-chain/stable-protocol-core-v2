@@ -243,6 +243,7 @@ export const ERRORS = {
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   TRANSFER_FAIL: "TransferFailed",
   UNSTOPPABLE: "Unstoppable",
+  MISSING_BLOCKS_TO_SETTLEMENT: "MissingBlocksToSettlement",
 };
 
 export const CONSTANTS = {
