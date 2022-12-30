@@ -172,5 +172,10 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
         await expectPauseRevert(mocFunctions.mintTCandTP({ from: alice, qTP: 3 }));
       });
     });
+    describe(`WHEN someone tries to execute settlement`, () => {
+      it("THEN it fails, as the system is paused", async function () {
+        await expectPauseRevert(mocImpl.execSettlement());
+      });
+    });
   });
 });

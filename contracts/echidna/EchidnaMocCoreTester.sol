@@ -134,6 +134,10 @@ contract EchidnaMocCoreTester {
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
 
+    function execSettlement() public {
+        mocCARC20.execSettlement();
+    }
+
     function mintTC(uint256 qTC_, uint256 qACmax_) public virtual {
         if (qACmax_ > 0) {
             uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tcMintFee());

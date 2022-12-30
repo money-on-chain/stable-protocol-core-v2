@@ -10,6 +10,8 @@ import "./MocEma.sol";
 abstract contract MocSettlement is MocEma {
     // ------- Events -------
     event SettlementExecuted();
+    // ------- Custom Errors -------
+    error MissingBlocksToSettlement();
 
     // ------- Storage -------
     // number of blocks between settlements
@@ -40,11 +42,10 @@ abstract contract MocSettlement is MocEma {
 
     function execSettlement() external notPaused {
         // check if it is in the corresponding block to execute the settlement
-        if (block.number >= bns) {
-            bns = block.number + bes;
-            emit SettlementExecuted();
-            _execSettlement();
-        }
+        if (block.number < bns) revert MissingBlocksToSettlement();
+        bns = block.number + bes;
+        emit SettlementExecuted();
+        _execSettlement();
     }
 
     /**
