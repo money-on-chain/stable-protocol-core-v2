@@ -7,8 +7,13 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 abstract contract MocHelper {
     error InvalidAddress();
     error InvalidValue();
+    // Constants may not be used in child contracts and that is fine as they are
+    // not using any space in storage, so we disable the check
+    // slither-disable-next-line unused-state
     uint256 internal constant PRECISION = 10 ** 18;
+    // slither-disable-next-line unused-state
     uint256 internal constant ONE = 10 ** 18;
+    // slither-disable-next-line unused-state
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
     // Saves gas
@@ -52,5 +57,8 @@ abstract contract MocHelper {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }

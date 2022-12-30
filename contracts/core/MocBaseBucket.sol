@@ -79,6 +79,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     uint256 public nACcb;
     // amount of Collateral Asset that the Vaults owe to the Collateral Bag
     // this variable is not used and is reserved for a future upgrade of the protocol
+    // slither-disable-next-line constable-states
     uint256 internal nACioucb;
 
     // Collateral Token

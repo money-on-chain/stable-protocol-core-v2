@@ -14,21 +14,19 @@ import {
 } from "../../typechain";
 import { deployAndAddAssets, deployAndAddPeggedTokens } from "../helpers/utils";
 
+export type MoCContracts = {
+  mocImpl: MocCARC20;
+  mocWrapper: MocCAWrapper;
+  mocCollateralToken: MocTC;
+  mocPeggedTokens: MocRC20[];
+  priceProviders: PriceProviderMock[];
+  wcaToken: MocRC20;
+  assets: ERC20Mock[];
+  assetPriceProviders: PriceProviderMock[];
+};
+
 export const fixtureDeployedMocCABag = memoizee(
-  (
-    amountPegTokens: number,
-    tpParams?: any,
-    amountAssets = 1,
-  ): (() => Promise<{
-    mocImpl: MocCARC20;
-    mocWrapper: MocCAWrapper;
-    mocCollateralToken: MocTC;
-    mocPeggedTokens: MocRC20[];
-    priceProviders: PriceProviderMock[];
-    wcaToken: MocRC20;
-    assets: ERC20Mock[];
-    assetPriceProviders: PriceProviderMock[];
-  }>) => {
+  (amountPegTokens: number, tpParams?: any, amountAssets = 1): (() => Promise<MoCContracts>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
       const signer = ethers.provider.getSigner();

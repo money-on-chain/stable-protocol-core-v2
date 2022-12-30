@@ -625,11 +625,11 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         uint256 liqPACtp = tpLiqPrices[i_];
         // [PREC] = [N] * [PREC] / [PREC]
         qACRedeemed = _divPrec(qTP, liqPACtp);
-        // burn qTP from the sender
-        tpTokens[i_].burn(sender_, qTP);
         // Given rounding errors, the last redeemer might receive a little less
         if (acBalanceOf(address(this)) < qACRedeemed) qACRedeemed = acBalanceOf(address(this));
         emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0);
+        // burn qTP from the sender
+        tpTokens[i_].burn(sender_, qTP);
         // transfer qAC to the recipient, reverts if fail
         acTransfer(recipient_, qACRedeemed);
     }
