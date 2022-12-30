@@ -39,12 +39,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 deployments = hre.deployments;
-                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, mocAddresses = _a.mocAddresses;
+                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, mocAddresses = _a.mocAddresses, gasLimit = _a.gasLimit;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCACoinbaseProxy")];
             case 1:
@@ -75,7 +75,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 console.log("initializing...");
                 // initializations
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, MocCACoinbase.address, mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 8:
                 // initializations
@@ -102,7 +102,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                         pauserAddress: pauserAddress,
                         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
                         bes: settlementParams.bes,
-                    }, { gasLimit: utils_1.GAS_LIMIT_PATCH }))];
+                    }, { gasLimit: gasLimit }))];
             case 9:
                 _b.sent();
                 console.log("initialization completed!");

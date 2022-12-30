@@ -3,7 +3,7 @@ import { Contract } from "ethers";
 import memoizee from "memoizee";
 
 import { MocCAWrapper, MocCAWrapper__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH, waitForTxConfirmation } from "../../../../scripts/utils";
+import { waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor } from "../../../helpers/utils";
 
 export const fixtureDeployGovernance = memoizee(
@@ -37,15 +37,7 @@ export const fixtureDeployGovernance = memoizee(
       // initializations
       // TODO: fix these mockAddresses
       await waitForTxConfirmation(
-        MocCAWrapper.initialize(
-          governor.address,
-          mockAddress,
-          deployedMocContract.address,
-          deployedTCContract.address,
-          {
-            gasLimit: GAS_LIMIT_PATCH,
-          },
-        ),
+        MocCAWrapper.initialize(governor.address, mockAddress, deployedMocContract.address, deployedTCContract.address),
       );
 
       return {

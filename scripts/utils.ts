@@ -2,9 +2,6 @@ import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
 
-// TODO: fix this using a different value for each network: issue#181
-export const GAS_LIMIT_PATCH = 30000000;
-
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,
   confirmations: number = 1,
@@ -24,18 +21,19 @@ export const deployUUPSArtifact = async ({
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
+  const gasLimit = getNetworkDeployParams(hre).gasLimit;
   artifactBaseName = artifactBaseName || contract;
   const deployImplResult = await deploy(`${artifactBaseName}Impl`, {
     contract,
     from: deployer,
-    gasLimit: GAS_LIMIT_PATCH,
+    gasLimit,
   });
   console.log(`${contract}, as ${artifactBaseName} implementation deployed at ${deployImplResult.address}`);
 
   const deployProxyResult = await deploy(`${artifactBaseName}Proxy`, {
     contract: "ERC1967Proxy",
     from: deployer,
-    gasLimit: GAS_LIMIT_PATCH,
+    gasLimit,
     args: [deployImplResult.address, "0x"],
   });
   console.log(`${artifactBaseName} ERC1967Proxy deployed at ${deployProxyResult.address}`);
@@ -52,6 +50,7 @@ export const addPeggedTokensAndChangeGovernor = async (
   mocCore: any,
   tpParams: any,
 ) => {
+  const gasLimit = getNetworkDeployParams(hre).gasLimit;
   if (tpParams) {
     const { deployments } = hre;
     const signer = ethers.provider.getSigner();
@@ -69,7 +68,7 @@ export const addPeggedTokensAndChangeGovernor = async (
           mocCore.address,
           governorAddress,
           {
-            gasLimit: GAS_LIMIT_PATCH,
+            gasLimit,
           },
         ),
       );
@@ -86,7 +85,7 @@ export const addPeggedTokensAndChangeGovernor = async (
             tpEmaSf: tpParams.tpParams[i].smoothingFactor,
           },
           {
-            gasLimit: GAS_LIMIT_PATCH,
+            gasLimit,
           },
         ),
       );
@@ -95,7 +94,7 @@ export const addPeggedTokensAndChangeGovernor = async (
   console.log("Renouncing temp governance...");
   await waitForTxConfirmation(
     mocCore.changeGovernor(governorAddress, {
-      gasLimit: GAS_LIMIT_PATCH,
+      gasLimit,
     }),
   );
   console.log(`mocCore governor is now: ${governorAddress}`);
@@ -107,6 +106,7 @@ export const addAssetsAndChangeGovernor = async (
   mocWrapper: any,
   assetParams: any,
 ) => {
+  const gasLimit = getNetworkDeployParams(hre).gasLimit;
   if (assetParams) {
     for (let i = 0; i < assetParams.assetParams.length; i++) {
       console.log(`Adding ${assetParams.assetParams[i].assetAddress} as Asset ${i}...`);
@@ -127,7 +127,7 @@ export const addAssetsAndChangeGovernor = async (
           priceProvider,
           assetParams.assetParams[i].decimals,
           {
-            gasLimit: GAS_LIMIT_PATCH,
+            gasLimit,
           },
         ),
       );
@@ -136,7 +136,7 @@ export const addAssetsAndChangeGovernor = async (
   console.log("Renouncing temp governance...");
   await waitForTxConfirmation(
     mocWrapper.changeGovernor(governorAddress, {
-      gasLimit: GAS_LIMIT_PATCH,
+      gasLimit,
     }),
   );
   console.log(`MocCAWrapper governor is now: ${governorAddress}`);

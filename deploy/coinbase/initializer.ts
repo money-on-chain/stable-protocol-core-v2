@@ -1,16 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import {
-  addPeggedTokensAndChangeGovernor,
-  GAS_LIMIT_PATCH,
-  getNetworkDeployParams,
-  waitForTxConfirmation,
-} from "../../scripts/utils";
+import { addPeggedTokensAndChangeGovernor, getNetworkDeployParams, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit } =
+    getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
@@ -33,7 +29,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // initializations
   await waitForTxConfirmation(
     CollateralToken.initialize(ctParams.name, ctParams.symbol, MocCACoinbase.address, mocAddresses.governorAddress, {
-      gasLimit: GAS_LIMIT_PATCH,
+      gasLimit,
     }),
   );
 
@@ -62,7 +58,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         bes: settlementParams.bes,
       },
-      { gasLimit: GAS_LIMIT_PATCH },
+      { gasLimit },
     ),
   );
   console.log("initialization completed!");

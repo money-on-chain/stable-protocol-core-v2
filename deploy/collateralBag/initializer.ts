@@ -4,14 +4,13 @@ import { ethers } from "hardhat";
 import {
   addAssetsAndChangeGovernor,
   addPeggedTokensAndChangeGovernor,
-  GAS_LIMIT_PATCH,
   getNetworkDeployParams,
   waitForTxConfirmation,
 } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const { coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses } =
+  const { coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, gasLimit } =
     getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
@@ -48,7 +47,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       deployedMocContract.address,
       mocAddresses.governorAddress,
       {
-        gasLimit: GAS_LIMIT_PATCH,
+        gasLimit,
       },
     ),
   );
@@ -59,7 +58,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       deployedMocCAWrapperContract.address,
       mocAddresses.governorAddress,
       {
-        gasLimit: GAS_LIMIT_PATCH,
+        gasLimit,
       },
     ),
   );
@@ -92,12 +91,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         },
         acTokenAddress: WCAToken.address,
       },
-      { gasLimit: GAS_LIMIT_PATCH },
+      { gasLimit },
     ),
   );
   await waitForTxConfirmation(
     MocCAWrapper.initialize(governorAddress, pauserAddress, mocCARC20.address, WCAToken.address, {
-      gasLimit: GAS_LIMIT_PATCH,
+      gasLimit,
     }),
   );
   console.log("initialization completed!");

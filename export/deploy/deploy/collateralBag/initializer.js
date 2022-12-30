@@ -39,12 +39,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, gasLimit, signer, deployedMocContract, mocCARC20, deployedTCContract, CollateralToken, deployedMocCAWrapperContract, MocCAWrapper, deployedWCAContract, WCAToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 deployments = hre.deployments;
-                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, assetParams = _a.assetParams, mocAddresses = _a.mocAddresses;
+                _a = (0, utils_1.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, ctParams = _a.ctParams, tpParams = _a.tpParams, assetParams = _a.assetParams, mocAddresses = _a.mocAddresses, gasLimit = _a.gasLimit;
                 signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, deployments.getOrNull("MocCABagProxy")];
             case 1:
@@ -91,13 +91,13 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 console.log("initializing...");
                 // initializations
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, deployedMocContract.address, mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 12:
                 // initializations
                 _b.sent();
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, mocAddresses.governorAddress, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 13:
                 _b.sent();
@@ -126,11 +126,11 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                             bes: settlementParams.bes,
                         },
                         acTokenAddress: WCAToken.address,
-                    }, { gasLimit: utils_1.GAS_LIMIT_PATCH }))];
+                    }, { gasLimit: gasLimit }))];
             case 14:
                 _b.sent();
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCAWrapper.initialize(governorAddress, pauserAddress, mocCARC20.address, WCAToken.address, {
-                        gasLimit: utils_1.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 15:
                 _b.sent();

@@ -1,17 +1,13 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import {
-  addPeggedTokensAndChangeGovernor,
-  GAS_LIMIT_PATCH,
-  getNetworkDeployParams,
-  waitForTxConfirmation,
-} from "../../scripts/utils";
+import { addPeggedTokensAndChangeGovernor, getNetworkDeployParams, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
-  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit } =
+    getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
@@ -35,7 +31,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
       contract: "ERC20Mock",
       from: deployer,
-      gasLimit: GAS_LIMIT_PATCH,
+      gasLimit,
     });
     collateralAssetToken = deployedERC20MockContract.address;
   }
@@ -49,7 +45,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       deployedMocContract.address,
       mocAddresses.governorAddress,
       {
-        gasLimit: GAS_LIMIT_PATCH,
+        gasLimit,
       },
     ),
   );
@@ -81,7 +77,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         },
         acTokenAddress: collateralAssetToken,
       },
-      { gasLimit: GAS_LIMIT_PATCH },
+      { gasLimit },
     ),
   );
   console.log("initialization completed!");
