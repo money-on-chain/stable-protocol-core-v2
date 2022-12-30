@@ -3,9 +3,9 @@ import { MocCARC20 } from "../../typechain";
 import { fixtureDeployedMocCABag } from "../collateralBag/fixture";
 import { ERRORS, mineUpTo } from "../helpers/utils";
 
-describe("Feature: Ema execution", () => {
+describe("Feature: Moc Settlement block triggering", () => {
   let mocImpl: MocCARC20;
-  beforeEach(async () => {
+  before(async () => {
     const fixtureDeploy = fixtureDeployedMocCABag(2, undefined);
     ({ mocImpl } = await fixtureDeploy());
   });
@@ -21,14 +21,14 @@ describe("Feature: Ema execution", () => {
     });
 
     describe("AND block to next settlement has passed", () => {
-      beforeEach(async () => {
+      before(async () => {
         await mineUpTo(await mocImpl.bns());
       });
       it("THEN blocks remaining to next settlement is 0", async () => {
         expect(await mocImpl.getBts()).to.be.equals(0);
       });
       describe("WHEN settlement is executed", () => {
-        beforeEach(async () => {
+        before(async () => {
           await mocImpl.execSettlement();
         });
         it("THEN blocks remaining for next settlement is equal to blocks between settlements", async () => {
