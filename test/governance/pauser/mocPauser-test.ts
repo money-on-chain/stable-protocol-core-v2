@@ -127,6 +127,11 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
         });
       });
     });
+    describe(`WHEN someone tries to liquidate his TP`, () => {
+      it("THEN it fails, as the system is paused", async function () {
+        await expectPauseRevert(mocFunctions.liqRedeemTP({ from: alice }));
+      });
+    });
     describe(`WHEN someone tries to mintTP`, () => {
       it("THEN it fails, as the system is paused", async function () {
         await expectPauseRevert(mocFunctions.mintTP({ from: alice, qTP: 3 }));

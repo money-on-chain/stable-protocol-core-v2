@@ -73,6 +73,18 @@ describe("Feature: MocCABag initialization", function () {
       });
       newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address);
     });
+    describe("WHEN it is initialized with invalid TC token value", () => {
+      it("THEN tx fails because Moc core hasn´t got full roles for that token", async () => {
+        const invalidMocTC = await deployCollateralToken({
+          adminAddress: mocWrapper.address,
+          governorAddress: mocWrapper.address,
+        });
+        await expect(newMocInit({ mocTCAddress: invalidMocTC.address })).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.INVALID_ADDRESS,
+        );
+      });
+    });
     describe("WHEN it is initialized with invalid protThrld value", () => {
       it("THEN tx fails because protThrld is below ONE", async () => {
         await expect(newMocInit({ protThrld: CONSTANTS.ONE.sub(1) })).to.be.revertedWithCustomError(

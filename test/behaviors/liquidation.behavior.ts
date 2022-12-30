@@ -35,6 +35,14 @@ const shouldBehaveLikeLiquidable = function () {
           expect(await mocImpl.liquidated()).to.be.false;
         });
       });
+      describe("WHEN alice tries to liquidate his TP", function () {
+        it("THEN tx fails because contract is not liquidated yet", async function () {
+          await expect(this.mocFunctions.liqRedeemTP({ from: alice })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.ONLY_LIQUIDATED,
+          );
+        });
+      });
       describe("WHEN liquidation is enabled, and then evaluated", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {

@@ -227,6 +227,7 @@ export const ERRORS = {
   INSUFFICIENT_TP_TO_REDEEM: "InsufficientTPtoRedeem",
   INSUFFICIENT_TC_TO_REDEEM: "InsufficientTCtoRedeem",
   LIQUIDATED: "Liquidated",
+  ONLY_LIQUIDATED: "OnlyWhenLiquidated",
   LOW_COVERAGE: "LowCoverage",
   MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   MISSING_PROVIDER_PRICE: "MissingProviderPrice",
