@@ -174,7 +174,7 @@ const mintTPBehavior = function () {
           });
           it("THEN coverage is still above ctargemaCA", async function () {
             const actualCoverage = await mocContracts.mocImpl.getCglb();
-            const actualCtargemaCA = await mocContracts.mocImpl.callStatic.calcCtargemaCA();
+            const actualCtargemaCA = await mocContracts.mocImpl.calcCtargemaCA();
             expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
           });
           it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
@@ -625,7 +625,7 @@ const mintTPBehavior = function () {
             });
             it("THEN coverage is still above ctargemaCA", async function () {
               const actualCoverage = await mocContracts.mocImpl.getCglb();
-              const actualCtargemaCA = await mocContracts.mocImpl.callStatic.calcCtargemaCA();
+              const actualCtargemaCA = await mocContracts.mocImpl.calcCtargemaCA();
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
@@ -733,7 +733,7 @@ const mintTPBehavior = function () {
             });
             it("THEN coverage is still above ctargemaCA", async function () {
               const actualCoverage = await mocContracts.mocImpl.getCglb();
-              const actualCtargemaCA = await mocContracts.mocImpl.callStatic.calcCtargemaCA();
+              const actualCtargemaCA = await mocContracts.mocImpl.calcCtargemaCA();
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 4 available to mint", async function () {
