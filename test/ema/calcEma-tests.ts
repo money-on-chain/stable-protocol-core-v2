@@ -126,7 +126,7 @@ describe("Feature: Ema Calculation", function () {
       describe("WHEN get ctargemaCA", async () => {
         let ctargemaCA: BigNumber;
         beforeEach(async () => {
-          ctargemaCA = await mocImpl.callStatic.calcCtargemaCA();
+          ctargemaCA = await mocImpl.calcCtargemaCA();
         });
         it("THEN ctargemaCA is equal to 4.61", async () => {
           /*
@@ -152,8 +152,7 @@ describe("Feature: Ema Calculation", function () {
         describe("WHEN get ctargemaCA", async () => {
           let ctargemaCA: BigNumber;
           beforeEach(async () => {
-            // callStatic because it is not a view function
-            ctargemaCA = await mocImpl.callStatic.calcCtargemaCA();
+            ctargemaCA = await mocImpl.calcCtargemaCA();
           });
           it("THEN ctargemaCA is equal to 4.73", async () => {
             /*
