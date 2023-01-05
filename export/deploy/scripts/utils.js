@@ -36,9 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addAssetsAndChangeGovernor = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.GAS_LIMIT_PATCH = void 0;
+exports.addAssetsAndChangeGovernor = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = void 0;
 var hardhat_1 = require("hardhat");
-exports.GAS_LIMIT_PATCH = 6800000;
 var waitForTxConfirmation = function (tx, confirmations) {
     if (confirmations === void 0) { confirmations = 1; }
     return __awaiter(void 0, void 0, void 0, function () {
@@ -54,7 +53,7 @@ exports.waitForTxConfirmation = waitForTxConfirmation;
 var deployUUPSArtifact = function (_a) {
     var hre = _a.hre, artifactBaseName = _a.artifactBaseName, contract = _a.contract;
     return __awaiter(void 0, void 0, void 0, function () {
-        var deployments, getNamedAccounts, deployer, deploy, deployImplResult, deployProxyResult;
+        var deployments, getNamedAccounts, deployer, deploy, gasLimit, deployImplResult, deployProxyResult;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -63,11 +62,12 @@ var deployUUPSArtifact = function (_a) {
                 case 1:
                     deployer = (_b.sent()).deployer;
                     deploy = deployments.deploy;
+                    gasLimit = (0, exports.getNetworkDeployParams)(hre).gasLimit;
                     artifactBaseName = artifactBaseName || contract;
                     return [4 /*yield*/, deploy("".concat(artifactBaseName, "Impl"), {
                             contract: contract,
                             from: deployer,
-                            gasLimit: exports.GAS_LIMIT_PATCH,
+                            gasLimit: gasLimit,
                         })];
                 case 2:
                     deployImplResult = _b.sent();
@@ -75,7 +75,7 @@ var deployUUPSArtifact = function (_a) {
                     return [4 /*yield*/, deploy("".concat(artifactBaseName, "Proxy"), {
                             contract: "ERC1967Proxy",
                             from: deployer,
-                            gasLimit: exports.GAS_LIMIT_PATCH,
+                            gasLimit: gasLimit,
                             args: [deployImplResult.address, "0x"],
                         })];
                 case 3:
@@ -93,10 +93,11 @@ var getNetworkDeployParams = function (hre) {
 };
 exports.getNetworkDeployParams = getNetworkDeployParams;
 var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, tpParams) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, signer, i, mocRC20TP, mocRC20Proxy;
+    var gasLimit, deployments, signer, i, mocRC20TP, mocRC20Proxy;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                gasLimit = (0, exports.getNetworkDeployParams)(hre).gasLimit;
                 if (!tpParams) return [3 /*break*/, 8];
                 deployments = hre.deployments;
                 signer = hardhat_1.ethers.provider.getSigner();
@@ -117,7 +118,7 @@ var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, 
                 mocRC20Proxy = _a.sent();
                 console.log("Initializing ".concat(tpParams.tpParams[i].name, " PeggedToken..."));
                 return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocRC20Proxy.initialize(tpParams.tpParams[i].name, tpParams.tpParams[i].symbol, mocCore.address, governorAddress, {
-                        gasLimit: exports.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 5:
                 _a.sent();
@@ -131,7 +132,7 @@ var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, 
                         tpEma: tpParams.tpParams[i].initialEma,
                         tpEmaSf: tpParams.tpParams[i].smoothingFactor,
                     }, {
-                        gasLimit: exports.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 6:
                 _a.sent();
@@ -142,7 +143,7 @@ var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, 
             case 8:
                 console.log("Renouncing temp governance...");
                 return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocCore.changeGovernor(governorAddress, {
-                        gasLimit: exports.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 9:
                 _a.sent();
@@ -153,10 +154,11 @@ var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, 
 }); };
 exports.addPeggedTokensAndChangeGovernor = addPeggedTokensAndChangeGovernor;
 var addAssetsAndChangeGovernor = function (hre, governorAddress, mocWrapper, assetParams) { return __awaiter(void 0, void 0, void 0, function () {
-    var i, priceProvider, shifterFactory, shiftedPriceProvider;
+    var gasLimit, i, priceProvider, shifterFactory, shiftedPriceProvider;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                gasLimit = (0, exports.getNetworkDeployParams)(hre).gasLimit;
                 if (!assetParams) return [3 /*break*/, 7];
                 i = 0;
                 _a.label = 1;
@@ -176,7 +178,7 @@ var addAssetsAndChangeGovernor = function (hre, governorAddress, mocWrapper, ass
                 console.log("price provider shifter deployed at: ".concat(priceProvider));
                 _a.label = 4;
             case 4: return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocWrapper.addOrEditAsset(assetParams.assetParams[i].assetAddress, priceProvider, assetParams.assetParams[i].decimals, {
-                    gasLimit: exports.GAS_LIMIT_PATCH,
+                    gasLimit: gasLimit,
                 }))];
             case 5:
                 _a.sent();
@@ -187,7 +189,7 @@ var addAssetsAndChangeGovernor = function (hre, governorAddress, mocWrapper, ass
             case 7:
                 console.log("Renouncing temp governance...");
                 return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocWrapper.changeGovernor(governorAddress, {
-                        gasLimit: exports.GAS_LIMIT_PATCH,
+                        gasLimit: gasLimit,
                     }))];
             case 8:
                 _a.sent();

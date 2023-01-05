@@ -88,4 +88,7 @@ export type DeployParameters = {
     // moc appreciation beneficiary Address
     mocAppreciationBeneficiaryAddress: Address;
   };
+  // gas limit applied for each tx during deployment
+  // Hardhat gas limit config cannot be used because we are using ethers.js library. https://github.com/NomicFoundation/hardhat/pull/2406
+  gasLimit: number;
 };

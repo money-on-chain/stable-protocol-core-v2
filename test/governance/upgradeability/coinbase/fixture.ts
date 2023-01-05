@@ -3,7 +3,7 @@ import { Contract } from "ethers";
 import memoizee from "memoizee";
 
 import { MocCACoinbase, MocCACoinbase__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH, getNetworkDeployParams, waitForTxConfirmation } from "../../../../scripts/utils";
+import { getNetworkDeployParams, waitForTxConfirmation } from "../../../../scripts/utils";
 import { deployAeropagusGovernor, deployCollateralToken } from "../../../helpers/utils";
 
 const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDeployParams(hre);
@@ -35,32 +35,29 @@ export const fixtureDeployGovernance = memoizee(
 
       let { pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
       await waitForTxConfirmation(
-        mocCACoinbase.initialize(
-          {
-            initializeBaseBucketParams: {
-              tcTokenAddress: mocTC.address,
-              mocFeeFlowAddress: mocFeeFlowAddress,
-              mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
-              protThrld: coreParams.protThrld,
-              liqThrld: coreParams.liqThrld,
-              feeRetainer: feeParams.feeRetainer,
-              tcMintFee: feeParams.mintFee,
-              tcRedeemFee: feeParams.redeemFee,
-              swapTPforTPFee: feeParams.swapTPforTPFee,
-              swapTPforTCFee: feeParams.swapTPforTCFee,
-              swapTCforTPFee: feeParams.swapTCforTPFee,
-              redeemTCandTPFee: feeParams.redeemTCandTPFee,
-              mintTCandTPFee: feeParams.mintTCandTPFee,
-              successFee: coreParams.successFee,
-              appreciationFactor: coreParams.appreciationFactor,
-            },
-            governorAddress: governor.address,
-            pauserAddress: pauserAddress,
-            emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-            bes: settlementParams.bes,
+        mocCACoinbase.initialize({
+          initializeBaseBucketParams: {
+            tcTokenAddress: mocTC.address,
+            mocFeeFlowAddress: mocFeeFlowAddress,
+            mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            feeRetainer: feeParams.feeRetainer,
+            tcMintFee: feeParams.mintFee,
+            tcRedeemFee: feeParams.redeemFee,
+            swapTPforTPFee: feeParams.swapTPforTPFee,
+            swapTPforTCFee: feeParams.swapTPforTCFee,
+            swapTCforTPFee: feeParams.swapTCforTPFee,
+            redeemTCandTPFee: feeParams.redeemTCandTPFee,
+            mintTCandTPFee: feeParams.mintTCandTPFee,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
           },
-          { gasLimit: GAS_LIMIT_PATCH },
-        ),
+          governorAddress: governor.address,
+          pauserAddress: pauserAddress,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          bes: settlementParams.bes,
+        }),
       );
 
       return {
