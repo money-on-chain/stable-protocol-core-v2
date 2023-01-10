@@ -54,7 +54,7 @@ Is recommended to use Gherkin as a language to describe the test cases
 describe("Feature: Greeter", () => {
   describe("Scenario: Should return the new greeting once it's changed", () => {
     let greeter: Greeter;
-    it("GIVEN a deployed Greeter contract", async () => {
+    before("GIVEN a deployed Greeter contract", async () => {
       const factory = await ethers.getContractFactory("Greeter");
       greeter = <Greeter>await factory.deploy("Hello, world!");
       expect(await greeter.greet()).to.equal("Hello, world!");
@@ -98,7 +98,7 @@ Or if you want more flexibility, first execute the command
 and once inside the docker container run
 
 ```sh
-solc-select 0.8.14
+solc-select 0.8.16
 cd project
 ```
 
@@ -106,24 +106,24 @@ so that you can use the tools there installed.
 
 ##### Local option
 
-First, install slither
+First, install slither:
 
 `pip3 install slither-analyzer`
 
-then run 
+then run:
 
 `npm run slither`
 
-slither will execute the static analysis using the configuration at slither.config.json
+slither will execute the static analysis using the configuration at `slither.config.json`
 
 for more information [here](https://github.com/crytic/slither)
 
 #### Echidna
 
-echidna-test takes a contract and a list of invariants (properties that should always remain true) as input. For each invariant, it generates random sequences of calls to the contract and checks if the invariant holds. If it can find some way to falsify the invariant, it prints the call sequence that does so. If it can't, you have some assurance the contract is safe.
+`echidna-test` takes a contract and a list of invariants (properties that should always remain true) as input. For each invariant, it generates random sequences of calls to the contract and checks if the invariant holds. If it can find some way to falsify the invariant, it prints the call sequence that does so. If it can't, you have some assurance the contract is safe.
 Invariants are expressed as Solidity functions with names that begin with echidna_, have no arguments, and return a boolean.
 
-after finishing, a coverage folder will be created containing a copy of the source code with coverage annotations.
+After finishing, a coverage folder will be created containing a copy of the source code with coverage annotations.
 
 * '*' if an execution ended with a STOP
 * 'r' if an execution ended with a REVERT
@@ -164,7 +164,7 @@ or to execute in property mode run this command passing contract name as argumen
 
 `npm run echidna-property --contract=EchidnaMocCoreTester`
 
-echidna will execute fuzzing tests using the configuration at echidna/default.yaml
+echidna will execute fuzzing tests using the configuration at `echidna/default.yaml`
 
 for more information [here](https://github.com/crytic/echidna)
 
@@ -193,12 +193,13 @@ In that case, you can use the command:
 
 `npm run export`
 
-After that, artifacts and deployments scripts are copied to the export folder. In another repo you can install them as a github package, configure them as external deploy in hardhat config and set all the deployment parameters. 
-You can configure a network as `testnet` using [tags](https://github.com/wighawag/hardhat-deploy#tags) mechanism, that will allow you to: 
-1. deploy and initialize the protocol using a governor mocked to skip governance system
-2. initialize the protocol with Pegged Tokens 
-3. in collateral bag implementation add Assets to mocWrapper
-4. transfer governance to the real governor
+After that, artifacts and deployments scripts are copied into the export folder. Then, in another repository, you can install them as a npm github dependency, configure them as external deploy in hardhat config setting all the corresponding deployment parameters.
+Setting the a network tag as `testnet` using [tags](https://github.com/wighawag/hardhat-deploy#tags), will allow you to:
+
+1. Deploy and initialize the protocol using a governor mocked to bypass governance restrictions
+2. Initialize the protocol with a list of predefined Pegged Tokens by configuration
+3. Add Assets to mocWrapper (only for collateral bag implementation)
+4. Transfer governance to the real governor once initializations have finished
 
 ## Built With
 
