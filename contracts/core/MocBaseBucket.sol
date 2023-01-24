@@ -21,7 +21,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qTP_,
         uint256 qAC_,
         uint256 qACfee_,
-        uint256 qFeeToken_
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_
     );
     event ContractLiquidated();
     event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);

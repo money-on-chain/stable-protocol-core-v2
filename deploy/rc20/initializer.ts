@@ -21,6 +21,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
   const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
+  const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
+  if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
+  const MocVendors = await ethers.getContractAt("MocVendors", deployedMocVendors.address, signer);
+
   let {
     collateralAssetAddress,
     governorAddress,
@@ -29,6 +33,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     feeTokenPriceProviderAddress,
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
+    vendorsGuardianAddress,
   } = mocAddresses;
 
   // for tests and testnet we deploy a Governor Mock
@@ -68,6 +73,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     ),
   );
   await waitForTxConfirmation(
+    MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
+      gasLimit,
+    }),
+  );
+  await waitForTxConfirmation(
     mocCARC20.initialize(
       {
         initializeCoreParams: {
@@ -96,6 +106,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           pauserAddress,
           mocCoreExpansion: deployedMocExpansionContract.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: MocVendors.address,
         },
         acTokenAddress: collateralAssetAddress!,
       },
@@ -113,4 +124,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CARC20"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCARC20"];
-deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20"];
+deployFunc.dependencies = ["MocCARC20", "CollateralTokenCARC20", "CollateralAssetCARC20", "MocVendors"];

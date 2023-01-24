@@ -84,6 +84,7 @@ const config: HardhatUserConfig = {
     alice: 2,
     bob: 3,
     charlie: 4,
+    vendor: 5,
   },
   networks: {
     hardhat: {
@@ -129,6 +130,7 @@ const config: HardhatUserConfig = {
           feeTokenPriceProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
           mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
           mocAppreciationBeneficiaryAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
+          vendorsGuardianAddress: "0x26a00AF444928D689DDeC7b4D17c0E4a8C9d407E",
         },
         gasLimit: 30000000, // high value to avoid coverage issue. https://github.com/NomicFoundation/hardhat/issues/3121
       },

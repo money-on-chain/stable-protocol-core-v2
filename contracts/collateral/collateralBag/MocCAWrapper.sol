@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
-
-import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
@@ -243,32 +239,34 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @notice transfer Fee Tokens from the `sender_` to this contract
      * @param sender_ address who executes the operation
      * @return feeToken Fee Token contract
-     * @return qFeeTokenToSpend minimum between the `sender_` Fee Token balance and allowance
+     * @return qFeeTokenAvailable minimum between the `sender_` Fee Token balance and allowance
      */
-    function _transferFeeTokenFromSender(address sender_) internal returns (IERC20 feeToken, uint256 qFeeTokenToSpend) {
+    function _transferFeeTokenFromSender(
+        address sender_
+    ) internal returns (IERC20 feeToken, uint256 qFeeTokenAvailable) {
         feeToken = mocCore.feeToken();
-        qFeeTokenToSpend = Math.min(feeToken.allowance(sender_, address(this)), feeToken.balanceOf(sender_));
-        if (qFeeTokenToSpend > 0) {
-            SafeERC20.safeTransferFrom(feeToken, sender_, address(this), qFeeTokenToSpend);
-            SafeERC20.safeApprove(feeToken, address(mocCore), qFeeTokenToSpend);
+        qFeeTokenAvailable = Math.min(feeToken.allowance(sender_, address(this)), feeToken.balanceOf(sender_));
+        if (qFeeTokenAvailable > 0) {
+            SafeERC20.safeTransferFrom(feeToken, sender_, address(this), qFeeTokenAvailable);
+            SafeERC20.safeApprove(feeToken, address(mocCore), qFeeTokenAvailable);
         }
-        return (feeToken, qFeeTokenToSpend);
+        return (feeToken, qFeeTokenAvailable);
     }
 
     /**
      * @notice transfer Fee Tokens from this contract to the `sender_`
      * @param feeToken_ Fee Token contract
      * @param sender_ address who executes the operation
-     * @param qFeeTokenToSpend_ amount of Fee Token that the `sender_` has transferred to spend
+     * @param qFeeTokenAvailable_ amount of Fee Token that the `sender_` has transferred to spend
      * @param qFeeTokenSpent_ amount of Fee Token spent by MocCore as fee payment method
      */
     function _transferFeeTokenToSender(
         IERC20 feeToken_,
         address sender_,
-        uint256 qFeeTokenToSpend_,
+        uint256 qFeeTokenAvailable_,
         uint256 qFeeTokenSpent_
     ) internal {
-        uint256 qFeeTokenChange = qFeeTokenToSpend_ - qFeeTokenSpent_;
+        uint256 qFeeTokenChange = qFeeTokenAvailable_ - qFeeTokenSpent_;
         if (qFeeTokenChange > 0) {
             SafeERC20.safeTransfer(feeToken_, sender_, qFeeTokenChange);
             // if doesn't use all, we have to reset the allowance
@@ -276,36 +274,46 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         }
     }
 
-    /**
-     * @notice caller sends Asset and recipient receives Collateral Token
-        Requires prior sender approval of Asset to this contract 
-     * @param assetAddress_ Asset contract address
-     * @param qTC_ amount of Collateral Token to mint
-     * @param qAssetMax_ maximum amount of Asset that can be spent
-     * @param sender_ address who sends the Asset
-     * @param recipient_ address who receives the Collateral Token
-     */
     struct MintTCParams {
         address assetAddress;
         uint256 qTC;
         uint256 qAssetMax;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+        Requires prior sender approval of Asset to this contract 
+     * @param params_ mint TC function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      qTC_ amount of Collateral Token to mint
+     *      qAssetMax_ maximum amount of Asset that can be spent
+     *      sender_ address who sends the Asset
+     *      recipient_ address who receives the Collateral Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _mintTCto(MintTCParams memory params_) internal validAsset(params_.assetAddress) {
         uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // mint TC to the recipient
-        (uint256 wcaUsed, uint256 qFeeToken) = mocCore.mintTCto(params_.qTC, wcaMinted, params_.recipient);
+        (uint256 wcaUsed, uint256 qFeeTokenUsed) = mocCore.mintTCtoViaVendor(
+            params_.qTC,
+            wcaMinted,
+            params_.recipient,
+            params_.vendor
+        );
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaUnused, 0, address(this), params_.sender);
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         emit TCMintedWithWrapper(
             params_.assetAddress,
             params_.sender,
@@ -315,22 +323,27 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         );
     }
 
-    /**
-     * @notice caller sends Collateral Token and recipient receives Assets
-        Requires prior sender approval of Collateral Token to this contract 
-     * @param assetAddress_ Asset contract address
-     * @param qTC_ amount of Collateral Token to redeem
-     * @param qAssetMin_ minimum expected Asset amount to be received
-     * @param sender_ address who sends the Collateral Token
-     * @param recipient_ address who receives the Asset
-     */
     struct RedeemTCParams {
         address assetAddress;
         uint256 qTC;
         uint256 qAssetMin;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Assets
+     *  Requires prior sender approval of Collateral Token to this contract
+     * @param params_ redeem TC function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      qTC_ amount of Collateral Token to redeem
+     *      qAssetMin_ minimum expected Asset amount to be received
+     *      sender_ address who sends the Collateral Token
+     *      recipient_ address who receives the Asset
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _redeemTCto(RedeemTCParams memory params_) internal validAsset(params_.assetAddress) {
         // get Collateral Token contract address
@@ -338,11 +351,15 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer Collateral Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tcToken, params_.sender, address(this), params_.qTC);
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
-        (uint256 wcaTokenAmountRedeemed, uint256 qFeeToken) = mocCore.redeemTC(params_.qTC, 0);
+        (uint256 wcaTokenAmountRedeemed, uint256 qFeeTokenUsed) = mocCore.redeemTCViaVendor(
+            params_.qTC,
+            0,
+            params_.vendor
+        );
         // send Asset to the recipient
         uint256 assetRedeemed = _unwrapTo(
             params_.assetAddress,
@@ -352,20 +369,10 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             params_.recipient
         );
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         emit TCRedeemedWithWrapper(params_.assetAddress, params_.sender, params_.recipient, params_.qTC, assetRedeemed);
     }
 
-    /**
-     * @notice caller sends Asset and recipient receives Collateral Token
-        Requires prior sender approval of Asset to this contract 
-     * @param assetAddress_ Asset contract address
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Collateral Token to mint
-     * @param qAssetMax_ maximum amount of Asset that can be spent
-     * @param sender_ address who sends the Asset
-     * @param recipient_ address who receives the Collateral Token
-     */
     struct MintTPParams {
         address assetAddress;
         uint256 i;
@@ -373,21 +380,42 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+     *  Requires prior sender approval of Asset to this contract
+     * @param params_ mint TP function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      i_ Pegged Token index
+     *      qTP_ amount of Collateral Token to mint
+     *      qAssetMax_ maximum amount of Asset that can be spent
+     *      sender_ address who sends the Asset
+     *      recipient_ address who receives the Collateral Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _mintTPto(MintTPParams memory params_) internal validAsset(params_.assetAddress) {
         uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // mint TP to the recipient
-        (uint256 wcaUsed, uint256 qFeeToken) = mocCore.mintTPto(params_.i, params_.qTP, wcaMinted, params_.recipient);
+        (uint256 wcaUsed, uint256 qFeeTokenUsed) = mocCore.mintTPtoViaVendor(
+            params_.i,
+            params_.qTP,
+            wcaMinted,
+            params_.recipient,
+            params_.vendor
+        );
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaUnused, 0, address(this), params_.sender);
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         emit TPMintedWithWrapper(
             params_.assetAddress,
             params_.i,
@@ -398,16 +426,6 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         );
     }
 
-    /**
-     * @notice caller sends Pegged Token and recipient receives Assets
-        Requires prior sender approval of Pegged Token to this contract 
-     * @param assetAddress_ Asset contract address
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to redeem
-     * @param qAssetMin_ minimum expected Asset amount to be received
-     * @param sender_ address who sends the Pegged Token
-     * @param recipient_ address who receives the Asset
-     */
     struct RedeemTPParams {
         address assetAddress;
         uint256 i;
@@ -415,8 +433,23 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMin;
         address sender;
         address recipient;
+        address vendor;
         bool isLiqRedeem;
     }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Assets
+     *  Requires prior sender approval of Pegged Token to this contract
+     * @param params_ redeem TP function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      i_ Pegged Token index
+     *      qTP_ amount of Pegged Token to redeem
+     *      qAssetMin_ minimum expected Asset amount to be received
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives the Asset
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _redeemTPto(RedeemTPParams memory params_) internal validAsset(params_.assetAddress) {
         // get Pegged Token contract address
@@ -426,14 +459,20 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpToken, params_.sender, address(this), params_.qTP);
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed;
-        uint256 qFeeToken;
+        uint256 qFeeTokenUsed;
         if (params_.isLiqRedeem) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(params_.i);
-        else (wcaTokenAmountRedeemed, qFeeToken) = mocCore.redeemTP(params_.i, params_.qTP, 0);
+        else
+            (wcaTokenAmountRedeemed, qFeeTokenUsed) = mocCore.redeemTPViaVendor(
+                params_.i,
+                params_.qTP,
+                0,
+                params_.vendor
+            );
         // send Asset to the recipient
         uint256 assetRedeemed = _unwrapTo(
             params_.assetAddress,
@@ -443,7 +482,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             params_.recipient
         );
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         emit TPRedeemedWithWrapper(
             params_.assetAddress,
             params_.i,
@@ -454,19 +493,6 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         );
     }
 
-    /**
-     * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
-     *  Requires prior sender approval of Collateral Asset to this contract
-     *  This operation is done without checking coverage
-     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
-     *  and global coverage are not modified.
-     *  Reverts if qAC sent are insufficient.
-     * @param assetAddress_ Asset contract address
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint
-     * @param qAssetMax_ maximum amount of Asset that can be spent
-     * @param recipient_ address who receives the Collateral Token and Pegged Token
-     */
     struct MintTCandTPParams {
         address assetAddress;
         uint256 i;
@@ -474,38 +500,68 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param params_ mint TC and TP function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      i_ Pegged Token index
+     *      qTP_ amount of Pegged Token to mint
+     *      qAssetMax_ maximum amount of Asset that can be spent
+     *      recipient_ address who receives the Collateral Token and Pegged Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _mintTCandTPto(MintTCandTPParams memory params_) internal validAsset(params_.assetAddress) {
         uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // mint TC and TP to the recipient
-        (uint256 wcaUsed, uint256 qTCminted, uint256 qFeeToken) = mocCore.mintTCandTPto(
+        (uint256 wcaUsed, uint256 qTCminted, uint256 qFeeTokenUsed) = mocCore.mintTCandTPtoViaVendor(
             params_.i,
             params_.qTP,
             wcaMinted,
-            params_.recipient
+            params_.recipient,
+            params_.vendor
         );
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         // inside a block to avoid stack too deep error
         {
-            MintTCandTPParams memory mintTCandTPParams = params_;
+            MintTCandTPParams memory params = params_;
             emit TCandTPMintedWithWrapper(
-                mintTCandTPParams.assetAddress,
-                mintTCandTPParams.i,
-                mintTCandTPParams.sender,
-                mintTCandTPParams.recipient,
+                params.assetAddress,
+                params.i,
+                params.sender,
+                params.recipient,
                 qTCminted,
-                mintTCandTPParams.qTP,
-                mintTCandTPParams.qAssetMax - assetUnused
+                params.qTP,
+                params.qAssetMax - assetUnused
             );
         }
+    }
+
+    struct RedeemTCandTPParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTC;
+        uint256 qTP;
+        uint256 qAssetMin;
+        address sender;
+        address recipient;
+        address vendor;
     }
 
     /**
@@ -515,23 +571,17 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param assetAddress_ Asset contract address
-     * @param i_ Pegged Token index
-     * @param qTC_ maximum amount of Collateral Token to redeem
-     * @param qTP_ maximum amount of Pegged Token to redeem
-     * @param qAssetMin_ minimum amount of Asset that expect to be received
-     * @param sender_ address who sends Collateral Token and Pegged Token
-     * @param recipient_ address who receives the Asset
+     * @param params_ redeem TC and TP function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      i_ Pegged Token index
+     *      qTC_ maximum amount of Collateral Token to redeem
+     *      qTP_ maximum amount of Pegged Token to redeem
+     *      qAssetMin_ minimum amount of Asset that expect to be received
+     *      sender_ address who sends Collateral Token and Pegged Token
+     *      recipient_ address who receives the Asset
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
      */
-    struct RedeemTCandTPParams {
-        address assetAddress;
-        uint256 i;
-        uint256 qTC;
-        uint256 qTP;
-        uint256 qAssetMin;
-        address sender;
-        address recipient;
-    }
 
     function _redeemTCandTPto(RedeemTCandTPParams memory params_) internal validAsset(params_.assetAddress) {
         // get Collateral Token contract address
@@ -543,15 +593,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpToken, params_.sender, address(this), params_.qTP);
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' as qACmin parameter to avoid reverting by qAC below minimum since we are
         // checking it after with qAssetMin
-        (uint256 wcaTokenAmountRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) = mocCore.redeemTCandTP(
+        (uint256 wcaTokenAmountRedeemed, uint256 qTPRedeemed, uint256 qFeeTokenUsed) = mocCore.redeemTCandTPViaVendor(
             params_.i,
             params_.qTC,
             params_.qTP,
-            0
+            0,
+            params_.vendor
         );
         // send Asset to the recipient
         uint256 assetRedeemed = _unwrapTo(
@@ -564,7 +615,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer unused Pegged Token to the sender
         SafeERC20Upgradeable.safeTransfer(tpToken, params_.sender, params_.qTP - qTPRedeemed);
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         emit TCandTPRedeemedWithWrapper(
             params_.assetAddress,
             params_.i,
@@ -576,18 +627,6 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         );
     }
 
-    /**
-     * @notice caller sends a Pegged Token and recipient receives another one
-     *  Requires prior sender approval of Pegged Token and Asset to this contract
-     * @param assetAddress_ Asset contract address
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
-     * @param qTP_ amount of owned Pegged Token to swap
-     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
-     * @param sender_ address who sends the Pegged Token
-     * @param recipient_ address who receives the target Pegged Token
-     */
     struct SwapTPforTPParams {
         address assetAddress;
         uint256 iFrom;
@@ -597,7 +636,24 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param params_ swap TP for TP function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      iFrom_ owned Pegged Token index
+     *      iTo_ target Pegged Token index
+     *      qTP_ amount of owned Pegged Token to swap
+     *      qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     *      qAssetMax_ maximum amount of Asset that can be spent in fees
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives the target Pegged Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _swapTPforTPto(SwapTPforTPParams memory params_) internal validAsset(params_.assetAddress) {
         uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
@@ -606,48 +662,38 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, params_.sender, address(this), params_.qTP);
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
-        (uint256 wcaUsed, uint256 qTPMinted, uint256 qFeeToken) = mocCore.swapTPforTPto(
-            params_.iFrom,
-            params_.iTo,
-            params_.qTP,
-            params_.qTPmin,
-            wcaMinted,
-            params_.recipient
-        );
-        // send back Asset unused to the sender
-        // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
-        // that can be spent
-        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
-        // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
         // inside a block to avoid stack too deep error
         {
-            SwapTPforTPParams memory swapTPforTPParams = params_;
+            SwapTPforTPParams memory params = params_;
+            (uint256 wcaUsed, uint256 qTPMinted, uint256 qFeeTokenUsed) = mocCore.swapTPforTPtoViaVendor(
+                params.iFrom,
+                params.iTo,
+                params.qTP,
+                params.qTPmin,
+                wcaMinted,
+                params.recipient,
+                params.vendor
+            );
+            // send back Asset unused to the sender
+            // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
+            // that can be spent
+            uint256 assetUnused = _unwrapTo(params.assetAddress, wcaMinted - wcaUsed, 0, address(this), params.sender);
+            // transfer back the unused Fee Token
+            _transferFeeTokenToSender(feeToken, params.sender, qFeeTokenAvailable, qFeeTokenUsed);
             emit TPSwappedForTPWithWrapper(
-                swapTPforTPParams.assetAddress,
-                swapTPforTPParams.iFrom,
-                swapTPforTPParams.iTo,
-                swapTPforTPParams.sender,
-                swapTPforTPParams.recipient,
-                swapTPforTPParams.qTP,
+                params.assetAddress,
+                params.iFrom,
+                params.iTo,
+                params.sender,
+                params.recipient,
+                params.qTP,
                 qTPMinted,
-                swapTPforTPParams.qAssetMax - assetUnused
+                params.qAssetMax - assetUnused
             );
         }
     }
 
-    /**
-     * @notice caller sends a Pegged Token and recipient receives Collateral Token
-     *  Requires prior sender approval of Pegged Token and Asset to this contract
-     * @param assetAddress_ Asset contract address
-     * @param i_ owned Pegged Token index
-     * @param qTP_ amount of owned Pegged Token to swap
-     * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
-     * @param sender_ address who sends the Pegged Token
-     * @param recipient_ address who receives the Collateral Token
-     */
     struct SwapTPforTCParams {
         address assetAddress;
         uint256 i;
@@ -656,7 +702,23 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives Collateral Token
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param params_ swap TP for TC function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      i_ owned Pegged Token index
+     *      qTP_ amount of owned Pegged Token to swap
+     *      qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     *      qAssetMax_ maximum amount of Asset that can be spent in fees
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives the Collateral Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _swapTPforTCto(SwapTPforTCParams memory params_) internal validAsset(params_.assetAddress) {
         uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
@@ -665,46 +727,36 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer Pegged Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tpToken, params_.sender, address(this), params_.qTP);
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
-        (uint256 wcaUsed, uint256 qTCMinted, uint256 qFeeToken) = mocCore.swapTPforTCto(
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
+        (uint256 wcaUsed, uint256 qTCMinted, uint256 qFeeTokenUsed) = mocCore.swapTPforTCtoViaVendor(
             params_.i,
             params_.qTP,
             params_.qTCmin,
             wcaMinted,
-            params_.recipient
+            params_.recipient,
+            params_.vendor
         );
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         // inside a block to avoid stack too deep error
         {
-            SwapTPforTCParams memory swapTPforTCParams = params_;
+            SwapTPforTCParams memory params = params_;
             emit TPSwappedForTCWithWrapper(
-                swapTPforTCParams.assetAddress,
-                swapTPforTCParams.i,
-                swapTPforTCParams.sender,
-                swapTPforTCParams.recipient,
-                swapTPforTCParams.qTP,
+                params.assetAddress,
+                params.i,
+                params.sender,
+                params.recipient,
+                params.qTP,
                 qTCMinted,
-                swapTPforTCParams.qAssetMax - assetUnused
+                params.qAssetMax - assetUnused
             );
         }
     }
 
-    /**
-     * @notice caller sends a Collateral Token and recipient receives Pegged Token
-     *  Requires prior sender approval of Collateral Token and Asset to this contract
-     * @param assetAddress_ Asset contract address
-     * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to swap
-     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
-     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
-     * @param sender_ address who sends the Collateral Token
-     * @param recipient_ address who receives the Pegged Token
-     */
     struct SwapTCforTPParams {
         address assetAddress;
         uint256 i;
@@ -713,7 +765,23 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax;
         address sender;
         address recipient;
+        address vendor;
     }
+
+    /**
+     * @notice caller sends a Collateral Token and recipient receives Pegged Token
+     *  Requires prior sender approval of Collateral Token and Asset to this contract
+     * @param params_ swap TC for TP function params
+     * @dev
+     *      assetAddress_ Asset contract address
+     *      i_ Pegged Token index
+     *      qTC_ amount of Collateral Token to swap
+     *      qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     *      qAssetMax_ maximum amount of Asset that can be spent in fees
+     *      sender_ address who sends the Collateral Token
+     *      recipient_ address who receives the Pegged Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     */
 
     function _swapTCforTPto(SwapTCforTPParams memory params_) internal validAsset(params_.assetAddress) {
         uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
@@ -722,31 +790,32 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // transfer Collateral Token from sender to this address
         SafeERC20Upgradeable.safeTransferFrom(tcToken, params_.sender, address(this), params_.qTC);
         // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
-        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
-        (uint256 wcaUsed, uint256 qTPMinted, uint256 qFeeToken) = mocCore.swapTCforTPto(
+        (IERC20 feeToken, uint256 qFeeTokenAvailable) = _transferFeeTokenFromSender(params_.sender);
+        (uint256 wcaUsed, uint256 qTPMinted, uint256 qFeeTokenUsed) = mocCore.swapTCforTPtoViaVendor(
             params_.i,
             params_.qTC,
             params_.qTPmin,
             wcaMinted,
-            params_.recipient
+            params_.recipient,
+            params_.vendor
         );
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
         uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
         // transfer back the unused Fee Token
-        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenAvailable, qFeeTokenUsed);
         // inside a block to avoid stack too deep error
         {
-            SwapTCforTPParams memory swapTCforTPParams = params_;
+            SwapTCforTPParams memory params = params_;
             emit TCSwappedForTPWithWrapper(
-                swapTCforTPParams.assetAddress,
-                swapTCforTPParams.i,
-                swapTCforTPParams.sender,
-                swapTCforTPParams.recipient,
-                swapTCforTPParams.qTC,
+                params.assetAddress,
+                params.i,
+                params.sender,
+                params.recipient,
+                params.qTC,
                 qTPMinted,
-                swapTCforTPParams.qAssetMax - assetUnused
+                params.qAssetMax - assetUnused
             );
         }
     }
@@ -883,7 +952,29 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTC: qTC_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _mintTCto(params);
+    }
+
+    /**
+     * @notice caller sends Asset and receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param vendor_ address who receives a markup
+     */
+    function mintTCViaVendor(address assetAddress_, uint256 qTC_, uint256 qAssetMax_, address vendor_) external {
+        MintTCParams memory params = MintTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _mintTCto(params);
     }
@@ -902,7 +993,36 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTC: qTC_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _mintTCto(params);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token
+     * @param vendor_ address who receives a markup
+     */
+    function mintTCtoViaVendor(
+        address assetAddress_,
+        uint256 qTC_,
+        uint256 qAssetMax_,
+        address recipient_,
+        address vendor_
+    ) external {
+        MintTCParams memory params = MintTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _mintTCto(params);
     }
@@ -920,7 +1040,29 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTC: qTC_,
             qAssetMin: qAssetMin_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _redeemTCto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Collateral Token to this contract
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that sender expects to receive
+     * @param vendor_ address who receives a markup
+     */
+    function redeemTCViaVendor(address assetAddress_, uint256 qTC_, uint256 qAssetMin_, address vendor_) external {
+        RedeemTCParams memory params = RedeemTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _redeemTCto(params);
     }
@@ -939,7 +1081,36 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTC: qTC_,
             qAssetMin: qAssetMin_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _redeemTCto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Collateral Token to this contract
+     * @param assetAddress_ Asset contract address
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Asset
+     * @param vendor_ address who receives a markup
+     */
+    function redeemTCtoViaVendor(
+        address assetAddress_,
+        uint256 qTC_,
+        uint256 qAssetMin_,
+        address recipient_,
+        address vendor_
+    ) external {
+        RedeemTCParams memory params = RedeemTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _redeemTCto(params);
     }
@@ -959,7 +1130,37 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTP: qTP_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _mintTPto(params);
+    }
+
+    /**
+     * @notice caller sends Asset and receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param vendor_ address who receives a markup
+     */
+    function mintTPViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address vendor_
+    ) external {
+        MintTPParams memory params = MintTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _mintTPto(params);
     }
@@ -986,7 +1187,39 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTP: qTP_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _mintTPto(params);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Collateral Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token
+     * @param vendor_ address who receives a markup
+     */
+    function mintTPtoViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address recipient_,
+        address vendor_
+    ) external {
+        MintTPParams memory params = MintTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _mintTPto(params);
     }
@@ -1007,6 +1240,37 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qAssetMin: qAssetMin_,
             sender: msg.sender,
             recipient: msg.sender,
+            vendor: address(0),
+            isLiqRedeem: false
+        });
+        _redeemTPto(params);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and receives Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Pegged Token to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum Asset amount that sender expects to be received
+     * @param vendor_ address who receives a markup
+     */
+    function redeemTPViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address vendor_
+    ) external {
+        RedeemTPParams memory params = RedeemTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_,
             isLiqRedeem: false
         });
         _redeemTPto(params);
@@ -1035,6 +1299,39 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qAssetMin: qAssetMin_,
             sender: msg.sender,
             recipient: recipient_,
+            vendor: address(0),
+            isLiqRedeem: false
+        });
+        _redeemTPto(params);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Pegged Token to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Asset
+     * @param vendor_ address who receives a markup
+     */
+    function redeemTPtoViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address recipient_,
+        address vendor_
+    ) external {
+        RedeemTPParams memory params = RedeemTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_,
             isLiqRedeem: false
         });
         _redeemTPto(params);
@@ -1055,6 +1352,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qAssetMin: 0,
             sender: msg.sender,
             recipient: msg.sender,
+            vendor: address(0),
             isLiqRedeem: true
         });
         _redeemTPto(params);
@@ -1076,6 +1374,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qAssetMin: 0,
             sender: msg.sender,
             recipient: recipient_,
+            vendor: address(0),
             isLiqRedeem: true
         });
         _redeemTPto(params);
@@ -1100,7 +1399,41 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTP: qTP_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _mintTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Asset and receives Collateral Token and Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param vendor_ address who receives a markup
+     */
+    function mintTCandTPViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address vendor_
+    ) external {
+        MintTCandTPParams memory params = MintTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _mintTCandTPto(params);
     }
@@ -1131,7 +1464,43 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTP: qTP_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _mintTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Asset and recipient receives Collateral Token and Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qAssetMax_ maximum amount of Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @param vendor_ address who receives a markup
+     */
+    function mintTCandTPtoViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qAssetMax_,
+        address recipient_,
+        address vendor_
+    ) external {
+        MintTCandTPParams memory params = MintTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _mintTCandTPto(params);
     }
@@ -1157,7 +1526,44 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTP: qTP_,
             qAssetMin: qAssetMin_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _redeemTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and receives Assets
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
+     * @param vendor_ address who receives a markup
+     */
+    function redeemTCandTPViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address vendor_
+    ) external {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _redeemTCandTPto(params);
     }
@@ -1191,7 +1597,46 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTP: qTP_,
             qAssetMin: qAssetMin_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _redeemTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Assets
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Token and Pegged Token to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qAssetMin_ minimum amount of Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Asset
+     * @param vendor_ address who receives a markup
+     */
+    function redeemTCandTPtoViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAssetMin_,
+        address recipient_,
+        address vendor_
+    ) external {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _redeemTCandTPto(params);
     }
@@ -1222,7 +1667,43 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTPmin: qTPmin_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _swapTPforTPto(params);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and receives another one
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param vendor_ address who receives a markup
+     */
+    function swapTPforTPViaVendor(
+        address assetAddress_,
+        uint256 iFrom_,
+        uint256 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address vendor_
+    ) external {
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            assetAddress: assetAddress_,
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _swapTPforTPto(params);
     }
@@ -1255,7 +1736,45 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTPmin: qTPmin_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _swapTPforTPto(params);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param recipient_ address who receives the target Pegged Token
+     * @param vendor_ address who receives a markup
+     */
+    function swapTPforTPtoViaVendor(
+        address assetAddress_,
+        uint256 iFrom_,
+        uint256 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address recipient_,
+        address vendor_
+    ) external {
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            assetAddress: assetAddress_,
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _swapTPforTPto(params);
     }
@@ -1283,7 +1802,40 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTCmin: qTCmin_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _swapTPforTCto(params);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param vendor_ address who receives a markup
+     */
+    function swapTPforTCViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qAssetMax_,
+        address vendor_
+    ) external {
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _swapTPforTCto(params);
     }
@@ -1313,7 +1865,42 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTCmin: qTCmin_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _swapTPforTCto(params);
+    }
+
+    /**
+     * @notice caller sends a Pegged Token and recipient receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Pegged Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param recipient_ address who receives the Collateral Token
+     * @param vendor_ address who receives a markup
+     */
+    function swapTPforTCtoViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qAssetMax_,
+        address recipient_,
+        address vendor_
+    ) external {
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _swapTPforTCto(params);
     }
@@ -1341,7 +1928,40 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTPmin: qTPmin_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: msg.sender
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        _swapTCforTPto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param vendor_ address who receives a markup
+     */
+    function swapTCforTPViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address vendor_
+    ) external {
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
         });
         _swapTCforTPto(params);
     }
@@ -1371,7 +1991,42 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
             qTPmin: qTPmin_,
             qAssetMax: qAssetMax_,
             sender: msg.sender,
-            recipient: recipient_
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        _swapTCforTPto(params);
+    }
+
+    /**
+     * @notice caller sends a Collateral Token and recipient receives Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Token and Asset to this contract
+     * @param assetAddress_ Asset contract address
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param qAssetMax_ maximum amount of Asset that can be spent in fees
+     * @param recipient_ address who receives the Pegged Token
+     * @param vendor_ address who receives a markup
+     */
+    function swapTCforTPtoViaVendor(
+        address assetAddress_,
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qAssetMax_,
+        address recipient_,
+        address vendor_
+    ) external {
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
         });
         _swapTCforTPto(params);
     }

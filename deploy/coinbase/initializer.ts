@@ -20,6 +20,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
   const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
+  const deployedMocVendors = await deployments.getOrNull("MocVendorsCACoinbaseProxy");
+  if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
+  const MocVendors = await ethers.getContractAt("MocVendors", deployedMocVendors.address, signer);
+
   let {
     governorAddress,
     pauserAddress,
@@ -27,6 +31,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     feeTokenPriceProviderAddress,
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
+    vendorsGuardianAddress,
   } = mocAddresses;
 
   // For testing environment, we use Mock helper contracts
@@ -50,7 +55,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       gasLimit,
     }),
   );
-
+  await waitForTxConfirmation(
+    MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
+      gasLimit,
+    }),
+  );
   await waitForTxConfirmation(
     MocCACoinbase.initialize(
       {
@@ -79,6 +88,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         pauserAddress,
         mocCoreExpansion: deployedMocExpansionContract.address,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+        mocVendors: MocVendors.address,
       },
       { gasLimit },
     ),
@@ -94,4 +104,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_Coinbase"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCoinbase"];
-deployFunc.dependencies = ["MocCACoinbase", "CollateralTokenCoinbase"];
+deployFunc.dependencies = ["MocCACoinbase", "CollateralTokenCoinbase", "MocVendors"];

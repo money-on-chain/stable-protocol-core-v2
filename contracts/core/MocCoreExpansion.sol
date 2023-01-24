@@ -137,7 +137,9 @@ contract MocCoreExpansion is MocStorage {
         qACRedeemed = _divPrec(qTP, liqPACtp);
         // Given rounding errors, the last redeemer might receive a little less
         if (mocACBalance < qACRedeemed) qACRedeemed = mocACBalance;
-        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0);
+        // in liquidation doesn't pay fees or markup
+        // qACfee, qFeeToken, qACVendorMarkup, qFeeTokenVendorMarkup  = (0, 0, 0, 0)
+        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0, 0, 0);
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP);
     }

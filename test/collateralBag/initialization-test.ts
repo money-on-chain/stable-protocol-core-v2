@@ -8,6 +8,7 @@ import {
   MocCAWrapper,
   MocCAWrapper__factory,
   MocRC20,
+  MocVendors,
 } from "../../typechain";
 import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
@@ -20,6 +21,7 @@ describe("Feature: MocCABag initialization", function () {
   let mocCollateralToken: MocRC20;
   let mocInit: any;
   let mocCoreExpansion: MocCoreExpansion;
+  let mocVendors: MocVendors;
   const { governorAddress, pauserAddress } = getNetworkDeployParams(hre).mocAddresses;
   before(async () => {
     ({
@@ -28,8 +30,15 @@ describe("Feature: MocCABag initialization", function () {
       mocWrapper,
       mocCollateralToken,
       wcaToken,
+      mocVendors,
     } = await fixtureDeployedMocCABag(0)());
-    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address, mocCoreExpansion.address);
+    mocInit = mocInitialize(
+      mocProxy,
+      wcaToken.address,
+      mocCollateralToken.address,
+      mocCoreExpansion.address,
+      mocVendors.address,
+    );
   });
   describe("GIVEN a MocCABag implementation deployed", () => {
     describe("WHEN initialize mocProxy again", async () => {
@@ -45,7 +54,13 @@ describe("Feature: MocCABag initialization", function () {
           ethers.provider.getSigner(),
         );
         await expect(
-          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address, mocCoreExpansion.address)(),
+          mocInitialize(
+            mocImplementation,
+            wcaToken.address,
+            mocCollateralToken.address,
+            mocCoreExpansion.address,
+            mocVendors.address,
+          )(),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
@@ -85,7 +100,13 @@ describe("Feature: MocCABag initialization", function () {
         adminAddress: proxy.address,
         governorAddress: await newMocImpl.governor(),
       });
-      newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address, mocCoreExpansion.address);
+      newMocInit = mocInitialize(
+        newMocImpl,
+        wcaToken.address,
+        newMocTC.address,
+        mocCoreExpansion.address,
+        mocVendors.address,
+      );
     });
     describe("WHEN it is initialized with invalid TC token value", () => {
       it("THEN tx fails because Moc core hasn´t got full roles for that token", async () => {

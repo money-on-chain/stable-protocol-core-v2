@@ -5,13 +5,17 @@ import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
+import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const mintTPBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
+  let mocImpl: MocCACoinbase | MocCARC20;
   let deployer: Address;
   let alice: Address;
   let bob: Address;
+  let operator: Address;
+  let vendor: Address;
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
@@ -22,12 +26,14 @@ const mintTPBehavior = function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
-      ({ deployer, alice, bob } = await getNamedAccounts());
+      ({ mocImpl } = mocContracts);
+      ({ deployer, alice, bob, vendor } = await getNamedAccounts());
+      operator = mocContracts.mocWrapper?.address || alice;
     });
     describe("WHEN alice trie to mint 0 TP", function () {
       it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {
         await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 0 })).to.be.revertedWithCustomError(
-          mocContracts.mocImpl,
+          mocImpl,
           ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
         );
       });
@@ -35,7 +41,7 @@ const mintTPBehavior = function () {
     describe("WHEN alice sends 100 Asset to mint 100 TP but there is not collateral in the protocol", function () {
       it("THEN tx reverts because there is not enough TP to mint", async function () {
         await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
-          mocContracts.mocImpl,
+          mocImpl,
           ERRORS.INSUFFICIENT_TP_TO_MINT,
         );
       });
@@ -59,14 +65,14 @@ const mintTPBehavior = function () {
         describe("WHEN alice tries to mint 23500 TP", function () {
           it("THEN tx reverts because invalid price provider", async function () {
             await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
-              mocContracts.mocImpl,
+              mocImpl,
               ERRORS.MISSING_PROVIDER_PRICE,
             );
           });
         });
       });
       describe("WHEN alice tries to mint a non-existent TP", function () {
-        it("THEN tx reverts with panice code 0x32 array out of bounded", async function () {
+        it("THEN tx reverts with panic code 0x32 array out of bounded", async function () {
           await expect(mocFunctions.mintTP({ i: TP_NON_EXISTENT, from: alice, qTP: 100 })).to.be.revertedWithPanic(
             "0x32",
           );
@@ -83,7 +89,7 @@ const mintTPBehavior = function () {
         it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {
           await expect(
             mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 1, applyPrecision: false }),
-          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
         });
       });
       describe("WHEN alice sends 0.4 Asset to mint 100 TP", function () {
@@ -91,7 +97,7 @@ const mintTPBehavior = function () {
         it("THEN tx reverts because the amount of AC is insufficient", async function () {
           await expect(
             mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 100, qACmax: 0.4 }),
-          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
         });
       });
       describe("WHEN alice sends 105(exactly amount) Asset to mint 23500 TP", function () {
@@ -101,7 +107,7 @@ const mintTPBehavior = function () {
         let mocFeeFlowPrevACBalance: Balance;
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-          mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+          mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500, qACmax: 105 });
         });
@@ -109,7 +115,7 @@ const mintTPBehavior = function () {
           assertPrec(23500, await mocFunctions.tpBalanceOf(TP_0, alice));
         });
         it("THEN Moc balance increase 100 AC", async function () {
-          const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+          const mocActualACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
           const diff = mocActualACBalance.sub(mocPrevACBalance);
           assertPrec(100, diff);
         });
@@ -131,17 +137,11 @@ const mintTPBehavior = function () {
           // qAC: 100 AC + 5% for Moc Fee Flow
           // qACfee: 5% AC
           // qFeeToken: 0
+          // qACVendorMarkup: 0
+          // qFeeTokenVendorMarkup: 0
           await expect(tx)
-            .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(
-              TP_0,
-              mocContracts.mocWrapper?.address || alice,
-              alice,
-              pEth(23500),
-              pEth(100 * 1.05),
-              pEth(100 * 0.05),
-              0,
-            );
+            .to.emit(mocImpl, "TPMinted")
+            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: Zero Address
@@ -152,7 +152,7 @@ const mintTPBehavior = function () {
             .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(23500));
         });
         it("THEN now there are 131738.22 TP available to mint", async function () {
-          assertPrec("131738.223809919415159579", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+          assertPrec("131738.223809919415159579", await mocImpl.getTPAvailableToMint(TP_0));
         });
         describe("AND alice tries to mint 131738.23 TP more", function () {
           /*  
@@ -165,7 +165,7 @@ const mintTPBehavior = function () {
         */
           it("THEN tx reverts because there is not enough TP to mint", async function () {
             await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 131738.23 })).to.be.revertedWithCustomError(
-              mocContracts.mocImpl,
+              mocImpl,
               ERRORS.INSUFFICIENT_TP_TO_MINT,
             );
           });
@@ -175,13 +175,13 @@ const mintTPBehavior = function () {
             await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: "131738.223809919415159579" });
           });
           it("THEN coverage is still above ctargemaCA", async function () {
-            const actualCoverage = await mocContracts.mocImpl.getCglb();
-            const actualCtargemaCA = await mocContracts.mocImpl.calcCtargemaCA();
+            const actualCoverage = await mocImpl.getCglb();
+            const actualCtargemaCA = await mocImpl.calcCtargemaCA();
             expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
           });
           it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-            assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0");
-            assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_1), "TP 1");
+            assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+            assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1");
           });
         });
         describe("AND alice sends 2350000(exceeded amount) Asset to mint 23500 TP", function () {
@@ -199,7 +199,7 @@ const mintTPBehavior = function () {
           beforeEach(async function () {
             alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
             alicePrevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-            mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+            mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
             mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
             await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
           });
@@ -209,7 +209,7 @@ const mintTPBehavior = function () {
             assertPrec(23500, diff);
           });
           it("THEN Moc balance increase 100 AC", async function () {
-            const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+            const mocActualACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
             const diff = mocActualACBalance.sub(mocPrevACBalance);
             assertPrec(100, diff);
           });
@@ -240,7 +240,7 @@ const mintTPBehavior = function () {
         let mocFeeFlowPrevACBalance: Balance;
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-          mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+          mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.mintTPto({ i: TP_0, from: alice, to: bob, qTP: 23500 });
         });
@@ -248,7 +248,7 @@ const mintTPBehavior = function () {
           assertPrec(23500, await mocFunctions.tpBalanceOf(TP_0, bob));
         });
         it("THEN Moc balance increase 100 AC", async function () {
-          const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+          const mocActualACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
           const diff = mocActualACBalance.sub(mocPrevACBalance);
           assertPrec(100, diff);
         });
@@ -270,17 +270,65 @@ const mintTPBehavior = function () {
           // qAC: 100 AC + 5% for Moc Fee Flow
           // qACfee: 5% AC
           // qFeeToken: 0
+          // qACVendorMarkup: 0
+          // qFeeTokenVendorMarkup: 0
           await expect(tx)
-            .to.emit(mocContracts.mocImpl, "TPMinted")
-            .withArgs(
-              TP_0,
-              mocContracts.mocWrapper?.address || alice,
-              bob,
-              pEth(23500),
-              pEth(100 * 1.05),
-              pEth(100 * 0.05),
-              0,
-            );
+            .to.emit(mocImpl, "TPMinted")
+            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+        });
+      });
+      describe("WHEN alice mints 23500 TP via vendor", function () {
+        let alicePrevACBalance: Balance;
+        let vendorPrevACBalance: Balance;
+        let tx: ContractTransaction;
+        beforeEach(async function () {
+          alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+          vendorPrevACBalance = await mocFunctions.acBalanceOf(vendor);
+          tx = await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500, vendor });
+        });
+        it("THEN alice AC balance decrease 115 Asset (100 qAC + 5% qACFee + 10% qACVendorMarkup)", async function () {
+          const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+          const diff = alicePrevACBalance.sub(aliceActualACBalance);
+          assertPrec(115, diff);
+        });
+        it("THEN vendor AC balance increase 10 Asset", async function () {
+          const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
+          const diff = vendorActualACBalance.sub(vendorPrevACBalance);
+          assertPrec(10, diff);
+        });
+        it("THEN a TPMinted event is emitted", async function () {
+          // i : 0
+          // sender: alice || mocWrapper
+          // receiver: alice
+          // qTP: 23500
+          // qAC: 100 AC + 5% for Moc Fee Flow + 10% for vendor
+          // qACfee: 5% qAC
+          // qFeeToken: 0
+          // qACVendorMarkup: 10% qAC
+          // qFeeTokenVendorMarkup: 0
+          await expect(tx)
+            .to.emit(mocImpl, "TPMinted")
+            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+        });
+      });
+      describe("WHEN alice mints 23500 TP to bob via vendor", function () {
+        let tx: ContractTransaction;
+        beforeEach(async function () {
+          tx = await mocFunctions.mintTPto({ i: TP_0, from: alice, to: bob, qTP: 23500, vendor });
+        });
+        it("THEN a TPMinted event is emitted", async function () {
+          // i : 0
+          // sender: alice || mocWrapper
+          // receiver: bob
+          // qTP: 2350 TP
+          // qAC: 100 AC + 5% for Moc Fee Flow + 10% for vendor
+          // qACfee: 5% qAC
+          // qFeeToken: 0
+          // qACVendorMarkup: 10% qAC
+          // qFeeTokenVendorMarkup: 0
+          await expect(tx)
+            .to.emit(mocImpl, "TPMinted")
+            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
         });
       });
       describe("AND 23500 TP0 are minted", function () {
@@ -298,12 +346,12 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, "37.9");
           });
           it("THEN the coverage is 5", async function () {
-            assertPrec("4.999574468085106382", await mocContracts.mocImpl.getCglb());
+            assertPrec("4.999574468085106382", await mocImpl.getCglb());
           });
           describe("WHEN Alice tries to mint 1 TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
               await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 1 })).to.be.revertedWithCustomError(
-                mocContracts.mocImpl,
+                mocImpl,
                 ERRORS.LOW_COVERAGE,
               );
             });
@@ -322,12 +370,12 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, 38);
           });
           it("THEN there are 75 TP available to mint", async function () {
-            assertPrec("75.000000000000000020", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+            assertPrec("75.000000000000000020", await mocImpl.getTPAvailableToMint(TP_0));
           });
           describe("WHEN Alice tries to mint 75.1 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
               await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 75.1 })).to.be.revertedWithCustomError(
-                mocContracts.mocImpl,
+                mocImpl,
                 ERRORS.INSUFFICIENT_TP_TO_MINT,
               );
             });
@@ -349,13 +397,13 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, 300);
           });
           it("THEN there are 121847.2421 TP available to mint", async function () {
-            assertPrec("121847.242150377340925125", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+            assertPrec("121847.242150377340925125", await mocImpl.getTPAvailableToMint(TP_0));
           });
           it("THEN the coverage is 34.74", async function () {
-            assertPrec("34.742056074766355140", await mocContracts.mocImpl.getCglb());
+            assertPrec("34.742056074766355140", await mocImpl.getCglb());
           });
           it("THEN TC price is 1.002", async function () {
-            assertPrec("1.002888888888888888", await mocContracts.mocImpl.getPTCac());
+            assertPrec("1.002888888888888888", await mocImpl.getPTCac());
           });
           describe("AND EMA is updated", function () {
             /*
@@ -364,11 +412,11 @@ const mintTPBehavior = function () {
             => TP available to mint = 125449.0669
             */
             beforeEach(async function () {
-              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
-              await mocContracts.mocImpl.updateEmas();
+              await mineUpTo(await mocImpl.nextEmaCalculation());
+              await mocImpl.updateEmas();
             });
             it("THEN there are 125449.0669 TP available to mint", async function () {
-              assertPrec("125449.066971443529804161", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+              assertPrec("125449.066971443529804161", await mocImpl.getTPAvailableToMint(TP_0));
             });
           });
           describe("AND 3000 TP 0 are minted", function () {
@@ -389,8 +437,10 @@ const mintTPBehavior = function () {
               // qAC: 10 AC + 5% for Moc Fee Flow
               // qACfee: 5% AC
               // qFeeToken: 0
+              // qACVendorMarkup: 0
+              // qFeeTokenVendorMarkup: 0
               await expect(tx)
-                .to.emit(mocContracts.mocImpl, "TPMinted")
+                .to.emit(mocImpl, "TPMinted")
                 .withArgs(
                   TP_0,
                   mocContracts.mocWrapper?.address || deployer,
@@ -398,6 +448,8 @@ const mintTPBehavior = function () {
                   pEth(3000),
                   pEth(10 * 1.05),
                   pEth(10 * 0.05),
+                  0,
+                  0,
                   0,
                 );
             });
@@ -417,13 +469,13 @@ const mintTPBehavior = function () {
                 await mocFunctions.pokePrice(TP_0, 1000);
               });
               it("THEN there are 66087.4 TP available to mint", async function () {
-                assertPrec("66087.407998395976575724", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                assertPrec("66087.407998395976575724", await mocImpl.getTPAvailableToMint(TP_0));
               });
               it("THEN the coverage is 45.44", async function () {
-                assertPrec("45.445421245421245421", await mocContracts.mocImpl.getCglb());
+                assertPrec("45.445421245421245421", await mocImpl.getCglb());
               });
               it("THEN TC price is 1.011", async function () {
-                assertPrec("1.011133333333333333", await mocContracts.mocImpl.getPTCac());
+                assertPrec("1.011133333333333333", await mocImpl.getPTCac());
               });
               describe("AND EMA is updated", function () {
                 /*
@@ -432,11 +484,11 @@ const mintTPBehavior = function () {
                 => TP available to mint = 92369.57
                 */
                 beforeEach(async function () {
-                  await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
-                  await mocContracts.mocImpl.updateEmas();
+                  await mineUpTo(await mocImpl.nextEmaCalculation());
+                  await mocImpl.updateEmas();
                 });
                 it("THEN there are 92369.57 TP available to mint", async function () {
-                  assertPrec("92369.578979910128584434", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                  assertPrec("92369.578979910128584434", await mocImpl.getTPAvailableToMint(TP_0));
                 });
               });
             });
@@ -456,13 +508,13 @@ const mintTPBehavior = function () {
                 await mocFunctions.pokePrice(TP_0, 250);
               });
               it("THEN there are 126295.71 TP available to mint", async function () {
-                assertPrec("126295.710817372538465788", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                assertPrec("126295.710817372538465788", await mocImpl.getTPAvailableToMint(TP_0));
               });
               it("THEN the coverage is 28.79", async function () {
-                assertPrec("28.792592592592592592", await mocContracts.mocImpl.getCglb());
+                assertPrec("28.792592592592592592", await mocImpl.getCglb());
               });
               it("THEN TC price is 1.000533", async function () {
-                assertPrec("1.000533333333333333", await mocContracts.mocImpl.getPTCac());
+                assertPrec("1.000533333333333333", await mocImpl.getPTCac());
               });
               describe("AND EMA is updated", function () {
                 /*
@@ -471,11 +523,11 @@ const mintTPBehavior = function () {
                 => TP available to mint = 127951.22
                 */
                 beforeEach(async function () {
-                  await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
-                  await mocContracts.mocImpl.updateEmas();
+                  await mineUpTo(await mocImpl.nextEmaCalculation());
+                  await mocImpl.updateEmas();
                 });
                 it("THEN there are 127951.22 TP available to mint", async function () {
-                  assertPrec("127951.224154539014099053", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                  assertPrec("127951.224154539014099053", await mocImpl.getTPAvailableToMint(TP_0));
                 });
               });
             });
@@ -497,13 +549,13 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, 100);
           });
           it("THEN there are 48125 TP available to mint", async function () {
-            assertPrec(48125, await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+            assertPrec(48125, await mocImpl.getTPAvailableToMint(TP_0));
           });
           it("THEN the coverage is 13.19", async function () {
-            assertPrec("13.191489361702127659", await mocContracts.mocImpl.getCglb());
+            assertPrec("13.191489361702127659", await mocImpl.getCglb());
           });
           it("THEN TC price is 0.955", async function () {
-            assertPrec(0.955, await mocContracts.mocImpl.getPTCac());
+            assertPrec(0.955, await mocImpl.getPTCac());
           });
           describe("AND EMA is updated", function () {
             /*
@@ -512,11 +564,11 @@ const mintTPBehavior = function () {
             => TP available to mint = 48125
             */
             beforeEach(async function () {
-              await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
-              await mocContracts.mocImpl.updateEmas();
+              await mineUpTo(await mocImpl.nextEmaCalculation());
+              await mocImpl.updateEmas();
             });
             it("THEN there are 48125 TP available to mint", async function () {
-              assertPrec(48125, await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+              assertPrec(48125, await mocImpl.getTPAvailableToMint(TP_0));
             });
           });
           describe("AND 1000 TP are minted", function () {
@@ -537,8 +589,10 @@ const mintTPBehavior = function () {
               // qAC: 10 AC + 5% for Moc Fee Flow
               // qACfee: 5% AC
               // qFeeToken: 0
+              // qACVendorMarkup: 0
+              // qFeeTokenVendorMarkup: 0
               await expect(tx)
-                .to.emit(mocContracts.mocImpl, "TPMinted")
+                .to.emit(mocImpl, "TPMinted")
                 .withArgs(
                   TP_0,
                   mocContracts.mocWrapper?.address || deployer,
@@ -546,6 +600,8 @@ const mintTPBehavior = function () {
                   pEth(1000),
                   pEth(10 * 1.05),
                   pEth(10 * 0.05),
+                  0,
+                  0,
                   0,
                 );
             });
@@ -565,13 +621,13 @@ const mintTPBehavior = function () {
                 await mocFunctions.pokePrice(TP_0, 1000);
               });
               it("THEN there are 67122.83 TP available to mint", async function () {
-                assertPrec("67122.836865805061029229", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                assertPrec("67122.836865805061029229", await mocImpl.getTPAvailableToMint(TP_0));
               });
               it("THEN the coverage is 46.11", async function () {
-                assertPrec("46.118215613382899628", await mocContracts.mocImpl.getCglb());
+                assertPrec("46.118215613382899628", await mocImpl.getCglb());
               });
               it("THEN TC price is 1.0114", async function () {
-                assertPrec("1.0114", await mocContracts.mocImpl.getPTCac());
+                assertPrec("1.0114", await mocImpl.getPTCac());
               });
               describe("AND EMA is updated", function () {
                 /*
@@ -580,11 +636,11 @@ const mintTPBehavior = function () {
                 => TP available to mint = 93411.93
                 */
                 beforeEach(async function () {
-                  await mineUpTo(await mocContracts.mocImpl.nextEmaCalculation());
-                  await mocContracts.mocImpl.updateEmas();
+                  await mineUpTo(await mocImpl.nextEmaCalculation());
+                  await mocImpl.updateEmas();
                 });
                 it("THEN there are 93411.93 TP available to mint", async function () {
-                  assertPrec("93411.939256558090641158", await mocContracts.mocImpl.getTPAvailableToMint(TP_0));
+                  assertPrec("93411.939256558090641158", await mocImpl.getTPAvailableToMint(TP_0));
                 });
               });
             });
@@ -593,7 +649,7 @@ const mintTPBehavior = function () {
 
         describe("AND alice asks for mint TP 1, which ctargemaTP is smaller than ctargemaCA", function () {
           it("THEN there are 4220.76 TP 1 available to mint", async function () {
-            assertPrec("4220.766687516754535893", await mocContracts.mocImpl.getTPAvailableToMint(TP_1));
+            assertPrec("4220.766687516754535893", await mocImpl.getTPAvailableToMint(TP_1));
           });
           describe("WHEN Alice tries to mint 4220.77 TP1", function () {
             /*  
@@ -608,7 +664,7 @@ const mintTPBehavior = function () {
             it("THEN tx reverts because there is not enough TP1 to mint", async function () {
               await expect(
                 mocFunctions.mintTP({ i: TP_1, from: alice, qTP: "4220.766687516754535894" }),
-              ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
+              ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
             });
           });
           describe("WHEN Alice mints 4220.76 TP1", function () {
@@ -632,13 +688,13 @@ const mintTPBehavior = function () {
               assertPrec("4220.766687516754535893", diff);
             });
             it("THEN coverage is still above ctargemaCA", async function () {
-              const actualCoverage = await mocContracts.mocImpl.getCglb();
-              const actualCtargemaCA = await mocContracts.mocImpl.calcCtargemaCA();
+              const actualCoverage = await mocImpl.getCglb();
+              const actualCtargemaCA = await mocImpl.calcCtargemaCA();
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0");
-              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_1), "TP 1");
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1");
             });
           });
           describe("WHEN alice mints 525 TP 1", function () {
@@ -657,7 +713,7 @@ const mintTPBehavior = function () {
             let mocFeeFlowPrevACBalance: Balance;
             beforeEach(async function () {
               alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-              mocPrevACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+              mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
               mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
               tx = await mocFunctions.mintTP({ i: TP_1, from: alice, qTP: 525, qACmax: 105 });
             });
@@ -665,7 +721,7 @@ const mintTPBehavior = function () {
               assertPrec(525, await mocFunctions.tpBalanceOf(TP_1, alice));
             });
             it("THEN Moc balance increase 100 AC", async function () {
-              const mocActualACBalance = await mocFunctions.acBalanceOf(mocContracts.mocImpl.address);
+              const mocActualACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
               const diff = mocActualACBalance.sub(mocPrevACBalance);
               assertPrec(100, diff);
             });
@@ -687,23 +743,17 @@ const mintTPBehavior = function () {
               // qAC: 100 AC + 0.1% for Moc Fee Flow
               // qACfee: 0.1% AC
               // qFeeToken: 0
+              // qACVendorMarkup: 0
+              // qFeeTokenVendorMarkup: 0
               await expect(tx)
-                .to.emit(mocContracts.mocImpl, "TPMinted")
-                .withArgs(
-                  TP_1,
-                  mocContracts.mocWrapper?.address || alice,
-                  alice,
-                  pEth(525),
-                  pEth(100 * 1.001),
-                  pEth(100 * 0.001),
-                  0,
-                );
+                .to.emit(mocImpl, "TPMinted")
+                .withArgs(TP_1, operator, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0);
             });
           });
         });
         describe("AND alice asks for mint TP 4, which ctargemaTP is greater than ctargemaCA", function () {
           it("THEN there are 2545.85 TP 4 available to mint", async function () {
-            assertPrec("2545.859271835502735400", await mocContracts.mocImpl.getTPAvailableToMint(TP_4));
+            assertPrec("2545.859271835502735400", await mocImpl.getTPAvailableToMint(TP_4));
           });
           describe("WHEN Alice tries to mint 2545.86 TP4", function () {
             /*  
@@ -718,7 +768,7 @@ const mintTPBehavior = function () {
             it("THEN tx reverts because there is not enough TP4 to mint", async function () {
               await expect(
                 mocFunctions.mintTP({ i: TP_4, from: alice, qTP: "2545.859271835502735401" }),
-              ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
+              ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_TP_TO_MINT);
             });
           });
           describe("WHEN Alice mints 2545.85 TP4", function () {
@@ -742,25 +792,25 @@ const mintTPBehavior = function () {
               assertPrec("2545.859271835502735400", diff);
             });
             it("THEN coverage is still above ctargemaCA", async function () {
-              const actualCoverage = await mocContracts.mocImpl.getCglb();
-              const actualCtargemaCA = await mocContracts.mocImpl.calcCtargemaCA();
+              const actualCoverage = await mocImpl.getCglb();
+              const actualCtargemaCA = await mocImpl.calcCtargemaCA();
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 4 available to mint", async function () {
-              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_0), "TP 0");
-              assertPrec(0, await mocContracts.mocImpl.getTPAvailableToMint(TP_4), "TP 4");
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_4), "TP 4");
             });
           });
         });
         describe("AND Pegged Token has been revaluated making lckAC bigger than total AC in the protocol", function () {
-          // this test is to check that tx doesn´t fail because underflow doing totalACAvailable - lckAC
+          // this test is to check that tx doesn't fail because underflow doing totalACAvailable - lckAC
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, "0.00000001");
           });
           it("THEN tx reverts because coverage is below the protected threshold", async function () {
-            expect((await mocContracts.mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
+            expect((await mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
             await expect(mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
-              mocContracts.mocImpl,
+              mocImpl,
               ERRORS.LOW_COVERAGE,
             );
           });
@@ -776,7 +826,7 @@ const mintTPBehavior = function () {
           // mint FeeToken to alice
           await mocContracts.feeToken.mint(alice, pEth(50));
           // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocContracts.mocWrapper?.address || mocContracts.mocImpl.address;
+          const spender = mocContracts.mocWrapper?.address || mocImpl.address;
           await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
 
           // initialize previous balances
@@ -799,7 +849,7 @@ const mintTPBehavior = function () {
             const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
             assertPrec(2.5, diff);
           });
-          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+          it("THEN Moc Fee Flow AC balance doesn't change", async function () {
             const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
             assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
           });
@@ -816,17 +866,11 @@ const mintTPBehavior = function () {
             // qAC: 100 AC
             // qACfee: 0 AC
             // qFeeToken: 100 (5% * 50%)
+            // qACVendorMarkup: 0
+            // qFeeTokenVendorMarkup: 0
             await expect(tx)
-              .to.emit(mocContracts.mocImpl, "TPMinted")
-              .withArgs(
-                TP_0,
-                mocContracts.mocWrapper?.address || alice,
-                alice,
-                pEth(23500),
-                pEth(100),
-                0,
-                pEth(100 * 0.05 * 0.5),
-              );
+              .to.emit(mocImpl, "TPMinted")
+              .withArgs(TP_0, operator, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
           });
         });
         describe("WHEN alice mints 23500 TP to bob", function () {
@@ -843,7 +887,7 @@ const mintTPBehavior = function () {
             const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
             assertPrec(2.5, diff);
           });
-          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+          it("THEN Moc Fee Flow AC balance doesn't change", async function () {
             const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
             assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
           });
@@ -860,17 +904,11 @@ const mintTPBehavior = function () {
             // qAC: 100 AC
             // qACfee: 0 AC
             // qFeeToken: 100 (5% * 50%)
+            // qACVendorMarkup: 0
+            // qFeeTokenVendorMarkup: 0
             await expect(tx)
-              .to.emit(mocContracts.mocImpl, "TPMinted")
-              .withArgs(
-                TP_0,
-                mocContracts.mocWrapper?.address || alice,
-                bob,
-                pEth(23500),
-                pEth(100),
-                0,
-                pEth(100 * 0.05 * 0.5),
-              );
+              .to.emit(mocImpl, "TPMinted")
+              .withArgs(TP_0, operator, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
           });
         });
       });

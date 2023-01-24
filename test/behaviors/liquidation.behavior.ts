@@ -133,6 +133,8 @@ const shouldBehaveLikeLiquidable = function () {
             // qTP: 10 TP
             // qAC: 0.43333... AC
             // qACfee: 0 AC
+            // qACVendorMarkup: 0
+            // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TPRedeemed")
               .withArgs(
@@ -141,6 +143,8 @@ const shouldBehaveLikeLiquidable = function () {
                 this.mocContracts.mocWrapper?.address || otherUser,
                 pEth(10),
                 "43333333333333333247",
+                0,
+                0,
                 0,
                 0,
               );

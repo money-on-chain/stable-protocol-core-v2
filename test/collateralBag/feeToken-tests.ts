@@ -4,7 +4,7 @@ import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { feeTokenBehavior } from "../behaviors/feeToken.behavior";
 import { pEth, tpParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
-import { ERC20Mock, ERC20Mock__factory, MocCARC20, MocCAWrapper } from "../../typechain";
+import { ERC20Mock, MocCARC20, MocCAWrapper } from "../../typechain";
 import { fixtureDeployedMocCABag } from "./fixture";
 
 let mocWrapper: MocCAWrapper;
@@ -19,8 +19,7 @@ describe("Feature: MocCABag Fee Token", function () {
       const fixtureDeploy = fixtureDeployedMocCABag(tpParams.length, tpParams);
       this.mocContracts = await fixtureDeploy();
       this.mocFunctions = await mocFunctionsCABag(this.mocContracts);
-      ({ mocWrapper, mocImpl } = this.mocContracts);
-      feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), ethers.provider.getSigner());
+      ({ mocWrapper, mocImpl, feeToken } = this.mocContracts);
     });
     feeTokenBehavior();
     describe("AND alice has 10 Fee Token and approve them to Moc Wrapper", function () {

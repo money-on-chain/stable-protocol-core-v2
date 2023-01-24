@@ -31,6 +31,7 @@ contract EchidnaMocWrapperTester {
     MocTC internal tcToken;
     IPriceProvider internal feeTokenPriceProvider;
     ERC20Mock internal acToken;
+    MocVendors internal mocVendors;
     address internal mocCoreExpansion;
     address internal mocFeeFlow;
     address internal mocAppreciationBeneficiary;
@@ -52,6 +53,10 @@ contract EchidnaMocWrapperTester {
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
         mocWrapper = MocCAWrapper(_deployProxy(address(new MocCAWrapper())));
         mocCoreExpansion = address(new MocCoreExpansion());
+        mocVendors = MocVendors(_deployProxy(address(new MocVendors())));
+
+        // initialize Vendors
+        mocVendors.initialize(/*vendorGuardian */ msg.sender, address(governor), /*pauserAddress*/ msg.sender);
 
         // initialize Collateral Token
         tcToken.initialize("TCToken", "TC", address(mocCARC20), governor);
@@ -84,7 +89,8 @@ contract EchidnaMocWrapperTester {
             governorAddress: address(governor),
             pauserAddress: msg.sender,
             mocCoreExpansion: mocCoreExpansion,
-            emaCalculationBlockSpan: 1 days
+            emaCalculationBlockSpan: 1 days,
+            mocVendors: address(mocVendors)
         });
         MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
             initializeCoreParams: initializeCoreParams,

@@ -33,6 +33,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");
   const WCAToken = await ethers.getContractAt("MocRC20", deployedWCAContract.address, signer);
 
+  const deployedMocVendors = await deployments.getOrNull("MocVendorsCABagProxy");
+  if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
+  const MocVendors = await ethers.getContractAt("MocVendors", deployedMocVendors.address, signer);
+
   let {
     governorAddress,
     pauserAddress,
@@ -40,6 +44,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     feeTokenPriceProviderAddress,
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
+    vendorsGuardianAddress,
   } = mocAddresses;
 
   // for tests only, we deploy necessary Mocks
@@ -68,6 +73,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         gasLimit,
       },
     ),
+  );
+  await waitForTxConfirmation(
+    MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
+      gasLimit,
+    }),
   );
   await waitForTxConfirmation(
     WCAToken.initialize(
@@ -110,6 +120,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           pauserAddress,
           mocCoreExpansion: deployedMocExpansionContract.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: MocVendors.address,
         },
         acTokenAddress: WCAToken.address,
       },
@@ -133,4 +144,4 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CABag"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCABag"];
-deployFunc.dependencies = ["MocCABag", "CollateralTokenCABag", "MocCAWrapper", "WrappedCollateralAsset"];
+deployFunc.dependencies = ["MocCABag", "CollateralTokenCABag", "MocCAWrapper", "WrappedCollateralAsset", "MocVendors"];

@@ -57,6 +57,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
           pauserAddress: deployer,
           mocCoreExpansion: mocCoreExpansion.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: deployer, // Not relevant for this test
         },
         acTokenAddress: deployer,
       };

@@ -56,6 +56,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
         pauserAddress: deployer,
         mocCoreExpansion: mocCoreExpansion.address,
         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+        mocVendors: deployer, // Not relevant for this test
       };
       const mocImpl = MocCACoinbase__factory.connect(mocProxy.address, ethers.provider.getSigner());
       await mocImpl.initialize(initParams, { gasLimit: GAS_LIMIT_PATCH });
