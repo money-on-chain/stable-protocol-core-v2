@@ -8,12 +8,13 @@ const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDepl
 
 const { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
 
-export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address) {
+export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocCoreExpansion: Address) {
   return ({
     mocGovernorAddress = governorAddress,
     mocPauserAddress = pauserAddress,
     wcaTokenAddress = wcaToken,
     mocTCAddress = mocTC,
+    mocCoreExpansionAddress = mocCoreExpansion,
     feeFlowAddress = mocFeeFlowAddress,
     appreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress,
     protThrld = coreParams.protThrld,
@@ -35,6 +36,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocPauserAddress?: Address;
     wcaTokenAddress?: Address;
     mocTCAddress?: Address;
+    mocCoreExpansionAddress?: Address;
     feeFlowAddress?: Address;
     appreciationBeneficiaryAddress?: Address;
     protThrld?: BigNumberish;
@@ -70,11 +72,12 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           mintTCandTPFee,
           successFee,
           appreciationFactor,
+          bes,
         },
         governorAddress: mocGovernorAddress,
         pauserAddress: mocPauserAddress,
+        mocCoreExpansion: mocCoreExpansionAddress,
         emaCalculationBlockSpan,
-        bes,
       },
       acTokenAddress: wcaTokenAddress,
     });

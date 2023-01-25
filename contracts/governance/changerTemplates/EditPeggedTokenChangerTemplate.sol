@@ -56,7 +56,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
         (, uint256 emaSf) = mocCore.tpEma(i);
 
         // Only edits the priceProvider, all the other values are taken from the contracts itself
-        peggedTokenParams = MocCore.PeggedTokenParams(
+        peggedTokenParams = MocBaseBucket.PeggedTokenParams(
             // tpTokenAddress
             address(tpToEdit),
             // priceProviderAddress

@@ -38,6 +38,7 @@
     "hardhat-docgen": "1.3.0",
     "hardhat-erc1820": "0.1.0",
     "hardhat-preprocessor": "0.1.5",
+    "hardhat-storage-layout-diff": "0.0.4",
     "husky": "8.0.2",
     "memoizee": "0.4.15",
     "prettier": "2.7.1",
@@ -96,6 +97,7 @@
     "mythril:Greeter": "sudo docker run -it -v $(pwd):/tmp mythril/myth -v4 a -f /tmp/bytecodes/Greeter --max-depth 50",
     "mythril": "npx ts-node ./scripts/bytecodes-extractor.ts && npm run mythril:Greeter",
     "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
+    "storage-layout-compare:MocCoreExpansion": "hardhat storage-layout-compare --a contracts/core/MocCore.sol:MocCore --b contracts/core/MocCoreExpansion.sol:MocCoreExpansion",
     "export": "hardhat export-artifacts export/artifacts && tsc && npm run copy-dist",
     "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy && copyfiles -u 1 scripts/types.ts export/types"
   }

@@ -33,7 +33,12 @@ export const fixtureDeployGovernance = memoizee(
       });
 
       const mockWCATokenAddress = deployer;
-      await mocInitialize(mocCARC20, mockWCATokenAddress, mocTC.address)({ mocGovernorAddress: governor.address });
+      await mocInitialize(
+        mocCARC20,
+        mockWCATokenAddress,
+        mocTC.address,
+        mocTC.address, // TODO: use the real one
+      )({ mocGovernorAddress: governor.address });
 
       return {
         governor,

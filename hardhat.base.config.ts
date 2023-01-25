@@ -17,6 +17,7 @@ import "solidity-coverage";
 import "hardhat-storage-layout";
 import "hardhat-erc1820";
 import { DeployParameters } from "./scripts/types";
+import "hardhat-storage-layout-diff";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 

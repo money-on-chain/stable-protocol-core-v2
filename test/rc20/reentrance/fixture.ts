@@ -16,12 +16,14 @@ export const fixtureDeployedMocRC777 = memoizee(
       await deployments.fixture();
       const { deployer } = await getNamedAccounts();
 
-      const [mocFactory, erc1967ProxyProxyFactory] = await Promise.all([
+      const [mocCoreFactory, mocExpansionFactory, erc1967ProxyProxyFactory] = await Promise.all([
         ethers.getContractFactory("MocCARC20"),
+        ethers.getContractFactory("MocCoreExpansion"),
         ethers.getContractFactory("ERC1967Proxy"),
       ]);
 
-      const mocCARC20 = await mocFactory.deploy();
+      const mocCARC20 = await mocCoreFactory.deploy();
+      const mocCoreExpansion = await mocExpansionFactory.deploy();
       const deployMocProxy = await erc1967ProxyProxyFactory.deploy(mocCARC20.address, "0x");
       const mocImpl = MocCARC20__factory.connect(deployMocProxy.address, ethers.provider.getSigner());
 
@@ -43,6 +45,7 @@ export const fixtureDeployedMocRC777 = memoizee(
         mocImpl,
         collateralAsset.address,
         collateralToken.address,
+        mocCoreExpansion.address,
       )({ mocGovernorAddress: governorAddress });
 
       await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);

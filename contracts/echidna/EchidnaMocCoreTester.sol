@@ -2,6 +2,8 @@
 pragma solidity 0.8.16;
 
 import "../collateral/rc20/MocCARC20.sol";
+import "../core/MocCoreExpansion.sol";
+
 import "../tokens/MocTC.sol";
 import "../tokens/MocRC20.sol";
 import "../mocks/upgradeability/GovernorMock.sol";
@@ -24,6 +26,7 @@ contract EchidnaMocCoreTester {
     GovernorMock internal governor;
     MocTC internal tcToken;
     ERC20Mock internal acToken;
+    address internal mocCoreExpansion;
     address internal mocFeeFlow;
     address internal mocAppreciationBeneficiary;
 
@@ -54,6 +57,7 @@ contract EchidnaMocCoreTester {
         acToken = new ERC20Mock();
         tcToken = MocTC(_deployProxy(address(new MocTC())));
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
+        mocCoreExpansion = address(new MocCoreExpansion());
 
         // initialize Collateral Token
         tcToken.initialize("TCToken", "TC", address(mocCARC20), governor);
@@ -75,14 +79,15 @@ contract EchidnaMocCoreTester {
                 redeemTCandTPFee: (8 * PRECISION) / 100, // 8%
                 mintTCandTPFee: (8 * PRECISION) / 100, // 8%
                 successFee: (1 * PRECISION) / 10, // 10%
-                appreciationFactor: (5 * PRECISION) / 10 // 50%
+                appreciationFactor: (5 * PRECISION) / 10, // 50%
+                bes: 30 days
             });
         MocCore.InitializeCoreParams memory initializeCoreParams = MocCore.InitializeCoreParams({
             initializeBaseBucketParams: initializeBaseBucketParams,
             governorAddress: address(governor),
             pauserAddress: msg.sender,
-            emaCalculationBlockSpan: 1 days,
-            bes: 30 days
+            mocCoreExpansion: mocCoreExpansion,
+            emaCalculationBlockSpan: 1 days
         });
         MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
             initializeCoreParams: initializeCoreParams,
@@ -91,7 +96,7 @@ contract EchidnaMocCoreTester {
         mocCARC20.initialize(initializeParams);
 
         // add a Pegged Token
-        MocCore.PeggedTokenParams memory peggedTokenParams = MocCore.PeggedTokenParams({
+        MocCore.PeggedTokenParams memory peggedTokenParams = MocBaseBucket.PeggedTokenParams({
             tpTokenAddress: address(0),
             priceProviderAddress: address(0),
             tpCtarg: 5 * PRECISION,

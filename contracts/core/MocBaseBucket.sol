@@ -5,17 +5,29 @@ import "../interfaces/IMocRC20.sol";
 import "../tokens/MocTC.sol";
 import "../interfaces/IPriceProvider.sol";
 import "../governance/MocUpgradable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
  * @notice MocBaseBucket holds Bucket Zero state, both for the Collateral Bag and PeggedTokens Items.
  * @dev Abstracts all rw operations on the main bucket and expose all calculations relative to its state.
  */
-abstract contract MocBaseBucket is MocUpgradable {
+abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // ------- Events -------
+    event TPRedeemed(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_
+    );
     event ContractLiquidated();
+    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
 
     // ------- Custom Errors -------
+    error PeggedTokenAlreadyAdded();
+    error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error MissingProviderPrice(address priceProviderAddress_);
     error TransferFailed();
     error Liquidated();
@@ -35,6 +47,23 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 index;
         // true if Pegged Token exists
         bool exists;
+    }
+
+    struct PeggedTokenParams {
+        // Pegged Token contract address to add
+        address tpTokenAddress;
+        // priceProviderAddress Pegged Token price provider contract address
+        address priceProviderAddress;
+        // Pegged Token target coverage [PREC]
+        uint256 tpCtarg;
+        // additional fee pct applied on mint [PREC]
+        uint256 tpMintFee;
+        // additional fee pct applied on redeem [PREC]
+        uint256 tpRedeemFee;
+        // initial Pegged Token exponential moving average [PREC]
+        uint256 tpEma;
+        // Pegged Token smoothing factor [PREC]
+        uint256 tpEmaSf;
     }
 
     struct InitializeBaseBucketParams {
@@ -70,6 +99,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         // pct of the gain because Pegged Tokens devaluation that is returned
         // in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
         uint256 appreciationFactor;
+        // number of blocks between settlements
+        uint256 bes;
     }
 
     // ------- Storage -------
@@ -144,6 +175,13 @@ abstract contract MocBaseBucket is MocUpgradable {
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
 
+    // ------- Storage Settlement -------
+
+    // number of blocks between settlements
+    uint256 public bes;
+    // next settlement block
+    uint256 public bns;
+
     // ------- Storage Success Fee Tracking -------
 
     // profit and loss in collateral asset for each Pegged Token because its devaluation [N]
@@ -180,6 +218,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
+     *        bes number of blocks between settlements
      */
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
@@ -211,6 +250,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         mintTCandTPFee = initializeBaseBucketParams_.mintTCandTPFee;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
+        bes = initializeBaseBucketParams_.bes;
+        bns = block.number + initializeBaseBucketParams_.bes;
         liquidated = false;
         liqEnabled = false;
     }

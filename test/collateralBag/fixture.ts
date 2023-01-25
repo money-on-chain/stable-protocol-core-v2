@@ -4,6 +4,8 @@ import {
   ERC20Mock,
   MocCARC20,
   MocCARC20__factory,
+  MocCoreExpansion,
+  MocCoreExpansion__factory,
   MocCAWrapper,
   MocCAWrapper__factory,
   MocRC20,
@@ -16,6 +18,7 @@ import { deployAndAddAssets, deployAndAddPeggedTokens } from "../helpers/utils";
 
 export type MoCContracts = {
   mocImpl: MocCARC20;
+  mocCoreExpansion: MocCoreExpansion;
   mocWrapper: MocCAWrapper;
   mocCollateralToken: MocTC;
   mocPeggedTokens: MocRC20[];
@@ -35,6 +38,13 @@ export const fixtureDeployedMocCABag = memoizee(
       if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
       const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
+      const deployedMocExpansionContract = await deployments.getOrNull("MocCABagExpansion");
+      if (!deployedMocExpansionContract) throw new Error("No MocCABagExpansion deployed.");
+      const mocCoreExpansion: MocCoreExpansion = MocCoreExpansion__factory.connect(
+        deployedMocExpansionContract.address,
+        signer,
+      );
+
       const deployedMocCAWrapperContract = await deployments.getOrNull("MocCAWrapperProxy");
       if (!deployedMocCAWrapperContract) throw new Error("No MocCAWrapper deployed.");
       const mocWrapper: MocCAWrapper = MocCAWrapper__factory.connect(deployedMocCAWrapperContract.address, signer);
@@ -53,6 +63,7 @@ export const fixtureDeployedMocCABag = memoizee(
 
       return {
         mocImpl,
+        mocCoreExpansion,
         mocWrapper,
         mocCollateralToken,
         mocPeggedTokens,

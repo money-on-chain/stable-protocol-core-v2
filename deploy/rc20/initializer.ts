@@ -14,6 +14,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
   const mocCARC20 = await ethers.getContractAt("MocCARC20", deployedMocContract.address, signer);
 
+  const deployedMocExpansionContract = await deployments.getOrNull("MocCARC20Expansion");
+  if (!deployedMocExpansionContract) throw new Error("No MocCARC20Expansion deployed.");
+
   const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
   const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
@@ -69,11 +72,12 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             mintTCandTPFee: feeParams.mintTCandTPFee,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
+            bes: settlementParams.bes,
           },
           governorAddress,
           pauserAddress,
+          mocCoreExpansion: deployedMocExpansionContract.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-          bes: settlementParams.bes,
         },
         acTokenAddress: collateralAssetToken,
       },

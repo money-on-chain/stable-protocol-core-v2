@@ -2,7 +2,6 @@
 pragma solidity 0.8.16;
 
 import "../../core/MocCore.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title MocCACoinbase: Moc Collateral Asset Coinbase

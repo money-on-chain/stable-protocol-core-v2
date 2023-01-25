@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../interfaces/IMocRC20.sol";
-import "./MocSettlement.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "./MocStorage.sol";
+import "./MocCoreExpansion.sol";
 
 /**
  * @title MocCore
  * @notice MocCore nucleates all the basic MoC functionality and tool set. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
-abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
+abstract contract MocCore is MocStorage {
     // ------- Events -------
     event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
     event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
     event TPMinted(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_
-    );
-    event TPRedeemed(
         uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
@@ -73,19 +64,18 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         uint256 qAC_,
         uint256 qACfee_
     );
-    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
+    event SettlementExecuted();
     // ------- Custom Errors -------
-    error PeggedTokenAlreadyAdded();
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
-    error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
     error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
     error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
+    error MissingBlocksToSettlement();
     // ------- Structs -------
 
     struct InitializeCoreParams {
@@ -94,28 +84,15 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         address governorAddress;
         // The address that is authorized to pause this contract
         address pauserAddress;
+        // Moc Core Expansion contract address
+        address mocCoreExpansion;
         // amount of blocks to wait between Pegged ema calculation
         uint256 emaCalculationBlockSpan;
-        // number of blocks between settlements
-        uint256 bes;
     }
 
-    struct PeggedTokenParams {
-        // Pegged Token contract address to add
-        address tpTokenAddress;
-        // priceProviderAddress Pegged Token price provider contract address
-        address priceProviderAddress;
-        // Pegged Token target coverage [PREC]
-        uint256 tpCtarg;
-        // additional fee pct applied on mint [PREC]
-        uint256 tpMintFee;
-        // additional fee pct applied on redeem [PREC]
-        uint256 tpRedeemFee;
-        // initial Pegged Token exponential moving average [PREC]
-        uint256 tpEma;
-        // Pegged Token smoothing factor [PREC]
-        uint256 tpEmaSf;
-    }
+    // ------- Storage -------
+    // Moc Core Expansion contract address, used to expand 24kb size limit
+    address internal mocCoreExpansion;
 
     // ------- Initializer -------
     /**
@@ -123,7 +100,8 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
      * @dev this function must be execute by the AC implementation at initialization
      * @param initializeCoreParams_ contract initializer params
      *        governorAddress The address that will define when a change contract is authorized
-     *        pauserAddress_ The address that is authorized to pause this contract
+     *        pauserAddress The address that is authorized to pause this contract
+     *        mocCoreExpansion Moc Core Expansion contract address
      *        tcTokenAddress Collateral Token contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
@@ -137,13 +115,12 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]]
      *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
-     *        bes number of blocks between settlements
      */
     function __MocCore_init(InitializeCoreParams calldata initializeCoreParams_) internal onlyInitializing {
+        mocCoreExpansion = initializeCoreParams_.mocCoreExpansion;
         __MocUpgradable_init(initializeCoreParams_.governorAddress, initializeCoreParams_.pauserAddress);
         __MocBaseBucket_init_unchained(initializeCoreParams_.initializeBaseBucketParams);
         __MocEma_init_unchained(initializeCoreParams_.emaCalculationBlockSpan);
-        __MocSettlement_init_unchained(initializeCoreParams_.bes);
     }
 
     // ------- Internal Functions -------
@@ -608,6 +585,7 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
     /**
      * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
      * the equivalent AC given the liquidation frozen price.
+     * @dev This function is implemented in MocCoreExpansion but with this contract context
      * @param i_ Pegged Token index
      * @param sender_ address owner of the TP to be redeemed
      * @param recipient_ address who receives the AC
@@ -618,20 +596,14 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         address sender_,
         address recipient_
     ) internal notPaused returns (uint256 qACRedeemed) {
-        if (!liquidated) revert OnlyWhenLiquidated();
-        uint256 qTP = tpTokens[i_].balanceOf(sender_);
-        if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
-        // [PREC]
-        uint256 liqPACtp = tpLiqPrices[i_];
-        // [PREC] = [N] * [PREC] / [PREC]
-        qACRedeemed = _divPrec(qTP, liqPACtp);
-        // Given rounding errors, the last redeemer might receive a little less
-        if (acBalanceOf(address(this)) < qACRedeemed) qACRedeemed = acBalanceOf(address(this));
-        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0);
-        // burn qTP from the sender
-        tpTokens[i_].burn(sender_, qTP);
+        bytes memory payload = abi.encodeCall(
+            MocCoreExpansion(mocCoreExpansion).liqRedeemTPTo,
+            (i_, sender_, recipient_, acBalanceOf(address(this)))
+        );
+        qACRedeemed = abi.decode(Address.functionDelegateCall(mocCoreExpansion, payload), (uint256));
         // transfer qAC to the recipient, reverts if fail
         acTransfer(recipient_, qACRedeemed);
+        return qACRedeemed;
     }
 
     /**
@@ -995,21 +967,36 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         emit SuccessFeeDistributed(mocGain, tpToMint);
     }
 
-    // ------- Only Settlement Functions -------
+    // ------- External Functions -------
 
     /**
      * @notice this function is executed during settlement.
      *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
-    function _execSettlement() internal override {
+
+    function execSettlement() external notPaused {
+        // check if it is in the corresponding block to execute the settlement
+        if (block.number < bns) revert MissingBlocksToSettlement();
+        bns = block.number + bes;
+        emit SettlementExecuted();
         _distributeSuccessFee();
     }
 
     // ------- Only Authorized Changer Functions -------
 
     /**
+     * @dev sets Moc Core Expansion contract address
+     * @param mocCoreExpansion_ moc core expansion new contract address
+     */
+    function setMocCoreExpansion(address mocCoreExpansion_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        mocCoreExpansion = mocCoreExpansion_;
+    }
+
+    /**
      * @notice add a Pegged Token to the protocol
      * @dev Note that the ema value, should consider `nextEmaCalculation`
+     *  This function is implemented in MocCoreExpansion but with this contract context
      * @param peggedTokenParams_ params of Pegged Token to add
      * @dev tpTokenAddress Pegged Token contract address to add
      *      priceProviderAddress Pegged Token price provider contract address
@@ -1026,37 +1013,14 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
      *  for this contract
      */
     function addPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
-        IMocRC20 tpToken = IMocRC20(peggedTokenParams_.tpTokenAddress);
-        // Verifies it has the right roles over this TP
-        if (!tpToken.hasFullRoles(address(this))) revert InvalidAddress();
-
-        IPriceProvider priceProvider = IPriceProvider(peggedTokenParams_.priceProviderAddress);
-        if (peggedTokenIndex[address(tpToken)].exists) revert PeggedTokenAlreadyAdded();
-        uint256 newTPindex = uint256(tpTokens.length);
-        peggedTokenIndex[address(tpToken)] = PeggedTokenIndex({ index: newTPindex, exists: true });
-
-        // set Pegged Token address
-        tpTokens.push(tpToken);
-        // set peg container item
-        pegContainer.push(PegContainerItem({ nTP: 0, priceProvider: priceProvider }));
-        // set target coverage
-        tpCtarg.push(peggedTokenParams_.tpCtarg);
-        // set mint fee pct
-        tpMintFee.push(peggedTokenParams_.tpMintFee);
-        // set redeem fee pct
-        tpRedeemFee.push(peggedTokenParams_.tpRedeemFee);
-        // set EMA initial value and smoothing factor
-        tpEma.push(EmaItem({ ema: peggedTokenParams_.tpEma, sf: peggedTokenParams_.tpEmaSf }));
-        tpiou.push();
-        // reverts if price provider is invalid
-        pACtpLstop.push(getPACtp(newTPindex));
-        // emit the event
-        emit PeggedTokenChange(newTPindex, peggedTokenParams_);
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).addPeggedToken, (peggedTokenParams_));
+        Address.functionDelegateCall(mocCoreExpansion, payload);
     }
 
     /**
      * @notice modifies a Pegged Token of the protocol
      * @dev Note that the ema value, should consider `nextEmaCalculation`
+     *  This function is implemented in MocCoreExpansion but with this contract context
      * @param peggedTokenParams_ params of Pegged Token to add
      * @dev tpTokenAddress Pegged Token contract address to identify the token to edit
      *      priceProviderAddress Pegged Token price provider contract address
@@ -1072,26 +1036,8 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
      * - the tpTokenAddress must exists
      */
     function editPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
-        PeggedTokenIndex memory ptIndex = peggedTokenIndex[peggedTokenParams_.tpTokenAddress];
-        if (!ptIndex.exists) revert InvalidAddress();
-        uint256 i = ptIndex.index;
-        // if being edited, verifies it is a valid priceProvider
-        if (peggedTokenParams_.priceProviderAddress != address(pegContainer[i].priceProvider)) {
-            IPriceProvider priceProvider = IPriceProvider(peggedTokenParams_.priceProviderAddress);
-            (, bool has) = priceProvider.peek();
-            if (!has) revert InvalidAddress();
-            pegContainer[i].priceProvider = priceProvider;
-        }
-        // set target coverage
-        tpCtarg[i] = peggedTokenParams_.tpCtarg;
-        // set mint fee pct
-        tpMintFee[i] = peggedTokenParams_.tpMintFee;
-        // set redeem fee pct
-        tpRedeemFee[i] = peggedTokenParams_.tpRedeemFee;
-        // set EMA initial value and smoothing factor
-        tpEma[i].sf = peggedTokenParams_.tpEmaSf;
-        // emit the event
-        emit PeggedTokenChange(i, peggedTokenParams_);
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).editPeggedToken, (peggedTokenParams_));
+        Address.functionDelegateCall(mocCoreExpansion, payload);
     }
 
     // ------- Getters Functions -------
@@ -1172,6 +1118,21 @@ abstract contract MocCore is MocSettlement, ReentrancyGuardUpgradeable {
         uint256 qTP_
     ) external view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
         return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));
+    }
+
+    /**
+     * @notice get the number of blocks remaining for settlement
+     */
+    function getBts() external view returns (uint256) {
+        if (block.number >= bns) return 0;
+        return bns - block.number;
+    }
+
+    /**
+     * @param bes_ number of blocks between settlements
+     **/
+    function setBes(uint256 bes_) external onlyAuthorizedChanger {
+        bes = bes_;
     }
 
     /**

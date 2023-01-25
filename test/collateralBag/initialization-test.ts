@@ -1,7 +1,14 @@
 import { expect } from "chai";
 import hre, { deployments, ethers } from "hardhat";
 import { getNetworkDeployParams } from "../../scripts/utils";
-import { MocCARC20, MocCARC20__factory, MocCAWrapper, MocCAWrapper__factory, MocRC20 } from "../../typechain";
+import {
+  MocCARC20,
+  MocCoreExpansion,
+  MocCARC20__factory,
+  MocCAWrapper,
+  MocCAWrapper__factory,
+  MocRC20,
+} from "../../typechain";
 import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
 import { fixtureDeployedMocCABag } from "./fixture";
 import { mocInitialize } from "./initializers";
@@ -12,10 +19,17 @@ describe("Feature: MocCABag initialization", function () {
   let wcaToken: MocRC20;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
+  let mocCoreExpansion: MocCoreExpansion;
   const { governorAddress, pauserAddress } = getNetworkDeployParams(hre).mocAddresses;
   before(async () => {
-    ({ mocImpl: mocProxy, mocWrapper, mocCollateralToken, wcaToken } = await fixtureDeployedMocCABag(0)());
-    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address);
+    ({
+      mocImpl: mocProxy,
+      mocCoreExpansion,
+      mocWrapper,
+      mocCollateralToken,
+      wcaToken,
+    } = await fixtureDeployedMocCABag(0)());
+    mocInit = mocInitialize(mocProxy, wcaToken.address, mocCollateralToken.address, mocCoreExpansion.address);
   });
   describe("GIVEN a MocCABag implementation deployed", () => {
     describe("WHEN initialize mocProxy again", async () => {
@@ -31,7 +45,7 @@ describe("Feature: MocCABag initialization", function () {
           ethers.provider.getSigner(),
         );
         await expect(
-          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address)(),
+          mocInitialize(mocImplementation, wcaToken.address, mocCollateralToken.address, mocCoreExpansion.address)(),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
@@ -71,7 +85,7 @@ describe("Feature: MocCABag initialization", function () {
         adminAddress: proxy.address,
         governorAddress: await newMocImpl.governor(),
       });
-      newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address);
+      newMocInit = mocInitialize(newMocImpl, wcaToken.address, newMocTC.address, mocCoreExpansion.address);
     });
     describe("WHEN it is initialized with invalid TC token value", () => {
       it("THEN tx fails because Moc core hasn´t got full roles for that token", async () => {
