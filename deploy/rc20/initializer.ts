@@ -4,8 +4,7 @@ import { ethers } from "hardhat";
 import { addPeggedTokensAndChangeGovernor, getNetworkDeployParams, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployments, getNamedAccounts } = hre;
-  const { deployer } = await getNamedAccounts();
+  const { deployments } = hre;
   const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit } =
     getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
@@ -21,10 +20,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
   const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
 
-  //TODO: for live deployments we need to receive the Collateral Asset address
-  let collateralAssetToken: string = "";
-
   let {
+    collateralAssetAddress,
     governorAddress,
     pauserAddress,
     feeTokenAddress,
@@ -33,22 +30,16 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     mocAppreciationBeneficiaryAddress,
   } = mocAddresses;
 
-  // for tests we deploy a Collateral Asset and Governor Mock
+  // for tests and testnet we deploy a Governor Mock
   if (hre.network.tags.testnet || hre.network.tags.local) {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorAddress = (await governorMockFactory.deploy()).address;
-
-    const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
-      contract: "ERC20Mock",
-      from: deployer,
-      gasLimit,
-    });
-    collateralAssetToken = deployedERC20MockContract.address;
   }
 
-  // for tests we deploy a FeeToken mock and its price provider
+  // for tests we deploy a Collateral Asset mock, a FeeToken mock and its price provider
   if (hre.network.tags.local) {
     const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
+    collateralAssetAddress = (await rc20MockFactory.deploy()).address;
     feeTokenAddress = (await rc20MockFactory.deploy()).address;
 
     const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
@@ -98,7 +89,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           mocCoreExpansion: deployedMocExpansionContract.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         },
-        acTokenAddress: collateralAssetToken,
+        acTokenAddress: collateralAssetAddress!,
       },
       { gasLimit },
     ),
