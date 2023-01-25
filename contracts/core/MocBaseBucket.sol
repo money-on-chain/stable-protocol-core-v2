@@ -20,7 +20,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         address indexed recipient_,
         uint256 qTP_,
         uint256 qAC_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event ContractLiquidated();
     event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
@@ -67,6 +68,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     }
 
     struct InitializeBaseBucketParams {
+        // Fee Token contract address
+        address feeTokenAddress;
+        // Fee Token price provider address
+        address feeTokenPriceProviderAddress;
         // Collateral Token contract address
         address tcTokenAddress;
         // Moc Fee Flow contract address
@@ -93,6 +98,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 redeemTCandTPFee;
         // additional fee pct applied on mint Collateral Token and Pegged Token in one operation [PREC]
         uint256 mintTCandTPFee;
+        // pct applied on the top of the operation`s fee when using Fee Token as fee payment method [PREC]
+        // e.g. if tcMintFee = 1%, feeTokenPct = 50% => qFeeToken = 0.5%
+        uint256 feeTokenPct;
         // pct of the gain because Pegged Tokens devaluation that is transferred
         // in Collateral Asset to Moc Fee Flow during the settlement [PREC]
         uint256 successFee;
@@ -105,6 +113,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
 
     // ------- Storage -------
 
+    // Fee Token
+    IERC20 public feeToken;
+    // Fee Token price provider
+    IPriceProvider public feeTokenPriceProvider;
     // total amount of Collateral Asset held in the Collateral Bag
     // WARN: On RC20 implementation, this correlates with contract acBalance
     uint256 public nACcb;
@@ -151,6 +163,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     uint256 public redeemTCandTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // additional fee pct applied on mint Collateral Token and Pegged Token in one operation [PREC]
     uint256 public mintTCandTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // pct applied on the top of the operation`s fee when using Fee Token as fee payment method [PREC]
+    // e.g. if tcMintFee = 1%, FeeTokenPct = 50% => qFeeToken = 0.5%
+    uint256 public feeTokenPct; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // addition fee pct applied on Pegged Tokens mint [PREC]
     uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
@@ -201,7 +216,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     /**
      * @notice contract initializer
      * @param initializeBaseBucketParams_ contract initializer params
-     * @dev   tcTokenAddress Collateral Token contract address
+     * @dev   feeTokenAddress Fee Token contract address
+     *        feeTokenPriceProviderAddress Fee Token price provider contract address
+     *        tcTokenAddress Collateral Token contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
      *        protThrld protected coverage threshold [PREC]
@@ -214,6 +231,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      *        swapTCforTPFee additional fee pct applied on swap Collateral Token for a Pegged Token [PREC]
      *        redeemTCandTPFee additional fee pct applied on redeem Collateral Token and Pegged Token [PREC]
      *        mintTCandTPFee additional fee pct applied on mint Collateral Token and Pegged Token [PREC]
+     *        feeTokenPct pct applied on the top of the operation`s fee when using
+     *          Fee Token as fee payment method [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
@@ -232,7 +251,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         _checkLessThanOne(initializeBaseBucketParams_.swapTCforTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.redeemTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
+        _checkLessThanOne(initializeBaseBucketParams_.feeTokenPct);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
+        feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
+        feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
         // Verifies it has the right roles over this TC
         if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
@@ -248,6 +270,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         swapTCforTPFee = initializeBaseBucketParams_.swapTCforTPFee;
         redeemTCandTPFee = initializeBaseBucketParams_.redeemTCandTPFee;
         mintTCandTPFee = initializeBaseBucketParams_.mintTCandTPFee;
+        feeTokenPct = initializeBaseBucketParams_.feeTokenPct;
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
         bes = initializeBaseBucketParams_.bes;
@@ -624,9 +647,21 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      */
     function getPACtp(uint256 i_) public view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
-        (bytes32 price, bool has) = priceProvider.peek();
+        (uint256 price, bool has) = _peekPrice(priceProvider);
         if (!has) revert MissingProviderPrice(address(priceProvider));
-        return uint256(price);
+        return price;
+    }
+
+    /**
+     * @notice ask to a price provider for its token price
+     * @dev saves some contract size by using this function instead of calling the external directly
+     * @param priceProvider_ Pegged Token index
+     * @return price casted to uint256 [PREC]
+     * @return has true if has a valid price
+     */
+    function _peekPrice(IPriceProvider priceProvider_) internal view returns (uint256, bool) {
+        (bytes32 price, bool has) = priceProvider_.peek();
+        return (uint256(price), has);
     }
 
     /**
@@ -716,6 +751,17 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     }
 
     /**
+     * @dev sets the fee applied on the top of the operation`s fee when using Fee Token as fee payment method.
+     * @param feeTokenPct_ pct applied on the top of the operation`s fee when using Fee Token
+     *  as fee payment method [PREC]
+     *  e.g. if tcMintFee = 1%, FeeTokenPct = 50% => qFeeToken = 0.5%
+     *  0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+     */
+    function setFeeTokenPct(uint256 feeTokenPct_) external onlyAuthorizedChanger {
+        feeTokenPct = feeTokenPct_;
+    }
+
+    /**
      * @dev sets Moc Fee Flow contract address
      * @param mocFeeFlowAddress_ moc Fee Flow new contract address
      */
@@ -733,6 +779,24 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     ) external onlyAuthorizedChanger {
         // slither-disable-next-line missing-zero-check
         mocAppreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress_;
+    }
+
+    /**
+     * @dev sets Fee Token contract address
+     * @param mocFeeTokenAddress_ Fee Token new contract address
+     */
+    function setFeeTokenAddress(address mocFeeTokenAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        feeToken = IERC20(mocFeeTokenAddress_);
+    }
+
+    /**
+     * @dev sets Fee Token price provider contract address
+     * @param mocFeeTokenPriceProviderAddress_ Fee Token price provider new contract address
+     */
+    function setFeeTokenPriceProviderAddress(address mocFeeTokenPriceProviderAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        feeTokenPriceProvider = IPriceProvider(mocFeeTokenPriceProviderAddress_);
     }
 
     /**

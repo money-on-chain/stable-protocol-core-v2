@@ -50,10 +50,10 @@ const redeemTPBehavior = function () {
         });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
-        it("THEN tx reverts because the amount of TP is invalid", async function () {
+        it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {
           await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
-            ERRORS.INVALID_VALUE,
+            ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
           );
         });
       });
@@ -135,6 +135,7 @@ const redeemTPBehavior = function () {
           // qTP: 23500 TP
           // qAC: 100 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPRedeemed")
             .withArgs(
@@ -144,6 +145,7 @@ const redeemTPBehavior = function () {
               pEth(23500),
               pEth(95),
               pEth(100 * 0.05),
+              0,
             );
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
@@ -202,6 +204,7 @@ const redeemTPBehavior = function () {
           // qTP: 2350 TP
           // qAC: 10 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPRedeemed")
             .withArgs(
@@ -211,6 +214,7 @@ const redeemTPBehavior = function () {
               pEth(2350),
               pEth(9.5),
               pEth(10 * 0.05),
+              0,
             );
         });
       });
@@ -274,6 +278,7 @@ const redeemTPBehavior = function () {
             // qTP: 3000 TP
             // qAC: 10 AC - 5% for Moc Fee Flow
             // qACfee: 5% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPRedeemed")
               .withArgs(
@@ -283,6 +288,7 @@ const redeemTPBehavior = function () {
                 pEth(3000),
                 pEth(9.5),
                 pEth(10 * 0.05),
+                0,
               );
           });
           describe("AND Pegged Token has been devaluated to 1000", function () {
@@ -362,6 +368,7 @@ const redeemTPBehavior = function () {
             // qTP: 1000 TP
             // qAC: 10 AC - 5% for Moc Fee Flow
             // qACfee: 5% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPRedeemed")
               .withArgs(
@@ -371,6 +378,7 @@ const redeemTPBehavior = function () {
                 pEth(1000),
                 pEth(9.5),
                 pEth(10 * 0.05),
+                0,
               );
           });
           describe("AND Pegged Token has been devaluated to 1000", function () {

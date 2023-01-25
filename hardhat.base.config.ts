@@ -116,6 +116,7 @@ const config: HardhatUserConfig = {
           swapTCforTPFee: PCT_BASE.mul(1).div(100), // 1%
           redeemTCandTPFee: PCT_BASE.mul(8).div(100), // 8%
           mintTCandTPFee: PCT_BASE.mul(8).div(100), // 8%
+          feeTokenPct: PCT_BASE.mul(5).div(10), // 50%
         },
         ctParams: {
           name: "CollateralToken",
@@ -124,6 +125,8 @@ const config: HardhatUserConfig = {
         mocAddresses: {
           governorAddress: "0x26a00af444928d689dDEc7B4D17C0e4A8c9D407A",
           pauserAddress: "0x26a00aF444928D689DDec7B4D17C0e4a8c9d407b",
+          feeTokenAddress: "0x26a00AF444928d689DDeC7b4d17c0e4A8c9D4060",
+          feeTokenPriceProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
           mocFeeFlowAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
           mocAppreciationBeneficiaryAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
         },

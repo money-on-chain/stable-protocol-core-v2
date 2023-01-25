@@ -21,11 +21,11 @@ const mintTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ deployer, alice, bob } = await getNamedAccounts());
     });
-    describe("WHEN alice sends 0 Asset to mint TC", function () {
-      it("THEN tx reverts because the amount of AC is invalid", async function () {
+    describe("WHEN alice tries to mint 0 TC", function () {
+      it("TTHEN tx reverts because the amount of TC is too low and out of precision", async function () {
         await expect(mocFunctions.mintTC({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
           mocContracts.mocImpl,
-          ERRORS.INVALID_VALUE,
+          ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
         );
       });
     });
@@ -71,9 +71,10 @@ const mintTCBehavior = function () {
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow
         // qACfee: %5 AC
+        // qFeeToken: 0
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
-          .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05));
+          .withArgs(mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0);
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
         // from: Zero Address
@@ -145,9 +146,10 @@ const mintTCBehavior = function () {
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow
         // qACfee: %5 AC
+        // qFeeToken: 0
         await expect(tx)
           .to.emit(mocContracts.mocImpl, "TCMinted")
-          .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05));
+          .withArgs(mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0);
       });
     });
     describe("GIVEN 3000 TC and 100 TP are minted", function () {

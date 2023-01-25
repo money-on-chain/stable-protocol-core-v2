@@ -5,6 +5,7 @@ import "../../governance/MocUpgradable.sol";
 import "../rc20/MocCARC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper
@@ -95,6 +96,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
     error MissingProviderPrice(address priceProviderAddress_);
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
+    error InsufficientFeeTokenSent(uint256 qFeeTokenSent_, uint256 qFeeTokenNeeded_);
 
     // ------- Structs -------
     struct AssetIndex {
@@ -238,6 +240,43 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
     }
 
     /**
+     * @notice transfer Fee Tokens from the `sender_` to this contract
+     * @param sender_ address who executes the operation
+     * @return feeToken Fee Token contract
+     * @return qFeeTokenToSpend minimum between the `sender_` Fee Token balance and allowance
+     */
+    function _transferFeeTokenFromSender(address sender_) internal returns (IERC20 feeToken, uint256 qFeeTokenToSpend) {
+        feeToken = mocCore.feeToken();
+        qFeeTokenToSpend = Math.min(feeToken.allowance(sender_, address(this)), feeToken.balanceOf(sender_));
+        if (qFeeTokenToSpend > 0) {
+            SafeERC20.safeTransferFrom(feeToken, sender_, address(this), qFeeTokenToSpend);
+            SafeERC20.safeApprove(feeToken, address(mocCore), qFeeTokenToSpend);
+        }
+        return (feeToken, qFeeTokenToSpend);
+    }
+
+    /**
+     * @notice transfer Fee Tokens from this contract to the `sender_`
+     * @param feeToken_ Fee Token contract
+     * @param sender_ address who executes the operation
+     * @param qFeeTokenToSpend_ amount of Fee Token that the `sender_` has transferred to spend
+     * @param qFeeTokenSpent_ amount of Fee Token spent by MocCore as fee payment method
+     */
+    function _transferFeeTokenToSender(
+        IERC20 feeToken_,
+        address sender_,
+        uint256 qFeeTokenToSpend_,
+        uint256 qFeeTokenSpent_
+    ) internal {
+        uint256 qFeeTokenChange = qFeeTokenToSpend_ - qFeeTokenSpent_;
+        if (qFeeTokenChange > 0) {
+            SafeERC20.safeTransfer(feeToken_, sender_, qFeeTokenChange);
+            // if doesn't use all, we have to reset the allowance
+            SafeERC20.safeApprove(feeToken_, address(mocCore), 0);
+        }
+    }
+
+    /**
      * @notice caller sends Asset and recipient receives Collateral Token
         Requires prior sender approval of Asset to this contract 
      * @param assetAddress_ Asset contract address
@@ -246,23 +285,34 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Asset
      * @param recipient_ address who receives the Collateral Token
      */
-    function _mintTCto(
-        address assetAddress_,
-        uint256 qTC_,
-        uint256 qAssetMax_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
+    struct MintTCParams {
+        address assetAddress;
+        uint256 qTC;
+        uint256 qAssetMax;
+        address sender;
+        address recipient;
+    }
 
+    function _mintTCto(MintTCParams memory params_) internal validAsset(params_.assetAddress) {
+        uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
         // mint TC to the recipient
-        uint256 wcaUsed = mocCore.mintTCto(qTC_, wcaMinted, recipient_);
+        (uint256 wcaUsed, uint256 qFeeToken) = mocCore.mintTCto(params_.qTC, wcaMinted, params_.recipient);
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _unwrapTo(assetAddress_, wcaUnused, 0, address(this), sender_);
-        emit TCMintedWithWrapper(assetAddress_, sender_, recipient_, qTC_, qAssetMax_ - assetUnused);
+        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaUnused, 0, address(this), params_.sender);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        emit TCMintedWithWrapper(
+            params_.assetAddress,
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            params_.qAssetMax - assetUnused
+        );
     }
 
     /**
@@ -274,25 +324,36 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Asset
      */
-    function _redeemTCto(
-        address assetAddress_,
-        uint256 qTC_,
-        uint256 qAssetMin_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
+    struct RedeemTCParams {
+        address assetAddress;
+        uint256 qTC;
+        uint256 qAssetMin;
+        address sender;
+        address recipient;
+    }
+
+    function _redeemTCto(RedeemTCParams memory params_) internal validAsset(params_.assetAddress) {
         // get Collateral Token contract address
         IERC20Upgradeable tcToken = mocCore.tcToken();
         // transfer Collateral Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, params_.sender, address(this), params_.qTC);
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
         // redeem Collateral Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
-        uint256 wcaTokenAmountRedeemed = mocCore.redeemTC(qTC_, 0);
+        (uint256 wcaTokenAmountRedeemed, uint256 qFeeToken) = mocCore.redeemTC(params_.qTC, 0);
         // send Asset to the recipient
-        uint256 assetRedeemed = _unwrapTo(assetAddress_, wcaTokenAmountRedeemed, qAssetMin_, address(this), recipient_);
-
-        emit TCRedeemedWithWrapper(assetAddress_, sender_, recipient_, qTC_, assetRedeemed);
+        uint256 assetRedeemed = _unwrapTo(
+            params_.assetAddress,
+            wcaTokenAmountRedeemed,
+            params_.qAssetMin,
+            address(this),
+            params_.recipient
+        );
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        emit TCRedeemedWithWrapper(params_.assetAddress, params_.sender, params_.recipient, params_.qTC, assetRedeemed);
     }
 
     /**
@@ -305,24 +366,36 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Asset
      * @param recipient_ address who receives the Collateral Token
      */
-    function _mintTPto(
-        address assetAddress_,
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qAssetMax_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
+    struct MintTPParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTP;
+        uint256 qAssetMax;
+        address sender;
+        address recipient;
+    }
 
+    function _mintTPto(MintTPParams memory params_) internal validAsset(params_.assetAddress) {
+        uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
         // mint TP to the recipient
-        uint256 wcaUsed = mocCore.mintTPto(i_, qTP_, wcaMinted, recipient_);
+        (uint256 wcaUsed, uint256 qFeeToken) = mocCore.mintTPto(params_.i, params_.qTP, wcaMinted, params_.recipient);
         uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _unwrapTo(assetAddress_, wcaUnused, 0, address(this), sender_);
-        emit TPMintedWithWrapper(assetAddress_, i_, sender_, recipient_, qTP_, qAssetMax_ - assetUnused);
+        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaUnused, 0, address(this), params_.sender);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        emit TPMintedWithWrapper(
+            params_.assetAddress,
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            params_.qAssetMax - assetUnused
+        );
     }
 
     /**
@@ -335,30 +408,50 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the Asset
      */
-    function _redeemTPto(
-        address assetAddress_,
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qAssetMin_,
-        address sender_,
-        address recipient_,
-        bool isLiqRedeem_
-    ) internal validAsset(assetAddress_) {
+    struct RedeemTPParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTP;
+        uint256 qAssetMin;
+        address sender;
+        address recipient;
+        bool isLiqRedeem;
+    }
+
+    function _redeemTPto(RedeemTPParams memory params_) internal validAsset(params_.assetAddress) {
         // get Pegged Token contract address
-        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
+        IERC20Upgradeable tpToken = mocCore.tpTokens(params_.i);
         // When liquidating, we extract all the user's balance
-        if (isLiqRedeem_) qTP_ = tpToken.balanceOf(sender_);
+        if (params_.isLiqRedeem) params_.qTP = tpToken.balanceOf(params_.sender);
         // transfer Pegged Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, params_.sender, address(this), params_.qTP);
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
         uint256 wcaTokenAmountRedeemed;
-        if (isLiqRedeem_) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(i_);
-        else wcaTokenAmountRedeemed = mocCore.redeemTP(i_, qTP_, 0);
+        uint256 qFeeToken;
+        if (params_.isLiqRedeem) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(params_.i);
+        else (wcaTokenAmountRedeemed, qFeeToken) = mocCore.redeemTP(params_.i, params_.qTP, 0);
         // send Asset to the recipient
-        uint256 assetRedeemed = _unwrapTo(assetAddress_, wcaTokenAmountRedeemed, qAssetMin_, address(this), recipient_);
-        emit TPRedeemedWithWrapper(assetAddress_, i_, sender_, recipient_, qTP_, assetRedeemed);
+        uint256 assetRedeemed = _unwrapTo(
+            params_.assetAddress,
+            wcaTokenAmountRedeemed,
+            params_.qAssetMin,
+            address(this),
+            params_.recipient
+        );
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        emit TPRedeemedWithWrapper(
+            params_.assetAddress,
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            assetRedeemed
+        );
     }
 
     /**
@@ -374,30 +467,44 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      */
-    function _mintTCandTPto(
-        address assetAddress_,
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qAssetMax_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
+    struct MintTCandTPParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTP;
+        uint256 qAssetMax;
+        address sender;
+        address recipient;
+    }
 
+    function _mintTCandTPto(MintTCandTPParams memory params_) internal validAsset(params_.assetAddress) {
+        uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
         // mint TC and TP to the recipient
-        (uint256 wcaUsed, uint256 qTCminted) = mocCore.mintTCandTPto(i_, qTP_, wcaMinted, recipient_);
-        uint256 wcaUnused = wcaMinted - wcaUsed;
+        (uint256 wcaUsed, uint256 qTCminted, uint256 qFeeToken) = mocCore.mintTCandTPto(
+            params_.i,
+            params_.qTP,
+            wcaMinted,
+            params_.recipient
+        );
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _unwrapTo(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
         // inside a block to avoid stack too deep error
         {
-            address assetAddress = assetAddress_;
-            uint256 i = i_;
-            uint256 qTP = qTP_;
-            uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TCandTPMintedWithWrapper(assetAddress, i, sender_, recipient_, qTCminted, qTP, qAssetUsed);
+            MintTCandTPParams memory mintTCandTPParams = params_;
+            emit TCandTPMintedWithWrapper(
+                mintTCandTPParams.assetAddress,
+                mintTCandTPParams.i,
+                mintTCandTPParams.sender,
+                mintTCandTPParams.recipient,
+                qTCminted,
+                mintTCandTPParams.qTP,
+                mintTCandTPParams.qAssetMax - assetUnused
+            );
         }
     }
 
@@ -416,37 +523,57 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends Collateral Token and Pegged Token
      * @param recipient_ address who receives the Asset
      */
-    function _redeemTCandTPto(
-        address assetAddress_,
-        uint256 i_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qAssetMin_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
+    struct RedeemTCandTPParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTC;
+        uint256 qTP;
+        uint256 qAssetMin;
+        address sender;
+        address recipient;
+    }
+
+    function _redeemTCandTPto(RedeemTCandTPParams memory params_) internal validAsset(params_.assetAddress) {
         // get Collateral Token contract address
         IERC20Upgradeable tcToken = mocCore.tcToken();
         // get Pegged Token contract address
-        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
+        IERC20Upgradeable tpToken = mocCore.tpTokens(params_.i);
         // transfer Collateral Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, params_.sender, address(this), params_.qTC);
         // transfer Pegged Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, params_.sender, address(this), params_.qTP);
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
         // redeem Collateral Token and Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' as qACmin parameter to avoid reverting by qAC below minimum since we are
         // checking it after with qAssetMin
-        (uint256 wcaTokenAmountRedeemed, uint256 qTPRedeemed) = mocCore.redeemTCandTP(i_, qTC_, qTP_, 0);
+        (uint256 wcaTokenAmountRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) = mocCore.redeemTCandTP(
+            params_.i,
+            params_.qTC,
+            params_.qTP,
+            0
+        );
         // send Asset to the recipient
-        uint256 assetRedeemed = _unwrapTo(assetAddress_, wcaTokenAmountRedeemed, qAssetMin_, address(this), recipient_);
+        uint256 assetRedeemed = _unwrapTo(
+            params_.assetAddress,
+            wcaTokenAmountRedeemed,
+            params_.qAssetMin,
+            address(this),
+            params_.recipient
+        );
         // transfer unused Pegged Token to the sender
-        SafeERC20Upgradeable.safeTransfer(tpToken, sender_, qTP_ - qTPRedeemed);
-        // inside a block to avoid stack too deep error
-        {
-            address assetAddress = assetAddress_;
-            uint256 qTC = qTC_;
-            emit TCandTPRedeemedWithWrapper(assetAddress, i_, sender_, recipient_, qTC, qTPRedeemed, assetRedeemed);
-        }
+        SafeERC20Upgradeable.safeTransfer(tpToken, params_.sender, params_.qTP - qTPRedeemed);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
+        emit TCandTPRedeemedWithWrapper(
+            params_.assetAddress,
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qTPRedeemed,
+            assetRedeemed
+        );
     }
 
     /**
@@ -461,42 +588,52 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the target Pegged Token
      */
-    function _swapTPforTPto(
-        address assetAddress_,
-        uint256 iFrom_,
-        uint256 iTo_,
-        uint256 qTP_,
-        uint256 qTPmin_,
-        uint256 qAssetMax_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
+    struct SwapTPforTPParams {
+        address assetAddress;
+        uint256 iFrom;
+        uint256 iTo;
+        uint256 qTP;
+        uint256 qTPmin;
+        uint256 qAssetMax;
+        address sender;
+        address recipient;
+    }
+
+    function _swapTPforTPto(SwapTPforTPParams memory params_) internal validAsset(params_.assetAddress) {
+        uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
         // get Pegged Token contract address
-        IERC20Upgradeable tpTokenFrom = mocCore.tpTokens(iFrom_);
+        IERC20Upgradeable tpTokenFrom = mocCore.tpTokens(params_.iFrom);
         // transfer Pegged Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, sender_, address(this), qTP_);
-        (uint256 wcaUsed, uint256 qTPMinted) = mocCore.swapTPforTPto(
-            iFrom_,
-            iTo_,
-            qTP_,
-            qTPmin_,
+        SafeERC20Upgradeable.safeTransferFrom(tpTokenFrom, params_.sender, address(this), params_.qTP);
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (uint256 wcaUsed, uint256 qTPMinted, uint256 qFeeToken) = mocCore.swapTPforTPto(
+            params_.iFrom,
+            params_.iTo,
+            params_.qTP,
+            params_.qTPmin,
             wcaMinted,
-            recipient_
+            params_.recipient
         );
-        uint256 wcaUnused = wcaMinted - wcaUsed;
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _unwrapTo(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
         // inside a block to avoid stack too deep error
         {
-            address assetAddress = assetAddress_;
-            uint256 iFrom = iFrom_;
-            uint256 iTo = iTo_;
-            uint256 qTP = qTP_;
-            uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TPSwappedForTPWithWrapper(assetAddress, iFrom, iTo, sender_, recipient_, qTP, qTPMinted, qAssetUsed);
+            SwapTPforTPParams memory swapTPforTPParams = params_;
+            emit TPSwappedForTPWithWrapper(
+                swapTPforTPParams.assetAddress,
+                swapTPforTPParams.iFrom,
+                swapTPforTPParams.iTo,
+                swapTPforTPParams.sender,
+                swapTPforTPParams.recipient,
+                swapTPforTPParams.qTP,
+                qTPMinted,
+                swapTPforTPParams.qAssetMax - assetUnused
+            );
         }
     }
 
@@ -511,33 +648,49 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Pegged Token
      * @param recipient_ address who receives the Collateral Token
      */
-    function _swapTPforTCto(
-        address assetAddress_,
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qTCmin_,
-        uint256 qAssetMax_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
+    struct SwapTPforTCParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTP;
+        uint256 qTCmin;
+        uint256 qAssetMax;
+        address sender;
+        address recipient;
+    }
+
+    function _swapTPforTCto(SwapTPforTCParams memory params_) internal validAsset(params_.assetAddress) {
+        uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
         // get Pegged Token contract address
-        IERC20Upgradeable tpToken = mocCore.tpTokens(i_);
+        IERC20Upgradeable tpToken = mocCore.tpTokens(params_.i);
         // transfer Pegged Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tpToken, sender_, address(this), qTP_);
-        (uint256 wcaUsed, uint256 qTCMinted) = mocCore.swapTPforTCto(i_, qTP_, qTCmin_, wcaMinted, recipient_);
-        uint256 wcaUnused = wcaMinted - wcaUsed;
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, params_.sender, address(this), params_.qTP);
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (uint256 wcaUsed, uint256 qTCMinted, uint256 qFeeToken) = mocCore.swapTPforTCto(
+            params_.i,
+            params_.qTP,
+            params_.qTCmin,
+            wcaMinted,
+            params_.recipient
+        );
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _unwrapTo(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
         // inside a block to avoid stack too deep error
         {
-            address assetAddress = assetAddress_;
-            uint256 i = i_;
-            uint256 qTP = qTP_;
-            uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TPSwappedForTCWithWrapper(assetAddress, i, sender_, recipient_, qTP, qTCMinted, qAssetUsed);
+            SwapTPforTCParams memory swapTPforTCParams = params_;
+            emit TPSwappedForTCWithWrapper(
+                swapTPforTCParams.assetAddress,
+                swapTPforTCParams.i,
+                swapTPforTCParams.sender,
+                swapTPforTCParams.recipient,
+                swapTPforTCParams.qTP,
+                qTCMinted,
+                swapTPforTCParams.qAssetMax - assetUnused
+            );
         }
     }
 
@@ -552,33 +705,49 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param sender_ address who sends the Collateral Token
      * @param recipient_ address who receives the Pegged Token
      */
-    function _swapTCforTPto(
-        address assetAddress_,
-        uint256 i_,
-        uint256 qTC_,
-        uint256 qTPmin_,
-        uint256 qAssetMax_,
-        address sender_,
-        address recipient_
-    ) internal validAsset(assetAddress_) {
-        uint256 wcaMinted = _wrapTo(assetAddress_, qAssetMax_, sender_, address(this));
+    struct SwapTCforTPParams {
+        address assetAddress;
+        uint256 i;
+        uint256 qTC;
+        uint256 qTPmin;
+        uint256 qAssetMax;
+        address sender;
+        address recipient;
+    }
+
+    function _swapTCforTPto(SwapTCforTPParams memory params_) internal validAsset(params_.assetAddress) {
+        uint256 wcaMinted = _wrapTo(params_.assetAddress, params_.qAssetMax, params_.sender, address(this));
         // get Collateral Token contract address
         IERC20Upgradeable tcToken = mocCore.tcToken();
         // transfer Collateral Token from sender to this address
-        SafeERC20Upgradeable.safeTransferFrom(tcToken, sender_, address(this), qTC_);
-        (uint256 wcaUsed, uint256 qTPMinted) = mocCore.swapTCforTPto(i_, qTC_, qTPmin_, wcaMinted, recipient_);
-        uint256 wcaUnused = wcaMinted - wcaUsed;
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, params_.sender, address(this), params_.qTC);
+        // if sender has Fee Token balance and allowance, we transfer them to be used as fee payment method
+        (IERC20 feeToken, uint256 qFeeTokenToSpend) = _transferFeeTokenFromSender(params_.sender);
+        (uint256 wcaUsed, uint256 qTPMinted, uint256 qFeeToken) = mocCore.swapTCforTPto(
+            params_.i,
+            params_.qTC,
+            params_.qTPmin,
+            wcaMinted,
+            params_.recipient
+        );
         // send back Asset unused to the sender
         // we pass '0' to qAssetMin parameter because we check when minting how much is the maximum
         // that can be spent
-        uint256 assetUnused = _unwrapTo(assetAddress_, wcaUnused, 0, address(this), sender_);
+        uint256 assetUnused = _unwrapTo(params_.assetAddress, wcaMinted - wcaUsed, 0, address(this), params_.sender);
+        // transfer back the unused Fee Token
+        _transferFeeTokenToSender(feeToken, params_.sender, qFeeTokenToSpend, qFeeToken);
         // inside a block to avoid stack too deep error
         {
-            address assetAddress = assetAddress_;
-            uint256 i = i_;
-            uint256 qTC = qTC_;
-            uint256 qAssetUsed = qAssetMax_ - assetUnused;
-            emit TCSwappedForTPWithWrapper(assetAddress, i, sender_, recipient_, qTC, qTPMinted, qAssetUsed);
+            SwapTCforTPParams memory swapTCforTPParams = params_;
+            emit TCSwappedForTPWithWrapper(
+                swapTCforTPParams.assetAddress,
+                swapTCforTPParams.i,
+                swapTCforTPParams.sender,
+                swapTCforTPParams.recipient,
+                swapTCforTPParams.qTC,
+                qTPMinted,
+                swapTCforTPParams.qAssetMax - assetUnused
+            );
         }
     }
 
@@ -709,7 +878,14 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTC(address assetAddress_, uint256 qTC_, uint256 qAssetMax_) external {
-        _mintTCto(assetAddress_, qTC_, qAssetMax_, msg.sender, msg.sender);
+        MintTCParams memory params = MintTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _mintTCto(params);
     }
 
     /**
@@ -721,7 +897,14 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param recipient_ address who receives the Collateral Token
      */
     function mintTCto(address assetAddress_, uint256 qTC_, uint256 qAssetMax_, address recipient_) external {
-        _mintTCto(assetAddress_, qTC_, qAssetMax_, msg.sender, recipient_);
+        MintTCParams memory params = MintTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _mintTCto(params);
     }
 
     /**
@@ -732,7 +915,14 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMin_ minimum amount of Asset that sender expects to receive
      */
     function redeemTC(address assetAddress_, uint256 qTC_, uint256 qAssetMin_) external {
-        _redeemTCto(assetAddress_, qTC_, qAssetMin_, msg.sender, msg.sender);
+        RedeemTCParams memory params = RedeemTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _redeemTCto(params);
     }
 
     /**
@@ -744,7 +934,14 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param recipient_ address who receives the Asset
      */
     function redeemTCto(address assetAddress_, uint256 qTC_, uint256 qAssetMin_, address recipient_) external {
-        _redeemTCto(assetAddress_, qTC_, qAssetMin_, msg.sender, recipient_);
+        RedeemTCParams memory params = RedeemTCParams({
+            assetAddress: assetAddress_,
+            qTC: qTC_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _redeemTCto(params);
     }
 
     /**
@@ -756,7 +953,15 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTP(address assetAddress_, uint256 i_, uint256 qTP_, uint256 qAssetMax_) external {
-        _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
+        MintTPParams memory params = MintTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _mintTPto(params);
     }
 
     /**
@@ -775,7 +980,15 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax_,
         address recipient_
     ) external {
-        _mintTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
+        MintTPParams memory params = MintTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _mintTPto(params);
     }
 
     /**
@@ -787,7 +1000,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMin_ minimum Asset amount that sender expects to be received
      */
     function redeemTP(address assetAddress_, uint256 i_, uint256 qTP_, uint256 qAssetMin_) external {
-        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, msg.sender, false);
+        RedeemTPParams memory params = RedeemTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            isLiqRedeem: false
+        });
+        _redeemTPto(params);
     }
 
     /**
@@ -806,7 +1028,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMin_,
         address recipient_
     ) external {
-        _redeemTPto(assetAddress_, i_, qTP_, qAssetMin_, msg.sender, recipient_, false);
+        RedeemTPParams memory params = RedeemTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            isLiqRedeem: false
+        });
+        _redeemTPto(params);
     }
 
     /**
@@ -817,7 +1048,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      */
     function liqRedeemTP(address assetAddress_, uint256 i_) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
-        _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, msg.sender, true);
+        RedeemTPParams memory params = RedeemTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: 0,
+            qAssetMin: 0,
+            sender: msg.sender,
+            recipient: msg.sender,
+            isLiqRedeem: true
+        });
+        _redeemTPto(params);
     }
 
     /**
@@ -829,7 +1069,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      */
     function liqRedeemTPto(address assetAddress_, uint256 i_, address recipient_) external {
         // qTP = 0 as it's calculated internally, liqRedeem = true
-        _redeemTPto(assetAddress_, i_, 0, 0, msg.sender, recipient_, true);
+        RedeemTPParams memory params = RedeemTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: 0,
+            qAssetMin: 0,
+            sender: msg.sender,
+            recipient: recipient_,
+            isLiqRedeem: true
+        });
+        _redeemTPto(params);
     }
 
     /**
@@ -845,7 +1094,15 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMax_ maximum amount of Asset that can be spent
      */
     function mintTCandTP(address assetAddress_, uint256 i_, uint256 qTP_, uint256 qAssetMax_) external {
-        _mintTCandTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, msg.sender);
+        MintTCandTPParams memory params = MintTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _mintTCandTPto(params);
     }
 
     /**
@@ -868,7 +1125,15 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax_,
         address recipient_
     ) external {
-        _mintTCandTPto(assetAddress_, i_, qTP_, qAssetMax_, msg.sender, recipient_);
+        MintTCandTPParams memory params = MintTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _mintTCandTPto(params);
     }
 
     /**
@@ -885,7 +1150,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param qAssetMin_ minimum amount of Asset that the sender expects to receive
      */
     function redeemTCandTP(address assetAddress_, uint256 i_, uint256 qTC_, uint256 qTP_, uint256 qAssetMin_) external {
-        _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, msg.sender);
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _redeemTCandTPto(params);
     }
 
     /**
@@ -910,7 +1184,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMin_,
         address recipient_
     ) external {
-        _redeemTCandTPto(assetAddress_, i_, qTC_, qTP_, qAssetMin_, msg.sender, recipient_);
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qAssetMin: qAssetMin_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _redeemTCandTPto(params);
     }
 
     /**
@@ -931,7 +1214,17 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qTPmin_,
         uint256 qAssetMax_
     ) external {
-        _swapTPforTPto(assetAddress_, iFrom_, iTo_, qTP_, qTPmin_, qAssetMax_, msg.sender, msg.sender);
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            assetAddress: assetAddress_,
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _swapTPforTPto(params);
     }
 
     /**
@@ -954,7 +1247,17 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax_,
         address recipient_
     ) external {
-        _swapTPforTPto(assetAddress_, iFrom_, iTo_, qTP_, qTPmin_, qAssetMax_, msg.sender, recipient_);
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            assetAddress: assetAddress_,
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _swapTPforTPto(params);
     }
 
     /**
@@ -973,7 +1276,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qTCmin_,
         uint256 qAssetMax_
     ) external {
-        _swapTPforTCto(assetAddress_, i_, qTP_, qTCmin_, qAssetMax_, msg.sender, msg.sender);
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _swapTPforTCto(params);
     }
 
     /**
@@ -994,7 +1306,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax_,
         address recipient_
     ) external {
-        _swapTPforTCto(assetAddress_, i_, qTP_, qTCmin_, qAssetMax_, msg.sender, recipient_);
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _swapTPforTCto(params);
     }
 
     /**
@@ -1013,7 +1334,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qTPmin_,
         uint256 qAssetMax_
     ) external {
-        _swapTCforTPto(assetAddress_, i_, qTC_, qTPmin_, qAssetMax_, msg.sender, msg.sender);
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        _swapTCforTPto(params);
     }
 
     /**
@@ -1034,7 +1364,16 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 qAssetMax_,
         address recipient_
     ) external {
-        _swapTCforTPto(assetAddress_, i_, qTC_, qTPmin_, qAssetMax_, msg.sender, recipient_);
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            assetAddress: assetAddress_,
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qAssetMax: qAssetMax_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        _swapTCforTPto(params);
     }
 
     /*

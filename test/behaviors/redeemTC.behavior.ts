@@ -26,10 +26,10 @@ const redeemTCBehavior = function () {
         await mocFunctions.mintTC({ from: alice, qTC: 300 });
       });
       describe("WHEN alice tries to redeem 0 TC", function () {
-        it("THEN tx reverts because the amount of TC is invalid", async function () {
+        it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
           await expect(mocFunctions.redeemTC({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
-            ERRORS.INVALID_VALUE,
+            ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
           );
         });
       });
@@ -99,6 +99,7 @@ const redeemTCBehavior = function () {
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCRedeemed")
             .withArgs(
@@ -107,6 +108,7 @@ const redeemTCBehavior = function () {
               pEth(300),
               pEth(300 * 0.95),
               pEth(300 * 0.05),
+              0,
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -149,6 +151,7 @@ const redeemTCBehavior = function () {
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCRedeemed")
             .withArgs(
@@ -157,6 +160,7 @@ const redeemTCBehavior = function () {
               pEth(300),
               pEth(300 * 0.95),
               pEth(300 * 0.05),
+              0,
             );
         });
       });

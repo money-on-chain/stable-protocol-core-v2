@@ -35,10 +35,10 @@ const swapTPforTCBehavior = function () {
         await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
       });
       describe("WHEN alice tries to swap 0 TP 0", function () {
-        it("THEN tx reverts because the amount of AC is invalid", async function () {
+        it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {
           await expect(mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
-            ERRORS.INVALID_VALUE,
+            ERRORS.QTC_BELOW_MINIMUM,
           );
         });
       });
@@ -117,9 +117,18 @@ const swapTPforTCBehavior = function () {
           // qTP: 23500 TP
           // qTC: 100 TC
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
-            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, alice, pEth(23500), pEth(100), pEth(100 * 0.01));
+            .withArgs(
+              TP_0,
+              mocContracts.mocWrapper?.address || alice,
+              alice,
+              pEth(23500),
+              pEth(100),
+              pEth(100 * 0.01),
+              0,
+            );
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -183,9 +192,10 @@ const swapTPforTCBehavior = function () {
           // qTP: 2350 TP
           // qTC: 10 TC
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
-            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, bob, pEth(2350), pEth(10), pEth(10 * 0.01));
+            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, bob, pEth(2350), pEth(10), pEth(10 * 0.01), 0);
         });
       });
       describe("AND TP 0 has been revaluated to 15.1", function () {
@@ -233,6 +243,7 @@ const swapTPforTCBehavior = function () {
             // qTP: 4700 TP
             // qTC: 9.933 TC
             // qACfee: 1% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
               .withArgs(
@@ -242,6 +253,7 @@ const swapTPforTCBehavior = function () {
                 pEth(4700),
                 pEth("9.933774834437086092"),
                 pEth(10 * 0.01),
+                0,
               );
           });
         });
@@ -271,6 +283,7 @@ const swapTPforTCBehavior = function () {
             // qTP: 1000 TP
             // qTC: 10.471 TC
             // qACfee: 1% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPSwappedForTC")
               .withArgs(
@@ -280,6 +293,7 @@ const swapTPforTCBehavior = function () {
                 pEth(1000),
                 pEth("10.471204188481675392"),
                 pEth(10 * 0.01),
+                0,
               );
           });
         });

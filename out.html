@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <title>Diff</title>
+</head>
+
+<body>
+  <style>
+    .diff {
+      border: 1px solid #C0C0C0;
+      border-collapse: collapse;
+      padding: 5px;
+    }
+
+    .diff th {
+      border: 1px solid #C0C0C0;
+      padding: 5px;
+      background: #F0F0F0;
+    }
+
+    .diff td {
+      border: 1px solid #C0C0C0;
+      padding: 5px;
+    }
+
+    .diff .changed {
+      background: #FF9999;
+    }
+  </style>
+  <table class="diff">
+    <thead>
+      <tr>
+        <th>Bytes Range</th>
+        <th>contracts/core/MocCore.sol:MocCore</th>
+        <th>contracts/core/MocCoreExpansion.sol:MocCoreExpansion</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+        <tr class="">
+          <td>0-0</td>
+          <td>
+            <strong>_initialized</strong> <code>uint8</code>
+          </td>
+            <td>
+            <strong>_initialized</strong> <code>uint8</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>1-1</td>
+          <td>
+            <strong>_initializing</strong> <code>bool</code>
+          </td>
+            <td>
+            <strong>_initializing</strong> <code>bool</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>2-31</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>32-1631</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>1632-3231</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>3232-4831</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>4832-4851</td>
+          <td>
+            <strong>governor</strong> <code>contract IGovernor</code>
+          </td>
+            <td>
+            <strong>governor</strong> <code>contract IGovernor</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>4852-4863</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>4864-6463</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>6464-6464</td>
+          <td>
+            <strong>stoppable</strong> <code>bool</code>
+          </td>
+            <td>
+            <strong>stoppable</strong> <code>bool</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>6465-6465</td>
+          <td>
+            <strong>_paused</strong> <code>bool</code>
+          </td>
+            <td>
+            <strong>_paused</strong> <code>bool</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>6466-6485</td>
+          <td>
+            <strong>pauser</strong> <code>address</code>
+          </td>
+            <td>
+            <strong>pauser</strong> <code>address</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>6486-6495</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>6496-8095</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>8096-9695</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>9696-9727</td>
+          <td>
+            <strong>_status</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>_status</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>9728-11295</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[49]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[49]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11296-11327</td>
+          <td>
+            <strong>nACcb</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>nACcb</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11328-11359</td>
+          <td>
+            <strong>nACioucb</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>nACioucb</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11360-11379</td>
+          <td>
+            <strong>mocCoreExpansion</strong> <code>address</code>
+          </td>
+            <td>
+            <strong>mocCoreExpansion</strong> <code>address</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11380-11391</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11392-11411</td>
+          <td>
+            <strong>tcToken</strong> <code>contract MocTC</code>
+          </td>
+            <td>
+            <strong>tcToken</strong> <code>contract MocTC</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11412-11423</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11424-11455</td>
+          <td>
+            <strong>nTCcb</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>nTCcb</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11456-11487</td>
+          <td>
+            <strong>tpTokens</strong> <code>contract IMocRC20[]</code>
+          </td>
+            <td>
+            <strong>tpTokens</strong> <code>contract IMocRC20[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11488-11519</td>
+          <td>
+            <strong>peggedTokenIndex</strong> <code>mapping(address =&gt; struct MocBaseBucket.PeggedTokenIndex)</code>
+          </td>
+            <td>
+            <strong>peggedTokenIndex</strong> <code>mapping(address =&gt; struct MocBaseBucket.PeggedTokenIndex)</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11520-11551</td>
+          <td>
+            <strong>pegContainer</strong> <code>struct MocBaseBucket.PegContainerItem[]</code>
+          </td>
+            <td>
+            <strong>pegContainer</strong> <code>struct MocBaseBucket.PegContainerItem[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11552-11583</td>
+          <td>
+            <strong>tpLiqPrices</strong> <code>uint256[]</code>
+          </td>
+            <td>
+            <strong>tpLiqPrices</strong> <code>uint256[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11584-11615</td>
+          <td>
+            <strong>successFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>successFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11616-11647</td>
+          <td>
+            <strong>appreciationFactor</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>appreciationFactor</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11648-11679</td>
+          <td>
+            <strong>feeRetainer</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>feeRetainer</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11680-11711</td>
+          <td>
+            <strong>tcMintFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>tcMintFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11712-11743</td>
+          <td>
+            <strong>tcRedeemFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>tcRedeemFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11744-11775</td>
+          <td>
+            <strong>swapTPforTPFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>swapTPforTPFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11776-11807</td>
+          <td>
+            <strong>swapTPforTCFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>swapTPforTCFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11808-11839</td>
+          <td>
+            <strong>swapTCforTPFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>swapTCforTPFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11840-11871</td>
+          <td>
+            <strong>redeemTCandTPFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>redeemTCandTPFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11872-11903</td>
+          <td>
+            <strong>mintTCandTPFee</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>mintTCandTPFee</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11904-11935</td>
+          <td>
+            <strong>tpMintFee</strong> <code>uint256[]</code>
+          </td>
+            <td>
+            <strong>tpMintFee</strong> <code>uint256[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11936-11967</td>
+          <td>
+            <strong>tpRedeemFee</strong> <code>uint256[]</code>
+          </td>
+            <td>
+            <strong>tpRedeemFee</strong> <code>uint256[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11968-11987</td>
+          <td>
+            <strong>mocFeeFlowAddress</strong> <code>address</code>
+          </td>
+            <td>
+            <strong>mocFeeFlowAddress</strong> <code>address</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>11988-11999</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12000-12019</td>
+          <td>
+            <strong>mocAppreciationBeneficiaryAddress</strong> <code>address</code>
+          </td>
+            <td>
+            <strong>mocAppreciationBeneficiaryAddress</strong> <code>address</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12020-12031</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12032-12063</td>
+          <td>
+            <strong>tpCtarg</strong> <code>uint256[]</code>
+          </td>
+            <td>
+            <strong>tpCtarg</strong> <code>uint256[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12064-12095</td>
+          <td>
+            <strong>protThrld</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>protThrld</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12096-12127</td>
+          <td>
+            <strong>liqThrld</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>liqThrld</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12128-12128</td>
+          <td>
+            <strong>liqEnabled</strong> <code>bool</code>
+          </td>
+            <td>
+            <strong>liqEnabled</strong> <code>bool</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12129-12129</td>
+          <td>
+            <strong>liquidated</strong> <code>bool</code>
+          </td>
+            <td>
+            <strong>liquidated</strong> <code>bool</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12130-12159</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12160-12191</td>
+          <td>
+            <strong>bes</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>bes</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12192-12223</td>
+          <td>
+            <strong>bns</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>bns</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12224-12255</td>
+          <td>
+            <strong>tpiou</strong> <code>int256[]</code>
+          </td>
+            <td>
+            <strong>tpiou</strong> <code>int256[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12256-12287</td>
+          <td>
+            <strong>pACtpLstop</strong> <code>uint256[]</code>
+          </td>
+            <td>
+            <strong>pACtpLstop</strong> <code>uint256[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>12288-13887</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>13888-13919</td>
+          <td>
+            <strong>tpEma</strong> <code>struct MocEma.EmaItem[]</code>
+          </td>
+            <td>
+            <strong>tpEma</strong> <code>struct MocEma.EmaItem[]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>13920-13951</td>
+          <td>
+            <strong>nextEmaCalculation</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>nextEmaCalculation</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>13952-13983</td>
+          <td>
+            <strong>emaCalculationBlockSpan</strong> <code>uint256</code>
+          </td>
+            <td>
+            <strong>emaCalculationBlockSpan</strong> <code>uint256</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>13984-15583</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>15584-17183</td>
+          <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+            <td>
+            <strong>__gap</strong> <code>uint256[50]</code>
+          </td>
+        </tr>
+      
+        <tr class="">
+          <td>17184-17183</td>
+          <td>
+            <strong></strong> <code></code>
+          </td>
+            <td>
+            <strong></strong> <code></code>
+          </td>
+        </tr>
+      
+    </tbody>
+  </table>
+</body>
+
+</html>

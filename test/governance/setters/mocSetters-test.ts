@@ -98,6 +98,18 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.mocAppreciationBeneficiaryAddress()).to.be.equal(mockAddress);
       });
     });
+    describe(`WHEN setFeeTokenAddress is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setFeeTokenAddress(mockAddress);
+        expect(await mocProxy.feeToken()).to.be.equal(mockAddress);
+      });
+    });
+    describe(`WHEN setFeeTokenPriceProviderAddress is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setFeeTokenPriceProviderAddress(mockAddress);
+        expect(await mocProxy.feeTokenPriceProvider()).to.be.equal(mockAddress);
+      });
+    });
     describe(`WHEN setProtThrld is invoked`, () => {
       it("THEN the new value is assigned", async function () {
         await mocProxy.setProtThrld(45);
@@ -120,6 +132,12 @@ describe("Feature: Verify that all config settings are protected by governance",
       it("THEN the new value is assigned", async function () {
         await mocProxy.setAppreciationFactor(48);
         expect(await mocProxy.appreciationFactor()).to.be.equal(48);
+      });
+    });
+    describe(`WHEN setFeeTokenPct is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setFeeTokenPct(50);
+        expect(await mocProxy.feeTokenPct()).to.be.equal(50);
       });
     });
   });
@@ -180,6 +198,11 @@ describe("Feature: Verify that all config settings are protected by governance",
         await expectRevertNotAuthorized(mocProxy.setMintTCandTPFee(42));
       });
     });
+    describe("WHEN setFeeTokenPct is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setFeeTokenPct(42));
+      });
+    });
     describe("WHEN setMocFeeFlowAddress is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setMocFeeFlowAddress(mockAddress));
@@ -188,6 +211,16 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setMocAppreciationBeneficiaryAddress is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setMocAppreciationBeneficiaryAddress(mockAddress));
+      });
+    });
+    describe("WHEN setFeeTokenAddress is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setFeeTokenAddress(mockAddress));
+      });
+    });
+    describe("WHEN setFeeTokenPriceProviderAddress is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setFeeTokenPriceProviderAddress(mockAddress));
       });
     });
     describe("WHEN setProtThrld is invoked", () => {

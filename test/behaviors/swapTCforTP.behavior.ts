@@ -35,10 +35,10 @@ const swapTCforTPBehavior = function () {
       });
 
       describe("WHEN alice tries to swap 0 TC", function () {
-        it("THEN tx reverts because the amount of AC is invalid", async function () {
+        it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
           await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 0 })).to.be.revertedWithCustomError(
             mocContracts.mocImpl,
-            ERRORS.INVALID_VALUE,
+            ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
           );
         });
       });
@@ -131,9 +131,18 @@ const swapTCforTPBehavior = function () {
           // qTC: 100 TC
           // qTP: 23500 TP
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(23500), pEth(100 * 0.01));
+            .withArgs(
+              TP_0,
+              mocContracts.mocWrapper?.address || alice,
+              alice,
+              pEth(100),
+              pEth(23500),
+              pEth(100 * 0.01),
+              0,
+            );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -191,9 +200,18 @@ const swapTCforTPBehavior = function () {
           // qTC: 100 TC
           // qTP: 23500 TP
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(23500), pEth(100 * 0.01));
+            .withArgs(
+              TP_0,
+              mocContracts.mocWrapper?.address || alice,
+              bob,
+              pEth(100),
+              pEth(23500),
+              pEth(100 * 0.01),
+              0,
+            );
         });
       });
       describe("AND there are 100000 TC more in the protocol", function () {
@@ -222,6 +240,7 @@ const swapTCforTPBehavior = function () {
             // qTC: 3000 TC
             // qTP: 705000 TP
             // qACfee: 1% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
               .withArgs(
@@ -231,6 +250,7 @@ const swapTCforTPBehavior = function () {
                 pEth(3000),
                 pEth(705000),
                 pEth(3000 * 0.01),
+                0,
               );
           });
         });
@@ -265,6 +285,7 @@ const swapTCforTPBehavior = function () {
               // qTC: 10 TC
               // qTP: 4731.02 TP
               // qACfee: 1% AC
+              // qFeeToken: 0
               await expect(tx)
                 .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
                 .withArgs(
@@ -274,6 +295,7 @@ const swapTCforTPBehavior = function () {
                   pEth(10),
                   pEth("4731.333333333333333333"),
                   pEth("0.100666666666666666"),
+                  0,
                 );
             });
           });
@@ -329,6 +351,7 @@ const swapTCforTPBehavior = function () {
               // qTC: 10 TC
               // qTP: 955 TP
               // qACfee: 1% AC
+              // qFeeToken: 0
               await expect(tx)
                 .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
                 .withArgs(
@@ -338,6 +361,7 @@ const swapTCforTPBehavior = function () {
                   pEth(10),
                   pEth(955),
                   pEth("0.095500000000000000"),
+                  0,
                 );
             });
           });

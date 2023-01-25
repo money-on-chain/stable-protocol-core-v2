@@ -24,7 +24,14 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //TODO: for live deployments we need to receive the Collateral Asset address
   let collateralAssetToken: string = "";
 
-  let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
+  let {
+    governorAddress,
+    pauserAddress,
+    feeTokenAddress,
+    feeTokenPriceProviderAddress,
+    mocFeeFlowAddress,
+    mocAppreciationBeneficiaryAddress,
+  } = mocAddresses;
 
   // for tests we deploy a Collateral Asset and Governor Mock
   if (hre.network.tags.testnet || hre.network.tags.local) {
@@ -37,6 +44,15 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       gasLimit,
     });
     collateralAssetToken = deployedERC20MockContract.address;
+  }
+
+  // for tests we deploy a FeeToken mock and its price provider
+  if (hre.network.tags.local) {
+    const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
+    feeTokenAddress = (await rc20MockFactory.deploy()).address;
+
+    const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
+    feeTokenPriceProviderAddress = (await priceProviderMockFactory.deploy(ethers.utils.parseEther("1"))).address;
   }
 
   console.log("initializing...");
@@ -57,6 +73,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       {
         initializeCoreParams: {
           initializeBaseBucketParams: {
+            feeTokenAddress,
+            feeTokenPriceProviderAddress,
             tcTokenAddress: CollateralToken.address,
             mocFeeFlowAddress,
             mocAppreciationBeneficiaryAddress,
@@ -70,6 +88,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             swapTCforTPFee: feeParams.swapTCforTPFee,
             redeemTCandTPFee: feeParams.redeemTCandTPFee,
             mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
             bes: settlementParams.bes,

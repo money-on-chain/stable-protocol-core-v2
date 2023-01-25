@@ -84,10 +84,10 @@ const swapTPforTPBehavior = function () {
         });
       });
       describe("WHEN alice tries to swap 0 TP 0", function () {
-        it("THEN tx reverts because the amount of AC is invalid", async function () {
+        it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {
           await expect(
             mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 0 }),
-          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_VALUE);
+          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QTP_BELOW_MINIMUM);
         });
       });
       describe("WHEN alice tries to swap 1 TP 0 to the zero address", function () {
@@ -193,6 +193,7 @@ const swapTPforTPBehavior = function () {
           // qTPfrom: 23500 TP
           // qTPto: 525 TP
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
             .withArgs(
@@ -203,6 +204,7 @@ const swapTPforTPBehavior = function () {
               pEth(23500),
               pEth(525),
               pEth(100 * 0.01),
+              0,
             );
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
@@ -264,6 +266,7 @@ const swapTPforTPBehavior = function () {
           // qTPfrom: 2350 TP
           // qTPto: 52.5 TP
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
             .withArgs(
@@ -274,6 +277,7 @@ const swapTPforTPBehavior = function () {
               pEth(2350),
               pEth(52.5),
               pEth(10 * 0.01),
+              0,
             );
         });
       });
@@ -301,6 +305,7 @@ const swapTPforTPBehavior = function () {
           // qTPfrom: 2350 TP
           // qTPto: 52.5 TP
           // qACfee: 1% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
             .withArgs(
@@ -311,6 +316,7 @@ const swapTPforTPBehavior = function () {
               pEth(2350),
               pEth(52.5),
               pEth(10 * 0.01),
+              0,
             );
         });
       });
@@ -358,6 +364,7 @@ const swapTPforTPBehavior = function () {
             // qTPfrom: 2350 TP
             // qTPto: 1175 TP
             // qACfee: 1% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
               .withArgs(
@@ -368,6 +375,7 @@ const swapTPforTPBehavior = function () {
                 pEth(2350),
                 pEth(1175),
                 pEth("2.238095238095238095"),
+                0,
               );
           });
         });
@@ -418,6 +426,7 @@ const swapTPforTPBehavior = function () {
             // qTPfrom: 23500 TP
             // qTPto: 262.5 TP
             // qACfee: 1% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TPSwappedForTP")
               .withArgs(
@@ -428,6 +437,7 @@ const swapTPforTPBehavior = function () {
                 pEth(23500),
                 pEth(262.5),
                 pEth(50 * 0.01),
+                0,
               );
           });
         });

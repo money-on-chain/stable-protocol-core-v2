@@ -49,6 +49,7 @@ const mintTCandTPBehavior = function () {
           // qTP: 2350 TP
           // qAC: 30 AC + 10 AC + 8% for Moc Fee Flow
           // qACfee: 8% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPMinted")
             .withArgs(
@@ -59,6 +60,7 @@ const mintTCandTPBehavior = function () {
               pEth(2350),
               pEth(43.2),
               pEth(3.2),
+              0,
             );
         });
       });
@@ -156,6 +158,7 @@ const mintTCandTPBehavior = function () {
           // qTP: 2350 TP
           // qAC: 45.4 AC + 10 AC + 8% for Moc Fee Flow
           // qACfee: 8% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPMinted")
             .withArgs(
@@ -166,6 +169,7 @@ const mintTCandTPBehavior = function () {
               pEth(2350),
               pEth("59.847198641765704576"),
               pEth("4.433125825315978116"),
+              0,
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -213,6 +217,7 @@ const mintTCandTPBehavior = function () {
           // qTP: 2350 TP
           // qAC: 45.4 AC + 10 AC + 8% for Moc Fee Flow
           // qACfee: 8% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPMinted")
             .withArgs(
@@ -223,6 +228,7 @@ const mintTCandTPBehavior = function () {
               pEth(2350),
               pEth("59.847198641765704576"),
               pEth("4.433125825315978116"),
+              0,
             );
         });
       });
@@ -256,6 +262,7 @@ const mintTCandTPBehavior = function () {
             // qTP: 23500 TP
             // qAC: 9400 AC + 2350 AC + 8% for Moc Fee Flow
             // qACfee: 8% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCandTPMinted")
               .withArgs(
@@ -266,6 +273,7 @@ const mintTCandTPBehavior = function () {
                 pEth(23500),
                 pEth(12690),
                 pEth(940),
+                0,
               );
           });
         });
@@ -301,6 +309,7 @@ const mintTCandTPBehavior = function () {
             // qTP: 23500 TP
             // qAC: 9400 AC + 2350 AC + 8% for Moc Fee Flow
             // qACfee: 8% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCandTPMinted")
               .withArgs(
@@ -311,6 +320,7 @@ const mintTCandTPBehavior = function () {
                 pEth(23500),
                 pEth("598.471986417657045822"),
                 pEth("44.331258253159781172"),
+                0,
               );
           });
         });

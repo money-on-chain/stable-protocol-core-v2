@@ -35,13 +35,14 @@ export const fixtureDeployGovernance = memoizee(
         governorAddress: governor.address,
       });
 
-      let { pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
       await waitForTxConfirmation(
         mocCACoinbase.initialize({
           initializeBaseBucketParams: {
+            feeTokenAddress: mocAddresses.feeTokenAddress,
+            feeTokenPriceProviderAddress: mocAddresses.feeTokenPriceProviderAddress,
             tcTokenAddress: mocTC.address,
-            mocFeeFlowAddress: mocFeeFlowAddress,
-            mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
+            mocFeeFlowAddress: mocAddresses.mocFeeFlowAddress,
+            mocAppreciationBeneficiaryAddress: mocAddresses.mocAppreciationBeneficiaryAddress,
             protThrld: coreParams.protThrld,
             liqThrld: coreParams.liqThrld,
             feeRetainer: feeParams.feeRetainer,
@@ -52,12 +53,13 @@ export const fixtureDeployGovernance = memoizee(
             swapTCforTPFee: feeParams.swapTCforTPFee,
             redeemTCandTPFee: feeParams.redeemTCandTPFee,
             mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
             bes: settlementParams.bes,
           },
           governorAddress: governor.address,
-          pauserAddress: pauserAddress,
+          pauserAddress: mocAddresses.pauserAddress,
           mocCoreExpansion: mocCoreExpansion.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
         }),

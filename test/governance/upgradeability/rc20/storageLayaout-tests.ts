@@ -33,6 +33,8 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
       const initParams = {
         initializeCoreParams: {
           initializeBaseBucketParams: {
+            feeTokenAddress: deployer,
+            feeTokenPriceProviderAddress: deployer,
             tcTokenAddress: mocTC.address,
             mocFeeFlowAddress: deployer,
             mocAppreciationBeneficiaryAddress: deployer,
@@ -46,6 +48,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
             swapTCforTPFee: feeParams.swapTCforTPFee,
             redeemTCandTPFee: feeParams.redeemTCandTPFee,
             mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
             bes: settlementParams.bes,

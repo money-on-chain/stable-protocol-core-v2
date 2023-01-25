@@ -46,10 +46,10 @@ const redeemTCandTPBehavior = function () {
         });
       });
       describe("WHEN alice tries to redeem 0 TC", function () {
-        it("THEN tx reverts because the amount of TC is invalid", async function () {
+        it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
           await expect(
             mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 0, qTP: 23500 }),
-          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.INVALID_VALUE);
+          ).to.be.revertedWithCustomError(mocContracts.mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
         });
       });
       describe("WHEN alice tries to redeem 100 TC and 23500 TP to the zero address", function () {
@@ -161,6 +161,7 @@ const redeemTCandTPBehavior = function () {
           // qTP: 783.33 TP
           // qAC: 103.33 AC - 8% for Moc Fee Flow
           // qACfee: 8% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
             .withArgs(
@@ -171,6 +172,7 @@ const redeemTCandTPBehavior = function () {
               pEth("783.333333333333333333"),
               pEth("95.066666666666666667"),
               pEth("8.266666666666666666"),
+              0,
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -235,6 +237,7 @@ const redeemTCandTPBehavior = function () {
           // qTP: 783.33 TP
           // qAC: 103.33 AC - 8% for Moc Fee Flow
           // qACfee: 8% AC
+          // qFeeToken: 0
           await expect(tx)
             .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
             .withArgs(
@@ -245,6 +248,7 @@ const redeemTCandTPBehavior = function () {
               pEth("783.333333333333333333"),
               pEth("95.066666666666666667"),
               pEth("8.266666666666666666"),
+              0,
             );
         });
       });
@@ -287,6 +291,7 @@ const redeemTCandTPBehavior = function () {
             // qTP: 783.33 TP
             // qAC: 103.33 AC - 8% for Moc Fee Flow
             // qACfee: 8% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
               .withArgs(
@@ -297,6 +302,7 @@ const redeemTCandTPBehavior = function () {
                 pEth("783.333333333333333333"),
                 pEth("95.066666666666666667"),
                 pEth("8.266666666666666666"),
+                0,
               );
           });
         });
@@ -341,6 +347,7 @@ const redeemTCandTPBehavior = function () {
             // qTP: 1175 TP
             // qAC: 103.16 AC - 8% for Moc Fee Flow
             // qACfee: 8% AC
+            // qFeeToken: 0
             await expect(tx)
               .to.emit(mocContracts.mocImpl, "TCandTPRedeemed")
               .withArgs(
@@ -351,6 +358,7 @@ const redeemTCandTPBehavior = function () {
                 pEth(1175),
                 pEth("94.913333333333333272"),
                 pEth("8.253333333333333328"),
+                0,
               );
           });
         });

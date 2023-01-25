@@ -32,6 +32,8 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
 
       const initParams = {
         initializeBaseBucketParams: {
+          feeTokenAddress: deployer,
+          feeTokenPriceProviderAddress: deployer,
           tcTokenAddress: mocTC.address,
           mocFeeFlowAddress: deployer,
           mocAppreciationBeneficiaryAddress: deployer,
@@ -45,6 +47,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
           swapTCforTPFee: feeParams.swapTCforTPFee,
           redeemTCandTPFee: feeParams.redeemTCandTPFee,
           mintTCandTPFee: feeParams.mintTCandTPFee,
+          feeTokenPct: feeParams.feeTokenPct,
           successFee: coreParams.successFee,
           bes: settlementParams.bes,
           appreciationFactor: coreParams.appreciationFactor,

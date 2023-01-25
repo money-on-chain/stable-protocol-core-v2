@@ -73,6 +73,7 @@
     "clean": "hardhat clean",
     "typechain": "TS_NODE_TRANSPILE_ONLY=true hardhat --config ./hardhat.base.config.ts typechain",
     "compile": "VIA_IR=true npm run typechain && VIA_IR=true hardhat compile",
+    "compile-not-viair": "npm run typechain && hardhat compile",
     "coverage": "hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"./test/**/*.ts\"",
     "lint": "npm run lint:sol && npm run lint:ts && npm run prettier:check",
     "lint:sol": "solhint --config .solhint.json --max-warnings 0 \"contracts/**/*.sol\"",

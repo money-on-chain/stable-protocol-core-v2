@@ -2,7 +2,13 @@ import { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
 import { ERC777Mock, ERC777Mock__factory, MocCARC20, MocCARC20__factory } from "../../../typechain";
 import { mocInitialize } from "../../collateralBag/initializers";
-import { deployAndAddPeggedTokens, deployCollateralToken } from "../../helpers/utils";
+import {
+  deployAndAddPeggedTokens,
+  deployAsset,
+  deployCollateralToken,
+  deployPriceProvider,
+  pEth,
+} from "../../helpers/utils";
 
 export const fixtureDeployedMocRC777 = memoizee(
   (
@@ -41,12 +47,15 @@ export const fixtureDeployedMocRC777 = memoizee(
         ethers.provider.getSigner(),
       );
 
+      const feeTokenAddress = (await deployAsset()).address;
+      const feeTokenPriceProviderAddress = (await deployPriceProvider(pEth(1))).address;
+
       await mocInitialize(
         mocImpl,
         collateralAsset.address,
         collateralToken.address,
         mocCoreExpansion.address,
-      )({ mocGovernorAddress: governorAddress });
+      )({ mocGovernorAddress: governorAddress, feeTokenAddress, feeTokenPriceProviderAddress });
 
       await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 

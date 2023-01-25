@@ -27,7 +27,9 @@ contract EchidnaMocWrapperTester {
 
     MocCARC20 internal mocCARC20;
     GovernorMock internal governor;
+    ERC20Mock internal feeToken;
     MocTC internal tcToken;
+    IPriceProvider internal feeTokenPriceProvider;
     ERC20Mock internal acToken;
     address internal mocCoreExpansion;
     address internal mocFeeFlow;
@@ -44,6 +46,8 @@ contract EchidnaMocWrapperTester {
         mocAppreciationBeneficiary = address(2);
         governor = new GovernorMock();
         acToken = new ERC20Mock();
+        feeToken = new ERC20Mock();
+        feeTokenPriceProvider = new PriceProviderMock(1 ether);
         tcToken = MocTC(_deployProxy(address(new MocTC())));
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
         mocWrapper = MocCAWrapper(_deployProxy(address(new MocCAWrapper())));
@@ -55,6 +59,8 @@ contract EchidnaMocWrapperTester {
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
+                feeTokenAddress: address(feeToken),
+                feeTokenPriceProviderAddress: address(feeTokenPriceProvider),
                 tcTokenAddress: address(tcToken),
                 mocFeeFlowAddress: mocFeeFlow,
                 mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiary,
@@ -68,6 +74,7 @@ contract EchidnaMocWrapperTester {
                 swapTCforTPFee: (1 * PRECISION) / 100, // 1%
                 redeemTCandTPFee: (8 * PRECISION) / 100, // 8%
                 mintTCandTPFee: (8 * PRECISION) / 100, // 8%
+                feeTokenPct: (5 * PRECISION) / 10, // 50%
                 successFee: (1 * PRECISION) / 10, // 10%
                 appreciationFactor: (5 * PRECISION) / 10, // 50%
                 bes: 30 days

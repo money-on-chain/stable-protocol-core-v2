@@ -6,17 +6,17 @@ import { getNetworkDeployParams } from "../../scripts/utils";
 
 const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDeployParams(hre);
 
-const { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
-
 export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocCoreExpansion: Address) {
   return ({
-    mocGovernorAddress = governorAddress,
-    mocPauserAddress = pauserAddress,
+    mocGovernorAddress = mocAddresses.governorAddress,
+    mocPauserAddress = mocAddresses.pauserAddress,
+    feeTokenAddress = mocAddresses.feeTokenAddress,
+    feeTokenPriceProviderAddress = mocAddresses.feeTokenPriceProviderAddress,
     wcaTokenAddress = wcaToken,
     mocTCAddress = mocTC,
     mocCoreExpansionAddress = mocCoreExpansion,
-    feeFlowAddress = mocFeeFlowAddress,
-    appreciationBeneficiaryAddress = mocAppreciationBeneficiaryAddress,
+    feeFlowAddress = mocAddresses.mocFeeFlowAddress,
+    mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
     feeRetainer = feeParams.feeRetainer,
@@ -27,6 +27,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     swapTCforTPFee = feeParams.swapTCforTPFee,
     redeemTCandTPFee = feeParams.redeemTCandTPFee,
     mintTCandTPFee = feeParams.mintTCandTPFee,
+    feeTokenPct = feeParams.feeTokenPct,
     emaCalculationBlockSpan = coreParams.emaCalculationBlockSpan,
     bes = settlementParams.bes,
     successFee = coreParams.successFee,
@@ -34,11 +35,13 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
   }: {
     mocGovernorAddress?: Address;
     mocPauserAddress?: Address;
+    feeTokenAddress?: Address;
+    feeTokenPriceProviderAddress?: Address;
     wcaTokenAddress?: Address;
     mocTCAddress?: Address;
     mocCoreExpansionAddress?: Address;
     feeFlowAddress?: Address;
-    appreciationBeneficiaryAddress?: Address;
+    mocAppreciationBeneficiaryAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
     feeRetainer?: BigNumberish;
@@ -49,6 +52,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     swapTCforTPFee?: BigNumberish;
     redeemTCandTPFee?: BigNumberish;
     mintTCandTPFee?: BigNumberish;
+    feeTokenPct?: BigNumberish;
     emaCalculationBlockSpan?: BigNumberish;
     bes?: BigNumberish;
     successFee?: BigNumberish;
@@ -57,9 +61,11 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     return mocCARC20.initialize({
       initializeCoreParams: {
         initializeBaseBucketParams: {
+          feeTokenAddress,
+          feeTokenPriceProviderAddress,
           tcTokenAddress: mocTCAddress,
           mocFeeFlowAddress: feeFlowAddress,
-          mocAppreciationBeneficiaryAddress: appreciationBeneficiaryAddress,
+          mocAppreciationBeneficiaryAddress,
           protThrld,
           liqThrld,
           feeRetainer,
@@ -70,6 +76,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
           swapTCforTPFee,
           redeemTCandTPFee,
           mintTCandTPFee,
+          feeTokenPct,
           successFee,
           appreciationFactor,
           bes,

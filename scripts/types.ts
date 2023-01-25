@@ -63,6 +63,9 @@ export type DeployParameters = {
     redeemTCandTPFee: BigNumber;
     // additional fee pct applied on mint Collateral Token and Pegged Token [PREC]
     mintTCandTPFee: BigNumber;
+    // pct applied on the top of the operation`s fee when using Fee Token as fee payment method [PREC]
+    // e.g. if tcMintFee = 1%, feeTokenPct = 50% => qFeeToken = 0.5%
+    feeTokenPct: BigNumber;
   };
   ctParams: {
     // collateral token name
@@ -83,6 +86,10 @@ export type DeployParameters = {
     governorAddress: Address;
     // the address that is authorized to pause this contract
     pauserAddress: Address;
+    // the Fee Token contract address used as an alternative method for paying fees instead of collateral asset
+    feeTokenAddress: Address;
+    // the Fee Token price provider contract address
+    feeTokenPriceProviderAddress: Address;
     // moc Fee Flow contract address
     mocFeeFlowAddress: Address;
     // moc appreciation beneficiary Address

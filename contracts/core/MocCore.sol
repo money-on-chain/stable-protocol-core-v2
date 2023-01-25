@@ -11,15 +11,30 @@ import "./MocCoreExpansion.sol";
  */
 abstract contract MocCore is MocStorage {
     // ------- Events -------
-    event TCMinted(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
-    event TCRedeemed(address indexed sender_, address indexed recipient_, uint256 qTC_, uint256 qAC_, uint256 qACfee_);
+    event TCMinted(
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_
+    );
+    event TCRedeemed(
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_
+    );
     event TPMinted(
         uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
         uint256 qAC_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event TPSwappedForTP(
         uint256 indexed iFrom_,
@@ -28,7 +43,8 @@ abstract contract MocCore is MocStorage {
         address indexed recipient_,
         uint256 qTPfrom_,
         uint256 qTPto_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event TPSwappedForTC(
         uint256 indexed i_,
@@ -36,7 +52,8 @@ abstract contract MocCore is MocStorage {
         address indexed recipient_,
         uint256 qTP_,
         uint256 qTC_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event TCSwappedForTP(
         uint256 indexed i_,
@@ -44,7 +61,8 @@ abstract contract MocCore is MocStorage {
         address indexed recipient_,
         uint256 qTC_,
         uint256 qTP_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event TCandTPRedeemed(
         uint256 indexed i_,
@@ -53,7 +71,8 @@ abstract contract MocCore is MocStorage {
         uint256 qTC_,
         uint256 qTP_,
         uint256 qAC_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event TCandTPMinted(
         uint256 indexed i_,
@@ -62,7 +81,8 @@ abstract contract MocCore is MocStorage {
         uint256 qTC_,
         uint256 qTP_,
         uint256 qAC_,
-        uint256 qACfee_
+        uint256 qACfee_,
+        uint256 qFeeToken_
     );
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     event SettlementExecuted();
@@ -100,8 +120,10 @@ abstract contract MocCore is MocStorage {
      * @dev this function must be execute by the AC implementation at initialization
      * @param initializeCoreParams_ contract initializer params
      *        governorAddress The address that will define when a change contract is authorized
-     *        pauserAddress The address that is authorized to pause this contract
+     *        pauserAddress_ The address that is authorized to pause this contract
      *        mocCoreExpansion Moc Core Expansion contract address
+     *        feeTokenAddress Fee Token contract address
+     *        feeTokenPriceProviderAddress Fee Token price provider contract address
      *        tcTokenAddress Collateral Token contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
      *        mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
@@ -110,6 +132,13 @@ abstract contract MocCore is MocStorage {
      *        feeRetainer pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
      *        tcMintFee additional fee pct applied on mint Collateral Tokens operations [PREC]
      *        tcRedeemFee additional fee pct applied on redeem Collateral Tokens operations [PREC]
+     *        swapTPforTPFee additional fee pct applied on swap a Pegged Token for another Pegged Token [PREC]
+     *        swapTPforTCFee additional fee pct applied on swap a Pegged Token for Collateral Token [PREC]
+     *        swapTCforTPFee additional fee pct applied on swap Collateral Token for a Pegged Token [PREC]
+     *        redeemTCandTPFee additional fee pct applied on redeem Collateral Token and Pegged Token [PREC]
+     *        mintTCandTPFee additional fee pct applied on mint Collateral Token and Pegged Token [PREC]
+     *        feeTokenPct pct applied on the top of the operation`s fee when using
+     *          Fee Token as fee payment method [PREC]
      *        successFee pct of the gain because Pegged Tokens devaluation that is transferred
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
@@ -151,141 +180,187 @@ abstract contract MocCore is MocStorage {
      */
     function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal virtual returns (uint256 change);
 
+    struct MintTCParams {
+        uint256 qTC;
+        uint256 qACmax;
+        address sender;
+        address recipient;
+    }
+
     /**
      * @notice mint Collateral Token in exchange for Collateral Asset
-     * @param qTC_ amount of Collateral Token to mint
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
-     * @param recipient_ address who receives the Collateral Token
+     * @param params_ mintTCto function params
+     * @dev
+     *      qTC_ amount of Collateral Token to mint
+     *      qACmax_ maximum amount of Collateral Asset that can be spent
+     *      sender_ address who sends the Collateral Asset, all unspent amount is returned to it
+     *      recipient_ address who receives the Collateral Token
      * @return qACtotalNeeded amount of AC used to mint qTC
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
+
     function _mintTCto(
-        uint256 qTC_,
-        uint256 qACmax_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        MintTCParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         uint256[] memory pACtps = _getPACtps();
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
-        // calculates how many qAC are needed to mint TC and the qAC fee
-        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTC(qTC_, lckAC, nACgain);
-        qACtotalNeeded = qACNeededtoMint + qACfee;
-        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        // calculates how many qAC are needed to mint TC
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACNeededtoMint = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
+        uint256 qACFee;
+        (qACtotalNeeded, qACFee, qFeeToken) = _calcFees(params_.sender, qACNeededtoMint, tcMintFee, true);
+        if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        emit TCMinted(sender_, recipient_, qTC_, qACtotalNeeded, qACfee);
-        _depositAndMintTC(qTC_, qACNeededtoMint, recipient_);
-        uint256 acChange = _onACNeededOperation(qACmax_, qACtotalNeeded);
+        emit TCMinted(params_.sender, params_.recipient, params_.qTC, qACtotalNeeded, qACFee, qFeeToken);
+        _depositAndMintTC(params_.qTC, qACNeededtoMint, params_.recipient);
+        uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(sender_, acChange, qACfee);
-        return qACtotalNeeded;
+        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        return (qACtotalNeeded, qFeeToken);
+    }
+
+    struct RedeemTCParams {
+        uint256 qTC;
+        uint256 qACmin;
+        address sender;
+        address recipient;
     }
 
     /**
      * @notice redeem Collateral Asset in exchange for Collateral Token
-     * @param qTC_ amount of Collateral Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
-     * @param sender_ address who sends the Collateral Token
-     * @param recipient_ address who receives the Collateral Asset
+     * @param params_ redeemTCto function params
+     * @dev
+     *      qTC_ amount of Collateral Token to redeem
+     *      qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     *      sender_ address who sends the Collateral Token
+     *      recipient_ address who receives the Collateral Asset
      * @return qACtoRedeem amount of AC sent to `recipient_`
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
+
     function _redeemTCto(
-        uint256 qTC_,
-        uint256 qACmin_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
+        RedeemTCParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qFeeToken) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
-        _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
-        // calculate how many total qAC are redeemed and how many correspond for fee
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
+        _evalTCAvailableToRedeem(params_.qTC, ctargemaCA, lckAC, nACgain);
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
-        qACtoRedeem = qACtotalToRedeem - qACfee;
-        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
-        emit TCRedeemed(sender_, recipient_, qTC_, qACtoRedeem, qACfee);
-        _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
+        uint256 qACFee;
+        (qACtoRedeem, qACFee, qFeeToken) = _calcFees(params_.sender, qACtotalToRedeem, tcRedeemFee, false);
+        if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
+        emit TCRedeemed(params_.sender, params_.recipient, params_.qTC, qACtoRedeem, qACFee, qFeeToken);
+        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
-        _distOpResults(recipient_, qACtoRedeem, qACfee);
-        return qACtoRedeem;
+        _distOpResults(params_.recipient, qACtoRedeem, qACFee, qFeeToken);
+        return (qACtoRedeem, qFeeToken);
+    }
+
+    struct MintTPParams {
+        uint256 i;
+        uint256 qTP;
+        uint256 qACmax;
+        address sender;
+        address recipient;
     }
 
     /**
      * @notice mint Pegged Token in exchange for Collateral Asset
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @param sender_ address who sends the Collateral Asset, all unspent amount is returned to it
-     * @param recipient_ address who receives the Pegged Token
+     * @param params_ mint TP function params
+     * @dev
+     *      i_ Pegged Token index
+     *      qTP_ amount of Pegged Token to mint
+     *      qACmax_ maximum amount of Collateral Asset that can be spent
+     *      sender_ address who sends the Collateral Asset, all unspent amount is returned to it
+     *      recipient_ address who receives the Pegged Token
      * @return qACtotalNeeded amount of AC used to mint qTP
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _mintTPto(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qACmax_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded) {
+        MintTPParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        uint256 pACtp = pACtps[i_];
-        _updateTPtracking(i_, pACtp);
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough TP available to mint, reverts if it's not
-        _evalTPavailableToMint(i_, qTP_, pACtp, ctargemaCA, lckAC, nACgain);
-        // calculate how many qAC are needed to mint TP and the qAC fee
-        (uint256 qACNeededtoMint, uint256 qACfee) = _calcQACforMintTP(i_, qTP_, pACtp);
-        qACtotalNeeded = qACNeededtoMint + qACfee;
-        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        _evalTPavailableToMint(params_.i, params_.qTP, pACtp, ctargemaCA, lckAC, nACgain);
+        // calculate how many qAC are needed to mint TP
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACNeededtoMint = _divPrec(params_.qTP, pACtp);
+        uint256 qACFee;
+        (qACtotalNeeded, qACFee, qFeeToken) = _calcFees(params_.sender, qACNeededtoMint, tpMintFee[params_.i], true);
+        if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        emit TPMinted(i_, sender_, recipient_, qTP_, qACtotalNeeded, qACfee);
+        emit TPMinted(params_.i, params_.sender, params_.recipient, params_.qTP, qACtotalNeeded, qACFee, qFeeToken);
         // update bucket and mint
-        _depositAndMintTP(i_, qTP_, qACNeededtoMint, recipient_);
-        uint256 acChange = _onACNeededOperation(qACmax_, qACtotalNeeded);
+        _depositAndMintTP(params_.i, params_.qTP, qACNeededtoMint, params_.recipient);
+        uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(sender_, acChange, qACfee);
-        return qACtotalNeeded;
+        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        return (qACtotalNeeded, qFeeToken);
+    }
+
+    struct RedeemTPParams {
+        uint256 i;
+        uint256 qTP;
+        uint256 qACmin;
+        address sender;
+        address recipient;
     }
 
     /**
      * @notice redeem Collateral Asset in exchange for Pegged Token
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
-     * @param sender_ address who sends the Pegged Token
-     * @param recipient_ address who receives the Collateral Asset
+     * @param params_ redeem CA function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTP_ amount of Pegged Token to redeem
+     *      qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives the Collateral Asset
      * @return qACtoRedeem amount of AC sent to `recipient_`
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _redeemTPto(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qACmin_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem) {
+        RedeemTPParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qFeeToken) {
         uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[i_];
-        _updateTPtracking(i_, pACtp);
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to redeem TP, reverts if it's not
         _evalCoverage(protThrld, pACtps);
-        // calculate how many total qAC are redeemed and how many correspond for fee
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTP(i_, qTP_, pACtp);
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtp);
+        uint256 qACFee;
+        (qACtoRedeem, qACFee, qFeeToken) = _calcFees(params_.sender, qACtotalToRedeem, tpRedeemFee[params_.i], false);
         // if is 0 reverts because it is trying to redeem an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
-        qACtoRedeem = qACtotalToRedeem - qACfee;
-        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
-        emit TPRedeemed(i_, sender_, recipient_, qTP_, qACtoRedeem, qACfee);
-        _withdrawAndBurnTP(i_, qTP_, qACtotalToRedeem, sender_);
+        if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
+        emit TPRedeemed(params_.i, params_.sender, params_.recipient, params_.qTP, qACtoRedeem, qACFee, qFeeToken);
+        _withdrawAndBurnTP(params_.i, params_.qTP, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
-        _distOpResults(recipient_, qACtoRedeem, qACfee);
-        return qACtoRedeem;
+        _distOpResults(params_.recipient, qACtoRedeem, qACFee, qFeeToken);
+        return (qACtoRedeem, qFeeToken);
+    }
+
+    struct MintTCandTPParams {
+        uint256 i;
+        uint256 qTP;
+        uint256 qACmax;
+        address sender;
+        address recipient;
     }
 
     /**
@@ -294,41 +369,58 @@ abstract contract MocCore is MocStorage {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @param sender_ address who sends Collateral Asset
-     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @param params_ mint TC and TP function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTP_ amount of Pegged Token to mint
+     *      qACmax_ maximum amount of Collateral Asset that can be spent
+     *      sender_ address who sends Collateral Asset
+     *      recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _mintTCandTPto(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qACmax_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTCtoMint) {
+        MintTCandTPParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
         uint256 qACNeededtoMint;
-        uint256 qACfee;
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        uint256 pACtp = pACtps[i_];
-        _updateTPtracking(i_, pACtp);
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         _evalCoverage(liqThrld, pACtps);
-        (qTCtoMint, qACNeededtoMint, qACfee) = _calcQACforMintTCandTP(qTP_, pACtp, ctargemaCA, pACtps);
-        qACtotalNeeded = qACNeededtoMint + qACfee;
-        if (qACtotalNeeded > qACmax_) revert InsufficientQacSent(qACmax_, qACtotalNeeded);
+        (qTCtoMint, qACNeededtoMint) = _calcQACforMintTCandTP(params_.qTP, pACtp, ctargemaCA, pACtps);
+        uint256 qACFee;
+        (qACtotalNeeded, qACFee, qFeeToken) = _calcFees(params_.sender, qACNeededtoMint, mintTCandTPFee, true);
+        if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        emit TCandTPMinted(i_, sender_, recipient_, qTCtoMint, qTP_, qACtotalNeeded, qACfee);
-        _depositAndMintTC(qTCtoMint, qACNeededtoMint, recipient_);
-        _depositAndMintTP(i_, qTP_, 0, recipient_);
-        uint256 acChange = _onACNeededOperation(qACmax_, qACtotalNeeded);
+        emit TCandTPMinted(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            qTCtoMint,
+            params_.qTP,
+            qACtotalNeeded,
+            qACFee,
+            qFeeToken
+        );
+        _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
+        _depositAndMintTP(params_.i, params_.qTP, 0, params_.recipient);
+        uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers qAC to the sender and distributes fees
-        _distOpResults(sender_, acChange, qACfee);
-        return (qACtotalNeeded, qTCtoMint);
+        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        return (qACtotalNeeded, qTCtoMint, qFeeToken);
+    }
+
+    struct RedeemTCandTPParams {
+        uint256 i;
+        uint256 qTC;
+        uint256 qTP;
+        uint256 qACmin;
+        address sender;
+        address recipient;
     }
 
     /**
@@ -337,26 +429,24 @@ abstract contract MocCore is MocStorage {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to redeem
-     * @param qTP_ maximum amount of Pegged Token to redeem
-     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
-     * @param sender_ address who sends Collateral Token and Pegged Token
-     * @param recipient_ address who receives the Collateral Asset
+     * @param params_ redeem TC and TP function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTC_ amount of Collateral Token to redeem
+     *      qTP_ maximum amount of Pegged Token to redeem
+     *      qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     *      sender_ address who sends Collateral Token and Pegged Token
+     *      recipient_ address who receives the Collateral Asset
      * @return qACtoRedeem amount of AC sent to `recipient_`
      * @return qTPtoRedeem amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _redeemTCandTPto(
-        uint256 i_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qACmin_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qTPtoRedeem) {
+        RedeemTCandTPParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeToken) {
         uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[i_];
-        _updateTPtracking(i_, pACtp);
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
@@ -368,218 +458,222 @@ abstract contract MocCore is MocStorage {
         // So, we can simplify (totalACavailable - lckAC)
         // qTPtoRedeem = (qTC * pACtp * lckAC) / nTCcb
         // [N] = ([N] * [N] * [PREC] / [N]) /  [PREC]
-        qTPtoRedeem = ((qTC_ * lckAC * pACtp) / nTCcb) / PRECISION;
+        qTPtoRedeem = ((params_.qTC * lckAC * pACtp) / nTCcb) / PRECISION;
 
-        if (qTPtoRedeem > qTP_) revert InsufficientQtpSent(qTP_, qTPtoRedeem);
-        (uint256 qACtotalToRedeem, uint256 qACfee) = _calcQACforRedeemTCandTP(
-            i_,
-            qTC_,
+        if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
+        uint256 qACtotalToRedeem = _calcQACforRedeemTCandTP(params_.qTC, qTPtoRedeem, pACtp, _getPTCac(lckAC, nACgain));
+        uint256 qACFee;
+        (qACtoRedeem, qACFee, qFeeToken) = _calcFees(params_.sender, qACtotalToRedeem, redeemTCandTPFee, false);
+        if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
+        // if is 0 reverts because it is trying to redeem an amount below precision
+        if (qACtoRedeem == 0) revert QacNeededMustBeGreaterThanZero();
+        emit TCandTPRedeemed(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
             qTPtoRedeem,
-            pACtp,
-            _getPTCac(lckAC, nACgain)
+            qACtoRedeem,
+            qACFee,
+            qFeeToken
         );
-        qACtoRedeem = qACtotalToRedeem - qACfee;
-        if (qACtoRedeem < qACmin_) revert QacBelowMinimumRequired(qACmin_, qACtoRedeem);
 
-        // inside a block to avoid stack too deep error
-        {
-            uint256 i = i_;
-            uint256 qTC = qTC_;
-            uint256 qACtoRedeem_ = qACtoRedeem;
-            emit TCandTPRedeemed(i, sender_, recipient_, qTC, qTPtoRedeem, qACtoRedeem_, qACfee);
-        }
-
-        _withdrawAndBurnTC(qTC_, qACtotalToRedeem, sender_);
-        _withdrawAndBurnTP(i_, qTPtoRedeem, 0, sender_);
+        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
+        _withdrawAndBurnTP(params_.i, qTPtoRedeem, 0, params_.sender);
 
         // transfers qAC to the recipient and distributes fees
-        _distOpResults(recipient_, qACtoRedeem, qACfee);
-        return (qACtoRedeem, qTPtoRedeem);
+        _distOpResults(params_.recipient, qACtoRedeem, qACFee, qFeeToken);
+        return (qACtoRedeem, qTPtoRedeem, qFeeToken);
+    }
+
+    struct SwapTPforTPParams {
+        uint256 iFrom;
+        uint256 iTo;
+        uint256 qTP;
+        uint256 qTPmin;
+        uint256 qACmax;
+        address sender;
+        address recipient;
     }
 
     /**
      * @notice swap Pegged Token to another one
      *  This operation is done without checking coverage unless the target coverage for
      *  received Pegged Token is greater than the Pegged Token sent
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
-     * @param qTP_ amount of owned Pegged Token to swap
-     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-     * @param sender_ address who sends the Pegged Token
-     * @param recipient_ address who receives the target Pegged Token
-     * @return qACfee amount of AC used to pay fee
+     * @param params_ swap TP for TP function parameters
+     * @dev
+     *      iFrom_ owned Pegged Token index
+     *      iTo_ target Pegged Token index
+     *      qTP_ amount of owned Pegged Token to swap
+     *      qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     *      qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives the target Pegged Token
+     * @return qACFee amount of AC used to pay fee
      * @return qTPtoMint amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _swapTPforTPto(
-        uint256 iFrom_,
-        uint256 iTo_,
-        uint256 qTP_,
-        uint256 qTPmin_,
-        uint256 qACmax_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTPtoMint) {
-        if (iFrom_ == iTo_) revert InvalidValue();
-        uint256 pACtpFrom = getPACtp(iFrom_);
-        uint256 pACtpTo = getPACtp(iTo_);
-        _updateTPtracking(iFrom_, pACtpFrom);
-        _updateTPtracking(iTo_, pACtpTo);
-        // calculate how many total qAC are redeemed and how many correspond for fee
-        (uint256 qACtotalToRedeem, ) = _calcQACforRedeemTP(iFrom_, qTP_, pACtpFrom);
+        SwapTPforTPParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACFee, uint256 qTPtoMint, uint256 qFeeToken) {
+        if (params_.iFrom == params_.iTo) revert InvalidValue();
+        uint256 pACtpFrom = getPACtp(params_.iFrom);
+        uint256 pACtpTo = getPACtp(params_.iTo);
+        _updateTPtracking(params_.iFrom, pACtpFrom);
+        _updateTPtracking(params_.iTo, pACtpTo);
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtpFrom);
         // calculate how many qTP can mint with the given qAC
         // [N] = [N] * [PREC] / [PREC]
-        qTPtoMint = (qTP_ * pACtpTo) / pACtpFrom;
-        if (qTPtoMint < qTPmin_ || qTPtoMint == 0) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
+        qTPtoMint = (params_.qTP * pACtpTo) / pACtpFrom;
+        if (qTPtoMint < params_.qTPmin || qTPtoMint == 0) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
 
         // if ctargemaTPto > ctargemaTPfrom we need to check coverage
-        if (_getCtargemaTP(iTo_, pACtpTo) > _getCtargemaTP(iFrom_, pACtpFrom)) {
+        if (_getCtargemaTP(params_.iTo, pACtpTo) > _getCtargemaTP(params_.iFrom, pACtpFrom)) {
             (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
             // evaluates whether or not the system coverage is healthy enough to mint TP
             // given the target coverage adjusted by the moving average, reverts if it's not
             (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
             // evaluates if there are enough TP available to mint, reverts if it's not
-            _evalTPavailableToMint(iTo_, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
+            _evalTPavailableToMint(params_.iTo, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
         }
+        (, qACFee, qFeeToken) = _calcFees(params_.sender, qACtotalToRedeem, swapTPforTPFee, false);
+        if (qACFee > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACFee);
+        emit TPSwappedForTP(
+            params_.iFrom,
+            params_.iTo,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qTPtoMint,
+            qACFee,
+            qFeeToken
+        );
 
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, swapTPforTPFee);
-        if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
-
-        // inside a block to avoid stack too deep error
-        {
-            uint256 iFrom = iFrom_;
-            uint256 iTo = iTo_;
-            uint256 qTP = qTP_;
-            emit TPSwappedForTP(iFrom, iTo, sender_, recipient_, qTP, qTPtoMint, qACfee);
-        }
-
-        _depositAndMintTP(iTo_, qTPtoMint, 0, recipient_);
-        _withdrawAndBurnTP(iFrom_, qTP_, 0, sender_);
+        _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
+        _withdrawAndBurnTP(params_.iFrom, params_.qTP, 0, params_.sender);
 
         // AC is only used to pay fees
-        uint256 acChange = _onACNeededOperation(qACmax_, qACfee);
+        uint256 acChange = _onACNeededOperation(params_.qACmax, qACFee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, acChange, qACfee);
-        return (qACfee, qTPtoMint);
+        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        return (qACFee, qTPtoMint, qFeeToken);
+    }
+
+    struct SwapTPforTCParams {
+        uint256 i;
+        uint256 qTP;
+        uint256 qTCmin;
+        uint256 qACmax;
+        address sender;
+        address recipient;
     }
 
     /**
      * @notice swap Pegged Token to Collateral Token
-     * @param i_ Pegged Token index
-     * @param qTP_ amount Pegged Token to swap
-     * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-     * @param sender_ address who sends the Pegged Token
-     * @param recipient_ address who receives Collateral Token
-     * @return qACfee amount of AC used to pay fee
+     * @param params_ swap TP for TC function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTP_ amount Pegged Token to swap
+     *      qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     *      qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives Collateral Token
+     * @return qACFee amount of AC used to pay fee
      * @return qTCtoMint amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _swapTPforTCto(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 qTCmin_,
-        uint256 qACmax_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTCtoMint) {
+        SwapTPforTCParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACFee, uint256 qTCtoMint, uint256 qFeeToken) {
         uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[i_];
-        _updateTPtracking(i_, pACtp);
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
-        // calculate how many total qAC are redeemed and how many correspond for fee
-        (uint256 qACtotalToRedeem, ) = _calcQACforRedeemTP(i_, qTP_, pACtp);
+        // calculate how many total qAC are redeemed TP
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtp);
         // calculate how many qTC can mint with the given qAC
         // qTCtoMint = qTP / pTCac / pACtp
         // [N] = [N] * [N] * [PREC] / ([N] - [N]) * [PREC]
-        qTCtoMint = _divPrec(qTP_ * nTCcb, (_getTotalACavailable(nACgain) - lckAC) * pACtp);
-        if (qTCtoMint < qTCmin_ || qTCtoMint == 0) revert QtcBelowMinimumRequired(qTCmin_, qTCtoMint);
+        qTCtoMint = _divPrec(params_.qTP * nTCcb, (_getTotalACavailable(nACgain) - lckAC) * pACtp);
+        if (qTCtoMint < params_.qTCmin || qTCtoMint == 0) revert QtcBelowMinimumRequired(params_.qTCmin, qTCtoMint);
 
-        // calculate qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, swapTPforTCFee);
-        if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
+        (, qACFee, qFeeToken) = _calcFees(params_.sender, qACtotalToRedeem, swapTPforTCFee, false);
+        if (qACFee > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACFee);
+        emit TPSwappedForTC(params_.i, params_.sender, params_.recipient, params_.qTP, qTCtoMint, qACFee, qFeeToken);
 
-        // inside a block to avoid stack too deep error
-        {
-            uint256 i = i_;
-            uint256 qTP = qTP_;
-            emit TPSwappedForTC(i, sender_, recipient_, qTP, qTCtoMint, qACfee);
-        }
+        _withdrawAndBurnTP(params_.i, params_.qTP, 0, params_.sender);
+        _depositAndMintTC(qTCtoMint, 0, params_.recipient);
 
-        _withdrawAndBurnTP(i_, qTP_, 0, sender_);
-        _depositAndMintTC(qTCtoMint, 0, recipient_);
         // AC is only used to pay fees
-        uint256 acChange = _onACNeededOperation(qACmax_, qACfee);
+        uint256 acChange = _onACNeededOperation(params_.qACmax, qACFee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, acChange, qACfee);
-        return (qACfee, qTCtoMint);
+        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        return (qACFee, qTCtoMint, qFeeToken);
+    }
+
+    struct SwapTCforTPParams {
+        uint256 i;
+        uint256 qTC;
+        uint256 qTPmin;
+        uint256 qACmax;
+        address sender;
+        address recipient;
     }
 
     /**
      * @notice swap Collateral Token to Pegged Token
-     * @param i_ Pegged Token index
-     * @param qTC_ amount of Collateral Token to swap
-     * @param qTPmin_ minimum amount of Pegged Token Token that `recipient_` expects to receive
-     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-     * @param sender_ address who sends the Collateral Token
-     * @param recipient_ address who receives the Pegged Token
-     * @return qACfee amount of AC used to pay fee
+     * @param params_ swap TC for TP function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTC_ amount of Collateral Token to swap
+     *      qTPmin_ minimum amount of Pegged Token Token that `recipient_` expects to receive
+     *      qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     *      sender_ address who sends the Collateral Token
+     *      recipient_ address who receives the Pegged Token
+     * @return qACFee amount of AC used to pay fee
      * @return qTPtoMint amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
      */
     function _swapTCforTPto(
-        uint256 i_,
-        uint256 qTC_,
-        uint256 qTPmin_,
-        uint256 qACmax_,
-        address sender_,
-        address recipient_
-    ) internal notLiquidated notPaused returns (uint256 qACfee, uint256 qTPtoMint) {
+        SwapTCforTPParams memory params_
+    ) internal notLiquidated notPaused returns (uint256 qACFee, uint256 qTPtoMint, uint256 qFeeToken) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        _updateTPtracking(i_, pACtps[i_]);
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
-        _evalTCAvailableToRedeem(qTC_, ctargemaCA, lckAC, nACgain);
-        // calculate how many total qAC are redeemed and how many correspond for fee
-        (uint256 qACtotalToRedeem, ) = _calcQACforRedeemTC(qTC_, lckAC, nACgain);
+        _evalTCAvailableToRedeem(params_.qTC, ctargemaCA, lckAC, nACgain);
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
         // if is 0 reverts because it is trying to swap an amount below precision
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // calculate how many qTP can mint with the given qAC
         // qTPtoMint = qTC * pTCac * pACtp
         // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
-        qTPtoMint = ((qTC_ * (_getTotalACavailable(nACgain) - lckAC) * pACtps[i_]) / nTCcb) / PRECISION;
+        qTPtoMint = ((params_.qTC * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
         // evaluates if there are enough TP available to mint, reverts if it's not
-        // inside a block to avoid stack too deep error
-        {
-            uint256 pACtp = pACtps[i_];
-            _evalTPavailableToMint(i_, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
-        }
-        if (qTPtoMint < qTPmin_) revert QtpBelowMinimumRequired(qTPmin_, qTPtoMint);
+        _evalTPavailableToMint(params_.i, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
+        if (qTPtoMint < params_.qTPmin) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
 
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, swapTCforTPFee);
-        if (qACfee > qACmax_) revert InsufficientQacSent(qACmax_, qACfee);
+        (, qACFee, qFeeToken) = _calcFees(params_.sender, qACtotalToRedeem, swapTCforTPFee, false);
+        if (qACFee > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACFee);
+        emit TCSwappedForTP(params_.i, params_.sender, params_.recipient, params_.qTC, qTPtoMint, qACFee, qFeeToken);
 
-        // inside a block to avoid stack too deep error
-        {
-            uint256 i = i_;
-            uint256 qTC = qTC_;
-            emit TCSwappedForTP(i, sender_, recipient_, qTC, qTPtoMint, qACfee);
-        }
-
-        _withdrawAndBurnTC(qTC_, 0, sender_);
-        _depositAndMintTP(i_, qTPtoMint, 0, recipient_);
+        _withdrawAndBurnTC(params_.qTC, 0, params_.sender);
+        _depositAndMintTP(params_.i, qTPtoMint, 0, params_.recipient);
 
         // AC is only used to pay fees
-        uint256 acChange = _onACNeededOperation(qACmax_, qACfee);
+        uint256 acChange = _onACNeededOperation(params_.qACmax, qACFee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(sender_, acChange, qACfee);
-        return (qACfee, qTPtoMint);
+        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        return (qACFee, qTPtoMint, qFeeToken);
     }
 
     /**
@@ -610,17 +704,79 @@ abstract contract MocCore is MocStorage {
      * @notice Distributes Operation results to the different recipients
      * @param operatorsAddress_ operator's address to receive `operatorsQAC_`
      * @param operatorsQAC_ amount of AC to transfer operator [N]
-     * @param qACfee_ amount of AC to be distributed as fees [N]
      */
-    function _distOpResults(address operatorsAddress_, uint256 operatorsQAC_, uint256 qACfee_) internal {
-        // [N] = [PREC] * [N] / [PREC]
-        uint256 qACfeeRetained = _mulPrec(feeRetainer, qACfee_);
-        // Increase collateral in the retain amount
-        nACcb += qACfeeRetained;
-        // transfer qAC leftover fees to Fee Flow
-        acTransfer(mocFeeFlowAddress, qACfee_ - qACfeeRetained);
+    function _distOpResults(
+        address operatorsAddress_,
+        uint256 operatorsQAC_,
+        uint256 qACFee_,
+        uint256 qFeeToken_
+    ) internal {
+        // transfer Fee Token to Moc Fee Flow
+        if (qFeeToken_ > 0)
+            SafeERC20.safeTransferFrom(feeToken, operatorsAddress_, mocFeeFlowAddress, qFeeToken_);
+            // if qFeeToken == 0 then the fees are paid in AC and a part is retained
+        else {
+            // [N] = [PREC] * [N] / [PREC]
+            uint256 qACFeeRetained = _mulPrec(feeRetainer, qACFee_);
+            // Increase collateral in the retain amount
+            nACcb += qACFeeRetained;
+            // transfer qAC fee to Moc Fee Flow
+            acTransfer(mocFeeFlowAddress, qACFee_ - qACFeeRetained);
+        }
         // transfer qAC to operator
         acTransfer(operatorsAddress_, operatorsQAC_);
+    }
+
+    /**
+     * @notice calc fees amount in qAC or Fee Token
+     *  If `sender_` has enough Fee Token to pay fees, will be used. In another case will use qAC
+     * @dev if qFeeToken > 0, qACFee = 0. If qACFee > 0, qFeeToken = 0.
+     * @param sender_ address who executes the operation
+     * @param qAC_ amount of AC involved in the operation, could be sent form sender for mint or
+     *  sent to recipient for redeem [N]
+     * @param qACFeePct_ additional fee pct applied on operation
+     * @param operationType_ true: minting, false: redeeming
+     * @return qACtotalNeeded amount of qAC needed for the operation.
+     *  When minting is qAC + qACFee, when redeeming is qAC - qACFee
+     * @return qACFee amount of qAC needed to pay fees
+     * @return qFeeToken amount of Fee Token needed to pay fess
+     */
+    function _calcFees(
+        address sender_,
+        uint256 qAC_,
+        uint256 qACFeePct_,
+        bool operationType_
+    ) internal view returns (uint256 qACtotalNeeded, uint256 qACFee, uint256 qFeeToken) {
+        qACtotalNeeded = qAC_;
+        uint256 senderAllowance = feeToken.allowance(sender_, address(this));
+        if (senderAllowance > 0) {
+            (uint256 feeTokenPrice, bool hasFeeTokenPrice) = _peekPrice(feeTokenPriceProvider);
+            if (hasFeeTokenPrice) {
+                // calculates Fee Token to be charged as fee
+                // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
+                // TODO: define if will not be necessary a feeTokenPct for each operation
+                qFeeToken = _mulPrec(qAC_ * qACFeePct_, feeTokenPct) / feeTokenPrice;
+                // TODO: if feeTokenPct == 0 should use qAC too?
+                if (senderAllowance < qFeeToken || feeToken.balanceOf(sender_) < qFeeToken) {
+                    qFeeToken = 0;
+                }
+            }
+        }
+        // if sender hasn't got enough feeToken balance or allowance or price provider hasn't got a valid price
+        // then qFeeToken == 0 and sender pays fees with AC
+        if (qFeeToken == 0) {
+            // calculates qAC to be charged as fee
+            // [N] = [N] * [PREC] / [PREC]
+            qACFee = _mulPrec(qAC_, qACFeePct_);
+            if (operationType_) {
+                // if it is a mint operation add fee to qAC total needed to mint
+                qACtotalNeeded = qAC_ + qACFee;
+            } else {
+                // if it is a redeem operation sub fee to qAC total claimed
+                qACtotalNeeded = qAC_ - qACFee;
+            }
+        }
+        return (qACtotalNeeded, qACFee, qFeeToken);
     }
 
     // ------- Public Functions -------
@@ -630,9 +786,16 @@ abstract contract MocCore is MocStorage {
      * @param qTC_ amount of Collateral Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @return qACRedeemed amount of AC sent to sender
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, msg.sender);
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+        RedeemTCParams memory params = RedeemTCParams({
+            qTC: qTC_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        return _redeemTCto(params);
     }
 
     /**
@@ -641,9 +804,20 @@ abstract contract MocCore is MocStorage {
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
      * @return qACRedeemed amount of AC sent to 'recipient_'
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function redeemTCto(uint256 qTC_, uint256 qACmin_, address recipient_) external returns (uint256 qACRedeemed) {
-        return _redeemTCto(qTC_, qACmin_, msg.sender, recipient_);
+    function redeemTCto(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+        RedeemTCParams memory params = RedeemTCParams({
+            qTC: qTC_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        return _redeemTCto(params);
     }
 
     /**
@@ -652,9 +826,21 @@ abstract contract MocCore is MocStorage {
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @return qACRedeemed amount of AC sent to sender
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function redeemTP(uint256 i_, uint256 qTP_, uint256 qACmin_) external returns (uint256 qACRedeemed) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, msg.sender);
+    function redeemTP(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+        RedeemTPParams memory params = RedeemTPParams({
+            i: i_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        return _redeemTPto(params);
     }
 
     /**
@@ -664,14 +850,22 @@ abstract contract MocCore is MocStorage {
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
      * @return qACRedeemed amount of AC sent to 'recipient_'
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTPto(
         uint256 i_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
-    ) external returns (uint256 qACRedeemed) {
-        return _redeemTPto(i_, qTP_, qACmin_, msg.sender, recipient_);
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+        RedeemTPParams memory params = RedeemTPParams({
+            i: i_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        return _redeemTPto(params);
     }
 
     /**
@@ -686,14 +880,23 @@ abstract contract MocCore is MocStorage {
      * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
      * @return qACRedeemed amount of AC sent to the sender
      * @return qTPRedeemed amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTCandTP(
         uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed) {
-        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, msg.sender);
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: msg.sender
+        });
+        return _redeemTCandTPto(params);
     }
 
     /**
@@ -709,6 +912,7 @@ abstract contract MocCore is MocStorage {
      * @param recipient_ address who receives the Collateral Asset
      * @return qACRedeemed amount of AC sent to the `recipient_`
      * @return qTPRedeemed amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTCandTPto(
         uint256 i_,
@@ -716,8 +920,16 @@ abstract contract MocCore is MocStorage {
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed) {
-        return _redeemTCandTPto(i_, qTC_, qTP_, qACmin_, msg.sender, recipient_);
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: recipient_
+        });
+        return _redeemTCandTPto(params);
     }
 
     /**
@@ -743,112 +955,18 @@ abstract contract MocCore is MocStorage {
 
     /**
      * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token
-     * @param qTC_ amount of Collateral Token to mint [N]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset in concept of fees [N]
-     */
-    function _calcQACforMintTC(
-        uint256 qTC_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
-        if (qTC_ == 0) revert InvalidValue();
-        // calculate how many qAC are needed to mint TC
-        // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACNeededtoMint, tcMintFee);
-
-        return (qACNeededtoMint, qACfee);
-    }
-
-    /**
-     * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
-     * @param qTC_ amount of Collateral Token to redeem [N]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset in concept of fees [N]
-     */
-    function _calcQACforRedeemTC(
-        uint256 qTC_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
-        if (qTC_ == 0) revert InvalidValue();
-        // calculate how many qAC are redeemed
-        // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = _mulPrec(qTC_, _getPTCac(lckAC_, nACgain_));
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, tcRedeemFee);
-        return (qACtotalToRedeem, qACfee);
-    }
-
-    /**
-     * @notice calculate how many Collateral Asset are needed to mint an amount of Pegged Token
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint [N]
-     * @param pACtp_ Pegged Token price [PREC]
-     * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset in concept of fees [N]
-     */
-    function _calcQACforMintTP(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 pACtp_
-    ) internal view returns (uint256 qACNeededtoMint, uint256 qACfee) {
-        if (qTP_ == 0) revert InvalidValue();
-        // calculate how many qAC are needed to mint TP
-        // [N] = [N] * [PREC] / [PREC]
-        qACNeededtoMint = _divPrec(qTP_, pACtp_);
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACNeededtoMint, tpMintFee[i_]);
-        return (qACNeededtoMint, qACfee);
-    }
-
-    /**
-     * @notice calculate how many Collateral Asset are needed to redeem an amount of Pegged Token
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to redeem
-     * @param pACtp_ Pegged Token price [PREC]
-     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset in concept of fees [N]
-     */
-    function _calcQACforRedeemTP(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 pACtp_
-    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
-        if (qTP_ == 0) revert InvalidValue();
-        // calculate how many qAC are redeemed
-        // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = _divPrec(qTP_, pACtp_);
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, tpRedeemFee[i_]);
-        return (qACtotalToRedeem, qACfee);
-    }
-
-    /**
-     * @notice calculate how many Collateral Asset are needed to mint an amount of Collateral Token
      * and Pegged Token in one operation
      * @param qTP_ amount of Pegged Token to mint
      * @param pACtp_ Pegged Token price [PREC]
      * @return qTCtoMint amount of Collateral Token to mint [N]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
-     * @return qACfee amount of Collateral Asset should be transfer to Fee Flow [N]
      */
     function _calcQACforMintTCandTP(
         uint256 qTP_,
         uint256 pACtp_,
         uint256 ctargemaCA_,
         uint256[] memory pACtps_
-    ) internal view returns (uint256 qTCtoMint, uint256 qACNeededtoMint, uint256 qACfee) {
+    ) internal view returns (uint256 qTCtoMint, uint256 qACNeededtoMint) {
         (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps_);
         uint256 pTCac = _getPTCac(lckAC, nACgain);
         // calculate how many TC are needed to mint TP and total qAC used for mint both
@@ -858,39 +976,32 @@ abstract contract MocCore is MocStorage {
         qTCtoMint = _divPrec(qACNeededtoMint, pTCac);
         // [N] = [N] + [N] *  [PREC] / [PREC]
         qACNeededtoMint = qACNeededtoMint + _divPrec(qTP_, pACtp_);
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACNeededtoMint, mintTCandTPFee);
-        return (qTCtoMint, qACNeededtoMint, qACfee);
+        return (qTCtoMint, qACNeededtoMint);
     }
 
     /**
      * @notice calculate how many Collateral Asset are needed to redeem an amount of Collateral Token
      * and Pegged Token in one operation
-     * @param i_ Pegged Token index
      * @param qTC_ amount of Collateral Token to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param pACtp_ Pegged Token price [PREC]
      * @param pTCac_ Collateral Token price [PREC]
      * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset in concept of fees [N]
      */
     function _calcQACforRedeemTCandTP(
-        uint256 i_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 pACtp_,
         uint256 pTCac_
-    ) internal view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
-        // calculate how many total qAC are redeemed and how many correspond for fee
-        (qACtotalToRedeem, ) = _calcQACforRedeemTP(i_, qTP_, pACtp_);
+    ) internal pure returns (uint256 qACtotalToRedeem) {
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        qACtotalToRedeem = _divPrec(qTP_, pACtp_);
         // calculate how many qAC are redeemed because TC
         // [N] = [N] * [PREC] / [PREC]
         // TODO: rounding error could be avoid replacing here with qTC_ * totalACavailable / nTCcb
         qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
-        // calculates qAC to be charged as fee
-        // [N] = [N] * [PREC] / [PREC]
-        qACfee = _mulPrec(qACtotalToRedeem, redeemTCandTPFee);
-        return (qACtotalToRedeem, qACfee);
+        return qACtotalToRedeem;
     }
 
     /**
@@ -998,7 +1109,8 @@ abstract contract MocCore is MocStorage {
      * @dev Note that the ema value, should consider `nextEmaCalculation`
      *  This function is implemented in MocCoreExpansion but with this contract context
      * @param peggedTokenParams_ params of Pegged Token to add
-     * @dev tpTokenAddress Pegged Token contract address to add
+     * @dev
+     *      tpTokenAddress Pegged Token contract address to add
      *      priceProviderAddress Pegged Token price provider contract address
      *      tpCtarg Pegged Token target coverage [PREC]
      *      tpMintFee additional fee pct applied on mint [PREC]
@@ -1022,7 +1134,8 @@ abstract contract MocCore is MocStorage {
      * @dev Note that the ema value, should consider `nextEmaCalculation`
      *  This function is implemented in MocCoreExpansion but with this contract context
      * @param peggedTokenParams_ params of Pegged Token to add
-     * @dev tpTokenAddress Pegged Token contract address to identify the token to edit
+     * @dev
+     *      tpTokenAddress Pegged Token contract address to identify the token to edit
      *      priceProviderAddress Pegged Token price provider contract address
      *      tpCtarg Pegged Token target coverage [PREC]
      *      tpMintFee additional fee pct applied on mint [PREC]
@@ -1104,20 +1217,6 @@ abstract contract MocCore is MocStorage {
     function getLeverageTC() external view returns (uint256 leverageTC) {
         (uint256 lckAC, uint256 nACgain) = _getLckACandACgain();
         return _getLeverageTC(lckAC, nACgain);
-    }
-
-    /**
-     * @notice returns how many Collateral Asset are needed to redeem `qTP_` amount of Pegged Token `i_`
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to redeem
-     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
-     * @return qACfee amount of Collateral Asset in concept of fees [N]
-     */
-    function getQACforRedeemTP(
-        uint256 i_,
-        uint256 qTP_
-    ) external view returns (uint256 qACtotalToRedeem, uint256 qACfee) {
-        return _calcQACforRedeemTP(i_, qTP_, getPACtp(i_));
     }
 
     /**

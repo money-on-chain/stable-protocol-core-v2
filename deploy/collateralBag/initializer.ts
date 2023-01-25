@@ -33,12 +33,27 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");
   const WCAToken = await ethers.getContractAt("MocRC20", deployedWCAContract.address, signer);
 
-  let { governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress } = mocAddresses;
+  let {
+    governorAddress,
+    pauserAddress,
+    feeTokenAddress,
+    feeTokenPriceProviderAddress,
+    mocFeeFlowAddress,
+    mocAppreciationBeneficiaryAddress,
+  } = mocAddresses;
 
-  // for tests only, we deploy a necessary Mocks
+  // for tests only, we deploy necessary Mocks
   if (hre.network.tags.testnet || hre.network.tags.local) {
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorAddress = (await governorMockFactory.deploy()).address;
+  }
+  // for tests we deploy a FeeToken mock and its price provider
+  if (hre.network.tags.local) {
+    const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
+    feeTokenAddress = (await rc20MockFactory.deploy()).address;
+
+    const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
+    feeTokenPriceProviderAddress = (await priceProviderMockFactory.deploy(ethers.utils.parseEther("1"))).address;
   }
 
   console.log("initializing...");
@@ -71,6 +86,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       {
         initializeCoreParams: {
           initializeBaseBucketParams: {
+            feeTokenAddress,
+            feeTokenPriceProviderAddress,
             tcTokenAddress: CollateralToken.address,
             mocFeeFlowAddress,
             mocAppreciationBeneficiaryAddress,
@@ -84,6 +101,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             swapTCforTPFee: feeParams.swapTCforTPFee,
             redeemTCandTPFee: feeParams.redeemTCandTPFee,
             mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
             successFee: coreParams.successFee,
             appreciationFactor: coreParams.appreciationFactor,
             bes: settlementParams.bes,
