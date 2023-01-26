@@ -82,6 +82,8 @@ export type DeployParameters = {
     assetParams: AssetParams[];
   };
   mocAddresses: {
+    // collateral asset token address, only used for RC20 implementation
+    collateralAssetAddress?: Address;
     // the address that will define when a change contract is authorized
     governorAddress: Address;
     // the address that is authorized to pause this contract
