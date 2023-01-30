@@ -4,7 +4,8 @@ import { ethers } from "hardhat";
 import { addPeggedTokensAndChangeGovernor, getNetworkDeployParams, waitForTxConfirmation } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { deployments } = hre;
+  const { deployments, getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
   const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit } =
     getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
@@ -38,8 +39,15 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // for tests we deploy a Collateral Asset mock, a FeeToken mock and its price provider
   if (hre.network.tags.local) {
+    // use deployments.deploy to get contract in fixture using deployments.getOrNull
+    const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
+      contract: "ERC20Mock",
+      from: deployer,
+      gasLimit,
+    });
+    collateralAssetAddress = deployedERC20MockContract.address;
+
     const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
-    collateralAssetAddress = (await rc20MockFactory.deploy()).address;
     feeTokenAddress = (await rc20MockFactory.deploy()).address;
 
     const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
