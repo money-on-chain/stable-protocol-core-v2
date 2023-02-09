@@ -194,7 +194,7 @@ contract MocCARC20 is MocCore {
         uint256 i_,
         uint256 qTP_,
         uint256 qACmax_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -225,7 +225,7 @@ contract MocCARC20 is MocCore {
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
