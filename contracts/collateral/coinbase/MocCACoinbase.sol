@@ -118,7 +118,7 @@ contract MocCACoinbase is MocCore {
      * @return qACtotalNeeded amount of AC used to mint qTP
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function mintTP(uint8 i_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    function mintTP(uint256 i_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
@@ -139,7 +139,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         address recipient_
     ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
@@ -166,7 +166,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_
     ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
@@ -193,7 +193,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         address recipient_
     ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
@@ -218,8 +218,8 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTP(
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_
     ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
@@ -247,8 +247,8 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTPto(
-        uint8 iFrom_,
-        uint8 iTo_,
+        uint256 iFrom_,
+        uint256 iTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         address recipient_
@@ -275,7 +275,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTC(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_
     ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
@@ -301,7 +301,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTCto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTP_,
         uint256 qTCmin_,
         address recipient_
@@ -327,7 +327,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTCforTP(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_
     ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
@@ -353,7 +353,7 @@ contract MocCACoinbase is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTCforTPto(
-        uint8 i_,
+        uint256 i_,
         uint256 qTC_,
         uint256 qTPmin_,
         address recipient_
