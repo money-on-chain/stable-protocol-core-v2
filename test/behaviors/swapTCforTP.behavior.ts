@@ -1,4 +1,4 @@
-import hre, { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -377,6 +377,98 @@ const swapTCforTPBehavior = function () {
               mocContracts.mocImpl,
               ERRORS.LOW_COVERAGE,
             );
+          });
+        });
+      });
+      describe("AND alice has FeeToken to pay fees", function () {
+        let alicePrevACBalance: Balance;
+        let alicePrevFeeTokenBalance: Balance;
+        let mocFeeFlowPrevACBalance: Balance;
+        let mocFeeFlowPrevFeeTokenBalance: Balance;
+        let tx: ContractTransaction;
+        beforeEach(async function () {
+          // mint FeeToken to alice
+          await mocContracts.feeToken.mint(alice, pEth(50));
+          // for collateral bag implementation approve must be set to Moc Wrapper contract
+          const spender = mocContracts.mocWrapper?.address || mocContracts.mocImpl.address;
+          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+
+          // initialize previous balances
+          alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+          alicePrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+          mocFeeFlowPrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+        });
+        describe("WHEN alice swaps 100 TC for 23500 TP 0", function () {
+          beforeEach(async function () {
+            tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100 });
+          });
+          it("THEN alice AC balance doesn´t change", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec(0, diff);
+          });
+          it("THEN alice Fee Token balance decrease 0.5 (100 * 1% * 50%)", async function () {
+            const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+            const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
+            assertPrec(0.5, diff);
+          });
+          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+            assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
+          });
+          it("THEN Moc Fee Flow Fee Token balance increase 0.5 (100 * 1% * 50%)", async function () {
+            const mocFeeFlowActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+            const diff = mocFeeFlowActualFeeTokenBalance.sub(mocFeeFlowPrevFeeTokenBalance);
+            assertPrec(0.5, diff);
+          });
+          it("THEN Fee Token is used as fee payment method", async function () {
+            // i: 0
+            // sender: alice || mocWrapper
+            // receiver: alice
+            // qTC: 100 TC
+            // qTP: 23500 TP
+            // qACfee: 0
+            // qFeeToken: 100 (1% * 50%)
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
+              .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, alice, pEth(100), pEth(23500), 0, pEth(0.5));
+          });
+        });
+        describe("WHEN alice swaps 100 TC for 23500 TP 0", function () {
+          beforeEach(async function () {
+            tx = await mocFunctions.swapTCforTPto({ i: TP_0, from: alice, to: bob, qTC: 100 });
+          });
+          it("THEN alice AC balance doesn´t change", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec(0, diff);
+          });
+          it("THEN alice Fee Token balance decrease 0.5 (100 * 1% * 50%)", async function () {
+            const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+            const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
+            assertPrec(0.5, diff);
+          });
+          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+            assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
+          });
+          it("THEN Moc Fee Flow Fee Token balance increase 0.5 (100 * 1% * 50%)", async function () {
+            const mocFeeFlowActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+            const diff = mocFeeFlowActualFeeTokenBalance.sub(mocFeeFlowPrevFeeTokenBalance);
+            assertPrec(0.5, diff);
+          });
+          it("THEN Fee Token is used as fee payment method", async function () {
+            // i: 0
+            // sender: alice || mocWrapper
+            // receiver: bob
+            // qTC: 100 TC
+            // qTP: 23500 TP
+            // qACfee: 0
+            // qFeeToken: 100 (1% * 50%)
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TCSwappedForTP")
+              .withArgs(TP_0, mocContracts.mocWrapper?.address || alice, bob, pEth(100), pEth(23500), 0, pEth(0.5));
           });
         });
       });

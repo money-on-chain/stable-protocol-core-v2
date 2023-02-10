@@ -1,4 +1,4 @@
-import hre, { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -414,6 +414,116 @@ const redeemTPBehavior = function () {
             mocContracts.mocImpl,
             ERRORS.LOW_COVERAGE,
           );
+        });
+      });
+      describe("AND alice has FeeToken to pay fees", function () {
+        let alicePrevFeeTokenBalance: Balance;
+        let mocFeeFlowPrevACBalance: Balance;
+        let mocFeeFlowPrevFeeTokenBalance: Balance;
+        let tx: ContractTransaction;
+        beforeEach(async function () {
+          // mint FeeToken to alice
+          await mocContracts.feeToken.mint(alice, pEth(50));
+          // for collateral bag implementation approve must be set to Moc Wrapper contract
+          const spender = mocContracts.mocWrapper?.address || mocContracts.mocImpl.address;
+          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+
+          // initialize previous balances
+          alicePrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+          mocFeeFlowPrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+        });
+        describe("WHEN alice redeems 23500 TP", function () {
+          let alicePrevACBalance: Balance;
+          beforeEach(async function () {
+            alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+            tx = await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500 });
+          });
+          it("THEN alice AC balance increase 100 Asset", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = aliceActualACBalance.sub(alicePrevACBalance);
+            assertPrec(100, diff);
+          });
+          it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
+            const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+            const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
+            assertPrec(2.5, diff);
+          });
+          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+            assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
+          });
+          it("THEN Moc Fee Flow Fee Token balance increase 2.5 (100 * 5% * 50%)", async function () {
+            const mocFeeFlowActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+            const diff = mocFeeFlowActualFeeTokenBalance.sub(mocFeeFlowPrevFeeTokenBalance);
+            assertPrec(2.5, diff);
+          });
+          it("THEN Fee Token is used as fee payment method", async function () {
+            // i: 0
+            // sender: alice || mocWrapper
+            // receiver: alice || mocWrapper
+            // qTP: 23500 TP
+            // qAC: 100 AC
+            // qACfee: 0 AC
+            // qFeeToken: 100 (5% * 50%)
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TPRedeemed")
+              .withArgs(
+                TP_0,
+                mocContracts.mocWrapper?.address || alice,
+                mocContracts.mocWrapper?.address || alice,
+                pEth(23500),
+                pEth(100),
+                0,
+                pEth(100 * 0.05 * 0.5),
+              );
+          });
+        });
+        describe("WHEN alice redeems 23500 TP to bob", function () {
+          let bobPrevACBalance: Balance;
+          beforeEach(async function () {
+            bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
+            tx = await mocFunctions.redeemTPto({ i: TP_0, from: alice, to: bob, qTP: 23500 });
+          });
+          it("THEN bob AC balance increase 100 Asset", async function () {
+            const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);
+            const diff = bobActualACBalance.sub(bobPrevACBalance);
+            assertPrec(100, diff);
+          });
+          it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
+            const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+            const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
+            assertPrec(2.5, diff);
+          });
+          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+            assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
+          });
+          it("THEN Moc Fee Flow Fee Token balance increase 2.5 (100 * 5% * 50%)", async function () {
+            const mocFeeFlowActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+            const diff = mocFeeFlowActualFeeTokenBalance.sub(mocFeeFlowPrevFeeTokenBalance);
+            assertPrec(2.5, diff);
+          });
+          it("THEN Fee Token is used as fee payment method", async function () {
+            // 0
+            // sender: alice || mocWrapper
+            // receiver: bob || mocWrapper
+            // qTP: 23500 TP
+            // qAC: 100 AC
+            // qACfee: 0 AC
+            // qFeeToken: 100 (5% * 50%)
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TPRedeemed")
+              .withArgs(
+                TP_0,
+                mocContracts.mocWrapper?.address || alice,
+                mocContracts.mocWrapper?.address || bob,
+                pEth(23500),
+                pEth(100),
+                0,
+                pEth(100 * 0.05 * 0.5),
+              );
+          });
         });
       });
     });

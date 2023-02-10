@@ -217,7 +217,7 @@ abstract contract MocCore is MocStorage {
         _depositAndMintTC(params_.qTC, qACNeededtoMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.sender, acChange, qACFee, qFeeToken);
         return (qACtotalNeeded, qFeeToken);
     }
 
@@ -260,7 +260,7 @@ abstract contract MocCore is MocStorage {
         emit TCRedeemed(params_.sender, params_.recipient, params_.qTC, qACtoRedeem, qACFee, qFeeToken);
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
-        _distOpResults(params_.recipient, qACtoRedeem, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.recipient, qACtoRedeem, qACFee, qFeeToken);
         return (qACtoRedeem, qFeeToken);
     }
 
@@ -308,7 +308,7 @@ abstract contract MocCore is MocStorage {
         _depositAndMintTP(params_.i, params_.qTP, qACNeededtoMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.sender, acChange, qACFee, qFeeToken);
         return (qACtotalNeeded, qFeeToken);
     }
 
@@ -351,7 +351,7 @@ abstract contract MocCore is MocStorage {
         emit TPRedeemed(params_.i, params_.sender, params_.recipient, params_.qTP, qACtoRedeem, qACFee, qFeeToken);
         _withdrawAndBurnTP(params_.i, params_.qTP, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
-        _distOpResults(params_.recipient, qACtoRedeem, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.recipient, qACtoRedeem, qACFee, qFeeToken);
         return (qACtoRedeem, qFeeToken);
     }
 
@@ -410,7 +410,7 @@ abstract contract MocCore is MocStorage {
         _depositAndMintTP(params_.i, params_.qTP, 0, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers qAC to the sender and distributes fees
-        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.sender, acChange, qACFee, qFeeToken);
         return (qACtotalNeeded, qTCtoMint, qFeeToken);
     }
 
@@ -482,7 +482,7 @@ abstract contract MocCore is MocStorage {
         _withdrawAndBurnTP(params_.i, qTPtoRedeem, 0, params_.sender);
 
         // transfers qAC to the recipient and distributes fees
-        _distOpResults(params_.recipient, qACtoRedeem, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.recipient, qACtoRedeem, qACFee, qFeeToken);
         return (qACtoRedeem, qTPtoRedeem, qFeeToken);
     }
 
@@ -557,7 +557,7 @@ abstract contract MocCore is MocStorage {
         // AC is only used to pay fees
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACFee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.sender, acChange, qACFee, qFeeToken);
         return (qACFee, qTPtoMint, qFeeToken);
     }
 
@@ -611,7 +611,7 @@ abstract contract MocCore is MocStorage {
         // AC is only used to pay fees
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACFee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.sender, acChange, qACFee, qFeeToken);
         return (qACFee, qTCtoMint, qFeeToken);
     }
 
@@ -672,7 +672,7 @@ abstract contract MocCore is MocStorage {
         // AC is only used to pay fees
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACFee);
         // transfer any qAC change to the sender and distribute fees
-        _distOpResults(params_.sender, acChange, qACFee, qFeeToken);
+        _distOpResults(params_.sender, params_.sender, acChange, qACFee, qFeeToken);
         return (qACFee, qTPtoMint, qFeeToken);
     }
 
@@ -702,10 +702,14 @@ abstract contract MocCore is MocStorage {
 
     /**
      * @notice Distributes Operation results to the different recipients
+     * @param sender_ address who executes the operation
      * @param operatorsAddress_ operator's address to receive `operatorsQAC_`
      * @param operatorsQAC_ amount of AC to transfer operator [N]
+     * @param qACFee_ amount of qAC needed to pay fees
+     * @param qFeeToken_ amount of Fee Token needed to pay fess
      */
     function _distOpResults(
+        address sender_,
         address operatorsAddress_,
         uint256 operatorsQAC_,
         uint256 qACFee_,
@@ -713,7 +717,7 @@ abstract contract MocCore is MocStorage {
     ) internal {
         // transfer Fee Token to Moc Fee Flow
         if (qFeeToken_ > 0)
-            SafeERC20.safeTransferFrom(feeToken, operatorsAddress_, mocFeeFlowAddress, qFeeToken_);
+            SafeERC20.safeTransferFrom(feeToken, sender_, mocFeeFlowAddress, qFeeToken_);
             // if qFeeToken == 0 then the fees are paid in AC and a part is retained
         else {
             // [N] = [PREC] * [N] / [PREC]

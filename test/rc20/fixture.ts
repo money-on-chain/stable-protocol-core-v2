@@ -21,6 +21,7 @@ export const fixtureDeployedMocRC20 = memoizee(
     mocPeggedTokens: MocRC20[];
     priceProviders: PriceProviderMock[];
     collateralAsset: ERC20Mock;
+    feeToken: ERC20Mock;
   }>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
@@ -44,12 +45,15 @@ export const fixtureDeployedMocRC20 = memoizee(
 
       const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
+      const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
+
       return {
         mocImpl,
         mocCollateralToken,
         mocPeggedTokens,
         priceProviders,
         collateralAsset,
+        feeToken,
       };
     });
   },

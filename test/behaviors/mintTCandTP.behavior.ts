@@ -1,4 +1,4 @@
-import hre, { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts, ethers } from "hardhat";
 import { BigNumber, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
@@ -336,6 +336,118 @@ const mintTCandTPBehavior = function () {
             mocContracts.mocImpl,
             ERRORS.LOW_COVERAGE,
           );
+        });
+      });
+      describe("AND alice has FeeToken to pay fees", function () {
+        let alicePrevACBalance: Balance;
+        let alicePrevFeeTokenBalance: Balance;
+        let mocFeeFlowPrevACBalance: Balance;
+        let mocFeeFlowPrevFeeTokenBalance: Balance;
+        let tx: ContractTransaction;
+        beforeEach(async function () {
+          // mint FeeToken to alice
+          await mocContracts.feeToken.mint(alice, pEth(50));
+          // for collateral bag implementation approve must be set to Moc Wrapper contract
+          const spender = mocContracts.mocWrapper?.address || mocContracts.mocImpl.address;
+          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+
+          // initialize previous balances
+          alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
+          alicePrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+          mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+          mocFeeFlowPrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+        });
+        describe("WHEN alice mints 45.41 TC and 2350 TP", function () {
+          beforeEach(async function () {
+            tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 2350 });
+          });
+          it("THEN alice AC balance decrease 55.41 Asset", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec("55.414072816449726460", diff);
+          });
+          it("THEN alice Fee Token balance decrease 2.21 (55.41 * 8% * 50%)", async function () {
+            const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+            const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
+            assertPrec("2.216562912657989058", diff);
+          });
+          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+            assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
+          });
+          it("THEN Moc Fee Flow Fee Token balance increase 2.21 (55.41 * 8% * 50%)", async function () {
+            const mocFeeFlowActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+            const diff = mocFeeFlowActualFeeTokenBalance.sub(mocFeeFlowPrevFeeTokenBalance);
+            assertPrec("2.216562912657989058", diff);
+          });
+          it("THEN Fee Token is used as fee payment method", async function () {
+            // i: 0
+            // sender: alice || mocWrapper
+            // receiver: alice
+            // qTC: 45.41 TC
+            // qTP: 2350 TP
+            // qAC: 45.4 AC + 10 AC
+            // qACfee: 0 AC
+            // qFeeToken: 55.4 (8% * 50%)
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TCandTPMinted")
+              .withArgs(
+                TP_0,
+                mocContracts.mocWrapper?.address || alice,
+                alice,
+                pEth("45.414072816449726460"),
+                pEth(2350),
+                pEth("55.414072816449726460"),
+                0,
+                pEth("2.216562912657989058"),
+              );
+          });
+        });
+        describe("WHEN alice mints 45.41 TC and 2350 TP to bob", function () {
+          beforeEach(async function () {
+            tx = await mocFunctions.mintTCandTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
+          });
+          it("THEN alice AC balance decrease 55.41 Asset", async function () {
+            const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+            const diff = alicePrevACBalance.sub(aliceActualACBalance);
+            assertPrec("55.414072816449726460", diff);
+          });
+          it("THEN alice Fee Token balance decrease 2.21 (55.41 * 8% * 50%)", async function () {
+            const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
+            const diff = alicePrevFeeTokenBalance.sub(aliceActualFeeTokenBalance);
+            assertPrec("2.216562912657989058", diff);
+          });
+          it("THEN Moc Fee Flow AC balance doesn´t change", async function () {
+            const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+            assertPrec(mocFeeFlowActualACBalance, mocFeeFlowPrevACBalance);
+          });
+          it("THEN Moc Fee Flow Fee Token balance increase 2.21 (55.41 * 8% * 50%)", async function () {
+            const mocFeeFlowActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(mocFeeFlowAddress);
+            const diff = mocFeeFlowActualFeeTokenBalance.sub(mocFeeFlowPrevFeeTokenBalance);
+            assertPrec("2.216562912657989058", diff);
+          });
+          it("THEN Fee Token is used as fee payment method", async function () {
+            // i: 0
+            // sender: alice || mocWrapper
+            // receiver: bob
+            // qTC: 45.41 TC
+            // qTP: 2350 TP
+            // qAC: 45.4 AC + 10 AC
+            // qACfee: 0 AC
+            // qFeeToken: 55.4 (8% * 50%)
+            await expect(tx)
+              .to.emit(mocContracts.mocImpl, "TCandTPMinted")
+              .withArgs(
+                TP_0,
+                mocContracts.mocWrapper?.address || alice,
+                bob,
+                pEth("45.414072816449726460"),
+                pEth(2350),
+                pEth("55.414072816449726460"),
+                0,
+                pEth("2.216562912657989058"),
+              );
+          });
         });
       });
     });

@@ -13,6 +13,7 @@ import {
   MocTC,
   MocTC__factory,
   PriceProviderMock,
+  ERC20Mock__factory,
 } from "../../typechain";
 import { deployAndAddAssets, deployAndAddPeggedTokens } from "../helpers/utils";
 
@@ -26,6 +27,7 @@ export type MoCContracts = {
   wcaToken: MocRC20;
   assets: ERC20Mock[];
   assetPriceProviders: PriceProviderMock[];
+  feeToken: ERC20Mock;
 };
 
 export const fixtureDeployedMocCABag = memoizee(
@@ -61,6 +63,8 @@ export const fixtureDeployedMocCABag = memoizee(
 
       const { assets, assetPriceProviders } = await deployAndAddAssets(mocWrapper, amountAssets);
 
+      const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
+
       return {
         mocImpl,
         mocCoreExpansion,
@@ -71,6 +75,7 @@ export const fixtureDeployedMocCABag = memoizee(
         wcaToken,
         assets,
         assetPriceProviders,
+        feeToken,
       };
     });
   },
