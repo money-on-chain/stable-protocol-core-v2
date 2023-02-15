@@ -152,6 +152,13 @@ const config: HardhatUserConfig = {
       optimizer: {
         enabled: true,
         runs: 200,
+        details: {
+          yulDetails: {
+            // solves viaIR issue that inline internal functions: https://github.com/ethereum/solidity/issues/13858#issuecomment-1428754261
+            optimizerSteps:
+              "dhfoDgvulfnTUtnIf[xa[r]EscLMcCTUtTOntnfDIulLculVcul[j]Tpeulxa[rul]xa[r]cLgvifCTUca[r]LSsTOtfDnca[r]Iulc]jmul[jul]VcTOculjmul",
+          },
+        },
       },
       viaIR: process.env.VIA_IR ? true : false,
       outputSelection: {
