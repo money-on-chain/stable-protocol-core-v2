@@ -1,4 +1,4 @@
-import { deployments } from "hardhat";
+import { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
 import {
   ERC20Mock,
@@ -14,8 +14,11 @@ import {
   MocTC__factory,
   PriceProviderMock,
   ERC20Mock__factory,
+  MocVendors,
+  MocVendors__factory,
+  PriceProviderMock__factory,
 } from "../../typechain";
-import { deployAndAddAssets, deployAndAddPeggedTokens } from "../helpers/utils";
+import { deployAndAddAssets, deployAndAddPeggedTokens, pEth } from "../helpers/utils";
 
 export type MoCContracts = {
   mocImpl: MocCARC20;
@@ -27,7 +30,9 @@ export type MoCContracts = {
   wcaToken: MocRC20;
   assets: ERC20Mock[];
   assetPriceProviders: PriceProviderMock[];
+  mocVendors: MocVendors;
   feeToken: ERC20Mock;
+  feeTokenPriceProvider: PriceProviderMock;
 };
 
 export const fixtureDeployedMocCABag = memoizee(
@@ -59,11 +64,20 @@ export const fixtureDeployedMocCABag = memoizee(
       if (!deployedWCAContract) throw new Error("No WrappedCollateralAssetProxy deployed.");
       const wcaToken: MocRC20 = MocRC20__factory.connect(deployedWCAContract.address, signer);
 
+      const deployedMocVendors = await deployments.getOrNull("MocVendorsCABagProxy");
+      if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
+      const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
+
       const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
       const { assets, assetPriceProviders } = await deployAndAddAssets(mocWrapper, amountAssets);
 
+      // initialize vendor with 10% markup
+      const { vendor } = await getNamedAccounts();
+      await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
+
       const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
+      const feeTokenPriceProvider = PriceProviderMock__factory.connect(await mocImpl.feeTokenPriceProvider(), signer);
 
       return {
         mocImpl,
@@ -75,7 +89,9 @@ export const fixtureDeployedMocCABag = memoizee(
         wcaToken,
         assets,
         assetPriceProviders,
+        mocVendors,
         feeToken,
+        feeTokenPriceProvider,
       };
     });
   },

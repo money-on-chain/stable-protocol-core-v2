@@ -18,13 +18,15 @@ export const fixtureDeployGovernance = memoizee(
       const { deployer } = await getNamedAccounts();
 
       // deploy and initialize governor
-      const [mocCoreFactory, mocCoreExpansionFactory, erc1967ProxyProxyFactory] = await Promise.all([
+      const [mocCoreFactory, mocCoreExpansionFactory, mocVendorsFactory, erc1967ProxyProxyFactory] = await Promise.all([
         ethers.getContractFactory("MocCACoinbase"),
         ethers.getContractFactory("MocCoreExpansion"),
+        ethers.getContractFactory("MocVendors"),
         ethers.getContractFactory("ERC1967Proxy"),
       ]);
       const mocImpl = await mocCoreFactory.deploy();
       const mocCoreExpansion = await mocCoreExpansionFactory.deploy();
+      const mocVendors = await mocVendorsFactory.deploy();
       const deployMocProxy = await erc1967ProxyProxyFactory.deploy(mocImpl.address, "0x");
       const mocCACoinbase = MocCACoinbase__factory.connect(deployMocProxy.address, ethers.provider.getSigner());
 
@@ -62,6 +64,7 @@ export const fixtureDeployGovernance = memoizee(
           pauserAddress: mocAddresses.pauserAddress,
           mocCoreExpansion: mocCoreExpansion.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: mocVendors.address,
         }),
       );
 

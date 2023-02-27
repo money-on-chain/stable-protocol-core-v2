@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
+import "../vendors/MocVendors.sol";
 import "./MocEma.sol";
 
 //    +-----------------+
@@ -15,9 +16,9 @@ import "./MocEma.sol";
 //            ^
 //            | is
 //            |
-//    +-----------------+
-//    |    MocStorage   |
-//    +-----------------+
+//    +-----------------+ contains  +-----------------+
+//    |    MocStorage   | ------>   |    MocVendors   |
+//    +-----------------+           +-----------------+
 //            ^
 //            | is
 //            | _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -40,6 +41,18 @@ import "./MocEma.sol";
  *  or in a parent contract. Declaring variables after this point could result in storage collisions.
  */
 abstract contract MocStorage is MocEma {
+    // Address for MocVendors contract, provides fee markup information
+    MocVendors public mocVendors;
+
+    // ------- Initializer -------
+    /**
+     * @notice contract initializer
+     * @param mocVendors_ address for MocVendors contract.
+     */
+    function __MocStorage_init_unchained(address mocVendors_) internal onlyInitializing {
+        mocVendors = MocVendors(mocVendors_);
+    }
+
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.

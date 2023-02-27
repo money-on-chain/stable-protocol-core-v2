@@ -6,7 +6,13 @@ import { getNetworkDeployParams } from "../../scripts/utils";
 
 const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDeployParams(hre);
 
-export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Address, mocCoreExpansion: Address) {
+export function mocInitialize(
+  mocCARC20: MocCARC20,
+  wcaToken: Address,
+  mocTC: Address,
+  mocCoreExpansion: Address,
+  mocVendors: Address,
+) {
   return ({
     mocGovernorAddress = mocAddresses.governorAddress,
     mocPauserAddress = mocAddresses.pauserAddress,
@@ -17,6 +23,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocCoreExpansionAddress = mocCoreExpansion,
     feeFlowAddress = mocAddresses.mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress,
+    mocVendorsAddress = mocVendors,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
     feeRetainer = feeParams.feeRetainer,
@@ -42,6 +49,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
     mocCoreExpansionAddress?: Address;
     feeFlowAddress?: Address;
     mocAppreciationBeneficiaryAddress?: Address;
+    mocVendorsAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
     feeRetainer?: BigNumberish;
@@ -85,6 +93,7 @@ export function mocInitialize(mocCARC20: MocCARC20, wcaToken: Address, mocTC: Ad
         pauserAddress: mocPauserAddress,
         mocCoreExpansion: mocCoreExpansionAddress,
         emaCalculationBlockSpan,
+        mocVendors: mocVendorsAddress,
       },
       acTokenAddress: wcaTokenAddress,
     });
