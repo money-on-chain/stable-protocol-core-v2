@@ -99,7 +99,7 @@
     "mythril": "npx ts-node ./scripts/bytecodes-extractor.ts && npm run mythril:Greeter",
     "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
     "storage-layout-compare:MocCoreExpansion": "hardhat storage-layout-compare --a contracts/core/MocCore.sol:MocCore --b contracts/core/MocCoreExpansion.sol:MocCoreExpansion",
-    "export": "hardhat export-artifacts export/artifacts && tsc && npm run copy-dist",
+    "export": "VIA_IR=true hardhat export-artifacts export/artifacts && tsc && npm run copy-dist",
     "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export/deploy && copyfiles -u 1 dist/scripts/utils.js export/deploy && copyfiles -u 1 scripts/types.ts export/types"
   }
 }
