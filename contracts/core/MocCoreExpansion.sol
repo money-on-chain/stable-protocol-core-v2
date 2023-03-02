@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import { MocStorage } from "./MocStorage.sol";
+import { MocCommons } from "./MocCommons.sol";
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 
@@ -15,7 +15,7 @@ import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
  *      a proxy contract cannot delegate calls to another proxy contract. So, for any MocCoreExpansion upgrade
  *      you must deploy a new implementation and set it to MocCore.
  */
-contract MocCoreExpansion is MocStorage {
+contract MocCoreExpansion is MocCommons {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -144,5 +144,84 @@ contract MocCoreExpansion is MocStorage {
         emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0, 0, 0);
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP);
+    }
+
+    /**
+     * @notice swap Pegged Token to another one
+     *  This operation is done without checking coverage unless the target coverage for
+     *  received Pegged Token is greater than the Pegged Token sent
+     * @param params_ swap TP for TP function parameters
+     * @dev
+     *      iFrom_ owned Pegged Token index
+     *      iTo_ target Pegged Token index
+     *      qTP_ amount of owned Pegged Token to swap
+     *      qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     *      qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives the target Pegged Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     * @return qACSurcharges amount of AC used to pay fees and markup
+     * @return qTPtoMint amount of Pegged Token minted
+     * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs struct with:
+     * @dev
+     *      qACFee amount of AC needed to pay fees
+     *      qFeeToken amount of Fee Token needed to pay fess
+     *      qACVendorMarkup amount of AC needed to pay vendor markup
+     *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
+     */
+    function swapTPforTPto(
+        SwapTPforTPParams memory params_
+    )
+        external
+        payable
+        notLiquidated
+        notPaused
+        returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        if (params_.iFrom == params_.iTo) revert InvalidValue();
+        uint256 pACtpFrom = getPACtp(params_.iFrom);
+        uint256 pACtpTo = getPACtp(params_.iTo);
+        _updateTPtracking(params_.iFrom, pACtpFrom);
+        _updateTPtracking(params_.iTo, pACtpTo);
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtpFrom);
+        // calculate how many qTP can mint with the given qAC
+        // [N] = [N] * [PREC] / [PREC]
+        qTPtoMint = (params_.qTP * pACtpTo) / pACtpFrom;
+        if (qTPtoMint < params_.qTPmin || qTPtoMint == 0) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
+
+        // if ctargemaTPto > ctargemaTPfrom we need to check coverage
+        if (_getCtargemaTP(params_.iTo, pACtpTo) > _getCtargemaTP(params_.iFrom, pACtpFrom)) {
+            (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
+            // evaluates whether or not the system coverage is healthy enough to mint TP
+            // given the target coverage adjusted by the moving average, reverts if it's not
+            (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
+            // evaluates if there are enough TP available to mint, reverts if it's not
+            _evalTPavailableToMint(params_.iTo, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
+        }
+        (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
+            params_.sender,
+            params_.vendor,
+            qACtotalToRedeem,
+            swapTPforTPFee
+        );
+        if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
+        emit TPSwappedForTP(
+            params_.iFrom,
+            params_.iTo,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qTPtoMint,
+            feeCalcs.qACFee,
+            feeCalcs.qFeeToken,
+            feeCalcs.qACVendorMarkup,
+            feeCalcs.qFeeTokenVendorMarkup
+        );
+
+        _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
+        _withdrawAndBurnTP(params_.iFrom, params_.qTP, 0, params_.sender);
     }
 }
