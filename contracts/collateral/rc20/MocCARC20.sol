@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../../core/MocCore.sol";
+import { MocCore, SafeERC20 } from "../../core/MocCore.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MocCARC20: Moc Collateral Asset RC20

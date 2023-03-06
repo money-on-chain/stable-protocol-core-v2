@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../governance/MocUpgradable.sol";
+import { MocUpgradable } from "../governance/MocUpgradable.sol";
 
 /**
  * @title MocVendors

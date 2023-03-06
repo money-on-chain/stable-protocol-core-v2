@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../interfaces/IGovernor.sol";
-import "../utils/MocHelper.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IGovernor } from "../interfaces/IGovernor.sol";
+import { MocHelper } from "../utils/MocHelper.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
   @title Governed

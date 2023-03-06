@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../../interfaces/IGovernor.sol";
-import "../../interfaces/IChangeContract.sol";
+import { IGovernor } from "../../interfaces/IGovernor.sol";
+import { IChangeContract } from "../../interfaces/IChangeContract.sol";
 
 /**
   @title GovernorMock

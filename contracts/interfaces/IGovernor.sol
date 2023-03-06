@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "./IChangeContract.sol";
+import { IChangeContract } from "./IChangeContract.sol";
 
 /**
   @title IGovernor

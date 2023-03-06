@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../interfaces/IPriceProvider.sol";
+import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 
 contract PriceProviderMock is IPriceProvider {
     bytes32 public mocPrice;

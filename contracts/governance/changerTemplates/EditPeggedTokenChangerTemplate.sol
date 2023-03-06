@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../../interfaces/IChangeContract.sol";
-import "../../interfaces/IMocRC20.sol";
-import "../../core/MocCore.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import { IChangeContract } from "../../interfaces/IChangeContract.sol";
+import { IMocRC20 } from "../../interfaces/IMocRC20.sol";
+import { MocCore } from "../../core/MocCore.sol";
+import { MocBaseBucket } from "../../core/MocBaseBucket.sol";
+import { MocHelper } from "../../utils/MocHelper.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
   @title EditPeggedTokenChangerTemplate

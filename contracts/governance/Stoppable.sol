@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "./Governed.sol";
+import { Governed } from "./Governed.sol";
 
 /**
  * @title Stoppable

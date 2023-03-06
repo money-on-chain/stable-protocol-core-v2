@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
+import { ERC777 } from "@openzeppelin/contracts/token/ERC777/ERC777.sol";
 
 contract ERC777Mock is ERC777 {
     uint256 internal constant UINT256_MAX = ~uint256(0);

@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-// This contract is not intended to be used in a production system
-// It was designed to be used in a testing environment only
-
-import "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
-import "../../collateral/coinbase/MocCACoinbase.sol";
-import "../../collateral/rc20/MocCARC20.sol";
+/* solhint-disable-next-line max-line-length */
+import { UUPSUpgradeable, UpgraderUUPSChangerTemplate } from "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
+import { MocCore, MocStorage, MocCoreExpansion, Address } from "../../core/MocCore.sol";
+import { MocCACoinbase } from "../../collateral/coinbase/MocCACoinbase.sol";
+import { MocCARC20 } from "../../collateral/rc20/MocCARC20.sol";
 
 /**
  * @title UpgradableMock

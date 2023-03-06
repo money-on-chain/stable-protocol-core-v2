@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "./MocStorage.sol";
+import { MocStorage } from "./MocStorage.sol";
+import { IMocRC20 } from "../interfaces/IMocRC20.sol";
+import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 
 /**
  * @title MocCoreExpansion
