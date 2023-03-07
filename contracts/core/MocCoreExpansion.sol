@@ -43,8 +43,6 @@ contract MocCoreExpansion is MocStorage {
      */
     function addPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external {
         IMocRC20 tpToken = IMocRC20(peggedTokenParams_.tpTokenAddress);
-        // Verifies it has the right roles over this TP
-        if (!tpToken.hasFullRoles(address(this))) revert InvalidAddress();
 
         IPriceProvider priceProvider = IPriceProvider(peggedTokenParams_.priceProviderAddress);
         if (peggedTokenIndex[address(tpToken)].exists) revert PeggedTokenAlreadyAdded();

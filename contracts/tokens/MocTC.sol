@@ -57,11 +57,4 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
     function pause() external virtual onlyRole(PAUSER_ROLE) {
         _pause();
     }
-
-    /**
-     * @inheritdoc IMocRC20
-     */
-    function hasFullRoles(address _account) public view override returns (bool) {
-        return hasRole(PAUSER_ROLE, _account) && MocRC20.hasFullRoles(_account);
-    }
 }
