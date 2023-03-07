@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "./MocRC20.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import { MocRC20, IGovernor, IMocRC20 } from "./MocRC20.sol";
+/* solhint-disable-next-line max-line-length */
+import { ERC20PausableUpgradeable, ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 
 /**
  * @title MocTC

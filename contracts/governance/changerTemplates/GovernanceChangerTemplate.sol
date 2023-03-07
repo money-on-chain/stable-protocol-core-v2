@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../../interfaces/IChangeContract.sol";
-import "../../governance/Governed.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { IChangeContract } from "../../interfaces/IChangeContract.sol";
+import { Governed, IGovernor } from "../../governance/Governed.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
   @title GovernanceChangerTemplate

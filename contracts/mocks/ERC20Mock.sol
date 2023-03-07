@@ -2,7 +2,7 @@
 // slither-disable-next-line solc-version
 pragma solidity 0.8.16;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { ERC20, ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract ERC20Mock is ERC20Burnable {
     uint256 internal constant UINT256_MAX = ~uint256(0);

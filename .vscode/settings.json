@@ -13,5 +13,8 @@
     "solidity.formatter": "prettier",
     "[solidity]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.watcherExclude": {
+        "**/target": true
     }
 }

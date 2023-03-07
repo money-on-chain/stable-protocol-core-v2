@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../interfaces/IMocRC20.sol";
-import "./MocBaseBucket.sol";
+import { IMocRC20 } from "../interfaces/IMocRC20.sol";
+import { MocBaseBucket } from "./MocBaseBucket.sol";
 
 /**
  * @title MocEma: Exponential Moving Average

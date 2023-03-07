@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../../interfaces/IChangeContract.sol";
-import "../../core/MocCore.sol";
+import { IChangeContract } from "../../interfaces/IChangeContract.sol";
+import { MocCore } from "../../core/MocCore.sol";
+import { MocHelper } from "../../utils/MocHelper.sol";
 
 /**
  * @title AddPeggedTokenChangerTemplate

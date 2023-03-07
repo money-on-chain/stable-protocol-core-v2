@@ -4,7 +4,8 @@ pragma solidity 0.8.16;
 // This contract is not intended to be used in a production system
 // It was designed to be used in a testing environment only
 
-import "../../tokens/MocTC.sol";
+import { MocTC, ERC20Upgradeable } from "../../tokens/MocTC.sol";
+import { IERC20Upgradeable } from "../../interfaces/IMocRC20.sol";
 
 /**
  * @title MocTcMock

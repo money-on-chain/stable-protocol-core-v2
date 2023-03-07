@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
-import "../rc20/MocCARC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+
+import { MocCARC20, IERC20, SafeERC20 } from "../rc20/MocCARC20.sol";
+import { IMocRC20, IERC20Upgradeable } from "../../interfaces/IMocRC20.sol";
+import { IPriceProvider } from "../../interfaces/IPriceProvider.sol";
+import { MocUpgradable } from "../../governance/MocUpgradable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+/* solhint-disable-next-line max-line-length */
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /**
  * @title MocCAWrapper: Moc Collateral Asset Wrapper

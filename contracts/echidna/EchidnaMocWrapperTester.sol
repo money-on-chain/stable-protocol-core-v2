@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../collateral/collateralBag/MocCAWrapper.sol";
-import "../core/MocCoreExpansion.sol";
-import "../tokens/MocTC.sol";
-import "../tokens/MocRC20.sol";
-import "../mocks/upgradeability/GovernorMock.sol";
-import "../mocks/ERC20Mock.sol";
-import "../mocks/PriceProviderMock.sol";
-import "../interfaces/IPriceProvider.sol";
-import "../utils/PriceProviderShifter.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "hardhat/console.sol";
+import { MocCAWrapper, MocCARC20 } from "../collateral/collateralBag/MocCAWrapper.sol";
+import { MocCore, MocCoreExpansion } from "../core/MocCore.sol";
+import { MocBaseBucket } from "../core/MocBaseBucket.sol";
+import { MocTC } from "../tokens/MocTC.sol";
+import { MocRC20 } from "../tokens/MocRC20.sol";
+import { MocVendors } from "../vendors/MocVendors.sol";
+import { GovernorMock } from "../mocks/upgradeability/GovernorMock.sol";
+import { ERC20Mock } from "../mocks/ERC20Mock.sol";
+import { PriceProviderMock } from "../mocks/PriceProviderMock.sol";
+import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
+import { PriceProviderShifter } from "../utils/PriceProviderShifter.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
  * @title EchidnaMocWrapperTester
- * @notice This test purpose is to check that operating with assets with different decimals than 18 doesn´t affect
+ * @notice This test purpose is to check that operating with assets with different decimals than 18 doesn't affect
  * the wrapped token price
  */
 contract EchidnaMocWrapperTester {

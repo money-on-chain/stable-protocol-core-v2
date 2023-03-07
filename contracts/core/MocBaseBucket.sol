@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import "../interfaces/IMocRC20.sol";
-import "../tokens/MocTC.sol";
-import "../interfaces/IPriceProvider.sol";
-import "../governance/MocUpgradable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { IMocRC20 } from "../interfaces/IMocRC20.sol";
+import { MocTC } from "../tokens/MocTC.sol";
+import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
+import { MocUpgradable } from "../governance/MocUpgradable.sol";
+/* solhint-disable-next-line max-line-length */
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MocBaseBucket: Moc Collateral Bag
