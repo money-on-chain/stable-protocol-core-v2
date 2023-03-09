@@ -18,7 +18,7 @@ interface IMocRC20 is IERC20Upgradeable {
      * @dev Burns a specific `amount` of tokens for `to`.
      * * See {ERC20-_burn}.
      */
-    function burn(address to, uint256 amount) external returns (bool);
+    function burn(address to, uint256 amount) external;
 
     /**
      * @dev returns true if the `_account` address has full control over this token
