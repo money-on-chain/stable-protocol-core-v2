@@ -260,8 +260,6 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
         feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
-        // Verifies it has the right roles over this TC
-        if (!tcToken.hasFullRoles(address(this))) revert InvalidAddress();
         mocFeeFlowAddress = initializeBaseBucketParams_.mocFeeFlowAddress;
         mocAppreciationBeneficiaryAddress = initializeBaseBucketParams_.mocAppreciationBeneficiaryAddress;
         protThrld = initializeBaseBucketParams_.protThrld;
