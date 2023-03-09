@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import { MocCommons } from "./MocCommons.sol";
+import { MocCommons, PeggedTokenParams } from "./MocCommons.sol";
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 

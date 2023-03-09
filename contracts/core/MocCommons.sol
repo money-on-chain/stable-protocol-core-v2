@@ -4,6 +4,25 @@ pragma solidity 0.8.16;
 import { MocVendors } from "../vendors/MocVendors.sol";
 import { MocEma } from "./MocEma.sol";
 
+// ------- External Structs -------
+
+struct PeggedTokenParams {
+    // Pegged Token contract address to add
+    address tpTokenAddress;
+    // priceProviderAddress Pegged Token price provider contract address
+    address priceProviderAddress;
+    // Pegged Token target coverage [PREC]
+    uint256 tpCtarg;
+    // additional fee pct applied on mint [PREC]
+    uint256 tpMintFee;
+    // additional fee pct applied on redeem [PREC]
+    uint256 tpRedeemFee;
+    // initial Pegged Token exponential moving average [PREC]
+    uint256 tpEma;
+    // Pegged Token smoothing factor [PREC]
+    uint256 tpEmaSf;
+}
+
 //    +-----------------+
 //    |  MocBaseBucket  |
 //    +-----------------+
@@ -48,28 +67,7 @@ abstract contract MocCommons is MocEma {
     // Address for MocVendors contract, provides fee markup information
     MocVendors public mocVendors;
 
-    // ------- Custom Errors -------
-
-    error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
-    error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
-    error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
-
-    // ------- Events -------
-
-    event TPSwappedForTP(
-        uint256 indexed iFrom_,
-        uint256 iTo_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTPfrom_,
-        uint256 qTPto_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
-    );
-
-    // ------- Structs -------
+    // ------- Internal Structs -------
 
     struct SwapTPforTPParams {
         uint256 iFrom;
@@ -88,6 +86,43 @@ abstract contract MocCommons is MocEma {
         uint256 qACVendorMarkup;
         uint256 qFeeTokenVendorMarkup;
     }
+
+    // ------- Custom Errors -------
+
+    error PeggedTokenAlreadyAdded();
+    error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
+    error TransferFailed();
+    error OnlyWhenLiquidated();
+    error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
+    error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
+    error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
+
+    // ------- Events -------
+
+    event TPRedeemed(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_
+    );
+    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
+    event TPSwappedForTP(
+        uint256 indexed iFrom_,
+        uint256 iTo_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTPfrom_,
+        uint256 qTPto_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_
+    );
 
     // ------- Initializer -------
 
