@@ -2,7 +2,7 @@
 pragma solidity 0.8.16;
 
 import { IChangeContract } from "../../interfaces/IChangeContract.sol";
-import { MocCore } from "../../core/MocCore.sol";
+import { MocCore, PeggedTokenParams } from "../../core/MocCore.sol";
 import { MocHelper } from "../../utils/MocHelper.sol";
 
 /**
@@ -14,13 +14,13 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
     // ------- Storage -------
 
     MocCore public mocCore;
-    MocCore.PeggedTokenParams internal peggedTokenParams;
+    PeggedTokenParams internal peggedTokenParams;
 
     /**
      * @notice Constructor
      * @param mocCore_ Address of the contract to add Pegged Token to
      */
-    constructor(MocCore mocCore_, MocCore.PeggedTokenParams memory peggedTokenParams_) {
+    constructor(MocCore mocCore_, PeggedTokenParams memory peggedTokenParams_) {
         mocCore = mocCore_;
         peggedTokenParams = peggedTokenParams_;
 
@@ -33,7 +33,7 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
     /**
      * @notice Returns the Pegged Token Params configurations that's going to be added
      */
-    function getPeggedTokenParams() external view returns (MocCore.PeggedTokenParams memory) {
+    function getPeggedTokenParams() external view returns (PeggedTokenParams memory) {
         return peggedTokenParams;
     }
 

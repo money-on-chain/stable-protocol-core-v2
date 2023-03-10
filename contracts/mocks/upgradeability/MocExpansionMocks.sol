@@ -3,18 +3,18 @@ pragma solidity 0.8.16;
 
 /* solhint-disable-next-line max-line-length */
 import { UUPSUpgradeable, UpgraderUUPSChangerTemplate } from "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
-import { MocCore, MocStorage, MocCoreExpansion, Address } from "../../core/MocCore.sol";
+import { MocCore, MocCommons, MocCoreExpansion, Address } from "../../core/MocCore.sol";
 import { MocCACoinbase } from "../../collateral/coinbase/MocCACoinbase.sol";
 import { MocCARC20 } from "../../collateral/rc20/MocCARC20.sol";
 
 /**
  * @title UpgradableMock
  * @dev Only for upgradeability testing purposes. Generic contract for initialize a mock and get a custom method.
- *  It is used to test that we can add storage variables to MocStorage and
+ *  It is used to test that we can add storage variables to MocCommons and
  *  MocCore keeps the compatibility with MocCoreExpansion.
  */
 
-abstract contract UpgradableMock is MocStorage {
+abstract contract UpgradableMock is MocCommons {
     uint256 public newVariable;
 
     function initializeMock() external {

@@ -16,27 +16,12 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  */
 abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // ------- Events -------
-    event TPRedeemed(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
-    );
+
     event ContractLiquidated();
-    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
 
     // ------- Custom Errors -------
-    error PeggedTokenAlreadyAdded();
-    error InsufficientTPtoRedeem(uint256 qTP_, uint256 tpAvailableToRedeem_);
     error MissingProviderPrice(address priceProviderAddress_);
-    error TransferFailed();
     error Liquidated();
-    error OnlyWhenLiquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
 
     // ------- Structs -------
@@ -52,23 +37,6 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 index;
         // true if Pegged Token exists
         bool exists;
-    }
-
-    struct PeggedTokenParams {
-        // Pegged Token contract address to add
-        address tpTokenAddress;
-        // priceProviderAddress Pegged Token price provider contract address
-        address priceProviderAddress;
-        // Pegged Token target coverage [PREC]
-        uint256 tpCtarg;
-        // additional fee pct applied on mint [PREC]
-        uint256 tpMintFee;
-        // additional fee pct applied on redeem [PREC]
-        uint256 tpRedeemFee;
-        // initial Pegged Token exponential moving average [PREC]
-        uint256 tpEma;
-        // Pegged Token smoothing factor [PREC]
-        uint256 tpEmaSf;
     }
 
     struct InitializeBaseBucketParams {

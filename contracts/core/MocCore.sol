@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import { MocStorage } from "./MocStorage.sol";
+import { MocCommons, PeggedTokenParams } from "./MocCommons.sol";
 import { MocCoreExpansion } from "./MocCoreExpansion.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -11,7 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
  * @notice MocCore nucleates all the basic MoC functionality and tool set. It allows Collateral
  * asset aware contracts to implement the main mint/redeem operations.
  */
-abstract contract MocCore is MocStorage {
+abstract contract MocCore is MocCommons {
     // ------- Events -------
     event TCMinted(
         address indexed sender_,
@@ -39,18 +39,6 @@ abstract contract MocCore is MocStorage {
         address indexed recipient_,
         uint256 qTP_,
         uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
-    );
-    event TPSwappedForTP(
-        uint256 indexed iFrom_,
-        uint256 iTo_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTPfrom_,
-        uint256 qTPto_,
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
@@ -105,12 +93,9 @@ abstract contract MocCore is MocStorage {
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     event SettlementExecuted();
     // ------- Custom Errors -------
-    error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
-    error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
     error QacNeededMustBeGreaterThanZero();
-    error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
     error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
     error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     error MissingBlocksToSettlement();
@@ -128,13 +113,6 @@ abstract contract MocCore is MocStorage {
         uint256 emaCalculationBlockSpan;
         // address for MocVendors
         address mocVendors;
-    }
-
-    struct FeeCalcs {
-        uint256 qACFee;
-        uint256 qFeeToken;
-        uint256 qACVendorMarkup;
-        uint256 qFeeTokenVendorMarkup;
     }
 
     // ------- Storage -------
@@ -178,7 +156,7 @@ abstract contract MocCore is MocStorage {
         __MocUpgradable_init(initializeCoreParams_.governorAddress, initializeCoreParams_.pauserAddress);
         __MocBaseBucket_init_unchained(initializeCoreParams_.initializeBaseBucketParams);
         __MocEma_init_unchained(initializeCoreParams_.emaCalculationBlockSpan);
-        __MocStorage_init_unchained(initializeCoreParams_.mocVendors);
+        __MocCommons_init_unchained(initializeCoreParams_.mocVendors);
     }
 
     // ------- Internal Functions -------
@@ -615,11 +593,10 @@ abstract contract MocCore is MocStorage {
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
 
-    struct SwapTPforTPParams {
-        uint256 iFrom;
-        uint256 iTo;
+    struct SwapTPforTCParams {
+        uint256 i;
         uint256 qTP;
-        uint256 qTPmin;
+        uint256 qTCmin;
         uint256 qACmax;
         address sender;
         address recipient;
@@ -652,66 +629,17 @@ abstract contract MocCore is MocStorage {
         notPaused
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded)
     {
-        if (params_.iFrom == params_.iTo) revert InvalidValue();
-        uint256 pACtpFrom = getPACtp(params_.iFrom);
-        uint256 pACtpTo = getPACtp(params_.iTo);
-        _updateTPtracking(params_.iFrom, pACtpFrom);
-        _updateTPtracking(params_.iTo, pACtpTo);
-        // calculate how many total qAC are redeemed
-        // [N] = [N] * [PREC] / [PREC]
-        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtpFrom);
-        // calculate how many qTP can mint with the given qAC
-        // [N] = [N] * [PREC] / [PREC]
-        qTPtoMint = (params_.qTP * pACtpTo) / pACtpFrom;
-        if (qTPtoMint < params_.qTPmin || qTPtoMint == 0) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
-
-        // if ctargemaTPto > ctargemaTPfrom we need to check coverage
-        if (_getCtargemaTP(params_.iTo, pACtpTo) > _getCtargemaTP(params_.iFrom, pACtpFrom)) {
-            (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-            // evaluates whether or not the system coverage is healthy enough to mint TP
-            // given the target coverage adjusted by the moving average, reverts if it's not
-            (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
-            // evaluates if there are enough TP available to mint, reverts if it's not
-            _evalTPavailableToMint(params_.iTo, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
-        }
         FeeCalcs memory feeCalcs;
-        (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
-            params_.sender,
-            params_.vendor,
-            qACtotalToRedeem,
-            swapTPforTPFee
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTPto, (params_));
+        (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
+            Address.functionDelegateCall(mocCoreExpansion, payload),
+            (uint256, uint256, uint256, FeeCalcs)
         );
-        if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        emit TPSwappedForTP(
-            params_.iFrom,
-            params_.iTo,
-            params_.sender,
-            params_.recipient,
-            params_.qTP,
-            qTPtoMint,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
-        );
-
-        _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
-        _withdrawAndBurnTP(params_.iFrom, params_.qTP, 0, params_.sender);
 
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
-    }
-
-    struct SwapTPforTCParams {
-        uint256 i;
-        uint256 qTP;
-        uint256 qTCmin;
-        uint256 qACmax;
-        address sender;
-        address recipient;
-        address vendor;
     }
 
     /**
@@ -926,76 +854,6 @@ abstract contract MocCore is MocStorage {
         }
         // transfer qAC to operator
         acTransfer(operatorsAddress_, operatorsQAC_);
-    }
-
-    /**
-     * @notice calc fees amount in qAC or Fee Token
-     *  If `sender_` has enough Fee Token to pay fees, will be used. In another case will use qAC
-     * @dev if qFeeToken > 0, qACFee = 0. If qACFee > 0, qFeeToken = 0.
-     * @param sender_ address who executes the operation
-     * @param qAC_ amount of AC involved in the operation, could be sent form sender for mint or
-     *  sent to recipient for redeem [N]
-     * @param qACFeePct_ additional fee pct applied on operation
-     * @return qACSurcharges amount of AC needed to pay fees and markup. 0 if pays with Fee Token
-     * @return qFeeTokenTotalNeeded amount of Fee Token needed to pay fees and markup. 0 if pays with AC
-     * @return feeCalcs
-     * @dev
-     *      qACFee amount of AC needed to pay fees
-     *      qFeeToken amount of Fee Token needed to pay fess
-     *      qACVendorMarkup amount of AC needed to pay vendor markup
-     *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
-     */
-    function _calcFees(
-        address sender_,
-        address vendor_,
-        uint256 qAC_,
-        uint256 qACFeePct_
-    ) internal view returns (uint256 qACSurcharges, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
-        uint256 qACmarked;
-        if (vendor_ != address(0)) {
-            // [PREC] = [N] * [PREC]
-            qACmarked = qAC_ * mocVendors.vendorMarkup(vendor_);
-        }
-        uint256 senderAllowance = feeToken.allowance(sender_, address(this));
-        if (senderAllowance > 0) {
-            (uint256 feeTokenPrice, bool hasFeeTokenPrice) = _peekPrice(feeTokenPriceProvider);
-            if (hasFeeTokenPrice) {
-                // calculates Fee Token to be charged as fee
-                // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
-                // TODO: define if will not be necessary a feeTokenPct for each operation
-                feeCalcs.qFeeToken = _mulPrec(qAC_ * qACFeePct_, feeTokenPct) / feeTokenPrice;
-                if (qACmarked > 0) {
-                    // [N] = [N] * [PREC] / [PREC]
-                    feeCalcs.qFeeTokenVendorMarkup = qACmarked / feeTokenPrice;
-                    // [N] = [N] + [N]
-                    qFeeTokenTotalNeeded = feeCalcs.qFeeToken + feeCalcs.qFeeTokenVendorMarkup;
-                } else {
-                    qFeeTokenTotalNeeded = feeCalcs.qFeeToken;
-                }
-                // TODO: if feeTokenPct == 0 should use qAC too?
-                if (senderAllowance < qFeeTokenTotalNeeded || feeToken.balanceOf(sender_) < qFeeTokenTotalNeeded) {
-                    feeCalcs.qFeeToken = 0;
-                    feeCalcs.qFeeTokenVendorMarkup = 0;
-                    qFeeTokenTotalNeeded = 0;
-                }
-            }
-        }
-        // if sender hasn't got enough feeToken balance or allowance or price provider hasn't got a valid price
-        // then qFeeToken == 0 and sender pays fees with AC
-        if (feeCalcs.qFeeToken == 0) {
-            // calculates qAC to be charged as fee
-            // [N] = [N] * [PREC] / [PREC]
-            feeCalcs.qACFee = _mulPrec(qAC_, qACFeePct_);
-            if (qACmarked > 0) {
-                // [N] = [PREC] / [PREC]
-                feeCalcs.qACVendorMarkup = qACmarked / PRECISION;
-                // [N] = [N] + [N]
-                qACSurcharges = feeCalcs.qACFee + feeCalcs.qACVendorMarkup;
-            } else {
-                qACSurcharges = feeCalcs.qACFee;
-            }
-        }
-        return (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     /**
@@ -1436,29 +1294,6 @@ abstract contract MocCore is MocStorage {
         uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
-    }
-
-    /**
-     * @notice evaluates if there are enough Pegged Token available to mint, reverts if it`s not
-     * @param i_ Pegged Token index
-     * @param qTP_ amount of Pegged Token to mint [N]
-     * @param pACtp_ Pegged Token price [PREC]
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     */
-    function _evalTPavailableToMint(
-        uint256 i_,
-        uint256 qTP_,
-        uint256 pACtp_,
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view {
-        uint256 ctargemaTP = _getCtargemaTP(i_, pACtp_);
-        uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, ctargemaTP, pACtp_, lckAC_, nACgain_);
-        // check if there are enough TP available to mint
-        if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
     }
 
     /**

@@ -3,7 +3,7 @@ pragma solidity 0.8.16;
 
 import { IChangeContract } from "../../interfaces/IChangeContract.sol";
 import { IMocRC20 } from "../../interfaces/IMocRC20.sol";
-import { MocCore } from "../../core/MocCore.sol";
+import { MocCore, MocCommons, PeggedTokenParams } from "../../core/MocCore.sol";
 import { MocBaseBucket } from "../../core/MocBaseBucket.sol";
 import { MocHelper } from "../../utils/MocHelper.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -27,7 +27,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
 
     MocCore public mocCore;
     IMocRC20 public tpToEdit;
-    MocCore.PeggedTokenParams internal peggedTokenParams;
+    PeggedTokenParams internal peggedTokenParams;
     uint256 public paramSet;
     uint256 public constant PARAMS_CHANGED = 1;
 
@@ -58,7 +58,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
         (, uint256 emaSf) = mocCore.tpEma(i);
 
         // Only edits the priceProvider, all the other values are taken from the contracts itself
-        peggedTokenParams = MocBaseBucket.PeggedTokenParams(
+        peggedTokenParams = PeggedTokenParams(
             // tpTokenAddress
             address(tpToEdit),
             // priceProviderAddress
@@ -79,7 +79,7 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
     /**
      * @notice Returns the Pegged Token Params configurations that's going to be edited
      */
-    function getPeggedTokenParams() external view returns (MocCore.PeggedTokenParams memory) {
+    function getPeggedTokenParams() external view returns (PeggedTokenParams memory) {
         return peggedTokenParams;
     }
 

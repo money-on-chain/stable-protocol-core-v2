@@ -2,7 +2,7 @@
 pragma solidity 0.8.16;
 
 import { MocCARC20 } from "../collateral/rc20/MocCARC20.sol";
-import { MocCore, MocCoreExpansion } from "../core/MocCore.sol";
+import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocTC } from "../tokens/MocTC.sol";
 import { MocRC20 } from "../tokens/MocRC20.sol";
@@ -109,7 +109,7 @@ contract EchidnaMocCoreTester {
         mocCARC20.initialize(initializeParams);
 
         // add a Pegged Token
-        MocCore.PeggedTokenParams memory peggedTokenParams = MocBaseBucket.PeggedTokenParams({
+        PeggedTokenParams memory peggedTokenParams = PeggedTokenParams({
             tpTokenAddress: address(0),
             priceProviderAddress: address(0),
             tpCtarg: 5 * PRECISION,
@@ -132,7 +132,7 @@ contract EchidnaMocCoreTester {
         mocCARC20.mintTP(0, 23500 ether, 1000 ether);
     }
 
-    function addPeggedToken(MocCore.PeggedTokenParams memory peggedTokenParams_, uint96 price_) public {
+    function addPeggedToken(PeggedTokenParams memory peggedTokenParams_, uint96 price_) public {
         require(totalPeggedTokensAdded < MAX_PEGGED_TOKENS, "max TP already added");
         MocRC20 tpToken = MocRC20(_deployProxy(address(new MocRC20())));
         // initialize Pegged Token
