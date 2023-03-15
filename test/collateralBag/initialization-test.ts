@@ -50,7 +50,7 @@ describe("Feature: MocCABag initialization", function () {
       let mocImplementation: MocCARC20;
       it("THEN tx fails because contract is already initialized", async () => {
         mocImplementation = MocCARC20__factory.connect(
-          (await deployments.get("MocCABagImpl")).address,
+          (await deployments.get("MocCABagProxy")).implementation!,
           ethers.provider.getSigner(),
         );
         await expect(
@@ -75,7 +75,7 @@ describe("Feature: MocCABag initialization", function () {
       let mocWrapperImplementation: MocCAWrapper;
       it("THEN tx fails because contract is already initialized", async () => {
         mocWrapperImplementation = MocCAWrapper__factory.connect(
-          (await deployments.get("MocCAWrapperImpl")).address,
+          (await deployments.get("MocCAWrapperProxy")).implementation!,
           ethers.provider.getSigner(),
         );
         await expect(

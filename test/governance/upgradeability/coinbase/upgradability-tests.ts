@@ -25,8 +25,8 @@ describe("Feature: MocCoinbase Upgradeability UUPS", () => {
 
     wrongChangeContract = await changerFactory.deploy(
       (
-        await deployments.get("MocCACoinbaseImpl")
-      ).address,
+        await deployments.get("MocCACoinbaseProxy")
+      ).implementation!,
       mocCoinbaseMockImpl.address,
     );
   });

@@ -25,8 +25,8 @@ describe("Feature: MocCAWrapper Upgradeability UUPS", () => {
 
     wrongChangeContract = await changerFactory.deploy(
       (
-        await deployments.get("MocCAWrapperImpl")
-      ).address,
+        await deployments.get("MocCAWrapperProxy")
+      ).implementation!,
       MocCAWrapperMockImpl.address,
     );
   });
