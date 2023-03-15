@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit, signer, deployedMocContractProxy, MocCACoinbase, deployedTCContract, CollateralToken, governorAddress, pauserAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, governorMockFactory;
+    var deployments, _a, coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit, signer, deployedMocContractProxy, MocCACoinbase, deployedMocExpansionContract, deployedTCContract, CollateralToken, deployedMocVendors, MocVendors, governorAddress, pauserAddress, feeTokenAddress, feeTokenPriceProviderAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, vendorsGuardianAddress, governorMockFactory, rc20MockFactory, priceProviderMockFactory;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -54,34 +54,69 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                 return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocCACoinbase", deployedMocContractProxy.address, signer)];
             case 2:
                 MocCACoinbase = _b.sent();
-                return [4 /*yield*/, deployments.getOrNull("CollateralTokenCoinbaseProxy")];
+                return [4 /*yield*/, deployments.getOrNull("MocCACoinbaseExpansion")];
             case 3:
+                deployedMocExpansionContract = _b.sent();
+                if (!deployedMocExpansionContract)
+                    throw new Error("No MocCACoinbaseExpansion deployed.");
+                return [4 /*yield*/, deployments.getOrNull("CollateralTokenCoinbaseProxy")];
+            case 4:
                 deployedTCContract = _b.sent();
                 if (!deployedTCContract)
                     throw new Error("No CollateralTokenCoinbaseProxy deployed.");
                 return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocTC", deployedTCContract.address, signer)];
-            case 4:
-                CollateralToken = _b.sent();
-                governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress;
-                if (!(hre.network.tags.testnet || hre.network.tags.local)) return [3 /*break*/, 7];
-                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
             case 5:
+                CollateralToken = _b.sent();
+                return [4 /*yield*/, deployments.getOrNull("MocVendorsCACoinbaseProxy")];
+            case 6:
+                deployedMocVendors = _b.sent();
+                if (!deployedMocVendors)
+                    throw new Error("No MocVendors deployed.");
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocVendors", deployedMocVendors.address, signer)];
+            case 7:
+                MocVendors = _b.sent();
+                governorAddress = mocAddresses.governorAddress, pauserAddress = mocAddresses.pauserAddress, feeTokenAddress = mocAddresses.feeTokenAddress, feeTokenPriceProviderAddress = mocAddresses.feeTokenPriceProviderAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress, vendorsGuardianAddress = mocAddresses.vendorsGuardianAddress;
+                if (!(hre.network.tags.testnet || hre.network.tags.local)) return [3 /*break*/, 10];
+                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("GovernorMock")];
+            case 8:
                 governorMockFactory = _b.sent();
                 return [4 /*yield*/, governorMockFactory.deploy()];
-            case 6:
+            case 9:
                 governorAddress = (_b.sent()).address;
-                _b.label = 7;
-            case 7:
+                _b.label = 10;
+            case 10:
+                if (!hre.network.tags.local) return [3 /*break*/, 15];
+                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("ERC20Mock")];
+            case 11:
+                rc20MockFactory = _b.sent();
+                return [4 /*yield*/, rc20MockFactory.deploy()];
+            case 12:
+                feeTokenAddress = (_b.sent()).address;
+                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderMock")];
+            case 13:
+                priceProviderMockFactory = _b.sent();
+                return [4 /*yield*/, priceProviderMockFactory.deploy(hardhat_1.ethers.utils.parseEther("1"))];
+            case 14:
+                feeTokenPriceProviderAddress = (_b.sent()).address;
+                _b.label = 15;
+            case 15:
                 console.log("initializing...");
                 // initializations
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(CollateralToken.initialize(ctParams.name, ctParams.symbol, MocCACoinbase.address, mocAddresses.governorAddress, {
                         gasLimit: gasLimit,
                     }))];
-            case 8:
+            case 16:
                 // initializations
+                _b.sent();
+                return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
+                        gasLimit: gasLimit,
+                    }))];
+            case 17:
                 _b.sent();
                 return [4 /*yield*/, (0, utils_1.waitForTxConfirmation)(MocCACoinbase.initialize({
                         initializeBaseBucketParams: {
+                            feeTokenAddress: feeTokenAddress,
+                            feeTokenPriceProviderAddress: feeTokenPriceProviderAddress,
                             tcTokenAddress: CollateralToken.address,
                             mocFeeFlowAddress: mocFeeFlowAddress,
                             mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
@@ -95,28 +130,31 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                             swapTCforTPFee: feeParams.swapTCforTPFee,
                             redeemTCandTPFee: feeParams.redeemTCandTPFee,
                             mintTCandTPFee: feeParams.mintTCandTPFee,
+                            feeTokenPct: feeParams.feeTokenPct,
                             successFee: coreParams.successFee,
                             appreciationFactor: coreParams.appreciationFactor,
+                            bes: settlementParams.bes,
                         },
                         governorAddress: governorAddress,
                         pauserAddress: pauserAddress,
+                        mocCoreExpansion: deployedMocExpansionContract.address,
                         emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-                        bes: settlementParams.bes,
+                        mocVendors: MocVendors.address,
                     }, { gasLimit: gasLimit }))];
-            case 9:
+            case 18:
                 _b.sent();
                 console.log("initialization completed!");
-                if (!hre.network.tags.testnet) return [3 /*break*/, 11];
+                if (!hre.network.tags.testnet) return [3 /*break*/, 20];
                 return [4 /*yield*/, (0, utils_1.addPeggedTokensAndChangeGovernor)(hre, mocAddresses.governorAddress, MocCACoinbase, tpParams)];
-            case 10:
+            case 19:
                 _b.sent();
-                _b.label = 11;
-            case 11: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                _b.label = 20;
+            case 20: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };
 exports.default = deployFunc;
 deployFunc.id = "Initialized_Coinbase"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCoinbase"];
-deployFunc.dependencies = ["MocCACoinbase", "CollateralTokenCoinbase"];
+deployFunc.dependencies = ["MocCACoinbase", "CollateralTokenCoinbase", "MocVendors"];
 //# sourceMappingURL=initializer.js.map

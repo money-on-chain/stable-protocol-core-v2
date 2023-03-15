@@ -13,7 +13,9 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es5"
+    "target": "es5",
+    // Generate d.ts files
+    "declaration": true,
   },
   "exclude": [
     "node_modules"
