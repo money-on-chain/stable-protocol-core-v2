@@ -162,7 +162,7 @@ const config: HardhatUserConfig = {
           },
         },
       },
-      viaIR: process.env.VIA_IR ? true : false,
+      viaIR: process.env.VIA_IR === undefined ? true : process.env.VIA_IR == "true",
       outputSelection: {
         "*": {
           "*": ["storageLayout"],
