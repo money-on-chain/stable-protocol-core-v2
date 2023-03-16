@@ -25,8 +25,8 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
 
     wrongChangeContract = await changerFactory.deploy(
       (
-        await deployments.get("MocCARC20Impl")
-      ).address,
+        await deployments.get("MocCARC20Proxy")
+      ).implementation!,
       mocRC20MockImpl.address,
     );
   });
