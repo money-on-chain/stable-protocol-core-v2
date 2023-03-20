@@ -47,6 +47,25 @@ export const deployUUPSArtifact = async ({
   console.log(`${artifactBaseName}Proxy ERC1967Proxy deployed at ${deployResult.address}`);
 };
 
+export const deployCollateralToken = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
+  const { ctParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { deployer } = await hre.getNamedAccounts();
+
+  await deployUUPSArtifact({
+    hre,
+    artifactBaseName,
+    contract: "MocTC",
+    initializeArgs: [
+      ctParams.name,
+      ctParams.symbol,
+      deployer, // proper Moc roles are gonna be assigned after it's deployed
+      mocAddresses.governorAddress,
+    ],
+  });
+
+  return hre.network.live; // prevents re execution on live networks
+};
+
 export const getNetworkDeployParams = (hre: HardhatRuntimeEnvironment) => {
   const network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
   return hre.config.networks[network].deployParameters;

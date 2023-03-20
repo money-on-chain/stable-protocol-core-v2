@@ -3,6 +3,8 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { deployUUPSArtifact } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+  await deployUUPSArtifact({ hre, artifactBaseName: "CollateralTokenCARC20", contract: "MocTC" });
+
   await deployUUPSArtifact({ hre, contract: "MocCARC20" });
   return hre.network.live; // prevents re execution on live networks
 };

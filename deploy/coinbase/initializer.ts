@@ -5,8 +5,7 @@ import { addPeggedTokensAndChangeGovernor, getNetworkDeployParams, waitForTxConf
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const { coreParams, settlementParams, feeParams, ctParams, tpParams, mocAddresses, gasLimit } =
-    getNetworkDeployParams(hre);
+  const { coreParams, settlementParams, feeParams, tpParams, mocAddresses, gasLimit } = getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   const deployedMocContractProxy = await deployments.getOrNull("MocCACoinbaseProxy");
@@ -51,11 +50,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize(ctParams.name, ctParams.symbol, MocCACoinbase.address, mocAddresses.governorAddress, {
-      gasLimit,
-    }),
-  );
-  await waitForTxConfirmation(
     MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
       gasLimit,
     }),
@@ -93,6 +87,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       { gasLimit },
     ),
   );
+
+  console.log("Delegating CT roles to Moc");
+  // Assign TC Roles, and renounce deployer ADMIN
+  await waitForTxConfirmation(CollateralToken.grantAllRoles(MocCACoinbase.address));
+
   console.log("initialization completed!");
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {

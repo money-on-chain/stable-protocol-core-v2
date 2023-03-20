@@ -10,7 +10,7 @@ import {
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
-  const { coreParams, settlementParams, feeParams, ctParams, tpParams, assetParams, mocAddresses, gasLimit } =
+  const { coreParams, settlementParams, feeParams, tpParams, assetParams, mocAddresses, gasLimit } =
     getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
@@ -64,17 +64,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    CollateralToken.initialize(
-      ctParams.name,
-      ctParams.symbol,
-      deployedMocContract.address,
-      mocAddresses.governorAddress,
-      {
-        gasLimit,
-      },
-    ),
-  );
-  await waitForTxConfirmation(
     MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
       gasLimit,
     }),
@@ -127,6 +116,11 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       { gasLimit },
     ),
   );
+
+  console.log("Delegating CT roles to Moc");
+  // Assign TC Roles, and renounce deployer ADMIN
+  await waitForTxConfirmation(CollateralToken.grantAllRoles(mocCARC20.address));
+
   await waitForTxConfirmation(
     MocCAWrapper.initialize(governorAddress, pauserAddress, mocCARC20.address, WCAToken.address, {
       gasLimit,

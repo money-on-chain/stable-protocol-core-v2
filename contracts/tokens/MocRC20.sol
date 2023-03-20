@@ -2,11 +2,11 @@
 pragma solidity 0.8.16;
 
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
+import { IGovernor, Governed } from "../governance/Governed.sol";
 /* solhint-disable-next-line max-line-length */
 import { AccessControlEnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { IGovernor, Governed } from "../governance/Governed.sol";
 
 /**
  * @title MocRC20
@@ -32,6 +32,8 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
         IGovernor governor_
     ) external virtual initializer {
         __MocRC20_init(name_, symbol_, admin_, governor_);
+        _setupRole(MINTER_ROLE, admin_);
+        _setupRole(BURNER_ROLE, admin_);
     }
 
     /**
@@ -49,10 +51,7 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
         __AccessControlEnumerable_init();
         __UUPSUpgradeable_init();
         __Governed_init(address(governor_));
-
         _setupRole(DEFAULT_ADMIN_ROLE, admin_);
-        _setupRole(MINTER_ROLE, admin_);
-        _setupRole(BURNER_ROLE, admin_);
     }
 
     /* solhint-disable-next-line no-empty-blocks */

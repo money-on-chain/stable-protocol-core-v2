@@ -7,14 +7,14 @@ import { BURNER_ROLE, DEFAULT_ADMIN_ROLE, MINTER_ROLE, PAUSER_ROLE, deployCollat
 
 describe("Feature: Moc Tokens Role Access restrictions", () => {
   let token: MocTC;
-  let deployer: Address, alice: Address, roleAdmin: Address;
+  let deployer: Address, alice: Address, otherUser: Address;
   let aliceSigner: SignerWithAddress;
   describe("GIVEN there is a MocTC", () => {
     before(async () => {
-      ({ alice, deployer, otherUser: roleAdmin } = await getNamedAccounts());
+      ({ alice, deployer, otherUser } = await getNamedAccounts());
       const fakeGovernor = deployer; // Governor is not relevant for this tests
-      token = (await deployCollateralToken({ adminAddress: roleAdmin, governorAddress: fakeGovernor })).connect(
-        await ethers.getSigner(roleAdmin),
+      token = (await deployCollateralToken({ adminAddress: otherUser, governorAddress: fakeGovernor })).connect(
+        await ethers.getSigner(deployer),
       );
       aliceSigner = await ethers.getSigner(alice);
     });
@@ -45,11 +45,11 @@ describe("Feature: Moc Tokens Role Access restrictions", () => {
         );
       });
     });
-    describe("WHEN deployer address invokes grantRole", () => {
+    describe("WHEN none admin user invokes grantRole", () => {
       it("THEN it fails as it is not the roleAdmin", async () => {
-        const deployerSigner = await ethers.getSigner(deployer);
-        await expect(token.connect(deployerSigner).grantRole(MINTER_ROLE, deployer)).to.be.revertedWith(
-          `AccessControl: account ${deployer.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`,
+        const otherUserSigner = await ethers.getSigner(otherUser);
+        await expect(token.connect(otherUserSigner).grantRole(MINTER_ROLE, deployer)).to.be.revertedWith(
+          `AccessControl: account ${otherUser.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`,
         );
       });
     });
