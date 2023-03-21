@@ -22,6 +22,7 @@ describe("Feature: Check MocTC storage layout compatibility using openzeppelin h
       await mocTC.initialize("UUPS Test", "UTM", deployer, governorMock.address, {
         gasLimit: GAS_LIMIT_PATCH,
       });
+      await mocTC.grantAllRoles(deployer);
       await mocTC.mint(deployer, 10);
     });
     describe("WHEN it is upgraded to a new implementation", () => {

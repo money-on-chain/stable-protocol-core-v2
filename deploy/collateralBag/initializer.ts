@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import {
   addAssetsAndChangeGovernor,
   addPeggedTokensAndChangeGovernor,
+  getGovernorAddresses,
   getNetworkDeployParams,
   waitForTxConfirmation,
 } from "../../scripts/utils";
@@ -35,23 +36,15 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocVendors = await deployments.getOrNull("MocVendorsCABagProxy");
   if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
-  const MocVendors = await ethers.getContractAt("MocVendors", deployedMocVendors.address, signer);
 
   let {
-    governorAddress,
     pauserAddress,
     feeTokenAddress,
     feeTokenPriceProviderAddress,
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
-    vendorsGuardianAddress,
   } = mocAddresses;
 
-  // for tests only, we deploy necessary Mocks
-  if (hre.network.tags.testnet || hre.network.tags.local) {
-    const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-    governorAddress = (await governorMockFactory.deploy()).address;
-  }
   // for tests we deploy a FeeToken mock and its price provider
   if (hre.network.tags.local) {
     const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
@@ -61,23 +54,14 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     feeTokenPriceProviderAddress = (await priceProviderMockFactory.deploy(ethers.utils.parseEther("1"))).address;
   }
 
+  const governorAddress = await getGovernorAddresses(hre);
+
   console.log("initializing...");
   // initializations
   await waitForTxConfirmation(
-    MocVendors.initialize(vendorsGuardianAddress, governorAddress, pauserAddress, {
+    WCAToken.initialize("WrappedCollateralAsset", "WCA", deployedMocCAWrapperContract.address, governorAddress, {
       gasLimit,
     }),
-  );
-  await waitForTxConfirmation(
-    WCAToken.initialize(
-      "WrappedCollateralAsset",
-      "WCA",
-      deployedMocCAWrapperContract.address,
-      mocAddresses.governorAddress,
-      {
-        gasLimit,
-      },
-    ),
   );
 
   await waitForTxConfirmation(
@@ -109,7 +93,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           pauserAddress,
           mocCoreExpansion: deployedMocExpansionContract.address,
           emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-          mocVendors: MocVendors.address,
+          mocVendors: deployedMocVendors.address,
         },
         acTokenAddress: WCAToken.address,
       },
@@ -129,8 +113,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initialization completed!");
   // for testnet we add some Pegged Token and Assets and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
-    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
-    await addAssetsAndChangeGovernor(hre, mocAddresses.governorAddress, MocCAWrapper, assetParams);
+    await addPeggedTokensAndChangeGovernor(hre, governorAddress, mocCARC20, tpParams);
+    await addAssetsAndChangeGovernor(hre, governorAddress, MocCAWrapper, assetParams);
   }
   return hre.network.live; // prevents re execution on live networks
 };
@@ -138,4 +122,10 @@ export default deployFunc;
 
 deployFunc.id = "Initialized_CABag"; // id required to prevent re-execution
 deployFunc.tags = ["InitializerCABag"];
-deployFunc.dependencies = ["MocCABag", "CollateralTokenCABag", "MocCAWrapper", "WrappedCollateralAsset", "MocVendors"];
+deployFunc.dependencies = [
+  "MocCABag",
+  "CollateralTokenCABag",
+  "MocCAWrapper",
+  "WrappedCollateralAsset",
+  "MocVendorsCABag",
+];

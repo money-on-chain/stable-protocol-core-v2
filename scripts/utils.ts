@@ -18,11 +18,13 @@ export const deployUUPSArtifact = async ({
   hre: HardhatRuntimeEnvironment;
   artifactBaseName?: string;
   contract: string;
-  initializeArgs?: string[];
+  initializeArgs?: any[];
 }) => {
-  const { deployments, getNamedAccounts } = hre;
+  const {
+    deployments: { deploy },
+    getNamedAccounts,
+  } = hre;
   const { deployer } = await getNamedAccounts();
-  const { deploy } = deployments;
   const gasLimit = getNetworkDeployParams(hre).gasLimit;
   artifactBaseName = artifactBaseName || contract;
   let execute;
@@ -45,10 +47,12 @@ export const deployUUPSArtifact = async ({
   });
   console.log(`${contract}, as ${artifactBaseName} implementation deployed at ${deployResult.implementation}`);
   console.log(`${artifactBaseName}Proxy ERC1967Proxy deployed at ${deployResult.address}`);
+  return deployResult;
 };
 
 export const deployCollateralToken = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
-  const { ctParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { ctParams } = getNetworkDeployParams(hre);
+  const governorAddress = getGovernorAddresses(hre);
   const { deployer } = await hre.getNamedAccounts();
 
   await deployUUPSArtifact({
@@ -59,8 +63,47 @@ export const deployCollateralToken = (artifactBaseName: string) => async (hre: H
       ctParams.name,
       ctParams.symbol,
       deployer, // proper Moc roles are gonna be assigned after it's deployed
-      mocAddresses.governorAddress,
+      governorAddress,
     ],
+  });
+
+  return hre.network.live; // prevents re execution on live networks
+};
+
+export const getGovernorAddresses = async (hre: HardhatRuntimeEnvironment) => {
+  let {
+    mocAddresses: { governorAddress },
+    gasLimit,
+  } = getNetworkDeployParams(hre);
+
+  // for tests only, we deploy necessary Mocks
+  if (hre.network.tags.testnet || hre.network.tags.local) {
+    const {
+      deployments: { deploy },
+      getNamedAccounts,
+    } = hre;
+    const { deployer } = await getNamedAccounts();
+    // GovernorMock can be re-use by all solutions, so it's deployed using "deploy"
+    const deployResult = await deploy("GovernorMock", {
+      contract: "GovernorMock",
+      from: deployer,
+      gasLimit,
+    });
+    governorAddress = deployResult.address;
+  }
+  return governorAddress;
+};
+
+export const deployVendors = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
+  let {
+    mocAddresses: { pauserAddress, vendorsGuardianAddress },
+  } = getNetworkDeployParams(hre);
+
+  await deployUUPSArtifact({
+    hre,
+    artifactBaseName,
+    contract: "MocVendors",
+    initializeArgs: [vendorsGuardianAddress, await getGovernorAddresses(hre), pauserAddress],
   });
 
   return hre.network.live; // prevents re execution on live networks
