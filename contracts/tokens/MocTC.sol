@@ -69,11 +69,8 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
      *
      * May emit a {RoleGranted x4, RoleRevoked x1} event.
      */
-    function grantAllRoles(address account) external virtual onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
-        _grantRole(DEFAULT_ADMIN_ROLE, account);
-        _grantRole(MINTER_ROLE, account);
-        _grantRole(BURNER_ROLE, account);
+    function grantAllRoles(address account) public override onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
         _grantRole(PAUSER_ROLE, account);
-        _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        super.grantAllRoles(account);
     }
 }

@@ -1,6 +1,7 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
+import { Address } from "hardhat-deploy/types";
 
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,
@@ -173,9 +174,11 @@ export const addPeggedTokensAndChangeGovernor = async (
 export const addAssetsAndChangeGovernor = async (
   hre: HardhatRuntimeEnvironment,
   governorAddress: string,
-  mocWrapper: any,
+  mocWrapperAddress: Address,
   assetParams: any,
 ) => {
+  const signer = ethers.provider.getSigner();
+  const mocWrapper = await ethers.getContractAt("MocCAWrapper", mocWrapperAddress, signer);
   const gasLimit = getNetworkDeployParams(hre).gasLimit;
   if (assetParams) {
     for (let i = 0; i < assetParams.assetParams.length; i++) {

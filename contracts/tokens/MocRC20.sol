@@ -80,4 +80,23 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
     function burn(address to, uint256 amount) external virtual onlyRole(BURNER_ROLE) {
         _burn(to, amount);
     }
+
+    /**
+     * @dev Grants all `roles` to `account` and sender renounces to ``role``'s admin role.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     *
+     * May emit a {RoleGranted x3, RoleRevoked x1} event.
+     */
+    function grantAllRoles(address account) public virtual onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
+        _grantRole(DEFAULT_ADMIN_ROLE, account);
+        _grantRole(MINTER_ROLE, account);
+        _grantRole(BURNER_ROLE, account);
+        _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 }

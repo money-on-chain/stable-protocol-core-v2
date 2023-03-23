@@ -55,6 +55,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
   const mocCARC20 = await deployUUPSArtifact({
     hre,
+    artifactBaseName: "MocCARC20",
     contract: "MocCARC20",
     initializeArgs: [
       {
