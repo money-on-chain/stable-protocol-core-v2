@@ -58,7 +58,7 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
     }
 
     /**
-     * @dev Grants all `roles` to `account` and sender renounces to ``role``'s admin role.
+     * @dev Grants all `roles` to `account` while sender renounces to all ``role``.
      *
      * If `account` had not been already granted `role`, emits a {RoleGranted}
      * event.
@@ -66,11 +66,14 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
      * Requirements:
      *
      * - the caller must have ``role``'s admin role.
+     * - no one else must have any other role
      *
-     * May emit a {RoleGranted x4, RoleRevoked x1} event.
+     * May emit a {RoleGranted x4, RoleRevoked x4} event.
      */
-    function grantAllRoles(address account) public override onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
+    function transferAllRoles(address account) public override onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
         _grantRole(PAUSER_ROLE, account);
-        super.grantAllRoles(account);
+        _revokeRole(PAUSER_ROLE, msg.sender);
+        super.transferAllRoles(account);
+        if (getRoleMemberCount(PAUSER_ROLE) != 1) revert NotUniqueRole(PAUSER_ROLE);
     }
 }

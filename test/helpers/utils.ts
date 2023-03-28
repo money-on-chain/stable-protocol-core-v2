@@ -233,6 +233,7 @@ export const ERRORS = {
   MISSING_PROVIDER_PRICE: "MissingProviderPrice",
   NOT_WHEN_PAUSED: "NotWhenPaused",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
+  NOT_UNIQUE_ROLE: "NotUniqueRole",
   ONLY_PAUSER: "OnlyPauser",
   ONLY_WHILE_PAUSED: "OnlyWhilePaused",
   PEGGED_TOKEN_ALREADY_ADDED: "PeggedTokenAlreadyAdded",

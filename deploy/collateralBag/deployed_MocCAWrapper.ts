@@ -40,8 +40,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("delegating Roles...");
   // initializations
 
-  await waitForTxConfirmation(WCAToken.grantAllRoles(deployedMocCAWrapper.address));
-  await waitForTxConfirmation(CollateralToken.grantAllRoles(mocCARC20.address));
+  await waitForTxConfirmation(WCAToken.transferAllRoles(deployedMocCAWrapper.address));
+  await waitForTxConfirmation(CollateralToken.transferAllRoles(mocCARC20.address));
 
   // for testnet we add some Pegged Token and Assets and then transfer governance to the real governor
   if (hre.network.tags.testnet) {

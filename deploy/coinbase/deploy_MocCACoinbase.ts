@@ -79,7 +79,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   console.log("Delegating CT roles to Moc");
   // Assign TC Roles, and renounce deployer ADMIN
-  await waitForTxConfirmation(CollateralToken.grantAllRoles(mocCACoinbase.address));
+  await waitForTxConfirmation(CollateralToken.transferAllRoles(mocCACoinbase.address));
 
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {

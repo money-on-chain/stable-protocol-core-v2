@@ -17,6 +17,8 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
+    error NotUniqueRole(bytes32 role);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -37,7 +39,7 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
     }
 
     /**
-     * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` & `BURNER_ROLE` to `admin` address.
+     * @dev Grants `DEFAULT_ADMIN_ROLE` to `admin` address.
      *
      * See {ERC20_init}.
      */
@@ -82,7 +84,7 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
     }
 
     /**
-     * @dev Grants all `roles` to `account` and sender renounces to ``role``'s admin role.
+     * @dev Grants all `roles` to `account` while sender renounces to all ``role``
      *
      * If `account` had not been already granted `role`, emits a {RoleGranted}
      * event.
@@ -90,13 +92,20 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
      * Requirements:
      *
      * - the caller must have ``role``'s admin role.
+     * - no one else must have any other role
      *
-     * May emit a {RoleGranted x3, RoleRevoked x1} event.
+     * May emit a {RoleGranted x3, RoleRevoked x3} event.
      */
-    function grantAllRoles(address account) public virtual onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
+    function transferAllRoles(address account) public virtual onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
         _grantRole(DEFAULT_ADMIN_ROLE, account);
         _grantRole(MINTER_ROLE, account);
         _grantRole(BURNER_ROLE, account);
+        _revokeRole(MINTER_ROLE, msg.sender);
+        _revokeRole(BURNER_ROLE, msg.sender);
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        // One the new admin account has roles
+        if (getRoleMemberCount(DEFAULT_ADMIN_ROLE) != 1) revert NotUniqueRole(DEFAULT_ADMIN_ROLE);
+        if (getRoleMemberCount(MINTER_ROLE) != 1) revert NotUniqueRole(MINTER_ROLE);
+        if (getRoleMemberCount(BURNER_ROLE) != 1) revert NotUniqueRole(BURNER_ROLE);
     }
 }
