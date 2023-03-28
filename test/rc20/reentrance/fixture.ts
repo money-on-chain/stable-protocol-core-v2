@@ -39,7 +39,7 @@ export const fixtureDeployedMocRC777 = memoizee(
       const governorAddress = (await governorMockFactory.deploy()).address;
 
       const collateralToken = await deployCollateralToken({
-        adminAddress: deployMocProxy.address,
+        adminAddress: deployer,
         governorAddress: governorAddress,
       });
 
@@ -59,6 +59,8 @@ export const fixtureDeployedMocRC777 = memoizee(
         mocCoreExpansion.address,
         mocVendors.address,
       )({ mocGovernorAddress: governorAddress, feeTokenAddress, feeTokenPriceProviderAddress });
+
+      await collateralToken.transferAllRoles(mocImpl.address);
 
       await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 

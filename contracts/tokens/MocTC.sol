@@ -31,7 +31,6 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
     ) external override initializer {
         __MocRC20_init(name_, symbol_, admin_, governor_);
         __ERC20Pausable_init();
-        _setupRole(PAUSER_ROLE, admin_);
     }
 
     /**
@@ -56,5 +55,25 @@ contract MocTC is MocRC20, ERC20PausableUpgradeable {
      */
     function pause() external virtual onlyRole(PAUSER_ROLE) {
         _pause();
+    }
+
+    /**
+     * @dev Grants all `roles` to `account` while sender renounces to all ``role``.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
+     * - no one else must have any other role
+     *
+     * May emit a {RoleGranted x4, RoleRevoked x4} event.
+     */
+    function transferAllRoles(address account) public override onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
+        _grantRole(PAUSER_ROLE, account);
+        _revokeRole(PAUSER_ROLE, msg.sender);
+        super.transferAllRoles(account);
+        if (getRoleMemberCount(PAUSER_ROLE) != 1) revert NotUniqueRole(PAUSER_ROLE);
     }
 }

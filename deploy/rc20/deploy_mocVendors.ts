@@ -1,11 +1,7 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { deployUUPSArtifact } from "../../scripts/utils";
+import { deployVendors } from "../../scripts/utils";
 
-const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  await deployUUPSArtifact({ hre, artifactBaseName: "MocVendorsCARC20", contract: "MocVendors" });
-  return hre.network.live; // prevents re execution on live networks
-};
+const deployFunc: DeployFunction = deployVendors("MocVendorsCARC20");
 export default deployFunc;
 
 deployFunc.id = "deployed_MocVendorsCARC20"; // id required to prevent re-execution

@@ -1,11 +1,7 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { deployUUPSArtifact } from "../../scripts/utils";
+import { deployCollateralToken } from "../../scripts/utils";
 
-const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  await deployUUPSArtifact({ hre, artifactBaseName: "CollateralTokenCoinbase", contract: "MocTC" });
-  return hre.network.live; // prevents re execution on live networks
-};
+const deployFunc: DeployFunction = deployCollateralToken("CollateralTokenCoinbase");
 export default deployFunc;
 
 deployFunc.id = "deployed_CollateralTokenCoinbase"; // id required to prevent re-execution
