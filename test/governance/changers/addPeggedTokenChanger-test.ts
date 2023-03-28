@@ -1,10 +1,26 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumberish, Contract } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
-import { IChangeContract__factory, MocCACoinbase, MocCore } from "../../../typechain";
-import { ERRORS, deployPeggedToken, deployPriceProvider, pEth, CONSTANTS, tpParamsDefault } from "../../helpers/utils";
+import {
+  AddPeggedTokenChangerTemplate__factory,
+  IChangeContract__factory,
+  MocCACoinbase,
+  MocCore,
+  MocRC20,
+} from "../../../typechain";
+import {
+  BURNER_ROLE,
+  DEFAULT_ADMIN_ROLE,
+  MINTER_ROLE,
+  ERRORS,
+  deployPeggedToken,
+  deployPriceProvider,
+  pEth,
+  CONSTANTS,
+  tpParamsDefault,
+} from "../../helpers/utils";
 
 const fixtureDeploy = fixtureDeployGovernance();
 
@@ -53,10 +69,10 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   let mocPeggedToken: Contract;
   let priceProvider: Contract;
   let deployChanger: any;
-
-  before(async () => {
+  let deployer: Address;
+  beforeEach(async () => {
     ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
-
+    ({ deployer } = await getNamedAccounts());
     ({ deployAddChanger: deployChanger, mocPeggedToken, priceProvider } = await deployChangerClosure(mocProxy)());
   });
   describe("WHEN trying to setup a Changer with invalid target coverage value", () => {
@@ -91,8 +107,104 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
       );
     });
   });
+  describe("GIVEN a new Pegged Token with roles assigned to the deployer", () => {
+    let fakePeggedToken: MocRC20;
+    let changer: AddPeggedTokenChangerTemplate__factory;
+    let transferRole: (role: string) => Promise<void>;
+    beforeEach(async () => {
+      fakePeggedToken = await deployPeggedToken({
+        adminAddress: deployer,
+        governorAddress: await mocProxy.governor(),
+      });
+      changer = await ethers.getContractFactory("AddPeggedTokenChangerTemplate");
+      transferRole = async (role: string) => {
+        await fakePeggedToken.grantRole(role, mocProxy.address);
+        await fakePeggedToken.renounceRole(role, deployer);
+      };
+    });
+    describe("WHEN trying to setup a Changer without transferring Minter role to MocCore", () => {
+      it("THEN tx fails because MocCore hasn't got the Minter roles", async () => {
+        await transferRole(BURNER_ROLE);
+        await transferRole(DEFAULT_ADMIN_ROLE);
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          changer,
+          ERRORS.INVALID_ROLES,
+        );
+      });
+    });
+    describe("WHEN trying to setup a Changer without transferring Burner role to MocCore", () => {
+      it("THEN tx fails because MocCore hasn't got the Burner roles", async () => {
+        await transferRole(MINTER_ROLE);
+        await transferRole(DEFAULT_ADMIN_ROLE);
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          changer,
+          ERRORS.INVALID_ROLES,
+        );
+      });
+    });
+    describe("WHEN trying to setup a Changer without transferring Admin role to MocCore", () => {
+      it("THEN tx fails because MocCore hasn't got the Admin roles", async () => {
+        await transferRole(MINTER_ROLE);
+        await transferRole(BURNER_ROLE);
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          changer,
+          ERRORS.INVALID_ROLES,
+        );
+      });
+    });
+    describe("WHEN trying to setup a Changer without renouncing Minter role", () => {
+      it("THEN tx fails because MocCore is not the only one with Minter role", async () => {
+        await fakePeggedToken.grantRole(MINTER_ROLE, mocProxy.address);
+        await transferRole(BURNER_ROLE);
+        await transferRole(DEFAULT_ADMIN_ROLE);
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          changer,
+          ERRORS.INVALID_ROLES,
+        );
+      });
+    });
+    describe("WHEN trying to setup a Changer without renouncing Burner role", () => {
+      it("THEN tx fails because MocCore is not the only one with Burner role", async () => {
+        await fakePeggedToken.grantRole(BURNER_ROLE, mocProxy.address);
+        await transferRole(MINTER_ROLE);
+        await transferRole(DEFAULT_ADMIN_ROLE);
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          changer,
+          ERRORS.INVALID_ROLES,
+        );
+      });
+    });
+    describe("WHEN trying to setup a Changer without renouncing Admin role", () => {
+      it("THEN tx fails because MocCore is not the only one with Admin role", async () => {
+        await fakePeggedToken.grantRole(DEFAULT_ADMIN_ROLE, mocProxy.address);
+        await transferRole(MINTER_ROLE);
+        await transferRole(BURNER_ROLE);
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          changer,
+          ERRORS.INVALID_ROLES,
+        );
+      });
+    });
+  });
+  describe("GIVEN a new Pegged Token with a different governor set", () => {
+    let fakePeggedToken: MocRC20;
+    beforeEach(async () => {
+      fakePeggedToken = await deployPeggedToken({
+        adminAddress: mocProxy.address,
+        governorAddress: deployer,
+      });
+    });
+    describe("WHEN trying to setup a Changer", () => {
+      it("THEN tx fails because has a different governor", async () => {
+        await expect(deployChanger({ tpTokenAddress: fakePeggedToken.address })).to.be.revertedWithCustomError(
+          await ethers.getContractFactory("AddPeggedTokenChangerTemplate"),
+          ERRORS.INVALID_GOVERNOR,
+        );
+      });
+    });
+  });
   describe("GIVEN a Changer contract is set up to add a new Pegged Token", () => {
-    before(async () => {
+    beforeEach(async () => {
       changeContract = await deployChanger(); // with default params
     });
     describe("WHEN an unauthorized account executed the changer", () => {

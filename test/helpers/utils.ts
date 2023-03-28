@@ -221,6 +221,8 @@ export const ERRORS = {
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
+  INVALID_ROLES: "InvalidRoles",
+  INVALID_GOVERNOR: "InvalidGovernor",
   INSUFFICIENT_QAC_SENT: "InsufficientQacSent",
   INSUFFICIENT_QTP_SENT: "InsufficientQtpSent",
   INSUFFICIENT_TP_TO_MINT: "InsufficientTPtoMint",
