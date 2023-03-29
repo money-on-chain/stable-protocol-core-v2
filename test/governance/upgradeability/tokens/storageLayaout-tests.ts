@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers, upgrades, getNamedAccounts } from "hardhat";
 import { MocTC, MocTC__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH } from "../../../helpers/utils";
+import { GAS_LIMIT_PATCH, MINTER_ROLE } from "../../../helpers/utils";
 
 describe("Feature: Check MocTC storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocTC: MocTC;
@@ -22,7 +22,7 @@ describe("Feature: Check MocTC storage layout compatibility using openzeppelin h
       await mocTC.initialize("UUPS Test", "UTM", deployer, governorMock.address, {
         gasLimit: GAS_LIMIT_PATCH,
       });
-      await mocTC.transferAllRoles(deployer);
+      await mocTC.grantRole(MINTER_ROLE, deployer);
       await mocTC.mint(deployer, 10);
     });
     describe("WHEN it is upgraded to a new implementation", () => {
