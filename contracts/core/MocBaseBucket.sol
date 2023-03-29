@@ -80,6 +80,12 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 appreciationFactor;
         // number of blocks between settlements
         uint256 bes;
+        // TC interest collector address
+        address tcInterestCollectorAddress;
+        // pct interest charged to TC holders on the total collateral in the protocol [PREC]
+        uint256 tcInterestRate;
+        // amount of blocks to wait for next TC interest payment
+        uint256 tcInterestPaymentBlockSpan;
     }
 
     // ------- Storage -------
@@ -176,6 +182,17 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // Pegged Token price used at last operation(redeem or mint) [PREC]
     uint256[] internal pACtpLstop;
 
+    // ------- Storage TC Holders Interest Payment -------
+
+    // TC interest collector address
+    address public tcInterestCollectorAddress;
+    // pct interest charged to TC holders on the total collateral in the protocol [PREC]
+    uint256 public tcInterestRate;
+    // amount of blocks to wait for next TC interest payment
+    uint256 public tcInterestPaymentBlockSpan;
+    // next TC interest payment block number
+    uint256 public nextTCInterestPayment;
+
     // ------- Modifiers -------
     /// @notice functions with this modifier reverts being in liquidated state
     modifier notLiquidated() {
@@ -209,6 +226,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
      *        bes number of blocks between settlements
+     *        tcInterestCollectorAddress TC interest collector address
+     *        tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
+     *        tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
      */
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
@@ -224,6 +244,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.feeTokenPct);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
+        _checkLessThanOne(initializeBaseBucketParams_.tcInterestRate);
         feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
         feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
@@ -243,7 +264,12 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         successFee = initializeBaseBucketParams_.successFee;
         appreciationFactor = initializeBaseBucketParams_.appreciationFactor;
         bes = initializeBaseBucketParams_.bes;
-        bns = block.number + initializeBaseBucketParams_.bes;
+        tcInterestCollectorAddress = initializeBaseBucketParams_.tcInterestCollectorAddress;
+        tcInterestRate = initializeBaseBucketParams_.tcInterestRate;
+        unchecked {
+            bns = block.number + initializeBaseBucketParams_.bes;
+            nextTCInterestPayment = block.number + initializeBaseBucketParams_.tcInterestPaymentBlockSpan;
+        }
         liquidated = false;
         liqEnabled = false;
     }
@@ -808,6 +834,33 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      */
     function setAppreciationFactor(uint256 appreciationFactor_) external onlyAuthorizedChanger {
         appreciationFactor = appreciationFactor_;
+    }
+
+    /**
+     * @dev sets TC interest collector address
+     * @param tcInterestCollectorAddress_ TC interest collector address
+     */
+    function setTCInterestCollectorAddress(address tcInterestCollectorAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        tcInterestCollectorAddress = tcInterestCollectorAddress_;
+    }
+
+    /**
+     * @dev sets TC interest rate
+     * @param tcInterestRate_ pct interest charged to TC holders on the total collateral in the protocol [PREC]
+     */
+    function setTCInterestRate(uint256 tcInterestRate_) external onlyAuthorizedChanger {
+        tcInterestRate = tcInterestRate_;
+    }
+
+    /**
+     * @dev sets TC interest payment block span
+     * @param tcInterestPaymentBlockSpan_ amount of blocks to wait for next TC interest payment
+     * @dev nextTCInterestPayment is not automatically updated, you have to wait until next
+     *  interest payment to be made : nextTCInterestPayment = block.number + tcInterestPaymentBlockSpan
+     */
+    function setTCInterestPaymentBlockSpan(uint256 tcInterestPaymentBlockSpan_) external onlyAuthorizedChanger {
+        tcInterestPaymentBlockSpan = tcInterestPaymentBlockSpan_;
     }
 
     /**

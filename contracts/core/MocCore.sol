@@ -70,10 +70,12 @@ abstract contract MocCore is MocCommons {
     );
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     event SettlementExecuted();
+    event TCInterestPayment(uint256 interestAmount_);
     // ------- Custom Errors -------
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     error MissingBlocksToSettlement();
+    error MissingBlocksToInterestPayment();
     // ------- Structs -------
 
     struct InitializeCoreParams {
@@ -123,6 +125,10 @@ abstract contract MocCore is MocCommons {
      *          in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *        appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *          in Pegged Tokens to appreciation beneficiary during the settlement [PREC]]
+     *        bes number of blocks between settlements
+     *        tcInterestCollectorAddress TC interest collector address
+     *        tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
+     *        tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
      *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *        mocVendors address for MocVendors contract.
      */
@@ -1203,13 +1209,34 @@ abstract contract MocCore is MocCommons {
      * @notice this function is executed during settlement.
      *  stores amount of locked AC by Pegged Tokens at this moment and distribute success fee
      */
-
     function execSettlement() external notPaused {
         // check if it is in the corresponding block to execute the settlement
         if (block.number < bns) revert MissingBlocksToSettlement();
-        bns = block.number + bes;
+        unchecked {
+            bns = block.number + bes;
+        }
         emit SettlementExecuted();
         _distributeSuccessFee();
+    }
+
+    /**
+     * @notice executes the interest payment of the TC holders
+     *  can only be executed after a block span
+     * @dev
+     *  -   The amount is not differential, it's a snapshot of the moment it's executed
+     *  -   It does not check coverage
+     */
+    function tcHoldersInterestPayment() external notPaused {
+        // check if it is in the corresponding block to execute the interest payment
+        if (block.number < nextTCInterestPayment) revert MissingBlocksToInterestPayment();
+        unchecked {
+            nextTCInterestPayment = block.number + tcInterestPaymentBlockSpan;
+        }
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 interestAmount = _mulPrec(nACcb, tcInterestRate);
+        emit TCInterestPayment(interestAmount);
+        // transfer interests to the interest collector address, reverts if fail
+        acTransfer(tcInterestCollectorAddress, interestAmount);
     }
 
     // ------- Only Authorized Changer Functions -------
@@ -1348,6 +1375,8 @@ abstract contract MocCore is MocCommons {
 
     /**
      * @param bes_ number of blocks between settlements
+     * @dev bns is not automatically updated, you have to wait until next
+     * settlement to be made : bns = block.number + bes
      **/
     function setBes(uint256 bes_) external onlyAuthorizedChanger {
         bes = bes_;

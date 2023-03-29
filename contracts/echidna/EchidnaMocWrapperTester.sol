@@ -83,7 +83,10 @@ contract EchidnaMocWrapperTester {
                 feeTokenPct: (5 * PRECISION) / 10, // 50%
                 successFee: (1 * PRECISION) / 10, // 10%
                 appreciationFactor: (5 * PRECISION) / 10, // 50%
-                bes: 30 days
+                bes: 30 days,
+                tcInterestCollectorAddress: mocFeeFlow,
+                tcInterestRate: (1 * PRECISION) / 10, // 0.1%
+                tcInterestPaymentBlockSpan: 7 days
             });
         MocCore.InitializeCoreParams memory initializeCoreParams = MocCore.InitializeCoreParams({
             initializeBaseBucketParams: initializeBaseBucketParams,
