@@ -39,6 +39,9 @@ export function mocInitialize(
     bes = settlementParams.bes,
     successFee = coreParams.successFee,
     appreciationFactor = coreParams.appreciationFactor,
+    tcInterestCollectorAddress = mocAddresses.tcInterestCollectorAddress,
+    tcInterestRate = coreParams.tcInterestRate,
+    tcInterestPaymentBlockSpan = coreParams.tcInterestPaymentBlockSpan,
   }: {
     mocGovernorAddress?: Address;
     mocPauserAddress?: Address;
@@ -65,6 +68,9 @@ export function mocInitialize(
     bes?: BigNumberish;
     successFee?: BigNumberish;
     appreciationFactor?: BigNumberish;
+    tcInterestCollectorAddress?: Address;
+    tcInterestRate?: BigNumberish;
+    tcInterestPaymentBlockSpan?: BigNumberish;
   } = {}) => {
     return mocCARC20.initialize({
       initializeCoreParams: {
@@ -88,6 +94,9 @@ export function mocInitialize(
           successFee,
           appreciationFactor,
           bes,
+          tcInterestCollectorAddress,
+          tcInterestRate,
+          tcInterestPaymentBlockSpan,
         },
         governorAddress: mocGovernorAddress,
         pauserAddress: mocPauserAddress,

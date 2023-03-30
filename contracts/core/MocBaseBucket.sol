@@ -244,7 +244,6 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.feeTokenPct);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
-        _checkLessThanOne(initializeBaseBucketParams_.tcInterestRate);
         feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
         feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
@@ -266,6 +265,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         bes = initializeBaseBucketParams_.bes;
         tcInterestCollectorAddress = initializeBaseBucketParams_.tcInterestCollectorAddress;
         tcInterestRate = initializeBaseBucketParams_.tcInterestRate;
+        tcInterestPaymentBlockSpan = initializeBaseBucketParams_.tcInterestPaymentBlockSpan;
         unchecked {
             bns = block.number + initializeBaseBucketParams_.bes;
             nextTCInterestPayment = block.number + initializeBaseBucketParams_.tcInterestPaymentBlockSpan;

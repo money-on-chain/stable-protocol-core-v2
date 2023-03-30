@@ -140,6 +140,24 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.feeTokenPct()).to.be.equal(50);
       });
     });
+    describe(`WHEN setTCInterestCollectorAddress is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setTCInterestCollectorAddress(mockAddress);
+        expect(await mocProxy.tcInterestCollectorAddress()).to.be.equal(mockAddress);
+      });
+    });
+    describe(`WHEN setTCInterestRate is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setTCInterestRate(51);
+        expect(await mocProxy.tcInterestRate()).to.be.equal(51);
+      });
+    });
+    describe(`WHEN setTCInterestPaymentBlockSpan is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setTCInterestPaymentBlockSpan(52);
+        expect(await mocProxy.tcInterestPaymentBlockSpan()).to.be.equal(52);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -261,6 +279,21 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setLiqEnable is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setLiqEnabled(true));
+      });
+    });
+    describe("WHEN setTCInterestCollectorAddress is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setTCInterestCollectorAddress(mockAddress));
+      });
+    });
+    describe("WHEN setTCInterestRate is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setTCInterestRate(42));
+      });
+    });
+    describe("WHEN setTCInterestPaymentBlockSpan is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setTCInterestPaymentBlockSpan(42));
       });
     });
   });

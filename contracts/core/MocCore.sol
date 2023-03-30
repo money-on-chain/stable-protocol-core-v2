@@ -75,7 +75,7 @@ abstract contract MocCore is MocCommons {
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
     error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     error MissingBlocksToSettlement();
-    error MissingBlocksToInterestPayment();
+    error MissingBlocksToTCInterestPayment();
     // ------- Structs -------
 
     struct InitializeCoreParams {
@@ -1228,7 +1228,7 @@ abstract contract MocCore is MocCommons {
      */
     function tcHoldersInterestPayment() external notPaused {
         // check if it is in the corresponding block to execute the interest payment
-        if (block.number < nextTCInterestPayment) revert MissingBlocksToInterestPayment();
+        if (block.number < nextTCInterestPayment) revert MissingBlocksToTCInterestPayment();
         unchecked {
             nextTCInterestPayment = block.number + tcInterestPaymentBlockSpan;
         }
