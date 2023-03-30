@@ -80,6 +80,26 @@ abstract contract MocCommons is MocEma {
         address vendor;
     }
 
+    struct SwapTPforTCParams {
+        uint256 i;
+        uint256 qTP;
+        uint256 qTCmin;
+        uint256 qACmax;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
+    struct SwapTCforTPParams {
+        uint256 i;
+        uint256 qTC;
+        uint256 qTPmin;
+        uint256 qACmax;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
     struct FeeCalcs {
         uint256 qACFee;
         uint256 qFeeToken;
@@ -96,6 +116,9 @@ abstract contract MocCommons is MocEma {
     error InsufficientQacSent(uint256 qACsent_, uint256 qACNeeded_);
     error InsufficientTPtoMint(uint256 qTP_, uint256 tpAvailableToMint_);
     error QtpBelowMinimumRequired(uint256 qTPmin_, uint256 qTP_);
+    error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
+    error QacNeededMustBeGreaterThanZero();
+    error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
 
     // ------- Events -------
 
@@ -118,6 +141,28 @@ abstract contract MocCommons is MocEma {
         address indexed recipient_,
         uint256 qTPfrom_,
         uint256 qTPto_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_
+    );
+    event TPSwappedForTC(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qTC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_
+    );
+    event TCSwappedForTP(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
@@ -227,6 +272,25 @@ abstract contract MocCommons is MocEma {
         uint256 tpAvailableToMint = _getTPAvailableToMint(ctargemaCA_, ctargemaTP, pACtp_, lckAC_, nACgain_);
         // check if there are enough TP available to mint
         if (tpAvailableToMint < qTP_) revert InsufficientTPtoMint(qTP_, tpAvailableToMint);
+    }
+
+    /**
+     * @notice evaluates if there is enough Collateral Token available to redeem, reverts if there's not
+     * @param qTC_ amount of Collateral Token to redeem [N]
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
+     * @param nACgain_ amount of Collateral Asset that will be distributed at
+     *         settlement because Pegged Token devaluation [N]
+     */
+    function _evalTCAvailableToRedeem(
+        uint256 qTC_,
+        uint256 ctargemaCA_,
+        uint256 lckAC_,
+        uint256 nACgain_
+    ) internal view {
+        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
+        // check if there are enough TC available to redeem
+        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
     }
 
     /**

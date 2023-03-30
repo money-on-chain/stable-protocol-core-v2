@@ -148,6 +148,7 @@ contract MocCoreExpansion is MocCommons {
      * @notice swap Pegged Token to another one
      *  This operation is done without checking coverage unless the target coverage for
      *  received Pegged Token is greater than the Pegged Token sent
+     * @dev This function is called by MocCore contract using it's context with delegate call
      * @param params_ swap TP for TP function parameters
      * @dev
      *      iFrom_ owned Pegged Token index
@@ -173,8 +174,6 @@ contract MocCoreExpansion is MocCommons {
     )
         external
         payable
-        notLiquidated
-        notPaused
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         if (params_.iFrom == params_.iTo) revert InvalidValue();
@@ -221,5 +220,143 @@ contract MocCoreExpansion is MocCommons {
 
         _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
         _withdrawAndBurnTP(params_.iFrom, params_.qTP, 0, params_.sender);
+    }
+
+    /**
+     * @notice swap Pegged Token to Collateral Token
+     * @dev This function is called by MocCore contract using it's context with delegate call
+     * @param params_ swap TP for TC function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTP_ amount Pegged Token to swap
+     *      qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     *      qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     *      sender_ address who sends the Pegged Token
+     *      recipient_ address who receives Collateral Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     * @return qACSurcharges amount of AC used to pay fees and markup
+     * @return qTCtoMint amount of Collateral Token minted
+     * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs struct with:
+     * @dev
+     *      qACFee amount of AC needed to pay fees
+     *      qFeeToken amount of Fee Token needed to pay fess
+     *      qACVendorMarkup amount of AC needed to pay vendor markup
+     *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
+     */
+    function swapTPforTCto(
+        SwapTPforTCParams memory params_
+    )
+        external
+        payable
+        returns (uint256 qACSurcharges, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        uint256[] memory pACtps = _getPACtps();
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
+        // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
+        // calculate how many total qAC are redeemed TP
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtp);
+        // calculate how many qTC can mint with the given qAC
+        // qTCtoMint = qTP / pTCac / pACtp
+        // [N] = [N] * [N] * [PREC] / ([N] - [N]) * [PREC]
+        qTCtoMint = _divPrec(params_.qTP * nTCcb, (_getTotalACavailable(nACgain) - lckAC) * pACtp);
+        if (qTCtoMint < params_.qTCmin || qTCtoMint == 0) revert QtcBelowMinimumRequired(params_.qTCmin, qTCtoMint);
+
+        (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
+            params_.sender,
+            params_.vendor,
+            qACtotalToRedeem,
+            swapTPforTCFee
+        );
+        if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
+        emit TPSwappedForTC(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qTCtoMint,
+            feeCalcs.qACFee,
+            feeCalcs.qFeeToken,
+            feeCalcs.qACVendorMarkup,
+            feeCalcs.qFeeTokenVendorMarkup
+        );
+
+        _withdrawAndBurnTP(params_.i, params_.qTP, 0, params_.sender);
+        _depositAndMintTC(qTCtoMint, 0, params_.recipient);
+    }
+
+    /**
+     * @notice swap Collateral Token to Pegged Token
+     * @dev This function is called by MocCore contract using it's context with delegate call
+     * @param params_ swap TC for TP function parameters
+     * @dev
+     *      i_ Pegged Token index
+     *      qTC_ amount of Collateral Token to swap
+     *      qTPmin_ minimum amount of Pegged Token Token that `recipient_` expects to receive
+     *      qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     *      sender_ address who sends the Collateral Token
+     *      recipient_ address who receives the Pegged Token
+     *      vendor_ address who receives a markup. If its address(0) no markup is applied
+     * @return qACSurcharges amount of AC used to pay fees and markup
+     * @return qTPtoMint amount of Pegged Token minted
+     * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @dev
+     *      qACFee amount of AC needed to pay fees
+     *      qFeeToken amount of Fee Token needed to pay fess
+     *      qACVendorMarkup amount of AC needed to pay vendor markup
+     *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
+     */
+    function swapTCforTPto(
+        SwapTCforTPParams memory params_
+    )
+        external
+        payable
+        returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
+        uint256 pACtp = pACtps[params_.i];
+        _updateTPtracking(params_.i, pACtp);
+        // evaluates whether or not the system coverage is healthy enough to redeem TC
+        // given the target coverage adjusted by the moving average, reverts if it's not
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
+        // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
+        _evalTCAvailableToRedeem(params_.qTC, ctargemaCA, lckAC, nACgain);
+        // calculate how many total qAC are redeemed
+        // [N] = [N] * [PREC] / [PREC]
+        uint256 qACtotalToRedeem = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
+        // if is 0 reverts because it is trying to swap an amount below precision
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
+        // calculate how many qTP can mint with the given qAC
+        // qTPtoMint = qTC * pTCac * pACtp
+        // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
+        qTPtoMint = ((params_.qTC * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
+        // evaluates if there are enough TP available to mint, reverts if it's not
+        _evalTPavailableToMint(params_.i, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
+        if (qTPtoMint < params_.qTPmin) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
+
+        (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
+            params_.sender,
+            params_.vendor,
+            qACtotalToRedeem,
+            swapTCforTPFee
+        );
+        if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
+        emit TCSwappedForTP(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qTPtoMint,
+            feeCalcs.qACFee,
+            feeCalcs.qFeeToken,
+            feeCalcs.qACVendorMarkup,
+            feeCalcs.qFeeTokenVendorMarkup
+        );
+
+        _withdrawAndBurnTC(params_.qTC, 0, params_.sender);
+        _depositAndMintTP(params_.i, qTPtoMint, 0, params_.recipient);
     }
 }

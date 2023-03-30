@@ -44,28 +44,6 @@ abstract contract MocCore is MocCommons {
         uint256 qACVendorMarkup_,
         uint256 qFeeTokenVendorMarkup_
     );
-    event TPSwappedForTC(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qTC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
-    );
-    event TCSwappedForTP(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
-    );
     event TCandTPRedeemed(
         uint256 indexed i_,
         address indexed sender_,
@@ -94,9 +72,6 @@ abstract contract MocCore is MocCommons {
     event SettlementExecuted();
     // ------- Custom Errors -------
     error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
-    error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
-    error QacNeededMustBeGreaterThanZero();
-    error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
     error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
     error MissingBlocksToSettlement();
     // ------- Structs -------
@@ -593,16 +568,6 @@ abstract contract MocCore is MocCommons {
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
 
-    struct SwapTPforTCParams {
-        uint256 i;
-        uint256 qTP;
-        uint256 qTCmin;
-        uint256 qACmax;
-        address sender;
-        address recipient;
-        address vendor;
-    }
-
     /**
      * @notice swap Pegged Token to another one
      *  This operation is done without checking coverage unless the target coverage for
@@ -665,57 +630,17 @@ abstract contract MocCore is MocCommons {
         notPaused
         returns (uint256 qACSurcharges, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded)
     {
-        uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
-        // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
-        // calculate how many total qAC are redeemed TP
-        // [N] = [N] * [PREC] / [PREC]
-        uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtp);
-        // calculate how many qTC can mint with the given qAC
-        // qTCtoMint = qTP / pTCac / pACtp
-        // [N] = [N] * [N] * [PREC] / ([N] - [N]) * [PREC]
-        qTCtoMint = _divPrec(params_.qTP * nTCcb, (_getTotalACavailable(nACgain) - lckAC) * pACtp);
-        if (qTCtoMint < params_.qTCmin || qTCtoMint == 0) revert QtcBelowMinimumRequired(params_.qTCmin, qTCtoMint);
-
         FeeCalcs memory feeCalcs;
-        (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
-            params_.sender,
-            params_.vendor,
-            qACtotalToRedeem,
-            swapTPforTCFee
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTCto, (params_));
+        (qACSurcharges, qTCtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
+            Address.functionDelegateCall(mocCoreExpansion, payload),
+            (uint256, uint256, uint256, FeeCalcs)
         );
-        if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        emit TPSwappedForTC(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTP,
-            qTCtoMint,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
-        );
-
-        _withdrawAndBurnTP(params_.i, params_.qTP, 0, params_.sender);
-        _depositAndMintTC(qTCtoMint, 0, params_.recipient);
 
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
-    }
-
-    struct SwapTCforTPParams {
-        uint256 i;
-        uint256 qTC;
-        uint256 qTPmin;
-        uint256 qACmax;
-        address sender;
-        address recipient;
-        address vendor;
     }
 
     /**
@@ -741,49 +666,12 @@ abstract contract MocCore is MocCommons {
         notPaused
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded)
     {
-        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
-        // evaluates whether or not the system coverage is healthy enough to redeem TC
-        // given the target coverage adjusted by the moving average, reverts if it's not
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
-        // evaluates if there are enough Collateral Tokens available to redeem, reverts if there are not
-        _evalTCAvailableToRedeem(params_.qTC, ctargemaCA, lckAC, nACgain);
-        // calculate how many total qAC are redeemed
-        // [N] = [N] * [PREC] / [PREC]
-        uint256 qACtotalToRedeem = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
-        // if is 0 reverts because it is trying to swap an amount below precision
-        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
-        // calculate how many qTP can mint with the given qAC
-        // qTPtoMint = qTC * pTCac * pACtp
-        // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
-        qTPtoMint = ((params_.qTC * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
-        // evaluates if there are enough TP available to mint, reverts if it's not
-        _evalTPavailableToMint(params_.i, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
-        if (qTPtoMint < params_.qTPmin) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
-
         FeeCalcs memory feeCalcs;
-        (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
-            params_.sender,
-            params_.vendor,
-            qACtotalToRedeem,
-            swapTCforTPFee
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTCforTPto, (params_));
+        (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
+            Address.functionDelegateCall(mocCoreExpansion, payload),
+            (uint256, uint256, uint256, FeeCalcs)
         );
-        if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        emit TCSwappedForTP(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qTPtoMint,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
-        );
-
-        _withdrawAndBurnTC(params_.qTC, 0, params_.sender);
-        _depositAndMintTP(params_.i, qTPtoMint, 0, params_.recipient);
 
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
@@ -1275,25 +1163,6 @@ abstract contract MocCore is MocCommons {
         // TODO: rounding error could be avoid replacing here with qTC_ * totalACavailable / nTCcb
         qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
         return qACtotalToRedeem;
-    }
-
-    /**
-     * @notice evaluates if there is enough Collateral Token available to redeem, reverts if there's not
-     * @param qTC_ amount of Collateral Token to redeem [N]
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [PREC]
-     * @param nACgain_ amount of Collateral Asset that will be distributed at
-     *         settlement because Pegged Token devaluation [N]
-     */
-    function _evalTCAvailableToRedeem(
-        uint256 qTC_,
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view {
-        uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
-        // check if there are enough TC available to redeem
-        if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
     }
 
     /**
