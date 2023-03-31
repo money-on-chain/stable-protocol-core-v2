@@ -41,6 +41,10 @@ export type DeployParameters = {
     successFee: BigNumber;
     // pct of the gain because Pegged Tokens devaluation that is returned in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
     appreciationFactor: BigNumber;
+    // pct interest charged to TC holders on the total collateral in the protocol [PREC]
+    tcInterestRate: BigNumber;
+    // amount of blocks to wait for next TC interest payment
+    tcInterestPaymentBlockSpan: number;
   };
   settlementParams: {
     // number of blocks between settlements
@@ -98,6 +102,8 @@ export type DeployParameters = {
     mocAppreciationBeneficiaryAddress: Address;
     // address authorized to change a vendor markup
     vendorsGuardianAddress: Address;
+    // TC interest collector address
+    tcInterestCollectorAddress: Address;
   };
   // gas limit applied for each tx during deployment
   // Hardhat gas limit config cannot be used because we are using ethers.js library. https://github.com/NomicFoundation/hardhat/pull/2406

@@ -44,7 +44,12 @@ contract MocCARC20 is MocCore {
      *        in Collateral Asset to Moc Fee Flow during the settlement [PREC]
      *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
      *        in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
+     *      bes number of blocks between settlements
+     *      tcInterestCollectorAddress TC interest collector address
+     *      tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
+     *      tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
+     *      mocVendors address for MocVendors contract
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
         acToken = IERC20(initializeParams_.acTokenAddress);

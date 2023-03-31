@@ -248,6 +248,7 @@ export const ERRORS = {
   TRANSFER_FAIL: "TransferFailed",
   UNSTOPPABLE: "Unstoppable",
   MISSING_BLOCKS_TO_SETTLEMENT: "MissingBlocksToSettlement",
+  MISSING_BLOCKS_TO_TC_INTEREST_PAYMENT: "MissingBlocksToTCInterestPayment",
 };
 
 export const CONSTANTS = {

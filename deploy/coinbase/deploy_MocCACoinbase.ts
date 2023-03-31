@@ -30,6 +30,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     feeTokenPriceProviderAddress,
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
+    tcInterestCollectorAddress,
   } = mocAddresses;
 
   const governorAddress = getGovernorAddresses(hre);
@@ -67,6 +68,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           successFee: coreParams.successFee,
           appreciationFactor: coreParams.appreciationFactor,
           bes: settlementParams.bes,
+          tcInterestCollectorAddress,
+          tcInterestRate: coreParams.tcInterestRate,
+          tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
         },
         governorAddress,
         pauserAddress,

@@ -177,5 +177,10 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
         await expectPauseRevert(mocImpl.execSettlement());
       });
     });
+    describe(`WHEN someone tries to execute tcHoldersInterestPayment`, () => {
+      it("THEN it fails, as the system is paused", async function () {
+        await expectPauseRevert(mocImpl.tcHoldersInterestPayment());
+      });
+    });
   });
 });
