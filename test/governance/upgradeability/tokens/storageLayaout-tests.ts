@@ -28,9 +28,9 @@ describe("Feature: Check MocTC storage layout compatibility using openzeppelin h
     describe("WHEN it is upgraded to a new implementation", () => {
       it("THEN it succeeds as it is consistent with the previous storage", async () => {
         const mocTCMockFactory = await ethers.getContractFactory("MocTcMock");
-        await expect(await mocTC.totalSupply()).to.be.equal(10);
+        expect(await mocTC.totalSupply()).to.be.equal(10);
         await upgrades.upgradeProxy(mocTC.address, mocTCMockFactory);
-        await expect(await mocTC.totalSupply()).to.be.equal(11);
+        expect(await mocTC.totalSupply()).to.be.equal(11);
       });
     });
   });

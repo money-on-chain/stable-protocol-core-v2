@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 
 import {
@@ -7,9 +7,8 @@ import {
   MocCoinbaseWithExpansionMock,
   MocCoinbaseWithExpansionMock__factory,
 } from "../../../../typechain";
-import { fixtureDeployGovernance } from "./fixture";
-
-const fixtureDeploy = fixtureDeployGovernance();
+import { fixtureDeployedMocCoinbase } from "../../../coinbase/fixture";
+import { deployAeropagusGovernor, tpParams } from "../../../helpers/utils";
 
 describe("Feature: MocCoinbase Upgradeability UUPS", () => {
   let mocProxy: MocCACoinbase;
@@ -18,7 +17,13 @@ describe("Feature: MocCoinbase Upgradeability UUPS", () => {
   let changeContractWithExpansion: Contract;
 
   before(async () => {
-    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
+    const { deployer } = await getNamedAccounts();
+    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
+    ({ mocImpl: mocProxy } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocProxy.changeGovernor(governor.address);
 
     const MocCoinbaseMockFactory = await ethers.getContractFactory("MocCoinbaseWithExpansionMock");
     const mocCoinbaseMockImpl = await MocCoinbaseMockFactory.deploy();

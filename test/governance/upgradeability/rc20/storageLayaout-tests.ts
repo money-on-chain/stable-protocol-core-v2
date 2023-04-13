@@ -1,75 +1,20 @@
-import hre, { ethers, getNamedAccounts, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { Contract } from "ethers";
-import { MocCARC20__factory } from "../../../../typechain";
-import { GAS_LIMIT_PATCH, deployCollateralToken } from "../../../helpers/utils";
-import { getNetworkDeployParams } from "../../../../scripts/utils";
-
-const { coreParams, feeParams, settlementParams } = getNetworkDeployParams(hre);
+import { fixtureDeployedMocRC20 } from "../../../rc20/fixture";
+import { tpParams } from "../../../helpers/utils";
 
 describe("Feature: Check MocCARC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
   describe("GIVEN a MocCARC20 Proxy is deployed", () => {
     beforeEach(async () => {
-      const { deployer } = await getNamedAccounts();
-
-      const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-      const governorMock = await governorMockFactory.deploy();
-
-      const mocProxyFactory = await ethers.getContractFactory("MocCARC20");
-      const mocCoreExpansion = await (await ethers.getContractFactory("MocCoreExpansion")).deploy();
-
-      mocProxy = await upgrades.deployProxy(mocProxyFactory, undefined, {
-        // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455
-        unsafeAllow: ["delegatecall"],
-        kind: "uups",
-        initializer: false,
-      });
-
-      const mocTC = await deployCollateralToken({
-        adminAddress: mocProxy.address,
-        governorAddress: governorMock.address,
-      });
-
-      const initParams = {
-        initializeCoreParams: {
-          initializeBaseBucketParams: {
-            feeTokenAddress: deployer,
-            feeTokenPriceProviderAddress: deployer,
-            tcTokenAddress: mocTC.address,
-            mocFeeFlowAddress: deployer,
-            mocAppreciationBeneficiaryAddress: deployer,
-            protThrld: coreParams.protThrld,
-            liqThrld: coreParams.liqThrld,
-            feeRetainer: feeParams.feeRetainer,
-            tcMintFee: feeParams.mintFee,
-            tcRedeemFee: feeParams.redeemFee,
-            swapTPforTPFee: feeParams.swapTPforTPFee,
-            swapTPforTCFee: feeParams.swapTPforTCFee,
-            swapTCforTPFee: feeParams.swapTCforTPFee,
-            redeemTCandTPFee: feeParams.redeemTCandTPFee,
-            mintTCandTPFee: feeParams.mintTCandTPFee,
-            feeTokenPct: feeParams.feeTokenPct,
-            successFee: coreParams.successFee,
-            appreciationFactor: coreParams.appreciationFactor,
-            bes: settlementParams.bes,
-            tcInterestCollectorAddress: deployer,
-            tcInterestRate: coreParams.tcInterestRate,
-            tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
-          },
-          governorAddress: governorMock.address,
-          pauserAddress: deployer,
-          mocCoreExpansion: mocCoreExpansion.address,
-          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-          mocVendors: deployer, // Not relevant for this test
-        },
-        acTokenAddress: deployer,
-      };
-      const mocImpl = MocCARC20__factory.connect(mocProxy.address, ethers.provider.getSigner());
-      await mocImpl.initialize(initParams, { gasLimit: GAS_LIMIT_PATCH });
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams);
+      ({ mocImpl: mocProxy } = await fixtureDeploy());
     });
     describe("WHEN it is upgraded to a new implementation", () => {
       it("THEN it succeeds as it is consistent with the previous storage", async () => {
         const mocRC20MockFactory = await ethers.getContractFactory("MocCARC20Mock");
+        // forces the import of an existing proxy to be used with this plugin
+        await upgrades.forceImport(mocProxy.address, mocRC20MockFactory);
         await upgrades.upgradeProxy(mocProxy.address, mocRC20MockFactory, {
           // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455
           unsafeAllow: ["delegatecall"],

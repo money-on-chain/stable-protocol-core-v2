@@ -1,24 +1,30 @@
 import { expect } from "chai";
-import { deployments, ethers } from "hardhat";
+import { deployments, ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 
 import { MocCACoinbase, MocCoinbaseMock, MocCoinbaseMock__factory } from "../../../../typechain";
-import { fixtureDeployGovernance } from "./fixture";
-
-const fixtureDeploy = fixtureDeployGovernance();
+import { fixtureDeployedMocCoinbase } from "../../../coinbase/fixture";
+import { deployAeropagusGovernor, ERRORS, tpParams } from "../../../helpers/utils";
 
 describe("Feature: MocCoinbase Upgradeability UUPS", () => {
   let mocProxy: MocCACoinbase;
   let mocProxyAsCoinbaseMock: MocCoinbaseMock;
+  let mocCoinbaseMockImpl: Contract;
   let governor: Contract;
   let changeContract: Contract;
   let wrongChangeContract: Contract;
 
   before(async () => {
-    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
+    const { deployer } = await getNamedAccounts();
+    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
+    ({ mocImpl: mocProxy } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocProxy.changeGovernor(governor.address);
 
     const MocCoinbaseMockFactory = await ethers.getContractFactory("MocCoinbaseMock");
-    const mocCoinbaseMockImpl = await MocCoinbaseMockFactory.deploy();
+    mocCoinbaseMockImpl = await MocCoinbaseMockFactory.deploy();
 
     const changerFactory = await ethers.getContractFactory("MocUpgradeChangerMock");
     changeContract = await changerFactory.deploy(mocProxy.address, mocCoinbaseMockImpl.address);
@@ -36,6 +42,14 @@ describe("Feature: MocCoinbase Upgradeability UUPS", () => {
       it("THEN tx reverts because update only can be called by a proxy", async () => {
         await expect(governor.executeChange(wrongChangeContract.address)).to.be.revertedWith(
           "Function must be called through delegatecall",
+        );
+      });
+    });
+    describe("WHEN the governor didn't authorize the upgrade", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async () => {
+        await expect(mocProxy.upgradeTo(mocCoinbaseMockImpl.address)).to.be.revertedWithCustomError(
+          mocProxy,
+          ERRORS.NOT_AUTH_CHANGER,
         );
       });
     });

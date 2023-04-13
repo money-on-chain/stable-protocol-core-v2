@@ -1,11 +1,9 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
-import { fixtureDeployGovernance } from "../upgradeability/collateralBag/fixture";
+import { fixtureDeployedMocCABag } from "../../collateralBag/fixture";
 import { IChangeContract__factory, MocCAWrapper } from "../../../typechain";
-import { ERRORS, deployAsset, deployPriceProvider, pEth } from "../../helpers/utils";
-
-const fixtureDeploy = fixtureDeployGovernance();
+import { ERRORS, deployAsset, deployPriceProvider, pEth, tpParams, deployAeropagusGovernor } from "../../helpers/utils";
 
 describe("Feature: Governance protected CA Wrapper Asset addition ", () => {
   let mocCAWrapper: MocCAWrapper;
@@ -15,7 +13,13 @@ describe("Feature: Governance protected CA Wrapper Asset addition ", () => {
   let priceProvider: Contract;
 
   before(async () => {
-    ({ MocCAWrapper: mocCAWrapper, governor } = await fixtureDeploy());
+    const { deployer } = await getNamedAccounts();
+    const fixtureDeploy = fixtureDeployedMocCABag(tpParams.length, tpParams);
+    ({ mocWrapper: mocCAWrapper } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocCAWrapper.changeGovernor(governor.address);
 
     const changerFactory = await ethers.getContractFactory("AddCAWrapperAssetChangerTemplate");
 

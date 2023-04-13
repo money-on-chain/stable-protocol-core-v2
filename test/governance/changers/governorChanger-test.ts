@@ -1,13 +1,11 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 
-import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
+import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
 import { MocCACoinbase } from "../../../typechain";
 import { GovernanceChangerTemplate__factory } from "../../../typechain/factories/contracts/governance/changerTemplates/GovernanceChangerTemplate__factory";
-import { ERRORS } from "../../helpers/utils";
-
-const fixtureDeploy = fixtureDeployGovernance();
+import { deployAeropagusGovernor, ERRORS, tpParams } from "../../helpers/utils";
 
 describe("Feature: Change MocCore Governor", () => {
   let mocProxy: MocCACoinbase;
@@ -16,7 +14,13 @@ describe("Feature: Change MocCore Governor", () => {
   let governorMock: Contract;
 
   before(async () => {
-    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
+    const { deployer } = await getNamedAccounts();
+    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
+    ({ mocImpl: mocProxy } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocProxy.changeGovernor(governor.address);
 
     const governorMockFactory = await ethers.getContractFactory("GovernorMock");
     governorMock = await governorMockFactory.deploy();

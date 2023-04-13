@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
-import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
+import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
 import {
   EditPeggedTokenChangerTemplate,
   EditPeggedTokenChangerTemplate__factory,
@@ -10,10 +10,15 @@ import {
   MocRC20,
   PriceProviderMock,
 } from "../../../typechain";
-import { ERRORS, deployPriceProvider, pEth, tpParamsDefault } from "../../helpers/utils";
+import {
+  ERRORS,
+  deployPriceProvider,
+  pEth,
+  tpParamsDefault,
+  deployAeropagusGovernor,
+  tpParams,
+} from "../../helpers/utils";
 import { deployChangerClosure } from "./addPeggedTokenChanger-test";
-
-const fixtureDeploy = fixtureDeployGovernance();
 
 describe("Feature: Governance protected Pegged Token edition ", () => {
   let mocProxy: MocCACoinbase;
@@ -25,8 +30,15 @@ describe("Feature: Governance protected Pegged Token edition ", () => {
   let changerFactory: any;
 
   before(async () => {
-    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
-    let deployAddChanger;
+    const { deployer } = await getNamedAccounts();
+    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
+    ({ mocImpl: mocProxy } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocProxy.changeGovernor(governor.address);
+
+    let deployAddChanger: any;
     ({ deployAddChanger, mocPeggedToken, priceProvider } = await deployChangerClosure(mocProxy)());
     const addChangerContract = await deployAddChanger();
     governor.executeChange(addChangerContract.address);
@@ -90,7 +102,7 @@ describe("Feature: Governance protected Pegged Token edition ", () => {
         it("THEN only the Pegged Token Price Provider is changed", async function () {
           await expect(governor.executeChange(changeContract.address))
             .to.emit(mocProxy, "PeggedTokenChange")
-            .withArgs(0, [
+            .withArgs(tpParams.length, [
               mocPeggedToken.address,
               newPriceProvider.address, // <---- New Price Provider
               tpParamsDefault.ctarg,

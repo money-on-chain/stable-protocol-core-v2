@@ -1,11 +1,10 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 
 import { MocCARC20, MocCARC20WithExpansionMock, MocCARC20WithExpansionMock__factory } from "../../../../typechain";
-import { fixtureDeployGovernance } from "./fixture";
-
-const fixtureDeploy = fixtureDeployGovernance();
+import { fixtureDeployedMocRC20 } from "../../../rc20/fixture";
+import { deployAeropagusGovernor, tpParams } from "../../../helpers/utils";
 
 describe("Feature: MocRC20 Upgradeability UUPS", () => {
   let mocProxy: MocCARC20;
@@ -14,7 +13,13 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
   let changeContractWithExpansion: Contract;
 
   before(async () => {
-    ({ mocCARC20: mocProxy, governor } = await fixtureDeploy());
+    const { deployer } = await getNamedAccounts();
+    const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams);
+    ({ mocImpl: mocProxy } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocProxy.changeGovernor(governor.address);
 
     const mocRC20MockFactory = await ethers.getContractFactory("MocCARC20WithExpansionMock");
     const mocRC20MockImpl = await mocRC20MockFactory.deploy();

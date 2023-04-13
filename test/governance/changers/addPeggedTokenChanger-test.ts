@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers, getNamedAccounts } from "hardhat";
 import { BigNumberish, Contract } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { fixtureDeployGovernance } from "../upgradeability/coinbase/fixture";
+import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
 import {
   AddPeggedTokenChangerTemplate__factory,
   IChangeContract__factory,
@@ -20,9 +20,9 @@ import {
   pEth,
   CONSTANTS,
   tpParamsDefault,
+  tpParams,
+  deployAeropagusGovernor,
 } from "../../helpers/utils";
-
-const fixtureDeploy = fixtureDeployGovernance();
 
 export function deployChangerClosure(mocProxy: MocCore) {
   return async () => {
@@ -71,8 +71,14 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   let deployChanger: any;
   let deployer: Address;
   beforeEach(async () => {
-    ({ mocCACoinbase: mocProxy, governor } = await fixtureDeploy());
     ({ deployer } = await getNamedAccounts());
+    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
+    ({ mocImpl: mocProxy } = await fixtureDeploy());
+
+    // set a real governor
+    governor = await deployAeropagusGovernor(deployer);
+    await mocProxy.changeGovernor(governor.address);
+
     ({ deployAddChanger: deployChanger, mocPeggedToken, priceProvider } = await deployChangerClosure(mocProxy)());
   });
   describe("WHEN trying to setup a Changer with invalid target coverage value", () => {
@@ -217,7 +223,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
       it("THEN the new Pegged Token is added", async function () {
         await expect(governor.executeChange(changeContract.address))
           .to.emit(mocProxy, "PeggedTokenChange")
-          .withArgs(0, [
+          .withArgs(tpParams.length, [
             mocPeggedToken.address,
             priceProvider.address,
             tpParamsDefault.ctarg,
