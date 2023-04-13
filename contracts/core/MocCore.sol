@@ -1320,6 +1320,15 @@ abstract contract MocCore is MocCommons {
     }
 
     /**
+     * @notice get amount of Collateral Asset locked by Pegged Token
+     * @return lckAC [PREC]
+     */
+    function getLckAC() external view returns (uint256 lckAC) {
+        (lckAC, ) = _getLckACandACgain();
+        return lckAC;
+    }
+
+    /**
      * @notice get amount of Collateral Token available to redeem
      * @dev because it is a view function we are not calculating the new ema,
      *  since we are using the last ema calculation, this may differ a little from the real amount
@@ -1371,15 +1380,6 @@ abstract contract MocCore is MocCommons {
     function getBts() external view returns (uint256) {
         if (block.number >= bns) return 0;
         return bns - block.number;
-    }
-
-    /**
-     * @param bes_ number of blocks between settlements
-     * @dev bns is not automatically updated, you have to wait until next
-     * settlement to be made : bns = block.number + bes
-     **/
-    function setBes(uint256 bes_) external onlyAuthorizedChanger {
-        bes = bes_;
     }
 
     /**

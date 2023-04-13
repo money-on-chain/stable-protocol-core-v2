@@ -114,7 +114,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // peg container
     PegContainerItem[] public pegContainer;
     // Pegged Token prices, at which they can be redeemed after liquidation event
-    uint256[] internal tpLiqPrices;
+    uint256[] public tpLiqPrices;
     // pct of the gain because Pegged Tokens devaluation that is transferred
     // in Collateral Asset to Moc Fee Flow during the settlement [PREC]
     uint256 public successFee;
@@ -861,6 +861,15 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      */
     function setTCInterestPaymentBlockSpan(uint256 tcInterestPaymentBlockSpan_) external onlyAuthorizedChanger {
         tcInterestPaymentBlockSpan = tcInterestPaymentBlockSpan_;
+    }
+
+    /**
+     * @param bes_ number of blocks between settlements
+     * @dev bns is not automatically updated, you have to wait until next
+     * settlement to be made : bns = block.number + bes
+     **/
+    function setBes(uint256 bes_) external onlyAuthorizedChanger {
+        bes = bes_;
     }
 
     /**

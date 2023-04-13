@@ -18,7 +18,7 @@ contract MocCARC20 is MocCore {
 
     // ------- Storage -------
     // Collateral Asset token
-    IERC20 private acToken;
+    IERC20 public acToken;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
