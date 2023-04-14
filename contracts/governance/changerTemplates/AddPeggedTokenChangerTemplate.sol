@@ -14,9 +14,9 @@ import { MocRC20 } from "../../tokens/MocRC20.sol";
     For any other type of Pegged Token it must be modified to achieve similar validations
  */
 contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+    bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 private constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 private constant DEFAULT_ADMIN_ROLE = 0x00;
 
     error InvalidRoles();
     error InvalidGovernor();
