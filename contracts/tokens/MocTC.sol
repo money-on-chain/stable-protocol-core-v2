@@ -11,7 +11,7 @@ import { ERC20PausableUpgradeable, ERC20Upgradeable } from "@openzeppelin/contra
  * @dev ERC20 like token that allows roles allowed contracts to mint and burn (destroyed) any token.
  */
 contract MocTC is MocRC20, ERC20PausableUpgradeable {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 private constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
