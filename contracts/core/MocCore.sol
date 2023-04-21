@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.16;
 
-import { MocCommons, PeggedTokenParams } from "./MocCommons.sol";
+import { MocCommons, PeggedTokenParams, MocVendors } from "./MocCommons.sol";
 import { MocCoreExpansion } from "./MocCoreExpansion.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -1297,6 +1297,15 @@ abstract contract MocCore is MocCommons {
     function editPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
         bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).editPeggedToken, (peggedTokenParams_));
         Address.functionDelegateCall(mocCoreExpansion, payload);
+    }
+
+    /**
+     * @dev sets Moc Vendors contract address
+     * @param mocVendors_ moc Vendors new contract address
+     */
+    function setMocVendors(address mocVendors_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        mocVendors = MocVendors(mocVendors_);
     }
 
     // ------- Getters Functions -------

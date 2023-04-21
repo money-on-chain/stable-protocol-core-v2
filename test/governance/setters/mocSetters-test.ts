@@ -158,6 +158,12 @@ describe("Feature: Verify that all config settings are protected by governance",
         expect(await mocProxy.tcInterestPaymentBlockSpan()).to.be.equal(52);
       });
     });
+    describe(`WHEN setMocVendors is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setMocVendors(mockAddress);
+        expect(await mocProxy.mocVendors()).to.be.equal(mockAddress);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -294,6 +300,11 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setTCInterestPaymentBlockSpan is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setTCInterestPaymentBlockSpan(42));
+      });
+    });
+    describe("WHEN setMocVendors is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMocVendors(mockAddress));
       });
     });
   });
