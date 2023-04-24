@@ -47,7 +47,7 @@ contract MocCACoinbase is MocCore {
     /**
      * @inheritdoc MocCore
      */
-    function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
+    function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
             if (to_ == address(0)) revert InvalidAddress();
             // solhint-disable-next-line avoid-low-level-calls
