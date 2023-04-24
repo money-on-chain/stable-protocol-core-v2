@@ -12,8 +12,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
   this one or taking it as a guide
  */
 abstract contract UpgraderUUPSChangerTemplate is IChangeContract {
-    UUPSUpgradeable public proxy;
-    address public newImplementation;
+    UUPSUpgradeable public immutable proxy;
+    address public immutable newImplementation;
 
     /** 
     @notice Constructor

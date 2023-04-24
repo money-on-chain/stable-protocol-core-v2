@@ -44,6 +44,7 @@ contract MocVendors is MocUpgradable {
         address governorAddress_,
         address pauserAddress_
     ) external initializer {
+        // slither-disable-next-line missing-zero-check
         vendorsGuardianAddress = vendorsGuardianAddress_;
         __MocUpgradable_init(governorAddress_, pauserAddress_);
     }
@@ -96,5 +97,8 @@ contract MocVendors is MocUpgradable {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }

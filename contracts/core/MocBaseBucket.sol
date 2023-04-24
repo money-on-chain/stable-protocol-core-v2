@@ -108,7 +108,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     uint256 public nTCcb;
 
     // Pegged Tokens MocRC20 addresses
-    IMocRC20[] public tpTokens;
+    IMocRC20[] public tpTokens = new IMocRC20[](0);
     // Pegged Token indexes
     mapping(address => PeggedTokenIndex) public peggedTokenIndex;
     // peg container
@@ -145,9 +145,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     uint256 public feeTokenPct; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // addition fee pct applied on Pegged Tokens mint [PREC]
-    uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256[] public tpMintFee = new uint256[](0); // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // addition fee pct applied on Pegged Tokens redeem [PREC]
-    uint256[] public tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256[] public tpRedeemFee = new uint256[](0); // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
     address public mocFeeFlowAddress;
@@ -157,7 +157,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // ------- Storage Coverage Tracking -------
 
     // Target coverage for each Pegged Token [PREC]
-    uint256[] public tpCtarg;
+    uint256[] public tpCtarg = new uint256[](0);
     // Coverage protected state threshold [PREC]
     uint256 public protThrld;
     // Coverage liquidation threshold [PREC]
@@ -344,6 +344,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         // add qTP and qAC to the Bucket
         _depositTP(i_, qTP_, qAC_);
         // mint qTP to the recipient
+        // slither-disable-next-line unused-return
         tpTokens[i_].mint(recipient_, qTP_);
     }
 
@@ -358,6 +359,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qAC_);
         // burn qTP from this address
+        // slither-disable-next-line unused-return
         tpTokens[i_].burn(toBurnFrom_, qTP_);
     }
 
@@ -371,6 +373,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         // add qTC to the Bucket
         _depositTC(qTC_, qAC_);
         // mint qTC to the recipient
+        // slither-disable-next-line unused-return
         tcToken.mint(recipient_, qTC_);
     }
 
@@ -467,6 +470,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     function settleLiquidationPrices() internal {
         // Total amount of AC available to be redeemed
         uint256 totalACAvailable = nACcb;
+        // slither-disable-next-line incorrect-equality
         if (totalACAvailable == 0) return;
         uint256 pegAmount = pegContainer.length;
         // this could be get by getLckAC(), but given the prices are needed after,
@@ -577,6 +581,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @return pTCac [PREC]
      */
     function _getPTCac(uint256 lckAC_, uint256 nACgain_) internal view returns (uint256 pTCac) {
+        // slither-disable-next-line incorrect-equality
         if (nTCcb == 0) return ONE;
         // [PREC] = ([N] - [N]) * [PREC]) / [N]
         return _divPrec((_getTotalACavailable(nACgain_) - lckAC_), nTCcb);
@@ -601,6 +606,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @return cglob [PREC]
      */
     function _getCglb(uint256 lckAC_, uint256 nACgain_) internal view returns (uint256 cglob) {
+        // slither-disable-next-line incorrect-equality
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = [N] * [PREC] / [N]
         return _divPrec(_getTotalACavailable(nACgain_), lckAC_);
@@ -877,5 +883,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }

@@ -25,8 +25,8 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
 
     // ------- Storage -------
 
-    MocCore public mocCore;
-    IMocRC20 public tpToEdit;
+    MocCore public immutable mocCore;
+    IMocRC20 public immutable tpToEdit;
     PeggedTokenParams internal peggedTokenParams;
     uint256 public paramSet;
     uint256 private constant PARAMS_CHANGED = 1;

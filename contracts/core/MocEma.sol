@@ -122,6 +122,7 @@ abstract contract MocEma is MocBaseBucket {
             den += qAC;
         }
         // we must return a default value when all nTP are 0
+        // slither-disable-next-line incorrect-equality
         if (den == 0) {
             unchecked {
                 return (protThrld * 2, pACtps);
@@ -194,5 +195,8 @@ abstract contract MocEma is MocBaseBucket {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }
