@@ -63,7 +63,7 @@ contract MocCARC20 is MocCore {
      * @dev this function could revert during safeTransfer call.
      *  safeTransfer will revert if token transfer reverts or returns 0
      */
-    function acTransfer(address to_, uint256 amount_) internal override nonReentrant {
+    function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
             SafeERC20.safeTransfer(acToken, to_, amount_);
         }
