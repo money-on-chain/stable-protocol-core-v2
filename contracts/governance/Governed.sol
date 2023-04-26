@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.16;
+pragma solidity 0.8.18;
 
 import { IGovernor } from "../interfaces/IGovernor.sol";
 import { MocHelper } from "../utils/MocHelper.sol";

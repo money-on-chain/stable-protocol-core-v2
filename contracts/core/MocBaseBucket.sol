@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.16;
+pragma solidity 0.8.18;
 
 import { MocTC, IMocRC20 } from "../tokens/MocTC.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";

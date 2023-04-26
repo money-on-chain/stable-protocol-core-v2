@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.16;
+pragma solidity 0.8.18;
 
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
 import { MocBaseBucket } from "./MocBaseBucket.sol";
