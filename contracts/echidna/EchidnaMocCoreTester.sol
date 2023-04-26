@@ -69,7 +69,7 @@ contract EchidnaMocCoreTester {
         mocVendors.initialize(/*vendorGuardian */ msg.sender, address(governor), /*pauserAddress*/ msg.sender);
 
         // initialize Collateral Token
-        tcToken.initialize("TCToken", "TC", address(mocCARC20), governor);
+        tcToken.initialize("TCToken", "TC", address(this), governor);
 
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
@@ -110,6 +110,9 @@ contract EchidnaMocCoreTester {
             acTokenAddress: address(acToken)
         });
         mocCARC20.initialize(initializeParams);
+
+        // transfer roles to mocCARC20
+        tcToken.transferAllRoles(address(mocCARC20));
 
         // add a Pegged Token
         PeggedTokenParams memory peggedTokenParams = PeggedTokenParams({

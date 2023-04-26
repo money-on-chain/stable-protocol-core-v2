@@ -59,8 +59,8 @@ contract EchidnaMocWrapperTester {
         // initialize Vendors
         mocVendors.initialize(/*vendorGuardian */ msg.sender, address(governor), /*pauserAddress*/ msg.sender);
 
-        // initialize Collateral Token
-        tcToken.initialize("TCToken", "TC", address(mocCARC20), governor);
+        // initialize Collateral Token, with this as admin to later on transferAll roles
+        tcToken.initialize("TCToken", "TC", address(this), governor);
 
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
@@ -102,6 +102,9 @@ contract EchidnaMocWrapperTester {
         });
         mocCARC20.initialize(initializeParams);
         mocWrapper.initialize(address(governor), msg.sender, address(mocCARC20), address(acToken));
+
+        // transfer roles
+        tcToken.transferAllRoles(address(mocCARC20));
 
         // add a Pegged Token
         PeggedTokenParams memory peggedTokenParams = PeggedTokenParams({
