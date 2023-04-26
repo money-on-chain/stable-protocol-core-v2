@@ -12,7 +12,7 @@ describe("Feature: MocCARC20 reentracy tests", function () {
   let expectRevertReentrancyGuard: (it: any) => any;
 
   describe("GIVEN a MocCARC20 implementation deployed", function () {
-    beforeEach(async () => {
+    before(async () => {
       ({ mocImpl, collateralAsset } = await fixtureDeployedMocRC777(2)());
       const factory = await ethers.getContractFactory("ReentrancyAttackerERC777Mock");
       reentrancyAttacker = await factory.deploy();
