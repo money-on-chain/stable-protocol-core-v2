@@ -16,7 +16,7 @@ describe("Feature: MocCoinbase reentrance tests", () => {
   let expectRevertReentrancyGuard: (it: any) => any;
 
   describe("GIVEN a MocCoinbase implementation deployed", function () {
-    beforeEach(async function () {
+    before(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
       mocContracts = await fixtureDeploy();

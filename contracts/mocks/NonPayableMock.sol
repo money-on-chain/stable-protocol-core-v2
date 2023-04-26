@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.16;
+pragma solidity 0.8.18;
 
 contract NonPayableMock {
     function forward(address dest_, bytes calldata data_) external payable {

@@ -15,7 +15,7 @@ describe("Feature: MocCABag reentrancy tests", function () {
   let expectRevertReentrancyGuard: (it: any) => any;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
-    beforeEach(async function () {
+    before(async function () {
       ({ mocWrapper, mocCollateralToken, mocPeggedTokens } = await fixtureDeployedMocCABag(2, undefined, 0)());
       const factory = await ethers.getContractFactory("ReentrancyAttackerERC777Mock");
       reentrancyAttacker = await factory.deploy();
@@ -34,9 +34,11 @@ describe("Feature: MocCABag reentrancy tests", function () {
       await asset.approve(mocWrapper.address, pEth(1000));
       await mocWrapper.mintTPto(asset.address, TP_0, pEth(10), pEth(1000), reentrancyAttacker.address);
       // reentrace attacker contract approve all to mocWrapper
-      await reentrancyAttacker.approve(asset.address, mocWrapper.address, pEth(100000));
-      await reentrancyAttacker.approve(mocCollateralToken.address, mocWrapper.address, pEth(100000));
-      await reentrancyAttacker.approve(mocPeggedTokens[TP_0].address, mocWrapper.address, pEth(100000));
+      await Promise.all(
+        [asset, mocCollateralToken, mocPeggedTokens[TP_0]].map(contract =>
+          reentrancyAttacker.approve(contract.address, mocWrapper.address, pEth(100000)),
+        ),
+      );
       expectRevertReentrancyGuard = it => expect(it).to.be.revertedWith(ERRORS.REENTRACYGUARD);
     });
 

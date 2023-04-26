@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.16;
+pragma solidity 0.8.18;
 
 import { MocVendors } from "../vendors/MocVendors.sol";
 import { MocEma } from "./MocEma.sol";
