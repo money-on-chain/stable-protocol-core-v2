@@ -7,6 +7,7 @@ import {
   deployAsset,
   deployCollateralToken,
   deployPriceProvider,
+  ensureERC1820,
   pEth,
 } from "../../helpers/utils";
 
@@ -21,6 +22,8 @@ export const fixtureDeployedMocRC777 = memoizee(
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
       const { deployer } = await getNamedAccounts();
+      // for parallel test we need to deploy ERC1820 again because it could be deployed by hardhat-erc1820 in another Mocha worker
+      await ensureERC1820();
 
       const [mocCoreFactory, mocExpansionFactory, mocVendorsFactory, erc1967ProxyProxyFactory] = await Promise.all([
         ethers.getContractFactory("MocCARC20"),

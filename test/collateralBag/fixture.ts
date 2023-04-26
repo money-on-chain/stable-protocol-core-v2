@@ -18,7 +18,7 @@ import {
   MocVendors__factory,
   PriceProviderMock__factory,
 } from "../../typechain";
-import { deployAndAddAssets, deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { deployAndAddAssets, deployAndAddPeggedTokens, ensureERC1820, pEth } from "../helpers/utils";
 
 export type MoCContracts = {
   mocImpl: MocCARC20;
@@ -40,6 +40,8 @@ export const fixtureDeployedMocCABag = memoizee(
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
       const signer = ethers.provider.getSigner();
+      // for parallel test we need to deploy ERC1820 again because it could be deployed by hardhat-erc1820 in another Mocha worker
+      await ensureERC1820();
 
       const deployedMocContract = await deployments.getOrNull("MocCABagProxy");
       if (!deployedMocContract) throw new Error("No MocCABagProxy deployed.");
