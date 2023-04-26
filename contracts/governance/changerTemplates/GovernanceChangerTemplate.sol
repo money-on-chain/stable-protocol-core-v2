@@ -11,8 +11,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
   governance system.
  */
 contract GovernanceChangerTemplate is IChangeContract {
-    Governed public governed;
-    IGovernor public newGovernor;
+    Governed public immutable governed;
+    IGovernor public immutable newGovernor;
 
     /** 
     @notice Constructor

@@ -204,7 +204,7 @@ abstract contract MocCommons is MocEma {
         uint256 qAC_,
         uint256 qACFeePct_
     ) internal view returns (uint256 qACSurcharges, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
-        uint256 qACmarked;
+        uint256 qACmarked = 0;
         if (vendor_ != address(0)) {
             // [PREC] = [N] * [PREC]
             qACmarked = qAC_ * mocVendors.vendorMarkup(vendor_);
@@ -235,6 +235,7 @@ abstract contract MocCommons is MocEma {
         }
         // if sender hasn't got enough feeToken balance or allowance or price provider hasn't got a valid price
         // then qFeeToken == 0 and sender pays fees with AC
+        // slither-disable-next-line incorrect-equality
         if (feeCalcs.qFeeToken == 0) {
             // calculates qAC to be charged as fee
             // [N] = [N] * [PREC] / [PREC]
@@ -298,5 +299,8 @@ abstract contract MocCommons is MocEma {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }

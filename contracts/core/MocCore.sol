@@ -209,6 +209,7 @@ abstract contract MocCore is MocCommons {
         qACtotalNeeded = qACNeededToMint + qACSurcharges;
         if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
         // if is 0 reverts because it is trying to redeem an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         emit TCMinted(
             params_.sender,
@@ -260,6 +261,7 @@ abstract contract MocCore is MocCommons {
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACtotalToRedeem = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
         // if is 0 reverts because it is trying to redeem an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
@@ -333,6 +335,7 @@ abstract contract MocCore is MocCommons {
         qACtotalNeeded = qACNeededtoMint + qACSurcharges;
         if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         emit TPMinted(
             params_.i,
@@ -395,6 +398,7 @@ abstract contract MocCore is MocCommons {
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         // if is 0 reverts because it is trying to redeem an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         emit TPRedeemed(
@@ -467,6 +471,7 @@ abstract contract MocCore is MocCommons {
         qACtotalNeeded = qACNeededtoMint + qACSurcharges;
         if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
         // if is 0 reverts because it is trying to mint an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         emit TCandTPMinted(
             params_.i,
@@ -553,6 +558,7 @@ abstract contract MocCore is MocCommons {
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         // if is 0 reverts because it is trying to redeem an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtoRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         emit TCandTPRedeemed(
             params_.i,
@@ -1272,6 +1278,7 @@ abstract contract MocCore is MocCommons {
      */
     function addPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
         bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).addPeggedToken, (peggedTokenParams_));
+        // slither-disable-next-line unused-return
         Address.functionDelegateCall(mocCoreExpansion, payload);
     }
 
@@ -1296,6 +1303,7 @@ abstract contract MocCore is MocCommons {
      */
     function editPeggedToken(PeggedTokenParams calldata peggedTokenParams_) external onlyAuthorizedChanger {
         bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).editPeggedToken, (peggedTokenParams_));
+        // slither-disable-next-line unused-return
         Address.functionDelegateCall(mocCoreExpansion, payload);
     }
 
@@ -1396,5 +1404,8 @@ abstract contract MocCore is MocCommons {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }

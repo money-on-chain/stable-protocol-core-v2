@@ -15,11 +15,11 @@ contract AddCAWrapperAssetChangerTemplate is IChangeContract {
     // ------- Storage -------
 
     // target contract
-    MocCAWrapper public mocCAWrapper;
+    MocCAWrapper public immutable mocCAWrapper;
 
     // Change params
-    IERC20 public asset;
-    IPriceProvider public priceProvider;
+    IERC20 public immutable asset;
+    IPriceProvider public immutable priceProvider;
 
     /** 
     @notice Constructor

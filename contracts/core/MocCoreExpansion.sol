@@ -130,6 +130,7 @@ contract MocCoreExpansion is MocCommons {
     ) external returns (uint256 qACRedeemed) {
         if (!liquidated) revert OnlyWhenLiquidated();
         uint256 qTP = tpTokens[i_].balanceOf(sender_);
+        // slither-disable-next-line incorrect-equality
         if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
         // [PREC]
         uint256 liqPACtp = tpLiqPrices[i_];
@@ -263,6 +264,7 @@ contract MocCoreExpansion is MocCommons {
         // qTCtoMint = qTP / pTCac / pACtp
         // [N] = [N] * [N] * [PREC] / ([N] - [N]) * [PREC]
         qTCtoMint = _divPrec(params_.qTP * nTCcb, (_getTotalACavailable(nACgain) - lckAC) * pACtp);
+        // slither-disable-next-line incorrect-equality
         if (qTCtoMint < params_.qTCmin || qTCtoMint == 0) revert QtcBelowMinimumRequired(params_.qTCmin, qTCtoMint);
 
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
@@ -328,6 +330,7 @@ contract MocCoreExpansion is MocCommons {
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACtotalToRedeem = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
         // if is 0 reverts because it is trying to swap an amount below precision
+        // slither-disable-next-line incorrect-equality
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // calculate how many qTP can mint with the given qAC
         // qTPtoMint = qTC * pTCac * pACtp

@@ -470,8 +470,8 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         // redeem Pegged Token in exchange of Wrapped Collateral Asset Token
         // we pass '0' to qACmin parameter to do not revert by qAC below minimum since we are
         // checking it after with qAssetMin
-        uint256 wcaTokenAmountRedeemed;
-        uint256 qFeeTokenUsed;
+        uint256 wcaTokenAmountRedeemed = 0;
+        uint256 qFeeTokenUsed = 0;
         if (params_.isLiqRedeem) wcaTokenAmountRedeemed = mocCore.liqRedeemTP(params_.i);
         else
             (wcaTokenAmountRedeemed, qFeeTokenUsed) = mocCore.redeemTPViaVendor(
@@ -843,6 +843,7 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
         address recipient_
     ) internal returns (uint256 wcaTokenWrapped) {
         wcaTokenWrapped = _convertAssetToToken(assetAddress_, qAsset_);
+        // slither-disable-next-line unused-return
         wcaToken.mint(recipient_, wcaTokenWrapped);
 
         // transfer asset from sender to this contract
@@ -2043,5 +2044,8 @@ contract MocCAWrapper is MocUpgradable, ReentrancyGuardUpgradeable {
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
+
+    // Purposely left unused to save some state space to allow for future upgrades
+    // slither-disable-next-line unused-state
     uint256[50] private __gap;
 }
