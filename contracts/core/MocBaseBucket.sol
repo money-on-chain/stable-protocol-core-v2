@@ -108,7 +108,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     uint256 public nTCcb;
 
     // Pegged Tokens MocRC20 addresses
-    IMocRC20[] public tpTokens = new IMocRC20[](0);
+    IMocRC20[] public tpTokens;
     // Pegged Token indexes
     mapping(address => PeggedTokenIndex) public peggedTokenIndex;
     // peg container
@@ -145,9 +145,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     uint256 public feeTokenPct; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // addition fee pct applied on Pegged Tokens mint [PREC]
-    uint256[] public tpMintFee = new uint256[](0); // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // addition fee pct applied on Pegged Tokens redeem [PREC]
-    uint256[] public tpRedeemFee = new uint256[](0); // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    uint256[] public tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
     address public mocFeeFlowAddress;
@@ -157,7 +157,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // ------- Storage Coverage Tracking -------
 
     // Target coverage for each Pegged Token [PREC]
-    uint256[] public tpCtarg = new uint256[](0);
+    uint256[] public tpCtarg;
     // Coverage protected state threshold [PREC]
     uint256 public protThrld;
     // Coverage liquidation threshold [PREC]
