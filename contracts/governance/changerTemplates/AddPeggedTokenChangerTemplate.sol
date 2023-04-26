@@ -42,7 +42,7 @@ contract AddPeggedTokenChangerTemplate is IChangeContract, MocHelper {
         // true if only mocCore has Admin Role
         bool validAdminRole = peggedToken.hasRole(DEFAULT_ADMIN_ROLE, address(mocCore_)) &&
             peggedToken.getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 1;
-        if ((validMinterRole && validBurnerRole && validAdminRole) == false) revert InvalidRoles();
+        if ((!validMinterRole || !validBurnerRole || !validAdminRole)) revert InvalidRoles();
         if (peggedToken.governor() != mocCore_.governor()) revert InvalidGovernor();
         if (peggedTokenParams_.tpCtarg < ONE) revert InvalidValue();
         _checkLessThanOne(peggedTokenParams_.tpMintFee);
