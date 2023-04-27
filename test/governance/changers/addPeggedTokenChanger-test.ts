@@ -70,7 +70,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   let priceProvider: Contract;
   let deployChanger: any;
   let deployer: Address;
-  beforeEach(async () => {
+  before(async () => {
     ({ deployer } = await getNamedAccounts());
     const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
     ({ mocImpl: mocProxy } = await fixtureDeploy());
@@ -194,7 +194,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   });
   describe("GIVEN a new Pegged Token with a different governor set", () => {
     let fakePeggedToken: MocRC20;
-    beforeEach(async () => {
+    before(async () => {
       fakePeggedToken = await deployPeggedToken({
         adminAddress: mocProxy.address,
         governorAddress: deployer,
@@ -210,7 +210,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
     });
   });
   describe("GIVEN a Changer contract is set up to add a new Pegged Token", () => {
-    beforeEach(async () => {
+    before(async () => {
       changeContract = await deployChanger(); // with default params
     });
     describe("WHEN an unauthorized account executed the changer", () => {
