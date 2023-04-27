@@ -172,17 +172,17 @@ for more information [here](https://github.com/crytic/echidna)
 
 Mythril is a security analysis tool for EVM bytecode. It detects security vulnerabilities in smart contracts built for Ethereum, Hedera, Quorum, Vechain, Roostock, Tron and other EVM-compatible blockchains. It uses symbolic execution, SMT solving and taint analysis to detect a variety of security vulnerabilities
 
-First, get the last docker image
+First, install from Pypi (Python 3.6-3.9)
 
-`docker pull mythril/myth`
+`pip3 install mythril`
 
 compile contracts
 
 `npm run compile`
 
-then, execute this command
+then, for example, execute this command to analyze MocCACoinbase contracts
 
-`npm run mythril`
+`npm run mythril:MocCACoinbase`
 
 for more information [here](https://github.com/ConsenSys/mythril)
 
