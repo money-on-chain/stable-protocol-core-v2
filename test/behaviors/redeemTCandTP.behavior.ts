@@ -17,6 +17,8 @@ const redeemTCandTPBehavior = function () {
   let operator: Address;
   let vendor: Address;
   const TP_0 = 0;
+  const TP_1 = 1;
+  const TP_4 = 4;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
@@ -590,6 +592,49 @@ const redeemTCandTPBehavior = function () {
                 0,
                 0,
               );
+          });
+        });
+      });
+      describe("WHEN alice redeems all", function () {
+        beforeEach(async function () {
+          await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 3000, qTP: 23500 });
+        });
+        it("THEN coverage is max uint256", async function () {
+          assertPrec(await mocImpl.getCglb(), CONSTANTS.MAX_UINT256);
+        });
+        it("THEN ctargemaCA is 4", async function () {
+          assertPrec(await mocImpl.calcCtargemaCA(), 4);
+        });
+      });
+      describe("AND alice has TP 1 and TP 4", function () {
+        beforeEach(async function () {
+          await mocFunctions.mintTP({ i: TP_1, from: alice, qTP: 2500 });
+          await mocFunctions.mintTP({ i: TP_4, from: alice, qTP: 1000 });
+        });
+        describe("WHEN alice redeems 100 TC using TP 4 which ctarg is bigger than ctargemaCA", function () {
+          beforeEach(async function () {
+            // assert coverage is above ctargemaCA before the operation
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+            await mocFunctions.redeemTCandTP({ i: TP_4, from: alice, qTC: 100, qTP: 1000 });
+          });
+          it("THEN coverage is still above ctargemaCA", async function () {
+            // test pass:
+            // coverage = 4.913043478260869565
+            // ctargemaCA = 4.815771383044834603
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+          });
+        });
+        describe("WHEN alice redeems 1000 TC using TP 1 which ctarg is lower than ctargemaCA", function () {
+          beforeEach(async function () {
+            // assert coverage is above ctargemaCA before the operation
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+            await mocFunctions.redeemTCandTP({ i: TP_1, from: alice, qTC: 1000, qTP: 2500 });
+          });
+          it("THEN coverage is still above ctargemaCA", async function () {
+            // test fails:
+            // coverage = 4.913043478260869565
+            // ctargemaCA = 5.212035172081676842
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
           });
         });
       });

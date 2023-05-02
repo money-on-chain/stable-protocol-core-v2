@@ -49,7 +49,7 @@ export const fixtureDeployedMocRC20 = memoizee(
 
       const { alice, bob, charlie, vendor } = await getNamedAccounts();
       // Fill users accounts with balance so that they can operate
-      await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(10000000))));
+      await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(1000000000000))));
 
       // initialize vendor with 10% markup
       await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
