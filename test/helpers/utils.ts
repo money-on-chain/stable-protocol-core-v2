@@ -275,7 +275,7 @@ export async function ensureERC1820(): Promise<void> {
 
   const code = await ethers.provider.send("eth_getCode", [ERC1820_ADDRESS, "latest"]);
   if (code === "0x") {
-    const [from] = await ethers.provider.send("eth_accounts");
+    const [from] = await ethers.provider.send("eth_accounts", []);
 
     await ethers.provider.send("eth_sendTransaction", [
       {
