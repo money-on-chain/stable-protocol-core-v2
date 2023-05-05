@@ -19,8 +19,8 @@ const gasEstimationBehavior = function () {
     estimatedGas: estimatedGas,
     gasLeftPct: (((blockGasLimit - estimatedGas) / blockGasLimit) * 100).toFixed(2) + "%",
     gasPrice,
-    gasFee: (estimatedGas * gasPrice) / 10e18,
-    "fee (USD at 20k)": ((estimatedGas * gasPrice * 20000) / 10e18).toFixed(2),
+    gasFee: (estimatedGas * gasPrice) / 1e18,
+    "fee (USD at 30k)": ((estimatedGas * gasPrice * 30000) / 1e18).toFixed(2),
   });
 
   const setGasUsed = async (op, tx) => {
