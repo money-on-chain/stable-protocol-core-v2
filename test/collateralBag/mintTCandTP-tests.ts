@@ -52,12 +52,20 @@ describe("Feature: MocCABag mint TC and TP", function () {
         // i: 0
         // sender: alice
         // receiver: alice
-        // qTC: 300 TC
+        // qTC: 454.14 TC
         // qTP: 23500 TP
-        // qAC: 300 AC + 100 AC + 8% for Moc Fee Flow
+        // qAC: 454.14 AC + 100 AC + 8% for Moc Fee Flow
         await expect(tx)
           .to.emit(mocWrapper, "TCandTPMintedWithWrapper")
-          .withArgs(assetDefault.address, TP_0, alice, alice, pEth(300), pEth(23500), pEth(432));
+          .withArgs(
+            assetDefault.address,
+            TP_0,
+            alice,
+            alice,
+            pEth("454.140728164497264600"),
+            pEth(23500),
+            pEth("598.471986417657045768"),
+          );
       });
     });
     describe("WHEN alice mints 23500 TP 0 to bob", () => {
@@ -70,12 +78,20 @@ describe("Feature: MocCABag mint TC and TP", function () {
         // i: 0
         // sender: alice
         // receiver: bob
-        // qTC: 300 TC
+        // qTC: 454.14 TC
         // qTP: 23500 TP
-        // qAC: 300 AC + 100 AC + 8% for Moc Fee Flow
+        // qAC: 454.14 AC + 100 AC + 8% for Moc Fee Flow
         await expect(tx)
           .to.emit(mocWrapper, "TCandTPMintedWithWrapper")
-          .withArgs(assetDefault.address, TP_0, alice, bob, pEth(300), pEth(23500), pEth(432));
+          .withArgs(
+            assetDefault.address,
+            TP_0,
+            alice,
+            bob,
+            pEth("454.140728164497264600"),
+            pEth(23500),
+            pEth("598.471986417657045768"),
+          );
       });
     });
   });

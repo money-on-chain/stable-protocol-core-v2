@@ -453,13 +453,18 @@ abstract contract MocCore is MocCommons {
         returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded)
     {
         uint256 qACNeededtoMint;
-        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
+        uint256[] memory pACtps = _getPACtps();
         uint256 pACtp = pACtps[params_.i];
         _updateTPtracking(params_.i, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
-        _evalCoverage(liqThrld, pACtps);
-        (qTCtoMint, qACNeededtoMint) = _calcQACforMintTCandTP(params_.qTP, pACtp, ctargemaCA, pACtps);
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
+        (qTCtoMint, qACNeededtoMint) = _calcQACforMintTCandTP(
+            params_.qTP,
+            pACtp,
+            _getCtargemaTP(params_.i, pACtp),
+            _getPTCac(lckAC, nACgain)
+        );
         FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
@@ -529,22 +534,23 @@ abstract contract MocCore is MocCommons {
         notPaused
         returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeTokenTotalNeeded)
     {
-        uint256[] memory pACtps = _getPACtps();
+        (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
         uint256 pACtp = pACtps[params_.i];
         _updateTPtracking(params_.i, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
         // calculate how many TP are needed to redeem TC and not change coverage
-        // qTPtoRedeem = (qTC * pACtp * pTCac) / (cglb - 1)
+        // qTPtoRedeem = (qTC * pACtp * pTCac)(ctargemaCA - 1) / (cglb - 1)(ctargemaTP - 1)
         // pTCac = (totalACavailable - lckAC) / nTCcb
         // cglb = totalACavailable / lckAC => cglb - 1 = (totalACavailable - lckAC) / lckAC
-        // qTPtoRedeem = (qTC * pACtp * (totalACavailable - lckAC) / nTCcb) / ((totalACavailable - lckAC) / lckAC)
+        // qTPtoRedeem = (qTC * pACtp * (totalACavailable - lckAC)(ctargemaCA - 1) / nTCcb) / ...
+        // ...((totalACavailable - lckAC) / lckAC)(ctargemaTP - 1)
         // So, we can simplify (totalACavailable - lckAC)
-        // qTPtoRedeem = (qTC * pACtp * lckAC) / nTCcb
-        // [N] = ([N] * [N] * [PREC] / [N]) /  [PREC]
-        qTPtoRedeem = ((params_.qTC * lckAC * pACtp) / nTCcb) / PRECISION;
-
+        // [PREC] = [PREC] * [PREC] / [PREC]
+        uint256 aux = (pACtp * (ctargemaCA - ONE)) / (_getCtargemaTP(params_.i, pACtp) - ONE);
+        // [N] = ([N] * [N] * [PREC] / [N]) / [PREC]
+        qTPtoRedeem = ((params_.qTC * lckAC * aux) / nTCcb) / PRECISION;
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
         uint256 qACtotalToRedeem = _calcQACforRedeemTCandTP(params_.qTC, qTPtoRedeem, pACtp, _getPTCac(lckAC, nACgain));
         FeeCalcs memory feeCalcs;
@@ -1131,22 +1137,22 @@ abstract contract MocCore is MocCommons {
      * and Pegged Token in one operation
      * @param qTP_ amount of Pegged Token to mint
      * @param pACtp_ Pegged Token price [PREC]
+     * @param ctargemaTP_ target coverage adjusted by the moving average of the value of a Pegged Token
+     * @param pTCac_ Collateral Token price [PREC]
      * @return qTCtoMint amount of Collateral Token to mint [N]
      * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
      */
     function _calcQACforMintTCandTP(
         uint256 qTP_,
         uint256 pACtp_,
-        uint256 ctargemaCA_,
-        uint256[] memory pACtps_
-    ) internal view returns (uint256 qTCtoMint, uint256 qACNeededtoMint) {
-        (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps_);
-        uint256 pTCac = _getPTCac(lckAC, nACgain);
+        uint256 ctargemaTP_,
+        uint256 pTCac_
+    ) internal pure returns (uint256 qTCtoMint, uint256 qACNeededtoMint) {
         // calculate how many TC are needed to mint TP and total qAC used for mint both
         // [N] = [N] * ([PREC] - [PREC]) / [PREC]
-        qACNeededtoMint = (qTP_ * (ctargemaCA_ - ONE)) / pACtp_;
+        qACNeededtoMint = (qTP_ * (ctargemaTP_ - ONE)) / pACtp_;
         // [N] = [N] *  [PREC] / [PREC]
-        qTCtoMint = _divPrec(qACNeededtoMint, pTCac);
+        qTCtoMint = _divPrec(qACNeededtoMint, pTCac_);
         // [N] = [N] + [N] *  [PREC] / [PREC]
         qACNeededtoMint = qACNeededtoMint + _divPrec(qTP_, pACtp_);
         return (qTCtoMint, qACNeededtoMint);
