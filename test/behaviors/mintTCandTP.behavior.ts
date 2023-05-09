@@ -16,7 +16,10 @@ const mintTCandTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let tx: ContractTransaction;
   const TP_0 = 0;
+  const TP_1 = 1;
+  const TP_4 = 4;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
@@ -36,31 +39,41 @@ const mintTCandTPBehavior = function () {
           coverage = 41.266
           pTCac = 1
           ctargemaCA = 4
-          qTC = 30 TC
-          qAC = 30 AC + 10 AC + 8% for Moc Fee Flow
-          coverage = (0 + 40) / 10  
+          qTC = 45.41 TC
+          qAC = 45.41 AC + 10 AC + 8% for Moc Fee Flow
+          coverage = (0 + 55.41) / 10  
         */
-        let tx: ContractTransaction;
         beforeEach(async function () {
           tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 2350 });
         });
-        it("THEN coverage goes to 4, ctargemaCA value", async function () {
-          assertPrec(4, await mocImpl.getCglb());
+        it("THEN coverage goes to 5.54, ctargemaTP 0 value", async function () {
+          assertPrec(pEth("5.541407281644972646"), await mocImpl.getCglb());
         });
         it("THEN a TCandTPMinted event is emitted", async function () {
           // i: 0
           // sender: alice || mocWrapper
           // receiver: alice
-          // qTC: 30 TC
+          // qTC: 45.41 TC
           // qTP: 2350 TP
-          // qAC: 30 AC + 10 AC + 8% for Moc Fee Flow
+          // qAC: 45.41 AC + 10 AC + 8% for Moc Fee Flow
           // qACfee: 8% AC
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(TP_0, operator, alice, pEth(30), pEth(2350), pEth(43.2), pEth(3.2), 0, 0, 0);
+            .withArgs(
+              TP_0,
+              operator,
+              alice,
+              pEth("45.414072816449726460"),
+              pEth(2350),
+              pEth("59.847198641765704576"),
+              pEth("4.433125825315978116"),
+              0,
+              0,
+              0,
+            );
         });
       });
     });
@@ -93,7 +106,6 @@ const mintTCandTPBehavior = function () {
         qAC = 45.4 AC + 10 AC + 8% for Moc Fee Flow
         coverage = (3100 + 54.4) / 110  
         */
-        let tx: ContractTransaction;
         let tcPriceBefore: BigNumber;
         let alicePrevTCBalance: Balance;
         let alicePrevTPBalance: Balance;
@@ -117,6 +129,9 @@ const mintTCandTPBehavior = function () {
             mocFunctions.acBalanceOf(mocFeeFlowAddress),
           ]);
           tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 2350, qACmax: "59.847198641765704576" });
+        });
+        it("THEN coverage is still above ctargemaCA", async function () {
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
         });
         it("THEN coverage decrease to 28.68", async function () {
           assertPrec("28.685582480149542967", await mocImpl.getCglb());
@@ -202,7 +217,6 @@ const mintTCandTPBehavior = function () {
         qAC = 45.4 AC + 10 AC + 8% for Moc Fee Flow
         coverage = (3100 + 54.4) / 110  
         */
-        let tx: ContractTransaction;
         beforeEach(async function () {
           tx = await mocFunctions.mintTCandTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
         });
@@ -242,7 +256,6 @@ const mintTCandTPBehavior = function () {
       describe("WHEN alice mints 45.41 TC and 2350 TP via vendor", function () {
         let alicePrevACBalance: Balance;
         let vendorPrevACBalance: Balance;
-        let tx: ContractTransaction;
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           vendorPrevACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -285,7 +298,6 @@ const mintTCandTPBehavior = function () {
         });
       });
       describe("WHEN alice mints 45.41 TC and 2350 TP to bob via vendor", function () {
-        let tx: ContractTransaction;
         beforeEach(async function () {
           tx = await mocFunctions.mintTCandTPto({ i: TP_0, from: alice, to: bob, qTP: 2350, vendor });
         });
@@ -330,7 +342,6 @@ const mintTCandTPBehavior = function () {
             qAC = 9400 AC + 2350 AC + 8% for Moc Fee Flow
             coverage = (3100 + 11750) / 4700  
           */
-          let tx: ContractTransaction;
           beforeEach(async function () {
             tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 23500 });
           });
@@ -370,7 +381,6 @@ const mintTCandTPBehavior = function () {
             qAC = 504.14 AC + 50 AC + 8% for Moc Fee Flow
             coverage = (3100 + 554.14) / 125  
           */
-          let tx: ContractTransaction;
           beforeEach(async function () {
             tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 23500 });
           });
@@ -423,7 +433,6 @@ const mintTCandTPBehavior = function () {
         let alicePrevFeeTokenBalance: Balance;
         let mocFeeFlowPrevACBalance: Balance;
         let mocFeeFlowPrevFeeTokenBalance: Balance;
-        let tx: ContractTransaction;
         beforeEach(async function () {
           // mint FeeToken to alice
           await mocContracts.feeToken.mint(alice, pEth(50));
@@ -536,6 +545,120 @@ const mintTCandTPBehavior = function () {
                 0,
               );
           });
+        });
+      });
+      describe("WHEN alice mints 10000000000000 TP 0, which ctarg is the same than ctargemaCA", function () {
+        beforeEach(async function () {
+          // assert coverage is above ctargemaCA before the operation
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+          tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 10000000000000 });
+        });
+        it("THEN coverage is still above ctargemaCA", async function () {
+          // coverage = 5.541407341472665393
+          // ctargemaCA = 5.541407281644972646
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+        });
+        it("THEN 193251373687.02 TC are minted", async function () {
+          // i: 0
+          // sender: alice || mocWrapper
+          // receiver: alice
+          // qTC: 193251373687.02 TC
+          // qTP: 10000000000000 TP
+          // qAC: 193251373687.02 AC + 42553191489.36 AC + 8% for Moc Fee Flow
+          // qACfee: 8% AC
+          // qFeeToken: 0
+          // qACVendorMarkup: 0
+          // qFeeTokenVendorMarkup: 0
+          await expect(tx)
+            .to.emit(mocImpl, "TCandTPMinted")
+            .withArgs(
+              TP_0,
+              operator,
+              alice,
+              pEth("193251373687.020112595744680851"),
+              pEth("10000000000000.000000000000000000"),
+              pEth("254668930390.492359901276595744"),
+              pEth("18864365214.110545177872340425"),
+              0,
+              0,
+              0,
+            );
+        });
+      });
+      describe("WHEN alice mints 100000 TP 4, which ctarg is bigger than ctargemaCA", function () {
+        beforeEach(async function () {
+          // assert coverage is above ctargemaCA before the operation
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+          tx = await mocFunctions.mintTCandTP({ i: TP_4, from: alice, qTP: 100000 });
+        });
+        it("THEN coverage is still above ctargemaCA", async function () {
+          // coverage = 6.379258890823178313
+          // ctargemaCA = 6.246299316815355490
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+        });
+        it("THEN 100000 TC are minted", async function () {
+          // i: 4
+          // sender: alice || mocWrapper
+          // receiver: alice
+          // qTC: 100000 TC
+          // qTP: 100000 TP
+          // qAC: 100000 AC + 19047.61 AC + 8% for Moc Fee Flow
+          // qACfee: 8% AC
+          // qFeeToken: 0
+          // qACVendorMarkup: 0
+          // qFeeTokenVendorMarkup: 0
+          await expect(tx)
+            .to.emit(mocImpl, "TCandTPMinted")
+            .withArgs(
+              TP_4,
+              operator,
+              alice,
+              pEth("100000.000000000000000000"),
+              pEth(100000),
+              pEth("128571.428571428571428570"),
+              pEth("9523.809523809523809523"),
+              0,
+              0,
+              0,
+            );
+        });
+      });
+      describe("WHEN alice mints 1000000 TP 1, which ctarg is lower than ctargemaCA", function () {
+        beforeEach(async function () {
+          // assert coverage is above ctargemaCA before the operation
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+          tx = await mocFunctions.mintTCandTP({ i: TP_1, from: alice, qTP: 1000000 });
+        });
+        it("THEN coverage is still above ctargemaCA", async function () {
+          // coverage = 4.180746774609996417
+          // ctargemaCA = 4.167388026775473153
+          expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+        });
+        it("THEN 603174.60 TC are minted", async function () {
+          // i: 1
+          // sender: alice || mocWrapper
+          // receiver: alice
+          // qTC: 603174.60 TC
+          // qTP: 1000000 TP
+          // qAC: 603174.60 AC + 190476.19 AC + 8% for Moc Fee Flow
+          // qACfee: 8% AC
+          // qFeeToken: 0
+          // qACVendorMarkup: 0
+          // qFeeTokenVendorMarkup: 0
+          await expect(tx)
+            .to.emit(mocImpl, "TCandTPMinted")
+            .withArgs(
+              TP_1,
+              operator,
+              alice,
+              pEth("603174.603174603174476190"),
+              pEth(1000000),
+              pEth("857142.857142857142719999"),
+              pEth("63492.063492063492053333"),
+              0,
+              0,
+              0,
+            );
         });
       });
     });

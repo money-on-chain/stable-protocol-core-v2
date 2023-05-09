@@ -17,6 +17,8 @@ const redeemTCandTPBehavior = function () {
   let operator: Address;
   let vendor: Address;
   const TP_0 = 0;
+  const TP_1 = 1;
+  const TP_4 = 4;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
@@ -29,6 +31,7 @@ const redeemTCandTPBehavior = function () {
   let bobPrevACBalance: Balance;
   let mocPrevACBalance: Balance;
   let mocFeeFlowPrevACBalance: Balance;
+  let tx: ContractTransaction;
 
   describe("Feature: joint Redeem TC and TP operation", function () {
     beforeEach(async function () {
@@ -100,7 +103,6 @@ const redeemTCandTPBehavior = function () {
             => to redeem 100 TC we use 783.3 TP
             => AC redeemed = 100 AC - 8% + 3.33AC - 8% = 95.066
         */
-        let tx: ContractTransaction;
         beforeEach(async function () {
           [
             coverageBefore,
@@ -211,7 +213,6 @@ const redeemTCandTPBehavior = function () {
             => to redeem 100 TC we use 783.3 TP
             => AC redeemed = 100 AC - 8% + 3.33AC - 8% = 95.066
         */
-        let tx: ContractTransaction;
         beforeEach(async function () {
           [coverageBefore, tcPriceBefore, tcLeverageBefore, bobPrevACBalance] = await Promise.all([
             mocImpl.getCglb(),
@@ -265,7 +266,6 @@ const redeemTCandTPBehavior = function () {
       describe("WHEN alice redeems 100 TC and 783.33 TP via vendor", function () {
         let alicePrevACBalance: Balance;
         let vendorPrevACBalance: Balance;
-        let tx: ContractTransaction;
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           vendorPrevACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -309,7 +309,6 @@ const redeemTCandTPBehavior = function () {
         });
       });
       describe("WHEN alice redeems 100 TC and 783.33 TP to bob via vendor", function () {
-        let tx: ContractTransaction;
         beforeEach(async function () {
           tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500, vendor });
         });
@@ -353,7 +352,6 @@ const redeemTCandTPBehavior = function () {
             => to redeem 100 TC we use 783.33 TP
             => AC redeemed = 25 AC - 8% + 78.33AC - 8% = 95.066
           */
-          let tx: ContractTransaction;
           beforeEach(async function () {
             [coverageBefore, tcPriceBefore, tcLeverageBefore] = await Promise.all([
               mocImpl.getCglb(),
@@ -413,7 +411,6 @@ const redeemTCandTPBehavior = function () {
             => to redeem 100 TC we use 1175 TP
             => AC redeemed = 100.66 AC - 8% + 2.5AC - 8% = 94.91
           */
-          let tx: ContractTransaction;
           beforeEach(async function () {
             [coverageBefore, tcPriceBefore, tcLeverageBefore] = await Promise.all([
               mocImpl.getCglb(),
@@ -475,7 +472,6 @@ const redeemTCandTPBehavior = function () {
         let alicePrevFeeTokenBalance: Balance;
         let mocFeeFlowPrevACBalance: Balance;
         let mocFeeFlowPrevFeeTokenBalance: Balance;
-        let tx: ContractTransaction;
         beforeEach(async function () {
           // mint FeeToken to alice
           await mocContracts.feeToken.mint(alice, pEth(50));
@@ -587,6 +583,103 @@ const redeemTCandTPBehavior = function () {
                 pEth("103.333333333333333333"),
                 0,
                 pEth("4.133333333333333333"),
+                0,
+                0,
+              );
+          });
+        });
+      });
+      describe("WHEN alice redeems all", function () {
+        beforeEach(async function () {
+          await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 3000, qTP: 23500 });
+        });
+        it("THEN coverage is max uint256", async function () {
+          assertPrec(await mocImpl.getCglb(), CONSTANTS.MAX_UINT256);
+        });
+        it("THEN ctargemaCA is 4", async function () {
+          assertPrec(await mocImpl.calcCtargemaCA(), 4);
+        });
+      });
+      describe("AND alice has TP 1 and TP 4", function () {
+        beforeEach(async function () {
+          await mocFunctions.mintTP({ i: TP_1, from: alice, qTP: 2500 });
+          await mocFunctions.mintTP({ i: TP_4, from: alice, qTP: 1000 });
+          // nAC = 3766.66
+          // lckAC = 766.66
+          // coverage = 4.913043478260869565
+          // ctargemaCA = 4.863579003610006783
+        });
+        describe("WHEN alice redeems 100 TC using TP 4, which ctarg is bigger than ctargemaCA", function () {
+          beforeEach(async function () {
+            // assert coverage is above ctargemaCA before the operation
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+            tx = await mocFunctions.redeemTCandTP({ i: TP_4, from: alice, qTC: 100, qTP: 1000 });
+          });
+          it("THEN coverage is still above ctargemaCA", async function () {
+            // coverage = 4.877732022794360916
+            // ctargemaCA = 4.828713917473026893
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+          });
+          it("THEN a 98.73 TP 4 are redeemed", async function () {
+            // i: 4
+            // sender: alice || mocWrapper
+            // receiver: alice || mocWrapper
+            // qTC: 100 TC
+            // qTP: 98.73 TP
+            // qAC: 118.8 AC - 8% for Moc Fee Flow
+            // qACfee: 8% AC
+            // qFeeToken: 0
+            // qACVendorMarkup: 0
+            // qFeeTokenVendorMarkup: 0
+            await expect(tx)
+              .to.emit(mocImpl, "TCandTPRedeemed")
+              .withArgs(
+                TP_4,
+                operator,
+                operator,
+                pEth(100),
+                pEth("98.735907870033506676"),
+                pEth("109.302292426748728789"),
+                pEth("9.504547167543367720"),
+                0,
+                0,
+                0,
+              );
+          });
+        });
+        describe("WHEN alice redeems 1000 TC using TP 1, which ctarg is lower than ctargemaCA", function () {
+          beforeEach(async function () {
+            // assert coverage is above ctargemaCA before the operation
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+            tx = await mocFunctions.redeemTCandTP({ i: TP_1, from: alice, qTC: 1000, qTP: 2500 });
+          });
+          it("THEN coverage is still above ctargemaCA", async function () {
+            // coverage = 5.396869700032148655
+            // ctargemaCA = 5.341289216189160902
+            expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
+          });
+          it("THEN a 1636.95 TP 1 are redeemed", async function () {
+            // i: 1
+            // sender: alice || mocWrapper
+            // receiver: alice || mocWrapper
+            // qTC: 1000 TC
+            // qTP: 1636.93 TP
+            // qAC: 1311.79 AC - 8% for Moc Fee Flow
+            // qACfee: 8% AC
+            // qFeeToken: 0
+            // qACVendorMarkup: 0
+            // qFeeTokenVendorMarkup: 0
+            await expect(tx)
+              .to.emit(mocImpl, "TCandTPRedeemed")
+              .withArgs(
+                TP_1,
+                operator,
+                operator,
+                pEth(1000),
+                pEth("1636.937419950555505676"),
+                pEth("1206.853795496097345756"),
+                pEth("104.943808304008464848"),
+                0,
                 0,
                 0,
               );

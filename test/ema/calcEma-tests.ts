@@ -69,6 +69,10 @@ describe("Feature: Ema Calculation", function () {
       let prevValues: { ema: any }[];
       let assertUpdatedEmas: (tx: ContractTransaction) => void;
       beforeEach(async function () {
+        await mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 15 });
+        await mocFunctions.mintTP({ from: alice, qTP: 1 });
+        await mocFunctions.mintTP({ from: alice, i: 3, qTP: 1 });
+
         await mineNBlocks(coreParams.emaCalculationBlockSpan);
         prevValues = await Promise.all(priceProviders.map((_, i) => mocImpl.tpEma(i)));
         await Promise.all(priceProviders.map(pp => pp.poke(pEth(2))));
@@ -80,7 +84,6 @@ describe("Feature: Ema Calculation", function () {
           }
           expect(await mocImpl.shouldCalculateEma()).to.be.false;
         };
-        await mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 15 });
       });
       it("THEN shouldCalculateEma returns true", async function () {
         expect(await mocImpl.shouldCalculateEma()).to.be.true;
@@ -103,15 +106,21 @@ describe("Feature: Ema Calculation", function () {
           await assertUpdatedEmas(tx);
         });
       });
-      describe("WHEN mintTCandTP is invoked", function () {
+      describe("WHEN redeemTCandTP is invoked", function () {
         it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
-          const tx = await mocFunctions.mintTCandTP({ from: bob, qTP: 1 });
+          const tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 0.1, qTP: 1 });
           await assertUpdatedEmas(tx);
         });
       });
       describe("WHEN swapTCforTP is invoked", function () {
         it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
           const tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 1 });
+          await assertUpdatedEmas(tx);
+        });
+      });
+      describe("WHEN swapTPforTP is invoked (ctargemaTP TPto > TPfrom)", function () {
+        it("THEN new Ema values are assigned as it's triggered by calcCtagema operation", async function () {
+          const tx = await mocFunctions.swapTPforTP({ from: alice, iFrom: 3, iTo: 0, qTP: 0.1 });
           await assertUpdatedEmas(tx);
         });
       });
