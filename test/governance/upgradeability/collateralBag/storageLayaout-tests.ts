@@ -13,9 +13,10 @@ describe("Feature: Check MocCAWrapper storage layout compatibility using openzep
     });
     describe("WHEN it is upgraded to a new implementation", () => {
       it("THEN it succeeds as it is consistent with the previous storage", async () => {
+        const mocCAWrapperFactory = await ethers.getContractFactory("MocCAWrapper");
         const mocCAWrapperMockFactory = await ethers.getContractFactory("MocCAWrapperMock");
         // forces the import of an existing proxy to be used with this plugin
-        await upgrades.forceImport(mocProxy.address, mocCAWrapperMockFactory);
+        await upgrades.forceImport(mocProxy.address, mocCAWrapperFactory);
         await upgrades.upgradeProxy(mocProxy.address, mocCAWrapperMockFactory, {
           // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455
           unsafeAllow: ["delegatecall"],

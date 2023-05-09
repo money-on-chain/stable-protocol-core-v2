@@ -6,15 +6,16 @@ import { tpParams } from "../../../helpers/utils";
 describe("Feature: Check MocCARC20 storage layout compatibility using openzeppelin hardhat upgrade ", () => {
   let mocProxy: Contract;
   describe("GIVEN a MocCARC20 Proxy is deployed", () => {
-    beforeEach(async () => {
+    before(async () => {
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams);
       ({ mocImpl: mocProxy } = await fixtureDeploy());
     });
     describe("WHEN it is upgraded to a new implementation", () => {
       it("THEN it succeeds as it is consistent with the previous storage", async () => {
+        const mocRC20Factory = await ethers.getContractFactory("MocCARC20");
         const mocRC20MockFactory = await ethers.getContractFactory("MocCARC20Mock");
         // forces the import of an existing proxy to be used with this plugin
-        await upgrades.forceImport(mocProxy.address, mocRC20MockFactory);
+        await upgrades.forceImport(mocProxy.address, mocRC20Factory);
         await upgrades.upgradeProxy(mocProxy.address, mocRC20MockFactory, {
           // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455
           unsafeAllow: ["delegatecall"],
