@@ -16,6 +16,7 @@ const mintTCBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
@@ -82,7 +83,7 @@ const mintTCBehavior = function () {
         // qFeeTokenVendorMarkup: 0
         await expect(tx)
           .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+          .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
         // from: Zero Address
@@ -156,7 +157,7 @@ const mintTCBehavior = function () {
         // qFeeTokenVendorMarkup: 0
         await expect(tx)
           .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+          .withArgs(operator, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
       });
     });
     describe("WHEN alice mints 100 TC to bob via vendor", function () {
@@ -175,7 +176,7 @@ const mintTCBehavior = function () {
         // qFeeTokenVendorMarkup: 0
         await expect(tx)
           .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+          .withArgs(operator, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
       });
     });
     describe("WHEN feeRetainer is set to 20% AND alice sends 105 Asset to mint 100 TC to bob", function () {
@@ -211,7 +212,7 @@ const mintTCBehavior = function () {
         // qFeeTokenVendorMarkup: 0
         await expect(tx)
           .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+          .withArgs(operator, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
       });
     });
     describe("GIVEN 3000 TC and 100 TP are minted", function () {
@@ -397,7 +398,7 @@ const mintTCBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCMinted")
-            .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+            .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
         });
       });
       describe("WHEN alice mints 100 TC to bob", function () {
@@ -434,7 +435,7 @@ const mintTCBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCMinted")
-            .withArgs(operator, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+            .withArgs(operator, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
         });
       });
     });

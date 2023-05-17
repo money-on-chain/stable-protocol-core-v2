@@ -16,6 +16,7 @@ const redeemTCandTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
@@ -185,6 +186,7 @@ const redeemTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -260,6 +262,7 @@ const redeemTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -305,6 +308,7 @@ const redeemTCandTPBehavior = function () {
               0,
               pEth("10.333333333333333333"),
               0,
+              vendor,
             );
         });
       });
@@ -336,6 +340,7 @@ const redeemTCandTPBehavior = function () {
               0,
               pEth("10.333333333333333333"),
               0,
+              vendor,
             );
         });
       });
@@ -393,6 +398,7 @@ const redeemTCandTPBehavior = function () {
                 0,
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -452,6 +458,7 @@ const redeemTCandTPBehavior = function () {
                 0,
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -533,6 +540,7 @@ const redeemTCandTPBehavior = function () {
                 pEth("4.133333333333333333"),
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -585,6 +593,7 @@ const redeemTCandTPBehavior = function () {
                 pEth("4.133333333333333333"),
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -644,6 +653,7 @@ const redeemTCandTPBehavior = function () {
                 0,
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -682,6 +692,7 @@ const redeemTCandTPBehavior = function () {
                 0,
                 0,
                 0,
+                noVendor,
               );
           });
         });

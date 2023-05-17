@@ -131,7 +131,8 @@ abstract contract MocCommons is MocEma {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
     event TPSwappedForTP(
@@ -144,7 +145,8 @@ abstract contract MocCommons is MocEma {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event TPSwappedForTC(
         uint256 indexed i_,
@@ -155,7 +157,8 @@ abstract contract MocCommons is MocEma {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event TCSwappedForTP(
         uint256 indexed i_,
@@ -166,7 +169,8 @@ abstract contract MocCommons is MocEma {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
 
     // ------- Initializer -------

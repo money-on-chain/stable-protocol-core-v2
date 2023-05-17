@@ -15,6 +15,7 @@ const redeemTCBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
@@ -110,7 +111,7 @@ const redeemTCBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(operator, operator, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0);
+            .withArgs(operator, operator, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -166,6 +167,7 @@ const redeemTCBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -199,7 +201,7 @@ const redeemTCBehavior = function () {
           // qFeeTokenVendorMarkup: 10% qAC
           await expect(tx)
             .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(operator, operator, pEth(100), pEth(100 * 0.85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+            .withArgs(operator, operator, pEth(100), pEth(100 * 0.85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
         });
       });
       describe("WHEN alice redeems 100 TC to bob via vendor", function () {
@@ -227,6 +229,7 @@ const redeemTCBehavior = function () {
               0,
               pEth(100 * 0.1),
               0,
+              vendor,
             );
         });
       });
@@ -527,7 +530,7 @@ const redeemTCBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
           });
         });
         describe("WHEN alice redeems 100 TC to bob", function () {
@@ -575,6 +578,7 @@ const redeemTCBehavior = function () {
                 pEth(100 * 0.05 * 0.5),
                 0,
                 0,
+                noVendor,
               );
           });
         });

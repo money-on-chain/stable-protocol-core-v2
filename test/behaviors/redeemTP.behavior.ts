@@ -15,6 +15,7 @@ const redeemTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_2 = 2;
   const TP_NON_EXISTENT = 5;
@@ -146,7 +147,7 @@ const redeemTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TPRedeemed")
-            .withArgs(TP_0, operator, operator, pEth(23500), pEth(95), pEth(100 * 0.05), 0, 0, 0);
+            .withArgs(TP_0, operator, operator, pEth(23500), pEth(95), pEth(100 * 0.05), 0, 0, 0, noVendor);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -219,6 +220,7 @@ const redeemTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -253,7 +255,7 @@ const redeemTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TPRedeemed")
-            .withArgs(TP_0, operator, operator, pEth(23500), pEth(85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+            .withArgs(TP_0, operator, operator, pEth(23500), pEth(85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
         });
       });
       describe("WHEN alice redeems 23500 TP to bob via vendor", function () {
@@ -283,6 +285,7 @@ const redeemTPBehavior = function () {
               0,
               pEth(100 * 0.1),
               0,
+              vendor,
             );
         });
       });
@@ -351,7 +354,7 @@ const redeemTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(TP_0, operator, operator, pEth(3000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0);
+              .withArgs(TP_0, operator, operator, pEth(3000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor);
           });
           describe("AND Pegged Token has been devaluated to 1000", function () {
             /*  
@@ -435,7 +438,7 @@ const redeemTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(TP_0, operator, operator, pEth(1000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0);
+              .withArgs(TP_0, operator, operator, pEth(1000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor);
           });
           describe("AND Pegged Token has been devaluated to 1000", function () {
             /*  
@@ -526,7 +529,7 @@ const redeemTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(TP_0, operator, operator, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+              .withArgs(TP_0, operator, operator, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
           });
         });
         describe("WHEN alice redeems 23500 TP to bob", function () {
@@ -576,6 +579,7 @@ const redeemTPBehavior = function () {
                 pEth(100 * 0.05 * 0.5),
                 0,
                 0,
+                noVendor,
               );
           });
         });
