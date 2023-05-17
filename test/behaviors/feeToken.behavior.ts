@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, pEth } from "../helpers/utils";
 import { ERC20Mock, MocCACoinbase, MocCARC20, MocCAWrapper, PriceProviderMock } from "../../typechain";
 
 const feeTokenBehavior = function () {
@@ -17,6 +17,7 @@ const feeTokenBehavior = function () {
   let vendor: Address;
   let operator: Address;
   let tx: ContractTransaction;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
 
   describe("Feature: Fee Token as fee payment method", function () {
     beforeEach(async function () {
@@ -47,7 +48,7 @@ const feeTokenBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCMinted")
-            .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+            .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
         });
       });
       describe("AND alice approves 25 Fee Token to Moc Core", function () {
@@ -72,7 +73,7 @@ const feeTokenBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCMinted")
-              .withArgs(operator, alice, pEth(10000), pEth(10000 * 1.05), pEth(10000 * 0.05), 0, 0, 0);
+              .withArgs(operator, alice, pEth(10000), pEth(10000 * 1.05), pEth(10000 * 0.05), 0, 0, 0, noVendor);
           });
         });
         describe("WHEN alice mints 10000 TC and doesn't have enough Fee Token balance", function () {
@@ -93,7 +94,7 @@ const feeTokenBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCMinted")
-              .withArgs(operator, alice, pEth(10000), pEth(10000 * 1.05), pEth(10000 * 0.05), 0, 0, 0);
+              .withArgs(operator, alice, pEth(10000), pEth(10000 * 1.05), pEth(10000 * 0.05), 0, 0, 0, noVendor);
           });
         });
         describe("AND Fee Token price provider doesn't have a valid price", function () {
@@ -115,7 +116,7 @@ const feeTokenBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TCMinted")
-                .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+                .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
             });
           });
         });
@@ -134,7 +135,7 @@ const feeTokenBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCMinted")
-              .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+              .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
           });
         });
         describe("WHEN alice redeems 100 TC", function () {
@@ -152,7 +153,7 @@ const feeTokenBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
           });
         });
         describe("WHEN alice mints 100 TC via vendor", function () {
@@ -184,7 +185,7 @@ const feeTokenBehavior = function () {
             // qFeeTokenVendorMarkup: 10% qAC
             await expect(tx)
               .to.emit(mocImpl, "TCMinted")
-              .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, pEth(10));
+              .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, pEth(10), vendor);
           });
         });
         describe("WHEN alice redeems 100 TC via vendor", function () {
@@ -216,7 +217,7 @@ const feeTokenBehavior = function () {
             // qFeeTokenVendorMarkup: 10% qAC
             await expect(tx)
               .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, pEth(10));
+              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, pEth(10), vendor);
           });
         });
         describe("AND Fee Token price falls 10 times AC price", function () {
@@ -239,7 +240,7 @@ const feeTokenBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TCMinted")
-                .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(1000 * 0.05 * 0.5), 0, 0);
+                .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(1000 * 0.05 * 0.5), 0, 0, noVendor);
             });
           });
           describe("WHEN alice redeems 100 TC", function () {
@@ -257,7 +258,7 @@ const feeTokenBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TCRedeemed")
-                .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(1000 * 0.05 * 0.5), 0, 0);
+                .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(1000 * 0.05 * 0.5), 0, 0, noVendor);
             });
           });
         });
@@ -281,7 +282,7 @@ const feeTokenBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TCMinted")
-                .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(10 * 0.05 * 0.5), 0, 0);
+                .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(10 * 0.05 * 0.5), 0, 0, noVendor);
             });
           });
           describe("WHEN alice redeems 100 TC", function () {
@@ -299,7 +300,7 @@ const feeTokenBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TCRedeemed")
-                .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(10 * 0.05 * 0.5), 0, 0);
+                .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(10 * 0.05 * 0.5), 0, 0, noVendor);
             });
           });
         });

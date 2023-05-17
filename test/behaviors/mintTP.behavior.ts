@@ -16,6 +16,8 @@ const mintTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
+
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
@@ -141,7 +143,7 @@ const mintTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: Zero Address
@@ -274,7 +276,7 @@ const mintTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0);
+            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
         });
       });
       describe("WHEN alice mints 23500 TP via vendor", function () {
@@ -308,7 +310,7 @@ const mintTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor);
         });
       });
       describe("WHEN alice mints 23500 TP to bob via vendor", function () {
@@ -328,7 +330,7 @@ const mintTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0);
+            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor);
         });
       });
       describe("AND 23500 TP0 are minted", function () {
@@ -451,6 +453,7 @@ const mintTPBehavior = function () {
                   0,
                   0,
                   0,
+                  noVendor,
                 );
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {
@@ -603,6 +606,7 @@ const mintTPBehavior = function () {
                   0,
                   0,
                   0,
+                  noVendor,
                 );
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {
@@ -747,7 +751,7 @@ const mintTPBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TPMinted")
-                .withArgs(TP_1, operator, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0);
+                .withArgs(TP_1, operator, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0, noVendor);
             });
           });
         });
@@ -870,7 +874,7 @@ const mintTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TPMinted")
-              .withArgs(TP_0, operator, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+              .withArgs(TP_0, operator, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
           });
         });
         describe("WHEN alice mints 23500 TP to bob", function () {
@@ -908,7 +912,7 @@ const mintTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TPMinted")
-              .withArgs(TP_0, operator, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0);
+              .withArgs(TP_0, operator, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
           });
         });
       });

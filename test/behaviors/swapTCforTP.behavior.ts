@@ -17,6 +17,7 @@ const swapTCforTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
@@ -143,7 +144,7 @@ const swapTCforTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0);
+            .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -206,7 +207,7 @@ const swapTCforTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0);
+            .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor);
         });
       });
       describe("WHEN alice tries to swap 100 TC for 23500 TP 0 via vendor without sending the AC for the markup", function () {
@@ -248,7 +249,7 @@ const swapTCforTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, pEth(100 * 0.1), 0);
+            .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, pEth(100 * 0.1), 0, vendor);
         });
       });
       describe("WHEN alice swaps 100 TC for 23500 TP 0 to bob via vendor", function () {
@@ -268,7 +269,7 @@ const swapTCforTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expect(tx)
             .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, pEth(100 * 0.1), 0);
+            .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, pEth(100 * 0.1), 0, vendor);
         });
       });
       describe("AND there are 100000 TC more in the protocol", function () {
@@ -302,7 +303,7 @@ const swapTCforTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCSwappedForTP")
-              .withArgs(TP_0, operator, alice, pEth(3000), pEth(705000), pEth(3000 * 0.01), 0, 0, 0);
+              .withArgs(TP_0, operator, alice, pEth(3000), pEth(705000), pEth(3000 * 0.01), 0, 0, 0, noVendor);
           });
         });
       });
@@ -351,6 +352,7 @@ const swapTCforTPBehavior = function () {
                   0,
                   0,
                   0,
+                  noVendor,
                 );
             });
           });
@@ -411,7 +413,7 @@ const swapTCforTPBehavior = function () {
               // qFeeTokenVendorMarkup: 0
               await expect(tx)
                 .to.emit(mocImpl, "TCSwappedForTP")
-                .withArgs(TP_0, operator, alice, pEth(10), pEth(955), pEth("0.095500000000000000"), 0, 0, 0);
+                .withArgs(TP_0, operator, alice, pEth(10), pEth(955), pEth("0.095500000000000000"), 0, 0, 0, noVendor);
             });
           });
         });
@@ -483,7 +485,7 @@ const swapTCforTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCSwappedForTP")
-              .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0);
+              .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor);
           });
         });
         describe("WHEN alice swaps 100 TC for 23500 TP 0", function () {
@@ -521,7 +523,7 @@ const swapTCforTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCSwappedForTP")
-              .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0);
+              .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor);
           });
         });
       });

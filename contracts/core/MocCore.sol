@@ -21,7 +21,8 @@ abstract contract MocCore is MocCommons {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event TCRedeemed(
         address indexed sender_,
@@ -31,7 +32,8 @@ abstract contract MocCore is MocCommons {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event TPMinted(
         uint256 indexed i_,
@@ -42,7 +44,8 @@ abstract contract MocCore is MocCommons {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event TCandTPRedeemed(
         uint256 indexed i_,
@@ -54,7 +57,8 @@ abstract contract MocCore is MocCommons {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event TCandTPMinted(
         uint256 indexed i_,
@@ -66,7 +70,8 @@ abstract contract MocCore is MocCommons {
         uint256 qACfee_,
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
     );
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     event SettlementExecuted();
@@ -219,7 +224,8 @@ abstract contract MocCore is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
         _depositAndMintTC(params_.qTC, qACNeededToMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -281,7 +287,8 @@ abstract contract MocCore is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
@@ -346,7 +353,8 @@ abstract contract MocCore is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
         // update bucket and mint
         _depositAndMintTP(params_.i, params_.qTP, qACNeededtoMint, params_.recipient);
@@ -410,7 +418,8 @@ abstract contract MocCore is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
         _withdrawAndBurnTP(params_.i, params_.qTP, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
@@ -488,7 +497,8 @@ abstract contract MocCore is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
         _depositAndMintTP(params_.i, params_.qTP, 0, params_.recipient);
@@ -576,7 +586,8 @@ abstract contract MocCore is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
 
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);

@@ -16,6 +16,7 @@ const mintTCandTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  const noVendor = CONSTANTS.ZERO_ADDRESS;
   let tx: ContractTransaction;
   const TP_0 = 0;
   const TP_1 = 1;
@@ -73,6 +74,7 @@ const mintTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -188,6 +190,7 @@ const mintTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -250,6 +253,7 @@ const mintTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -294,6 +298,7 @@ const mintTCandTPBehavior = function () {
               0,
               pEth("5.541407281644972646"),
               0,
+              vendor,
             );
         });
       });
@@ -324,6 +329,7 @@ const mintTCandTPBehavior = function () {
               0,
               pEth("5.541407281644972646"),
               0,
+              vendor,
             );
         });
       });
@@ -361,7 +367,7 @@ const mintTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expect(tx)
               .to.emit(mocImpl, "TCandTPMinted")
-              .withArgs(TP_0, operator, alice, pEth(37600), pEth(23500), pEth(12690), pEth(940), 0, 0, 0);
+              .withArgs(TP_0, operator, alice, pEth(37600), pEth(23500), pEth(12690), pEth(940), 0, 0, 0, noVendor);
           });
         });
       });
@@ -411,6 +417,7 @@ const mintTCandTPBehavior = function () {
                 0,
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -493,6 +500,7 @@ const mintTCandTPBehavior = function () {
                 pEth("2.216562912657989058"),
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -543,6 +551,7 @@ const mintTCandTPBehavior = function () {
                 pEth("2.216562912657989058"),
                 0,
                 0,
+                noVendor,
               );
           });
         });
@@ -582,6 +591,7 @@ const mintTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -620,6 +630,7 @@ const mintTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });
@@ -658,6 +669,7 @@ const mintTCandTPBehavior = function () {
               0,
               0,
               0,
+              noVendor,
             );
         });
       });

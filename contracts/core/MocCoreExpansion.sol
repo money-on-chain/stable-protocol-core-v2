@@ -140,7 +140,7 @@ contract MocCoreExpansion is MocCommons {
         if (mocACBalance < qACRedeemed) qACRedeemed = mocACBalance;
         // in liquidation doesn't pay fees or markup
         // qACfee, qFeeToken, qACVendorMarkup, qFeeTokenVendorMarkup  = (0, 0, 0, 0)
-        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0, 0, 0);
+        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0, 0, 0, address(0));
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP);
     }
@@ -216,7 +216,8 @@ contract MocCoreExpansion is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
 
         _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
@@ -283,7 +284,8 @@ contract MocCoreExpansion is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
 
         _withdrawAndBurnTP(params_.i, params_.qTP, 0, params_.sender);
@@ -356,7 +358,8 @@ contract MocCoreExpansion is MocCommons {
             feeCalcs.qACFee,
             feeCalcs.qFeeToken,
             feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup
+            feeCalcs.qFeeTokenVendorMarkup,
+            params_.vendor
         );
 
         _withdrawAndBurnTC(params_.qTC, 0, params_.sender);

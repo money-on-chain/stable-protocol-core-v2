@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
-import { Balance, ERRORS, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 
@@ -147,6 +147,7 @@ const shouldBehaveLikeLiquidable = function () {
                 0,
                 0,
                 0,
+                CONSTANTS.ZERO_ADDRESS,
               );
           });
           it("THEN they receive the corresponding AC amount", async function () {
