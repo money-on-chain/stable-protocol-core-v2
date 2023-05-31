@@ -12,6 +12,7 @@ import { ERC20Mock } from "../mocks/ERC20Mock.sol";
 import { PriceProviderMock } from "../mocks/PriceProviderMock.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract EchidnaMocCoreTester {
     uint256 internal constant PRECISION = 10 ** 18;
@@ -422,14 +423,27 @@ contract EchidnaMocCoreTester {
         });
     }
 
-    function echidna_balance_not_drained() public returns (bool) {
+    function echidna_balance_not_drained() public view returns (bool) {
         // if lckAC > totalACavailable, getPTCac() will fail because underflow
         // when that occur the protocol can not be operated because it is in low coverage(< 1)
-        bool succeed;
+        bool succeed = false;
         try mocCARC20.getPTCac() {
-            succeed =
-                acToken.balanceOf(address(mocCARC20)) * mocCARC20.getCglb() >=
-                mocCARC20.getPTCac() * tcToken.totalSupply();
+            (bool notOverflowA, uint256 a) = SafeMath.tryMul(
+                acToken.balanceOf(address(mocCARC20)),
+                mocCARC20.getCglb()
+            );
+            (bool notOverflowB, uint256 b) = SafeMath.tryMul(tcToken.totalSupply(), mocCARC20.getPTCac());
+            succeed = !notOverflowA && notOverflowB;
+            if ((!notOverflowA && !notOverflowB)) {
+                unchecked {
+                    succeed =
+                        acToken.balanceOf(address(mocCARC20)) * mocCARC20.getCglb() >=
+                        tcToken.totalSupply() * mocCARC20.getPTCac();
+                }
+            }
+            if (notOverflowA && notOverflowB) {
+                succeed = a >= b;
+            }
         } catch {
             succeed = mocCARC20.getCglb() < PRECISION;
         }
