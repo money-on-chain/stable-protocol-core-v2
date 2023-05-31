@@ -1,15 +1,17 @@
 testMode: "property"
 
+# number of workers
+workers: 4
 #propMaxGas defines gas cost at which a property fails
 propMaxGas: 1000000000
 #testMaxGas is a gas limit; does not cause failure, but terminates sequence
 testMaxGas: 1000000000
 #balanceAddr is default balance for addresses
 balanceAddr: 0xffffffffffffffffffffffff
-#codeSize max code size for deployed contratcs (default 24576, per EIP-170)
+#codeSize max code size for deployed contracts (default 24576, per EIP-170)
 codeSize: 245760
 #testLimit is the number of test sequences to run
-testLimit: 20000
+testLimit: 200000
 #seqLen defines how many transactions are in a test sequence
 seqLen: 300
 #shrinkLimit determines how much effort is spent shrinking failing sequences
