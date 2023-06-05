@@ -562,6 +562,7 @@ abstract contract MocCore is MocCommons {
         // [N] = ([N] * [N] * [PREC] / [N]) / [PREC]
         qTPtoRedeem = ((params_.qTC * lckAC * aux) / nTCcb) / PRECISION;
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
+        // if qTC == 0 => qTPtoRedeem == 0 and will revert because QacNeededMustBeGreaterThanZero
         uint256 qACtotalToRedeem = _calcQACforRedeemTCandTP(params_.qTC, qTPtoRedeem, pACtp, _getPTCac(lckAC, nACgain));
         FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
@@ -573,9 +574,6 @@ abstract contract MocCore is MocCommons {
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
-        // if is 0 reverts because it is trying to redeem an amount below precision
-        // slither-disable-next-line incorrect-equality
-        if (qACtoRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         emit TCandTPRedeemed(
             params_.i,
             params_.sender,
@@ -1187,6 +1185,10 @@ abstract contract MocCore is MocCommons {
         // calculate how many total qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         qACtotalToRedeem = _divPrec(qTP_, pACtp_);
+        // if is 0 reverts because it is trying to redeem an amount of TP below precision
+        // we check it here to prevent qTP == 0 && qTC != 0
+        // slither-disable-next-line incorrect-equality
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         // calculate how many qAC are redeemed because TC
         // [N] = [N] * [PREC] / [PREC]
         // TODO: rounding error could be avoid replacing here with qTC_ * totalACavailable / nTCcb

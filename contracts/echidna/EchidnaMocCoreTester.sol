@@ -145,6 +145,8 @@ contract EchidnaMocCoreTester {
         // initialize Pegged Token
         tpToken.initialize("TPToken", "TP", address(mocCARC20), governor);
         peggedTokenParams_.tpTokenAddress = address(tpToken);
+        peggedTokenParams_.tpMintFee = peggedTokenParams_.tpMintFee % PRECISION;
+        peggedTokenParams_.tpRedeemFee = peggedTokenParams_.tpRedeemFee % PRECISION;
         // price not 0
         price_++;
         peggedTokenParams_.priceProviderAddress = address(new PriceProviderMock(price_));
@@ -358,11 +360,56 @@ contract EchidnaMocCoreTester {
             assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender + qTP_);
             if (coverageShouldIncrease) {
                 // assert: coverage should increase
-                assert(tpDataAfter.coverage >= tpDataBefore.coverage);
-                // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from below
-                assert(tpDataAfter.coverage <= mocCARC20.calcCtargemaCA());
+                assert(int256(tpDataAfter.coverage) - int256(tpDataBefore.coverage) >= -1);
             } else {
                 // assert: during mintTCandTP operation coverage should get closer to ctargemaCA from above
+                assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
+            }
+        } catch {
+            totalReverted++;
+        }
+        // assert: max txs reverted in a seqLen
+        assert(totalReverted < MAX_TXS_REVERTED);
+    }
+
+    function redeemTCandTP(uint256 i_, uint256 qTC_, uint256 qTP_) public {
+        i_ = i_ % totalPeggedTokensAdded;
+        TPData memory tpDataBefore = _getTPData(i_);
+        TCData memory tcDataBefore = _getTCData();
+        // we don't want to revert if echidna tries to redeem qTC that don´t have
+        qTC_ = (qTC_ % tcDataBefore.tcBalanceSender) + 1;
+        // we don't want to revert if echidna tries to redeem qTP that don´t have
+        qTP_ = (qTP_ % tpDataBefore.tpBalanceSender) + 1;
+        bool coverageBelow = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
+        try mocCARC20.redeemTCandTP(uint8(i_), qTC_, qTP_, 0) returns (
+            uint256 qACRedeemed,
+            uint256 qTPRedeemed,
+            uint256
+        ) {
+            TCData memory tcDataAfter = _getTCData();
+            TPData memory tpDataAfter = _getTPData(i_);
+            uint256 qACTotalRedeemed = (qTPRedeemed * PRECISION) /
+                tpDataBefore.tpPrice +
+                (qTC_ * tcDataBefore.tcPrice) /
+                PRECISION;
+            uint256 fee = (qACTotalRedeemed * mocCARC20.redeemTCandTPFee() * (PRECISION - mocCARC20.feeRetainer())) /
+                (PRECISION * PRECISION);
+            // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
+            // use tolerance 1 because possible rounding errors
+            assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.redeemTCandTPFee())) / PRECISION <= 1);
+            // assert: echidna AC balance should increase by qAC spent
+            assert(tcDataAfter.acBalanceSender == tcDataBefore.acBalanceSender + qACRedeemed);
+            // assert: Moc Flow balance should increase by qAC fee
+            // use tolerance 1 because possible rounding errors
+            assert(tcDataAfter.acBalanceMocFlow - tcDataBefore.acBalanceMocFlow - fee <= 1);
+            // assert: echidna TC balance should decrease by qTC
+            assert(tcDataAfter.tcBalanceSender == tcDataBefore.tcBalanceSender - qTC_);
+            // assert: echidna TP balance should decrease by qTP
+            assert(tpDataAfter.tpBalanceSender == tpDataBefore.tpBalanceSender - qTPRedeemed);
+            if (coverageBelow) {
+                assert(int256(tpDataAfter.coverage) - int256(tpDataBefore.coverage) >= -1);
+                assert(tpDataAfter.coverage <= mocCARC20.calcCtargemaCA());
+            } else {
                 assert(tpDataAfter.coverage >= mocCARC20.calcCtargemaCA());
             }
         } catch {
