@@ -792,7 +792,7 @@ abstract contract MocCore is MocCommons {
      * @return qACRedeemed amount of AC sent to sender
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -816,7 +816,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTC_,
         uint256 qACmin_,
         address vendor_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -839,7 +839,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTC_,
         uint256 qACmin_,
         address recipient_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -865,7 +865,7 @@ abstract contract MocCore is MocCommons {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -888,7 +888,7 @@ abstract contract MocCore is MocCommons {
         uint256 i_,
         uint256 qTP_,
         uint256 qACmin_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -915,7 +915,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -941,7 +941,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -970,7 +970,7 @@ abstract contract MocCore is MocCommons {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -1001,7 +1001,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
             i: i_,
             qTC: qTC_,
@@ -1036,7 +1036,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
             i: i_,
             qTC: qTC_,
@@ -1070,7 +1070,7 @@ abstract contract MocCore is MocCommons {
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
             i: i_,
             qTC: qTC_,
@@ -1107,7 +1107,7 @@ abstract contract MocCore is MocCommons {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
             i: i_,
             qTC: qTC_,
