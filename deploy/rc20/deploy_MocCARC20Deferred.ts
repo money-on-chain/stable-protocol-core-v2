@@ -36,7 +36,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   } = mocAddresses;
 
   // for tests and testnet we deploy a Governor Mock
-  const governorAddress = await getGovernorAddresses(hre);
+  const governorAddress = getGovernorAddresses(hre);
 
   // for tests we deploy a Collateral Asset mock, a FeeToken mock and its price provider
   if (hre.network.tags.local) {
@@ -56,8 +56,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
   const mocCARC20 = await deployUUPSArtifact({
     hre,
-    artifactBaseName: "MocCARC20",
-    contract: "MocCARC20",
+    artifactBaseName: "MocCARC20Deferred",
+    contract: "MocCARC20Deferred",
     initializeArgs: [
       {
         initializeCoreParams: {
@@ -98,18 +98,17 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   console.log("Delegating CT roles to Moc");
   // Assign TC Roles, and renounce deployer ADMIN
-  //TODO: await waitForTxConfirmation(CollateralToken.transferAllRoles(mocCARC20.address));
+  await waitForTxConfirmation(CollateralToken.transferAllRoles(mocCARC20.address));
 
   console.log("initialization completed!");
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
-    const mocCore = await ethers.getContractAt("MocCARC20", mocCARC20.address, signer);
-    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCore, tpParams);
+    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
   }
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;
 
-deployFunc.id = "deployed_MocCARC20"; // id required to prevent re-execution
-deployFunc.tags = ["MocCARC20"];
+deployFunc.id = "deployed_MocCARC20Deferred"; // id required to prevent re-execution
+deployFunc.tags = ["MocCARC20Deferred"];
 deployFunc.dependencies = ["CollateralTokenCARC20", "MocVendorsCARC20", "MocCARC20Expansion"];
