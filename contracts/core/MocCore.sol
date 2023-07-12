@@ -1371,10 +1371,10 @@ abstract contract MocCore is MocCommons {
      *  of TC available to redeem. Consider it an approximation.
      * @return tcAvailableToRedeem [N]
      */
-    function getTCAvailableToRedeem() external view returns (uint256 tcAvailableToRedeem) {
+    function getTCAvailableToRedeem() external view returns (int256 tcAvailableToRedeem) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _calcCtargemaCA();
         (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps);
-        return _getTCAvailableToRedeem(ctargemaCA, lckAC, nACgain);
+        return _getTCAvailableToRedeemSigned(ctargemaCA, lckAC, nACgain);
     }
 
     /**
@@ -1385,11 +1385,11 @@ abstract contract MocCore is MocCommons {
      * @param i_ Pegged Token index
      * @return tpAvailableToMint [N]
      */
-    function getTPAvailableToMint(uint256 i_) external view returns (uint256 tpAvailableToMint) {
+    function getTPAvailableToMint(uint256 i_) external view returns (int256 tpAvailableToMint) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _calcCtargemaCA();
         uint256 pACtp = pACtps[i_];
         (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps);
-        return _getTPAvailableToMint(ctargemaCA, _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
+        return _getTPAvailableToMintSigned(ctargemaCA, _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
     }
 
     /**

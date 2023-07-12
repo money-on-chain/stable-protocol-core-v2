@@ -182,7 +182,7 @@ const mintTPBehavior = function () {
             expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
           });
           it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-            assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0");
+            assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0", 15);
             assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1");
           });
         });
@@ -349,6 +349,9 @@ const mintTPBehavior = function () {
           });
           it("THEN the coverage is 5", async function () {
             assertPrec("4.999574468085106382", await mocImpl.getCglb());
+          });
+          it("THEN the are -2.5 TP 0 available to mint", async function () {
+            assertPrec("-2.499999999999999957", await mocImpl.getTPAvailableToMint(TP_0));
           });
           describe("WHEN Alice tries to mint 1 TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
@@ -697,8 +700,8 @@ const mintTPBehavior = function () {
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0");
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1");
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0", 20000);
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1", 600);
             });
           });
           describe("WHEN alice mints 525 TP 1", function () {
@@ -801,8 +804,8 @@ const mintTPBehavior = function () {
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 4 available to mint", async function () {
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0");
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_4), "TP 4");
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0", 15000);
+              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_4), "TP 4", 300);
             });
           });
         });

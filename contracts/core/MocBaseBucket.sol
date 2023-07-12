@@ -401,11 +401,28 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 ctargemaCA_,
         uint256 lckAC_,
         uint256 nACgain_
-    ) internal view returns (uint256 lckACemaAdjusted) {
-        // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
-        if (_getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
+    ) internal view returns (int256 lckACemaAdjusted) {
         // [PREC] = [N] * [PREC] - [PREC] * [N]
-        return _getTotalACavailable(nACgain_) * PRECISION - ctargemaCA_ * lckAC_;
+        return int256(_getTotalACavailable(nACgain_) * PRECISION) - int256(ctargemaCA_ * lckAC_);
+    }
+
+    /**
+     * @notice get signed amount of Collateral Token available to redeem
+     * @dev negative value is needed for multi collateral implementation
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
+     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
+     * @return tcAvailableToRedeem [N]
+     */
+    function _getTCAvailableToRedeemSigned(
+        uint256 ctargemaCA_,
+        uint256 lckAC_,
+        uint256 nACgain_
+    ) internal view returns (int256 tcAvailableToRedeem) {
+        // [PREC]
+        int256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
+        // [N] = [PREC] / [PREC]
+        return lckACemaAdjusted / int256(_getPTCac(lckAC_, nACgain_));
     }
 
     /**
@@ -420,10 +437,32 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 tcAvailableToRedeem) {
-        // [PREC]
-        uint256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
-        // [N] = [PREC] / [PREC]
-        return lckACemaAdjusted / _getPTCac(lckAC_, nACgain_);
+        int256 tcAvailableToRedeemSigned = _getTCAvailableToRedeemSigned(ctargemaCA_, lckAC_, nACgain_);
+        // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
+        if (tcAvailableToRedeemSigned < 0 || _getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
+        return uint256(tcAvailableToRedeemSigned);
+    }
+
+    /**
+     * @notice get signed amount of Pegged Token available to mint
+     * @dev negative value is needed for multi collateral implementation
+     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset
+     * @param ctargemaTP_ target coverage adjusted by the moving average of the value of a Pegged Token
+     * @param pACtp_ Collateral Asset price in amount of Pegged Token [PREC]
+     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
+     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
+     * @return tpAvailableToMint [N]
+     */
+    function _getTPAvailableToMintSigned(
+        uint256 ctargemaCA_,
+        uint256 ctargemaTP_,
+        uint256 pACtp_,
+        uint256 lckAC_,
+        uint256 nACgain_
+    ) internal view returns (int256 tpAvailableToMint) {
+        int256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
+        // [N] = [PREC] * [PREC] / ([PREC]) * [PREC])
+        return (lckACemaAdjusted * int256(pACtp_)) / int256((ctargemaTP_ - ONE) * PRECISION);
     }
 
     /**
@@ -442,8 +481,16 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view returns (uint256 tpAvailableToMint) {
-        // [N] = ([PREC] * [PREC] / [PREC]) / [PREC]
-        return ((_getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_) * pACtp_) / (ctargemaTP_ - ONE)) / PRECISION;
+        int256 tpAvailableToMintSigned = _getTPAvailableToMintSigned(
+            ctargemaCA_,
+            ctargemaTP_,
+            pACtp_,
+            lckAC_,
+            nACgain_
+        );
+        // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
+        if (tpAvailableToMintSigned < 0 || _getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
+        return uint256(tpAvailableToMintSigned);
     }
 
     /**
