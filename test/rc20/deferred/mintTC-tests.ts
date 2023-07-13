@@ -6,7 +6,7 @@ import { mintTCBehavior } from "../../behaviors/mintTC.behavior";
 import { CONSTANTS, tpParams } from "../../helpers/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
-describe.only("Feature: MocCARC20Deferred mint TC", function () {
+describe("Feature: MocCARC20Deferred mint TC", function () {
   let mocFunctions: any;
   let deployer: Address;
 

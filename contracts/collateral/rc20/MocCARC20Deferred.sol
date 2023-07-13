@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocCore, SafeERC20 } from "../../core/MocCore.sol";
+import { MocCoreAccessControlled, MocCore } from "../../core/MocCoreAccessControlled.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title MocCARC20: Moc Collateral Asset RC20
+ * @title MocCARC20Deferred: Moc Collateral Asset RC20 with deferred operations
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
-contract MocCARC20Deferred is MocCore {
+contract MocCARC20Deferred is MocCoreAccessControlled {
     // ------- Structs -------
     struct InitializeParams {
         InitializeCoreParams initializeCoreParams;
@@ -17,10 +18,19 @@ contract MocCARC20Deferred is MocCore {
     }
 
     // ------- Storage -------
+
     // Collateral Asset token
     IERC20 public acToken;
+
     uint256 public operIdCount;
-    mapping(uint256 => MintTCParams) public operations;
+    mapping(uint256 => MintTCParams) public operationsMintTC;
+    mapping(uint256 => MintTPParams) public operationsMintTP;
+    enum OperType {
+        mintTC,
+        redeemTC,
+        mintTP
+    }
+    mapping(uint256 => OperType) public operTypes;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -56,6 +66,8 @@ contract MocCARC20Deferred is MocCore {
     function initialize(InitializeParams calldata initializeParams_) external initializer {
         acToken = IERC20(initializeParams_.acTokenAddress);
         __MocCore_init(initializeParams_.initializeCoreParams);
+        __AccessControl_init();
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     // ------- Internal Functions -------
@@ -93,10 +105,20 @@ contract MocCARC20Deferred is MocCore {
 
     // ------- External Functions -------
 
-    function execute(uint256 operId) external {
-        MintTCParams memory params = operations[operId];
-        _mintTCto(params);
-        delete operations[operId];
+    function execute(uint256 operId) external onlyRole(EXECUTOR_ROLE) {
+        OperType operType = operTypes[operId];
+        if (operType == OperType.mintTC) {
+            MintTCParams memory params = operationsMintTC[operId];
+            _mintTCto(params);
+            delete operationsMintTC[operId];
+        } else if (operType == OperType.mintTP) {
+            MintTPParams memory params = operationsMintTP[operId];
+            _mintTPto(params);
+            delete operationsMintTP[operId];
+        }
+        // TODO: verify who keeps track of processed operations, and see if
+        // re-processing or having this deleted doesn't interfere.
+        delete operTypes[operId];
     }
 
     /**
@@ -158,7 +180,8 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = operIdCount;
-        operations[operId] = params;
+        operTypes[operId] = OperType.mintTC;
+        operationsMintTC[operId] = params;
         operIdCount++;
     }
 
@@ -168,109 +191,82 @@ contract MocCARC20Deferred is MocCore {
      * @param i_ Pegged Token index to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @return qACtotalNeeded amount of AC used to mint qTP
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId
      */
-    function mintTP(
+    function mintTP(uint256 i_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
+        return mintTPtoViaVendor(i_, qTP_, qACmax_, msg.sender, address(0));
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and receives Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Collateral Asset to this contract
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param vendor_ address who receives a markup
+     * @return operId
+     */
+    function mintTPViaVendor(
         uint256 i_,
         uint256 qTP_,
-        uint256 qACmax_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+        uint256 qACmax_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return mintTPtoViaVendor(i_, qTP_, qACmax_, msg.sender, vendor_);
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Pegged Token
+        Requires prior sender approval of Collateral Asset to this contract
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Pegged Token
+     * @return operId
+     */
+    function mintTPto(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    ) external payable returns (uint256 operId) {
+        return mintTPtoViaVendor(i_, qTP_, qACmax_, recipient_, address(0));
+    }
+
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *   Requires prior sender approval of Collateral Asset to this contract
+     * @param i_ Pegged Token index to mint
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Pegged Token
+     * @param vendor_ address who receives a markup
+     * @return operId
+     */
+    function mintTPtoViaVendor(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_,
+        address vendor_
+    ) public payable returns (uint256 operId) {
+        // Locks the funds
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
+            recipient: recipient_,
+            vendor: vendor_
         });
-        return _mintTPto(params);
+        operId = operIdCount;
+        operTypes[operId] = OperType.mintTP;
+        operationsMintTP[operId] = params;
+        operIdCount++;
     }
-
-    // /**
-    //  * @notice caller sends Collateral Asset and receives Pegged Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  *   Requires prior sender approval of Collateral Asset to this contract
-    //  * @param i_ Pegged Token index to mint
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACtotalNeeded amount of AC used to mint qTP
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTPViaVendor(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-    //     MintTPParams memory params = MintTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: vendor_
-    //     });
-    //     return _mintTPto(params);
-    // }
-
-    // /**
-    //  * @notice caller sends Collateral Asset and recipient receives Pegged Token
-    //     Requires prior sender approval of Collateral Asset to this contract
-    //  * @param i_ Pegged Token index to mint
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @param recipient_ address who receives the Pegged Token
-    //  * @return qACtotalNeeded amount of AC used to mint qTP
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTPto(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_,
-    //     address recipient_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-    //     MintTPParams memory params = MintTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: address(0)
-    //     });
-    //     return _mintTPto(params);
-    // }
-
-    // /**
-    //  * @notice caller sends Collateral Asset and recipient receives Pegged Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  *   Requires prior sender approval of Collateral Asset to this contract
-    //  * @param i_ Pegged Token index to mint
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @param recipient_ address who receives the Pegged Token
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACtotalNeeded amount of AC used to mint qTP
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTPtoViaVendor(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_,
-    //     address recipient_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-    //     MintTPParams memory params = MintTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: vendor_
-    //     });
-    //     return _mintTPto(params);
-    // }
 
     // /**
     //  * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token

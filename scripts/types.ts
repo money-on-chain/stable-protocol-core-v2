@@ -104,6 +104,8 @@ export type DeployParameters = {
     vendorsGuardianAddress: Address;
     // TC interest collector address
     tcInterestCollectorAddress: Address;
+    // Whitelisted addresses that are authorized to execute deferred Operations
+    authorizedExecutors: Address[];
   };
   // gas limit applied for each tx during deployment
   // Hardhat gas limit config cannot be used because we are using ethers.js library. https://github.com/NomicFoundation/hardhat/pull/2406

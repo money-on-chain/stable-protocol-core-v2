@@ -35,17 +35,9 @@ export const fixtureDeployedMocRC20 = memoizee(
       if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
       const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
-      const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
-      if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
-      const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
-
-      const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
-      if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
-      const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
-
-      const deployedERC20MockContract = await deployments.getOrNull("CollateralAssetCARC20");
-      if (!deployedERC20MockContract) throw new Error("No CollateralAssetCARC20 deployed.");
-      const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(deployedERC20MockContract.address, signer);
+      const mocVendors: MocVendors = MocVendors__factory.connect(await mocImpl.mocVendors(), signer);
+      const mocCollateralToken: MocRC20 = MocRC20__factory.connect(await mocImpl.tcToken(), signer);
+      const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(await mocImpl.acToken(), signer);
 
       const { alice, bob, charlie, vendor } = await getNamedAccounts();
       // Fill users accounts with balance so that they can operate
