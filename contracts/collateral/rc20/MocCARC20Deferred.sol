@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { MocCore } from "../../core/MocCore.sol";
-import { MocQueue, ENQUEUER_ROLE } from "../../queue/MocQueue.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { MocCoreAccessControlled, MocCore } from "../../core/MocCoreAccessControlled.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -12,7 +10,7 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
  * @title MocCARC20Deferred: Moc Collateral Asset RC20 with deferred operations
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
-contract MocCARC20Deferred is MocCore {
+contract MocCARC20Deferred is MocCoreAccessControlled {
     // ------- Structs -------
     struct InitializeParams {
         InitializeCoreParams initializeCoreParams;

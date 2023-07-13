@@ -302,3 +302,21 @@ export const deployCARC20 = async (
 
   return mocCARC20;
 };
+
+export const deployMocQueue = async (
+  hre: HardhatRuntimeEnvironment,
+  contractName: "MocQueueMock" | "MocQueue",
+): Promise<MocQueue> => {
+  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
+  const mocQueueMock = await mocQueueMockFactory.deploy();
+  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  await mocQueue.initialize(
+    await getGovernorAddresses(hre),
+    mocAddresses.pauserAddress,
+    queueParams.minOperWaitingBlk,
+    queueParams.maxOperPerBatch,
+    queueParams.execFeeParams,
+  );
+  return mocQueue;
+};
