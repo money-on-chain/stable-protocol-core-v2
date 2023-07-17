@@ -192,18 +192,23 @@ abstract contract MocCore is MocCommons {
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACtotalNeeded amount of AC used to mint qTC
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * // TODO: add fees
      */
 
     function _mintTCto(
         MintTCParams memory params_
-    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded) {
+    )
+        internal
+        notLiquidated
+        notPaused
+        returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
         uint256[] memory pACtps = _getPACtps();
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
         // calculates how many qAC are needed to mint TC
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACNeededToMint = _mulPrec(params_.qTC, _getPTCac(lckAC, nACgain));
-        FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -216,21 +221,30 @@ abstract contract MocCore is MocCommons {
         // if is 0 reverts because it is trying to redeem an amount below precision
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        emit TCMinted(
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qACtotalNeeded,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
+        onTCMinted(params_, qACtotalNeeded, feeCalcs);
         _depositAndMintTC(params_.qTC, qACNeededToMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+    }
+
+    // TODO: place and doc
+    function onTCMinted(
+        MintTCParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual {
+        emit TCMinted(
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
     }
 
     struct RedeemTCParams {

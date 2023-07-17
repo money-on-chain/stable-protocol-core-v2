@@ -117,10 +117,15 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      * @param qACNeeded_ amount of AC needed
      * @return change amount needed to be return to the sender after the operation is complete
      */
-    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal override returns (uint256 change) {
+    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal pure override returns (uint256 change) {
         // As we locked qACMax, we need to return the extra amount
         // TODO: review this
         change = qACMax_ - qACNeeded_;
+    }
+
+    /* solhint-disable-next-line no-empty-blocks */
+    function onTCMinted(MintTCParams memory p_, uint256 qACNeeded_, FeeCalcs memory fc_) internal override {
+        //Do nothing, as event is later on emitted with OperId in context
     }
 
     /**
@@ -184,7 +189,8 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         OperType operType = operTypes[operId];
         if (operType == OperType.mintTC) {
             MintTCParams memory params = operationsMintTC[operId];
-            _mintTCto(params);
+            (uint256 qACtotalNeeded_ /*qFeeTokenTotalNeeded*/, , FeeCalcs memory feeCalcs_) = _mintTCto(params);
+            onDeferredTCMinted(operId, params, qACtotalNeeded_, feeCalcs_);
             delete operationsMintTC[operId];
         } else if (operType == OperType.redeemTC) {
             RedeemTCParams memory params = operationsRedeemTC[operId];
@@ -265,6 +271,27 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         operTypes[operId] = OperType.mintTC;
         operationsMintTC[operId] = params;
         operIdCount++;
+    }
+
+    // TODO: place and doc
+    function onDeferredTCMinted(
+        uint256 operId_,
+        MintTCParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal {
+        // TODO: create a new event with OperId
+        emit TCMinted(
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
     }
 
     /**

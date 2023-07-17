@@ -111,7 +111,7 @@ contract MocCARC20 is MocCoreSharedRedeem {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _mintTCto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
     }
 
     /**
@@ -136,7 +136,7 @@ contract MocCARC20 is MocCoreSharedRedeem {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _mintTCto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
     }
 
     /**
@@ -160,7 +160,7 @@ contract MocCARC20 is MocCoreSharedRedeem {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _mintTCto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
     }
 
     /**
@@ -187,7 +187,7 @@ contract MocCARC20 is MocCoreSharedRedeem {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _mintTCto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
     }
 
     /**
