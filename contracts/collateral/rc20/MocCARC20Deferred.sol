@@ -27,14 +27,27 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
     // Dispatcher
     IDispatcher public dispatcher;
 
+    // Amount of Operations created
     uint256 public operIdCount;
+
     mapping(uint256 => MintTCParams) public operationsMintTC;
     mapping(uint256 => MintTPParams) public operationsMintTP;
+    mapping(uint256 => RedeemTCParams) public operationsRedeemTC;
+
+    // Set of Deferrable Operation Types
     enum OperType {
+        none, // avoid using zero as Type
         mintTC,
         redeemTC,
-        mintTP
+        mintTP,
+        redeemTP,
+        mintTCandTP,
+        redeemTCandTP,
+        swapTCforTP,
+        swapTPforTC,
+        swapTPforTP
     }
+    // OperId => Operation Type
     mapping(uint256 => OperType) public operTypes;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -173,6 +186,10 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
             MintTCParams memory params = operationsMintTC[operId];
             _mintTCto(params);
             delete operationsMintTC[operId];
+        } else if (operType == OperType.redeemTC) {
+            RedeemTCParams memory params = operationsRedeemTC[operId];
+            _redeemTCto(params);
+            delete operationsRedeemTC[operId];
         } else if (operType == OperType.mintTP) {
             MintTPParams memory params = operationsMintTP[operId];
             _mintTPto(params);
@@ -188,9 +205,9 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         Requires prior sender approval of Collateral Asset to this contract 
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
-     * @return orderID TODO
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTC(uint256 qTC_, uint256 qACmax_) external payable returns (uint256 orderID) {
+    function mintTC(uint256 qTC_, uint256 qACmax_) external payable returns (uint256 operId) {
         return mintTCtoViaVendor(qTC_, qACmax_, msg.sender, address(0));
     }
 
@@ -201,6 +218,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCViaVendor(uint256 qTC_, uint256 qACmax_, address vendor_) external payable returns (uint256 operId) {
         return mintTCtoViaVendor(qTC_, qACmax_, msg.sender, vendor_);
@@ -212,6 +230,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      * @param qTC_ amount of Collateral Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCto(uint256 qTC_, uint256 qACmax_, address recipient_) external payable returns (uint256 operId) {
         return mintTCtoViaVendor(qTC_, qACmax_, recipient_, address(0));
@@ -225,6 +244,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCtoViaVendor(
         uint256 qTC_,
@@ -244,6 +264,71 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTC;
         operationsMintTC[operId] = params;
+        operIdCount++;
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external payable returns (uint256 operId) {
+        return redeemTCtoViaVendor(qTC_, qACmin_, msg.sender, address(0));
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCViaVendor(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return redeemTCtoViaVendor(qTC_, qACmin_, msg.sender, vendor_);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCto(uint256 qTC_, uint256 qACmin_, address recipient_) external payable returns (uint256 operId) {
+        return redeemTCtoViaVendor(qTC_, qACmin_, recipient_, address(0));
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCtoViaVendor(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address recipient_,
+        address vendor_
+    ) public payable returns (uint256 operId) {
+        RedeemTCParams memory params = RedeemTCParams({
+            qTC: qTC_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
+        });
+        operId = operIdCount;
+        operTypes[operId] = OperType.redeemTC;
+        operationsRedeemTC[operId] = params;
         operIdCount++;
     }
 

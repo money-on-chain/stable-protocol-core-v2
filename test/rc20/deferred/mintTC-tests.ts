@@ -10,7 +10,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
   let mocFunctions: any;
   let deployer: Address;
 
-  describe("GIVEN a MocCARC20 implementation deployed", function () {
+  describe("GIVEN a MocCARC20Deferred implementation deployed", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams);
