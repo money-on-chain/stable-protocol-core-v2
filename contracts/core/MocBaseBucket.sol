@@ -436,7 +436,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 ctargemaCA_,
         uint256 lckAC_,
         uint256 nACgain_
-    ) internal view returns (uint256 tcAvailableToRedeem) {
+    ) internal view virtual returns (uint256 tcAvailableToRedeem) {
         int256 tcAvailableToRedeemSigned = _getTCAvailableToRedeemSigned(ctargemaCA_, lckAC_, nACgain_);
         // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
         if (tcAvailableToRedeemSigned < 0 || _getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
@@ -480,7 +480,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 pACtp_,
         uint256 lckAC_,
         uint256 nACgain_
-    ) internal view returns (uint256 tpAvailableToMint) {
+    ) internal view virtual returns (uint256 tpAvailableToMint) {
         int256 tpAvailableToMintSigned = _getTPAvailableToMintSigned(
             ctargemaCA_,
             ctargemaTP_,
@@ -652,7 +652,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return cglob [PREC]
      */
-    function _getCglb(uint256 lckAC_, uint256 nACgain_) internal view returns (uint256 cglob) {
+    function _getCglb(uint256 lckAC_, uint256 nACgain_) internal view virtual returns (uint256 cglob) {
         // slither-disable-next-line incorrect-equality
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = [N] * [PREC] / [N]
