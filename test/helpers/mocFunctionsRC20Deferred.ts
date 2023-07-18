@@ -305,7 +305,7 @@ const tpTransfer =
   };
 
 // TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready
-const getEventArgs = args => [anyValue, ...args];
+const getEventArgs = args => [...args, anyValue];
 
 export const mocFunctionsRC20Deferred = async ({
   mocImpl,

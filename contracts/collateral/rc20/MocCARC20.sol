@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocCoreSharedRedeem, MocCore } from "../../core/MocCoreSharedRedeem.sol";
+import { MocCoreShared, MocCore } from "../../core/MocCoreShared.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -9,7 +9,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @title MocCARC20: Moc Collateral Asset RC20
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
-contract MocCARC20 is MocCoreSharedRedeem {
+contract MocCARC20 is MocCoreShared {
     // ------- Structs -------
     struct InitializeParams {
         InitializeCoreParams initializeCoreParams;

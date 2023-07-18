@@ -4,12 +4,12 @@ pragma solidity 0.8.18;
 import { MocCore } from "./MocCore.sol";
 
 /**
- * @title MocCoreSharedRedeem
- * @notice Extends MocCore, with redeem external shared redeem functions.
+ * @title MocCoreShared
+ * @notice Extends MocCore, with redeem external shared redeem functions and definitions.
  * @dev This abstract contracts, is a just a middle step between MocCore and
- * RC20 and Coinbase implementation, as they share all redeem methods.
+ * RC20 and Coinbase implementation, as they share all redeem methods and events.
  */
-abstract contract MocCoreSharedRedeem is MocCore {
+abstract contract MocCoreShared is MocCore {
     // ------- Events -------
     event TCMinted(
         address indexed sender_,
@@ -20,7 +20,7 @@ abstract contract MocCoreSharedRedeem is MocCore {
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
         uint256 qFeeTokenVendorMarkup_,
-        address vendor
+        address vendor_
     );
 
     /**

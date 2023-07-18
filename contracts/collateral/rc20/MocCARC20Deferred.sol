@@ -13,7 +13,6 @@ import { IDispatcher } from "../../interfaces/IDispatcher.sol";
 contract MocCARC20Deferred is MocCoreAccessControlled {
     // ------- Events -------
     event TCMinted(
-        uint256 indexed operId_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -22,7 +21,8 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         uint256 qFeeToken_,
         uint256 qACVendorMarkup_,
         uint256 qFeeTokenVendorMarkup_,
-        address vendor
+        address vendor_,
+        uint256 operId_
     );
 
     // ------- Structs -------
@@ -295,7 +295,6 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         FeeCalcs memory feeCalcs_
     ) internal {
         emit TCMinted(
-            operId_,
             params_.sender,
             params_.recipient,
             params_.qTC,
@@ -304,7 +303,8 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
             feeCalcs_.qFeeToken,
             feeCalcs_.qACVendorMarkup,
             feeCalcs_.qFeeTokenVendorMarkup,
-            params_.vendor
+            params_.vendor,
+            operId_
         );
     }
 

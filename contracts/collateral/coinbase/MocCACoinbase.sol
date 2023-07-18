@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocCoreSharedRedeem, MocCore } from "../../core/MocCoreSharedRedeem.sol";
+import { MocCoreShared, MocCore } from "../../core/MocCoreShared.sol";
 
 /**
  * @title MocCACoinbase: Moc Collateral Asset Coinbase
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
-contract MocCACoinbase is MocCoreSharedRedeem {
+contract MocCACoinbase is MocCoreShared {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
