@@ -11,6 +11,20 @@ import { IDispatcher } from "../../interfaces/IDispatcher.sol";
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
 contract MocCARC20Deferred is MocCoreAccessControlled {
+    // ------- Events -------
+    event TCMinted(
+        uint256 indexed operId_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
+    );
+
     // ------- Structs -------
     struct InitializeParams {
         InitializeCoreParams initializeCoreParams;
@@ -280,8 +294,8 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         uint256 qACtotalNeeded_,
         FeeCalcs memory feeCalcs_
     ) internal {
-        // TODO: create a new event with OperId
         emit TCMinted(
+            operId_,
             params_.sender,
             params_.recipient,
             params_.qTC,

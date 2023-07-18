@@ -13,17 +13,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
  */
 abstract contract MocCore is MocCommons {
     // ------- Events -------
-    event TCMinted(
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
     event TCRedeemed(
         address indexed sender_,
         address indexed recipient_,
@@ -233,19 +222,7 @@ abstract contract MocCore is MocCommons {
         MintTCParams memory params_,
         uint256 qACtotalNeeded_,
         FeeCalcs memory feeCalcs_
-    ) internal virtual {
-        emit TCMinted(
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qACtotalNeeded_,
-            feeCalcs_.qACFee,
-            feeCalcs_.qFeeToken,
-            feeCalcs_.qACVendorMarkup,
-            feeCalcs_.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
-    }
+    ) internal virtual;
 
     struct RedeemTCParams {
         uint256 qTC;

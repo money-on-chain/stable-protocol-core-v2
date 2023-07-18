@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { ethers, getNamedAccounts } from "hardhat";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { pEth } from "./utils";
 
 const executeLastOperation = async mocImpl => {
@@ -303,6 +304,9 @@ const tpTransfer =
     return mocPeggedTokens[i].connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
+// TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready
+const getEventArgs = args => [anyValue, ...args];
+
 export const mocFunctionsRC20Deferred = async ({
   mocImpl,
   collateralAsset,
@@ -337,4 +341,5 @@ export const mocFunctionsRC20Deferred = async ({
   tpBalanceOf: tpBalanceOf(mocPeggedTokens),
   tpTransfer: tpTransfer(mocPeggedTokens),
   pokePrice: pokePrice(priceProviders),
+  getEventArgs: getEventArgs,
 });

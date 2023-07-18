@@ -10,6 +10,19 @@ import { MocCore } from "./MocCore.sol";
  * RC20 and Coinbase implementation, as they share all redeem methods.
  */
 abstract contract MocCoreSharedRedeem is MocCore {
+    // ------- Events -------
+    event TCMinted(
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor
+    );
+
     /**
      * @notice caller sends Collateral Token and receives Collateral Asset
      * @param qTC_ amount of Collateral Token to redeem
@@ -99,6 +112,24 @@ abstract contract MocCoreSharedRedeem is MocCore {
             vendor: vendor_
         });
         return _redeemTCto(params);
+    }
+
+    function onTCMinted(
+        MintTCParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TCMinted(
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
     }
 
     /**

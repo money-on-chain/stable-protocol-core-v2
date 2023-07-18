@@ -81,9 +81,11 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
+        let args = [operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+        if (mocFunctions.getEventArgs) args = mocFunctions.getEventArgs(args);
         await expect(tx)
           .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
+          .withArgs(...args);
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
         // from: Zero Address
