@@ -20,6 +20,16 @@ const redeemTCBehavior = function () {
   const TP_1 = 1;
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
+  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocImpl, "TCRedeemed")
+      .withArgs(...args);
+  };
+
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
@@ -109,9 +119,8 @@ const redeemTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(operator, operator, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor);
+          const args = [operator, operator, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -156,19 +165,9 @@ const redeemTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(300),
-              pEth(300 * 0.95),
-              pEth(300 * 0.05),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          const receiver = mocContracts.mocWrapper?.address || bob;
+          const args = [operator, receiver, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice redeems 100 TC via vendor", function () {
@@ -199,9 +198,8 @@ const redeemTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 10% qAC
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(operator, operator, pEth(100), pEth(100 * 0.85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
+          const args = [operator, operator, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice redeems 100 TC to bob via vendor", function () {
@@ -218,19 +216,9 @@ const redeemTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 10% qAC
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(100),
-              pEth(100 * 0.85),
-              pEth(100 * 0.05),
-              0,
-              pEth(100 * 0.1),
-              0,
-              vendor,
-            );
+          const receiver = mocContracts.mocWrapper?.address || bob;
+          const args = [operator, receiver, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("AND alice mints 2350 TP0, so there are 254.5859272 TC available to reedem", function () {
@@ -553,9 +541,8 @@ const redeemTCBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+            const args = [operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
         describe("WHEN alice redeems 100 TC to bob", function () {
@@ -592,19 +579,9 @@ const redeemTCBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(
-                operator,
-                mocContracts.mocWrapper?.address || bob,
-                pEth(100),
-                pEth(100),
-                0,
-                pEth(100 * 0.05 * 0.5),
-                0,
-                0,
-                noVendor,
-              );
+            const receiver = mocContracts.mocWrapper?.address || bob;
+            const args = [operator, receiver, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
       });

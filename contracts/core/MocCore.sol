@@ -13,17 +13,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
  */
 abstract contract MocCore is MocCommons {
     // ------- Events -------
-    event TCRedeemed(
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
     event TPMinted(
         uint256 indexed i_,
         address indexed sender_,
@@ -134,7 +123,7 @@ abstract contract MocCore is MocCommons {
         __MocCommons_init_unchained(initializeCoreParams_.mocVendors);
     }
 
-    // ------- Internal Functions -------
+    // ------- Internal abstract Functions -------
 
     /**
      * @notice transfer Collateral Asset
@@ -162,6 +151,32 @@ abstract contract MocCore is MocCommons {
      */
     function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal virtual returns (uint256 change);
 
+    /**
+     * @notice hook after the TC is minted, with operation information result
+     * @param params_ mintTCto function params
+     * @param qACtotalNeeded_ amount of AC used to mint qTC
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCMinted(
+        MintTCParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice hook after the TC is redeemed, with operation information result
+     * @param params_ mintTCto function params
+     * @param qACRedeemed_ amount of AC redeemed
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCRedeemed(
+        RedeemTCParams memory params_,
+        uint256 qACRedeemed_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    // ------- Internal Functions -------
+
     struct MintTCParams {
         uint256 qTC;
         uint256 qACmax;
@@ -181,9 +196,8 @@ abstract contract MocCore is MocCommons {
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACtotalNeeded amount of AC used to mint qTC
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
-     * // TODO: add fees
+     * @return feeCalcs platform fee detail breakdown
      */
-
     function _mintTCto(
         MintTCParams memory params_
     )
@@ -217,13 +231,6 @@ abstract contract MocCore is MocCommons {
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
     }
 
-    // TODO: place and doc
-    function onTCMinted(
-        MintTCParams memory params_,
-        uint256 qACtotalNeeded_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
     struct RedeemTCParams {
         uint256 qTC;
         uint256 qACmin;
@@ -247,7 +254,12 @@ abstract contract MocCore is MocCommons {
 
     function _redeemTCto(
         RedeemTCParams memory params_
-    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded) {
+    )
+        internal
+        notLiquidated
+        notPaused
+        returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
@@ -260,7 +272,6 @@ abstract contract MocCore is MocCommons {
         // if is 0 reverts because it is trying to redeem an amount below precision
         // slither-disable-next-line incorrect-equality
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
-        FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -270,17 +281,8 @@ abstract contract MocCore is MocCommons {
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
-        emit TCRedeemed(
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qACtoRedeem,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
+        onTCRedeemed(params_, qACtoRedeem, feeCalcs);
+
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);

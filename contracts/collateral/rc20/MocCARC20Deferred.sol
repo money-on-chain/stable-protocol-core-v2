@@ -24,6 +24,18 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         address vendor_,
         uint256 operId_
     );
+    event TCRedeemed(
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_,
+        uint256 operId_
+    );
 
     // ------- Structs -------
     struct InitializeParams {
@@ -137,10 +149,14 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         change = qACMax_ - qACNeeded_;
     }
 
-    /* solhint-disable-next-line no-empty-blocks */
-    function onTCMinted(MintTCParams memory p_, uint256 qACNeeded_, FeeCalcs memory fc_) internal override {
-        //Do nothing, as event is later on emitted with OperId in context
-    }
+    // Do nothing on Operation hooks, as event is later on emitted with OperId in context
+
+    /* solhint-disable no-empty-blocks */
+    function onTCMinted(MintTCParams memory p_, uint256 qAC_, FeeCalcs memory fc_) internal override {}
+
+    function onTCRedeemed(RedeemTCParams memory p_, uint256 qAC_, FeeCalcs memory fc_) internal override {}
+
+    /* solhint-enable no-empty-blocks */
 
     /**
      * @notice get combined global coverage
@@ -197,27 +213,87 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         return tpAvailableToMint;
     }
 
+    /**
+     * @notice hook after mintedTC Operation execution, emits the TCMinted event
+     * @param operId_ Identifier to track the Operation lifecycle
+     * @param params_ TCMint params
+     * @param qACtotalNeeded_ amount of AC used to mint qTC
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onDeferredTCMinted(
+        uint256 operId_,
+        MintTCParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal {
+        emit TCMinted(
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor,
+            operId_
+        );
+    }
+
+    /**
+     * @notice hook after redeemTC Operation execution, emits the TCRedeemed event
+     * @param operId_ Identifier to track the Operation lifecycle
+     * @param params_ mintTCto function params
+     * @param qACRedeemed_ amount of AC redeemed
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onDeferredTCRedeemed(
+        uint256 operId_,
+        RedeemTCParams memory params_,
+        uint256 qACRedeemed_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual {
+        emit TCRedeemed(
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qACRedeemed_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor,
+            operId_
+        );
+    }
+
     // ------- External Functions -------
 
-    function execute(uint256 operId) external onlyRole(EXECUTOR_ROLE) {
-        OperType operType = operTypes[operId];
+    /**
+     * @notice registered executors can process an existent Operations given by the `operId_`
+     * @dev can revert for a number of reason, throws events according to the Oper type
+     * @param operId_ Identifier to track the Operation lifecycle
+     */
+    function execute(uint256 operId_) external onlyRole(EXECUTOR_ROLE) {
+        OperType operType = operTypes[operId_];
         if (operType == OperType.mintTC) {
-            MintTCParams memory params = operationsMintTC[operId];
-            (uint256 qACtotalNeeded_ /*qFeeTokenTotalNeeded*/, , FeeCalcs memory feeCalcs_) = _mintTCto(params);
-            onDeferredTCMinted(operId, params, qACtotalNeeded_, feeCalcs_);
-            delete operationsMintTC[operId];
+            MintTCParams memory params = operationsMintTC[operId_];
+            (uint256 qACtotalNeeded, , FeeCalcs memory feeCalcs) = _mintTCto(params);
+            onDeferredTCMinted(operId_, params, qACtotalNeeded, feeCalcs);
+            delete operationsMintTC[operId_];
         } else if (operType == OperType.redeemTC) {
-            RedeemTCParams memory params = operationsRedeemTC[operId];
-            _redeemTCto(params);
-            delete operationsRedeemTC[operId];
+            RedeemTCParams memory params = operationsRedeemTC[operId_];
+            (uint256 qACtoRedeem, , FeeCalcs memory feeCalcs) = _redeemTCto(params);
+            onDeferredTCRedeemed(operId_, params, qACtoRedeem, feeCalcs);
+            delete operationsRedeemTC[operId_];
         } else if (operType == OperType.mintTP) {
-            MintTPParams memory params = operationsMintTP[operId];
+            MintTPParams memory params = operationsMintTP[operId_];
             _mintTPto(params);
-            delete operationsMintTP[operId];
+            delete operationsMintTP[operId_];
         }
-        // TODO: verify who keeps track of processed operations, and see if
+        // TODO: verify who/how keeps track of processed operations, and see if
         // re-processing or having this deleted doesn't interfere.
-        delete operTypes[operId];
+        delete operTypes[operId_];
     }
 
     /**
@@ -285,27 +361,6 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         operTypes[operId] = OperType.mintTC;
         operationsMintTC[operId] = params;
         operIdCount++;
-    }
-
-    // TODO: place and doc
-    function onDeferredTCMinted(
-        uint256 operId_,
-        MintTCParams memory params_,
-        uint256 qACtotalNeeded_,
-        FeeCalcs memory feeCalcs_
-    ) internal {
-        emit TCMinted(
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qACtotalNeeded_,
-            feeCalcs_.qACFee,
-            feeCalcs_.qFeeToken,
-            feeCalcs_.qACVendorMarkup,
-            feeCalcs_.qFeeTokenVendorMarkup,
-            params_.vendor,
-            operId_
-        );
     }
 
     /**

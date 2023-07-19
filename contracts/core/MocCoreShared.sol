@@ -22,6 +22,17 @@ abstract contract MocCoreShared is MocCore {
         uint256 qFeeTokenVendorMarkup_,
         address vendor_
     );
+    event TCRedeemed(
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
 
     /**
      * @notice caller sends Collateral Token and receives Collateral Asset
@@ -38,7 +49,7 @@ abstract contract MocCoreShared is MocCore {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _redeemTCto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTCto(params);
     }
 
     /**
@@ -62,7 +73,7 @@ abstract contract MocCoreShared is MocCore {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _redeemTCto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTCto(params);
     }
 
     /**
@@ -85,7 +96,7 @@ abstract contract MocCoreShared is MocCore {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _redeemTCto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTCto(params);
     }
 
     /**
@@ -111,9 +122,15 @@ abstract contract MocCoreShared is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _redeemTCto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTCto(params);
     }
 
+    /**
+     * @notice hook after the TC is minted with operation information result
+     * @param params_ mintTCto function params
+     * @param qACtotalNeeded_ amount of AC used to mint qTC
+     * @param feeCalcs_ platform fee detail breakdown
+     */
     function onTCMinted(
         MintTCParams memory params_,
         uint256 qACtotalNeeded_,
@@ -124,6 +141,30 @@ abstract contract MocCoreShared is MocCore {
             params_.recipient,
             params_.qTC,
             qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice hook after the TC is redeemed, with operation information result
+     * @param params_ mintTCto function params
+     * @param qACRedeemed_ amount of AC redeemed
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCRedeemed(
+        RedeemTCParams memory params_,
+        uint256 qACRedeemed_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TCRedeemed(
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qACRedeemed_,
             feeCalcs_.qACFee,
             feeCalcs_.qFeeToken,
             feeCalcs_.qACVendorMarkup,

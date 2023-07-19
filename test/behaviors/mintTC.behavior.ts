@@ -20,6 +20,16 @@ const mintTCBehavior = function () {
   const TP_0 = 0;
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
+  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocImpl, "TCMinted")
+      .withArgs(...args);
+  };
+
   describe("Feature: mint Collateral Token", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
@@ -81,11 +91,8 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
-        let args = [operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
-        if (mocFunctions.getEventArgs) args = mocFunctions.getEventArgs(args);
-        await expect(tx)
-          .to.emit(mocImpl, "TCMinted")
-          .withArgs(...args);
+        const args = [operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+        await expectEvent(tx, args);
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
         // from: Zero Address
@@ -157,9 +164,8 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 10% qAC
         // qFeeTokenVendorMarkup: 0
-        await expect(tx)
-          .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
+        const args = [operator, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
+        await expectEvent(tx, args);
       });
     });
     describe("WHEN alice mints 100 TC to bob via vendor", function () {
@@ -176,9 +182,8 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 10% qAC
         // qFeeTokenVendorMarkup: 0
-        await expect(tx)
-          .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
+        const args = [operator, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
+        await expectEvent(tx, args);
       });
     });
     describe("WHEN feeRetainer is set to 20% AND alice sends 105 Asset to mint 100 TC to bob", function () {
@@ -212,9 +217,8 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
-        await expect(tx)
-          .to.emit(mocImpl, "TCMinted")
-          .withArgs(operator, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
+        const args = [operator, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+        await expectEvent(tx, args);
       });
     });
     describe("GIVEN 3000 TC and 100 TP are minted", function () {
@@ -398,9 +402,8 @@ const mintTCBehavior = function () {
           // qFeeToken: 100 (5% * 50%)
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCMinted")
-            .withArgs(operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+          const args = [operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice mints 100 TC to bob", function () {
@@ -435,9 +438,8 @@ const mintTCBehavior = function () {
           // qFeeToken: 100 (5% * 50%)
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCMinted")
-            .withArgs(operator, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+          const args = [operator, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
       });
     });
