@@ -244,6 +244,31 @@ const redeemTCBehavior = function () {
         ctarg = 5.54
         => TC available to redeem = 254.5859272
         */
+        describe("AND Pegged Token has been revaluated to 37.9", function () {
+          /*  
+            nAC = 310    
+            nTP = 2350
+            lckAC = 62
+            => coverage = 5
+        */
+          beforeEach(async function () {
+            await mocFunctions.pokePrice(TP_0, "37.9");
+          });
+          it("THEN the coverage is 5", async function () {
+            assertPrec("4.999574468085106383", await mocImpl.getCglb());
+          });
+          it("THEN the are -0.0319 TC available to redeem", async function () {
+            assertPrec("-0.031918289179699965", await mocImpl.getTCAvailableToRedeem());
+          });
+          describe("WHEN Alice tries to redeem 1 TC", function () {
+            it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
+              await expect(mocFunctions.redeemTC({ from: alice, qTC: 1 })).to.be.revertedWithCustomError(
+                mocImpl,
+                ERRORS.LOW_COVERAGE,
+              );
+            });
+          });
+        });
         describe("AND Collateral Asset relation with Pegged Token price falls to 1/15.5", function () {
           beforeEach(async function () {
             await mocFunctions.pokePrice(0, "0.064516129032258064");
