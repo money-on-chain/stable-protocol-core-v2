@@ -5,12 +5,12 @@ import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
-import { MocCACoinbase, MocCARC20 } from "../../typechain";
+import { MocCACoinbase, MocCARC20, MocCARC20Deferred } from "../../typechain";
 
 const mintTCBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
-  let mocImpl: MocCACoinbase | MocCARC20;
+  let mocImpl: MocCACoinbase | MocCARC20 | MocCARC20Deferred;
   let deployer: Address;
   let alice: Address;
   let bob: Address;
@@ -26,7 +26,7 @@ const mintTCBehavior = function () {
       args = mocFunctions.getEventArgs(args);
     }
     await expect(tx)
-      .to.emit(mocImpl, "TCMinted")
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCMinted")
       .withArgs(...args);
   };
 

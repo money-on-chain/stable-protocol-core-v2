@@ -1,13 +1,16 @@
 // @ts-nocheck
 import { ethers, getNamedAccounts } from "hardhat";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
+import { MocQueue__factory } from "../../typechain";
 import { pEth } from "./utils";
 
-const executeLastOperation = async mocImpl => {
-  const operIdCount = await mocImpl.operIdCount();
+const executeLastOperation = mocImpl => async () => {
   const { deployer } = await getNamedAccounts();
   const whitelistedExecutor = await ethers.getSigner(deployer);
-  return mocImpl.connect(whitelistedExecutor).execute(operIdCount - 1);
+  // TODO: maybe cash this
+  const mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), ethers.provider.getSigner());
+  const operIdCount = await mocQueue.operIdCount();
+  return mocQueue.connect(whitelistedExecutor).execute(operIdCount - 1);
 };
 
 const mintTC =
@@ -21,7 +24,7 @@ const mintTC =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTC(qTC, qACmax);
     else await mocImpl.connect(signer).mintTCViaVendor(qTC, qACmax, vendor);
-    return execute && executeLastOperation(mocImpl);
+    return execute && executeLastOperation(mocImpl)();
   };
 
 const mintTCto =
@@ -35,7 +38,7 @@ const mintTCto =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTCto(qTC, qACmax, to);
     else await mocImpl.connect(signer).mintTCtoViaVendor(qTC, qACmax, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const redeemTC =
@@ -49,7 +52,7 @@ const redeemTC =
     await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
     if (!vendor) await mocImpl.connect(signer).redeemTC(qTC, qACmin);
     else await mocImpl.connect(signer).redeemTCViaVendor(qTC, qACmin, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const redeemTCto =
@@ -63,7 +66,7 @@ const redeemTCto =
     await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
     if (!vendor) await mocImpl.connect(signer).redeemTCto(qTC, qACmin, to);
     else await mocImpl.connect(signer).redeemTCtoViaVendor(qTC, qACmin, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const mintTP =
@@ -77,7 +80,7 @@ const mintTP =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTP(i, qTP, qACmax);
     else await mocImpl.connect(signer).mintTPViaVendor(i, qTP, qACmax, vendor);
-    return execute && executeLastOperation(mocImpl);
+    return execute && executeLastOperation(mocImpl)();
   };
 
 const mintTPto =
@@ -91,7 +94,7 @@ const mintTPto =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTPto(i, qTP, qACmax, to);
     else await mocImpl.connect(signer).mintTPtoViaVendor(i, qTP, qACmax, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const redeemTP =
@@ -104,7 +107,7 @@ const redeemTP =
     }
     if (!vendor) await mocImpl.connect(signer).redeemTP(i, qTP, qACmin);
     else await mocImpl.connect(signer).redeemTPViaVendor(i, qTP, qACmin, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const redeemTPto =
@@ -117,7 +120,7 @@ const redeemTPto =
     }
     if (!vendor) await mocImpl.connect(signer).redeemTPto(i, qTP, qACmin, to);
     else await mocImpl.connect(signer).redeemTPtoViaVendor(i, qTP, qACmin, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const mintTCandTP =
@@ -131,7 +134,7 @@ const mintTCandTP =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTCandTP(i, qTP, qACmax);
     else await mocImpl.connect(signer).mintTCandTPViaVendor(i, qTP, qACmax, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const mintTCandTPto =
@@ -145,7 +148,7 @@ const mintTCandTPto =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTCandTPto(i, qTP, qACmax, to);
     else await mocImpl.connect(signer).mintTCandTPtoViaVendor(i, qTP, qACmax, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const redeemTCandTP =
@@ -159,7 +162,7 @@ const redeemTCandTP =
     }
     if (!vendor) await mocImpl.connect(signer).redeemTCandTP(i, qTC, qTP, qACmin);
     else await mocImpl.connect(signer).redeemTCandTPViaVendor(i, qTC, qTP, qACmin, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const redeemTCandTPto =
@@ -173,7 +176,7 @@ const redeemTCandTPto =
     }
     if (!vendor) await mocImpl.connect(signer).redeemTCandTPto(i, qTC, qTP, qACmin, to);
     else await mocImpl.connect(signer).redeemTCandTPtoViaVendor(i, qTC, qTP, qACmin, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const liqRedeemTP =
@@ -202,7 +205,7 @@ const swapTPforTP =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).swapTPforTP(iFrom, iTo, qTP, qTPmin, qACmax);
     else await mocImpl.connect(signer).swapTPforTPViaVendor(iFrom, iTo, qTP, qTPmin, qACmax, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const swapTPforTPto =
@@ -217,7 +220,7 @@ const swapTPforTPto =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).swapTPforTPto(iFrom, iTo, qTP, qTPmin, qACmax, to);
     else await mocImpl.connect(signer).swapTPforTPtoViaVendor(iFrom, iTo, qTP, qTPmin, qACmax, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const swapTPforTC =
@@ -232,7 +235,7 @@ const swapTPforTC =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).swapTPforTC(i, qTP, qTCmin, qACmax);
     else await mocImpl.connect(signer).swapTPforTCViaVendor(i, qTP, qTCmin, qACmax, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const swapTPforTCto =
@@ -247,7 +250,7 @@ const swapTPforTCto =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).swapTPforTCto(i, qTP, qTCmin, qACmax, to);
     else await mocImpl.connect(signer).swapTPforTCtoViaVendor(i, qTP, qTCmin, qACmax, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const swapTCforTP =
@@ -262,7 +265,7 @@ const swapTCforTP =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).swapTCforTP(i, qTC, qTPmin, qACmax);
     else await mocImpl.connect(signer).swapTCforTPViaVendor(i, qTC, qTPmin, qACmax, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const swapTCforTPto =
@@ -277,7 +280,7 @@ const swapTCforTPto =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).swapTCforTPto(i, qTC, qTPmin, qACmax, to);
     else await mocImpl.connect(signer).swapTCforTPtoViaVendor(i, qTC, qTPmin, qACmax, to, vendor);
-    return executeLastOperation(mocImpl);
+    return executeLastOperation(mocImpl)();
   };
 
 const balanceOf = asset => account => asset.balanceOf(account);
@@ -313,6 +316,7 @@ export const mocFunctionsRC20Deferred = async ({
   mocCollateralToken,
   mocPeggedTokens,
   priceProviders,
+  mocQueue,
 }) => ({
   mintTC: mintTC(mocImpl, collateralAsset),
   mintTCto: mintTCto(mocImpl, collateralAsset),
@@ -342,4 +346,6 @@ export const mocFunctionsRC20Deferred = async ({
   tpTransfer: tpTransfer(mocPeggedTokens),
   pokePrice: pokePrice(priceProviders),
   getEventArgs: getEventArgs,
+  executeLastOperation: executeLastOperation(mocImpl),
+  getEventSource: () => mocQueue,
 });

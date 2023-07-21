@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocCore } from "./MocCore.sol";
+import { MocUpgradable } from "../governance/MocUpgradable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /**
- * @title MocCoreAccessControlled
- * @notice Extends MocCore, with access control capabilities
+ * @title MocAccessControlled
+ * @notice Extends Moc Upgradable capabilities, with access control capabilities
  * @dev grant and revoke functions are overwritten so that they are also
  *      compatible with governance authorization mechanism.
  */
-abstract contract MocCoreAccessControlled is MocCore, AccessControlUpgradeable {
-    bytes32 internal constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-
+abstract contract MocAccessControlled is MocUpgradable, AccessControlUpgradeable {
     // ------- Public Functions -------
 
     /**

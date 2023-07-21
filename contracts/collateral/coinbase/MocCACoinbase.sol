@@ -181,7 +181,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _mintTPto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
     }
 
     /**
@@ -207,7 +207,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _mintTPto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
     }
 
     /**
@@ -232,7 +232,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _mintTPto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
     }
 
     /**
@@ -260,7 +260,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _mintTPto(params);
+        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
     }
 
     /**
@@ -272,13 +272,13 @@ contract MocCACoinbase is MocCoreShared {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to mint
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTCMinted amount of Collateral Token minted
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTP(
         uint256 i_,
         uint256 qTP_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -287,7 +287,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _mintTCandTPto(params);
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
     }
 
     /**
@@ -301,14 +301,14 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of Pegged Token to mint
      * @param vendor_ address who receives a markup
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTCMinted amount of Collateral Token minted
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPViaVendor(
         uint256 i_,
         uint256 qTP_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -317,7 +317,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _mintTCandTPto(params);
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
     }
 
     /**
@@ -330,14 +330,14 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of Pegged Token to mint
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTCMinted amount of Collateral Token minted
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPto(
         uint256 i_,
         uint256 qTP_,
         address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -346,7 +346,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _mintTCandTPto(params);
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
     }
 
     /**
@@ -361,7 +361,7 @@ contract MocCACoinbase is MocCoreShared {
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @param vendor_ address who receives a markup
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTCMinted amount of Collateral Token minted
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPtoViaVendor(
@@ -369,7 +369,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTP_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -378,7 +378,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _mintTCandTPto(params);
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
     }
 
     /**
@@ -407,7 +407,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _swapTPforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
     }
 
     /**
@@ -439,7 +439,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _swapTPforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
     }
 
     /**
@@ -470,7 +470,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _swapTPforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
     }
 
     /**
@@ -504,7 +504,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _swapTPforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
     }
 
     /**
@@ -530,7 +530,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _swapTPforTCto(params);
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
     }
 
     /**
@@ -559,7 +559,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _swapTPforTCto(params);
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
     }
 
     /**
@@ -587,7 +587,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _swapTPforTCto(params);
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
     }
 
     /**
@@ -618,7 +618,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _swapTPforTCto(params);
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
     }
 
     /**
@@ -644,7 +644,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _swapTCforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
     }
 
     /**
@@ -673,7 +673,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _swapTCforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
     }
 
     /**
@@ -701,7 +701,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _swapTCforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
     }
 
     /**
@@ -732,7 +732,7 @@ contract MocCACoinbase is MocCoreShared {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _swapTCforTPto(params);
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
     }
 
     /**

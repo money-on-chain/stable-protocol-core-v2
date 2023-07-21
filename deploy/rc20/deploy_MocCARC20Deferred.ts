@@ -1,31 +1,24 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { getNetworkDeployParams, deployCARC20 } from "../../scripts/utils";
-import { DEFAULT_ADMIN_ROLE, EXECUTOR_ROLE } from "../../test/helpers/utils";
+import { deployCARC20 } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts } = hre;
-  const { deployer } = await getNamedAccounts();
-  const { mocAddresses } = getNetworkDeployParams(hre);
+  const { deployments } = hre;
   const signer = ethers.provider.getSigner();
 
-  const mocCARC20 = await deployCARC20(hre, "MocCARC20Deferred", "CollateralTokenCARC20Deferred");
+  const deployedMocQueue = await deployments.getOrNull("MocQueueProxy");
+  if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
 
-  console.log("Whitelisting executors");
-  const mocRC20Proxy = await ethers.getContractAt("MocCARC20Deferred", mocCARC20.address, signer);
+  const mocCARC20 = await deployCARC20(hre, "MocCARC20Deferred", "CollateralTokenCARC20Deferred", {
+    mocQueue: deployedMocQueue.address,
+  });
 
-  for (let authorizedExecutor in mocAddresses.authorizedExecutors) {
-    console.log(`Whitelisting executor: ${authorizedExecutor}`);
-    await mocRC20Proxy.grantRole(EXECUTOR_ROLE, authorizedExecutor);
-  }
+  const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
 
-  if (hre.network.tags.local) {
-    console.log(`Whitelisting executor deployer: ${deployer}`);
-    await mocRC20Proxy.grantRole(EXECUTOR_ROLE, deployer);
-  }
-  // Executor Role admin is reserved for Governance
-  await mocRC20Proxy.renounceRole(DEFAULT_ADMIN_ROLE, deployer);
+  // TODO: Deployer has admin priviledges as this stage
+  console.log(`Registering mocRC20 bucket as enqueuer: ${mocCARC20.address}`);
+  await mocQueue.registerBucket(mocCARC20.address);
 
   return hre.network.live; // prevents re execution on live networks
 };
@@ -33,4 +26,4 @@ export default deployFunc;
 
 deployFunc.id = "deployed_MocCARC20Deferred"; // id required to prevent re-execution
 deployFunc.tags = ["MocCARC20Deferred"];
-deployFunc.dependencies = ["CollateralTokenCARC20Deferred", "MocVendorsCARC20", "MocCARC20Expansion"];
+deployFunc.dependencies = ["CollateralTokenCARC20Deferred", "MocVendorsCARC20", "MocCARC20Expansion", "MocQueue"];

@@ -57,7 +57,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
       });
       describe("AND operation is executed", function () {
         beforeEach(async function () {
-          await mocImpl.execute(0);
+          await mocFunctions.executeLastOperation();
         });
         it("THEN nACcb is 10 AC", async function () {
           assertPrec(await mocImpl.nACcb(), 10);

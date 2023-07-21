@@ -13,44 +13,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
  */
 abstract contract MocCore is MocCommons {
     // ------- Events -------
-    event TPMinted(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
-    event TCandTPRedeemed(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
-    event TCandTPMinted(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
     event SuccessFeeDistributed(uint256 mocGain_, uint256[] tpGain_);
     event SettlementExecuted();
     event TCInterestPayment(uint256 interestAmount_);
@@ -175,6 +137,94 @@ abstract contract MocCore is MocCommons {
         FeeCalcs memory feeCalcs_
     ) internal virtual;
 
+    /**
+     * @notice hook after the TP is minted, with operation information result
+     * @param params_ mintTP functions params
+     * @param qACtotalNeeded_ amount of AC needed to mint qTP
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPMinted(
+        MintTPParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice Hook after the TP is redeemed, with operation information result
+     * @param params_ redeemTPto function params
+     * @param qACRedeem_ amount of AC redeemed
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPRedeemed(
+        RedeemTPParams memory params_,
+        uint256 qACRedeem_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice Hook after the TC and TP are minted, with operation information result
+     * @param params_ mintTCandTPto function params
+     * @param qTCMinted_ amount of qTC minted for the given qTP
+     * @param qACtotalNeeded_ total amount of AC needed to mint qTC and qTP
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCandTPMinted(
+        MintTCandTPParams memory params_,
+        uint256 qTCMinted_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice Hook after the TC and TP are redeemed, with operation information result
+     * @param params_ redeemTCandTPto function params
+     * @param qTPRedeemed_ total amount of TP redeemed
+     * @param qACRedeemed_ total amount of AC redeemed
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCandTPRedeemed(
+        RedeemTCandTPParams memory params_,
+        uint256 qTPRedeemed_,
+        uint256 qACRedeemed_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice Hook after the TC is swapped for TP, with operation information result
+     * @param params_ swapTCforTP function params
+     * @param qTPMinted_ total amount of TP minted
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCSwappedForTP(
+        SwapTCforTPParams memory params_,
+        uint256 qTPMinted_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice Hook after the TP is swapped for TC, with operation information result
+     * @param params_ swapTPforTC function params
+     * @param qTCMinted_ total amount of TC minted
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPSwappedForTC(
+        SwapTPforTCParams memory params_,
+        uint256 qTCMinted_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
+    /**
+     * @notice Hook after the TP is swapped for another TP, with operation information result
+     * @param params_ swapTPforTP function params
+     * @param qTPMinted_ total amount of TP minted
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPSwappedForTP(
+        SwapTPforTPParams memory params_,
+        uint256 qTPMinted_,
+        FeeCalcs memory feeCalcs_
+    ) internal virtual;
+
     // ------- Internal Functions -------
 
     struct MintTCParams {
@@ -250,6 +300,7 @@ abstract contract MocCore is MocCommons {
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACtoRedeem amount of AC sent to `recipient_`
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
 
     function _redeemTCto(
@@ -309,10 +360,16 @@ abstract contract MocCore is MocCommons {
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACtotalNeeded amount of AC used to mint qTP
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _mintTPto(
         MintTPParams memory params_
-    ) internal notLiquidated notPaused returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded) {
+    )
+        internal
+        notLiquidated
+        notPaused
+        returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
         uint256 pACtp = pACtps[params_.i];
         _updateTPtracking(params_.i, pACtp);
@@ -324,7 +381,6 @@ abstract contract MocCore is MocCommons {
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACNeededtoMint = _divPrec(params_.qTP, pACtp);
-        FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -337,32 +393,12 @@ abstract contract MocCore is MocCommons {
         // if is 0 reverts because it is trying to mint an amount below precision
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        emit TPMinted(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTP,
-            qACtotalNeeded,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
+        onTPMinted(params_, qACtotalNeeded, feeCalcs);
         // update bucket and mint
         _depositAndMintTP(params_.i, params_.qTP, qACNeededtoMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
-    }
-
-    struct RedeemTPParams {
-        uint256 i;
-        uint256 qTP;
-        uint256 qACmin;
-        address sender;
-        address recipient;
-        address vendor;
     }
 
     /**
@@ -377,10 +413,16 @@ abstract contract MocCore is MocCommons {
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACtoRedeem amount of AC sent to `recipient_`
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _redeemTPto(
         RedeemTPParams memory params_
-    ) internal notLiquidated notPaused returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded) {
+    )
+        internal
+        notLiquidated
+        notPaused
+        returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
         uint256[] memory pACtps = _getPACtps();
         uint256 pACtp = pACtps[params_.i];
         _updateTPtracking(params_.i, pACtp);
@@ -389,7 +431,6 @@ abstract contract MocCore is MocCommons {
         // calculate how many total qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtp);
-        FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -402,18 +443,7 @@ abstract contract MocCore is MocCommons {
         // slither-disable-next-line incorrect-equality
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
-        emit TPRedeemed(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTP,
-            qACtoRedeem,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
+        onTPRedeemed(params_, qACtoRedeem, feeCalcs);
         _withdrawAndBurnTP(params_.i, params_.qTP, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
@@ -445,6 +475,7 @@ abstract contract MocCore is MocCommons {
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
      * @return qTCtoMint amount of Collateral Token minted
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _mintTCandTPto(
         MintTCandTPParams memory params_
@@ -452,7 +483,7 @@ abstract contract MocCore is MocCommons {
         internal
         notLiquidated
         notPaused
-        returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded)
+        returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         uint256 qACNeededtoMint;
         uint256[] memory pACtps = _getPACtps();
@@ -467,7 +498,6 @@ abstract contract MocCore is MocCommons {
             _getCtargemaTP(params_.i, pACtp),
             _getPTCac(lckAC, nACgain)
         );
-        FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -480,19 +510,7 @@ abstract contract MocCore is MocCommons {
         // if is 0 reverts because it is trying to mint an amount below precision
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        emit TCandTPMinted(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            qTCtoMint,
-            params_.qTP,
-            qACtotalNeeded,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
+        onTCandTPMinted(params_, qTCtoMint, qACtotalNeeded, feeCalcs);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
         _depositAndMintTP(params_.i, params_.qTP, 0, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -528,6 +546,7 @@ abstract contract MocCore is MocCommons {
      * @return qACtoRedeem amount of AC sent to `recipient_`
      * @return qTPtoRedeem amount of Pegged Token redeemed
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _redeemTCandTPto(
         RedeemTCandTPParams memory params_
@@ -535,7 +554,7 @@ abstract contract MocCore is MocCommons {
         internal
         notLiquidated
         notPaused
-        returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeTokenTotalNeeded)
+        returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
         uint256 pACtp = pACtps[params_.i];
@@ -557,7 +576,6 @@ abstract contract MocCore is MocCommons {
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
         // if qTC == 0 => qTPtoRedeem == 0 and will revert because QacNeededMustBeGreaterThanZero
         uint256 qACtotalToRedeem = _calcQACforRedeemTCandTP(params_.qTC, qTPtoRedeem, pACtp, _getPTCac(lckAC, nACgain));
-        FeeCalcs memory feeCalcs;
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -567,19 +585,7 @@ abstract contract MocCore is MocCommons {
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
-        emit TCandTPRedeemed(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qTPtoRedeem,
-            qACtoRedeem,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
+        onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
 
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
         _withdrawAndBurnTP(params_.i, qTPtoRedeem, 0, params_.sender);
@@ -603,8 +609,9 @@ abstract contract MocCore is MocCommons {
      *      recipient_ address who receives the target Pegged Token
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACSurcharges amount of AC used to pay fees and markup
-     * @return qTPtoMint amount of Pegged Token minted
+     * @return qTPMinted amount of Pegged Token minted
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _swapTPforTPto(
         SwapTPforTPParams memory params_
@@ -612,15 +619,14 @@ abstract contract MocCore is MocCommons {
         internal
         notLiquidated
         notPaused
-        returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded)
+        returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        FeeCalcs memory feeCalcs;
         bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTPto, (params_));
-        (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
+        (qACSurcharges, qTPMinted, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-
+        onTPSwappedForTP(params_, qTPMinted, feeCalcs);
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
@@ -639,8 +645,9 @@ abstract contract MocCore is MocCommons {
      *      recipient_ address who receives Collateral Token
      *      vendor_ address who receives a markup. If its address(0) no markup is applied
      * @return qACSurcharges amount of AC used to pay fees and markup
-     * @return qTCtoMint amount of Collateral Token minted
+     * @return qTCMinted amount of TC minted
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _swapTPforTCto(
         SwapTPforTCParams memory params_
@@ -648,15 +655,14 @@ abstract contract MocCore is MocCommons {
         internal
         notLiquidated
         notPaused
-        returns (uint256 qACSurcharges, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded)
+        returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        FeeCalcs memory feeCalcs;
         bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTCto, (params_));
-        (qACSurcharges, qTCtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
+        (qACSurcharges, qTCMinted, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-
+        onTPSwappedForTC(params_, qTCMinted, feeCalcs);
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
@@ -677,6 +683,7 @@ abstract contract MocCore is MocCommons {
      * @return qACSurcharges amount of AC used to pay fees and markup
      * @return qTPtoMint amount of Pegged Token minted
      * @return qFeeTokenTotalNeeded amount of Fee Token used by `sender_` to pay fees. 0 if qAC is used instead
+     * @return feeCalcs platform fee detail breakdown
      */
     function _swapTCforTPto(
         SwapTCforTPParams memory params_
@@ -684,15 +691,14 @@ abstract contract MocCore is MocCommons {
         internal
         notLiquidated
         notPaused
-        returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded)
+        returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        FeeCalcs memory feeCalcs;
         bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTCforTPto, (params_));
         (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-
+        onTCSwappedForTP(params_, qTPtoMint, feeCalcs);
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
@@ -799,7 +805,7 @@ abstract contract MocCore is MocCommons {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _redeemTPto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTPto(params);
     }
 
     /**
@@ -826,7 +832,7 @@ abstract contract MocCore is MocCommons {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _redeemTPto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTPto(params);
     }
 
     /**
@@ -852,7 +858,7 @@ abstract contract MocCore is MocCommons {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _redeemTPto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTPto(params);
     }
 
     /**
@@ -881,7 +887,7 @@ abstract contract MocCore is MocCommons {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _redeemTPto(params);
+        (qACRedeemed, qFeeToken, ) = _redeemTPto(params);
     }
 
     /**
@@ -913,7 +919,7 @@ abstract contract MocCore is MocCommons {
             recipient: msg.sender,
             vendor: address(0)
         });
-        return _redeemTCandTPto(params);
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
     }
 
     /**
@@ -948,7 +954,7 @@ abstract contract MocCore is MocCommons {
             recipient: msg.sender,
             vendor: vendor_
         });
-        return _redeemTCandTPto(params);
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
     }
 
     /**
@@ -982,7 +988,7 @@ abstract contract MocCore is MocCommons {
             recipient: recipient_,
             vendor: address(0)
         });
-        return _redeemTCandTPto(params);
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
     }
 
     /**
@@ -1019,7 +1025,7 @@ abstract contract MocCore is MocCommons {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _redeemTCandTPto(params);
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
     }
 
     /**

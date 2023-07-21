@@ -27,6 +27,16 @@ const mintTPBehavior = function () {
   // Available to mint formulas introduce rounding errors, so we tolerate some margin for it
   const availableToMintTolerance = 20000;
 
+  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TPMinted")
+      .withArgs(...args);
+  };
+
   describe("Feature: mint Pegged Token", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
@@ -144,9 +154,8 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
+          const args = [TP_0, operator, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: Zero Address
@@ -277,9 +286,8 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor);
+          const args = [TP_0, operator, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice mints 23500 TP via vendor", function () {
@@ -311,9 +319,8 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor);
+          const args = [TP_0, operator, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice mints 23500 TP to bob via vendor", function () {
@@ -331,9 +338,8 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPMinted")
-            .withArgs(TP_0, operator, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor);
+          const args = [TP_0, operator, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("AND 23500 TP0 are minted", function () {
@@ -447,20 +453,9 @@ const mintTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              await expect(tx)
-                .to.emit(mocImpl, "TPMinted")
-                .withArgs(
-                  TP_0,
-                  mocContracts.mocWrapper?.address || deployer,
-                  deployer,
-                  pEth(3000),
-                  pEth(10 * 1.05),
-                  pEth(10 * 0.05),
-                  0,
-                  0,
-                  0,
-                  noVendor,
-                );
+              const sender = mocContracts.mocWrapper?.address || deployer;
+              const args = [TP_0, sender, deployer, pEth(3000), pEth(10 * 1.05), pEth(10 * 0.05), 0, 0, 0, noVendor];
+              await expectEvent(tx, args);
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {
               /*  
@@ -600,20 +595,9 @@ const mintTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              await expect(tx)
-                .to.emit(mocImpl, "TPMinted")
-                .withArgs(
-                  TP_0,
-                  mocContracts.mocWrapper?.address || deployer,
-                  deployer,
-                  pEth(1000),
-                  pEth(10 * 1.05),
-                  pEth(10 * 0.05),
-                  0,
-                  0,
-                  0,
-                  noVendor,
-                );
+              const sender = mocContracts.mocWrapper?.address || deployer;
+              const args = [TP_0, sender, deployer, pEth(1000), pEth(10 * 1.05), pEth(10 * 0.05), 0, 0, 0, noVendor];
+              await expectEvent(tx, args);
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {
               /*  
@@ -755,9 +739,8 @@ const mintTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              await expect(tx)
-                .to.emit(mocImpl, "TPMinted")
-                .withArgs(TP_1, operator, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0, noVendor);
+              const args = [TP_1, operator, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0, noVendor];
+              await expectEvent(tx, args);
             });
           });
         });
@@ -878,9 +861,8 @@ const mintTPBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPMinted")
-              .withArgs(TP_0, operator, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+            const args = [TP_0, operator, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
         describe("WHEN alice mints 23500 TP to bob", function () {
@@ -916,9 +898,8 @@ const mintTPBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPMinted")
-              .withArgs(TP_0, operator, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+            const args = [TP_0, operator, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
       });

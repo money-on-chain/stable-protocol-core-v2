@@ -26,7 +26,7 @@ const redeemTCBehavior = function () {
       args = mocFunctions.getEventArgs(args);
     }
     await expect(tx)
-      .to.emit(mocImpl, "TCRedeemed")
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCRedeemed")
       .withArgs(...args);
   };
 

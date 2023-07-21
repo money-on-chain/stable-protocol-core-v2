@@ -216,7 +216,12 @@ export const addAssetsAndChangeGovernor = async (
   console.log(`MocCAWrapper governor is now: ${governorAddress}`);
 };
 
-export const deployCARC20 = async (hre: HardhatRuntimeEnvironment, mocCARC20Variant: string, ctVariant: string) => {
+export const deployCARC20 = async (
+  hre: HardhatRuntimeEnvironment,
+  mocCARC20Variant: string,
+  ctVariant: string,
+  extraInitParams = {},
+) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
   const { coreParams, settlementParams, feeParams, tpParams, mocAddresses, gasLimit } = getNetworkDeployParams(hre);
@@ -299,6 +304,7 @@ export const deployCARC20 = async (hre: HardhatRuntimeEnvironment, mocCARC20Vari
           mocVendors: deployedMocVendors.address,
         },
         acTokenAddress: collateralAssetAddress,
+        ...extraInitParams,
       },
     ],
   });

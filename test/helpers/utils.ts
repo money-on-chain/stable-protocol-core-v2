@@ -25,6 +25,7 @@ export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINT
 export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
 export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
 export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
+export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;

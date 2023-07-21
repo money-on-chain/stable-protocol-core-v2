@@ -33,6 +33,95 @@ abstract contract MocCoreShared is MocCore {
         uint256 qFeeTokenVendorMarkup_,
         address vendor_
     );
+    event TPMinted(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+    event TPRedeemed(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+    event TCandTPRedeemed(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+    event TCandTPMinted(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qAC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+    event TPSwappedForTP(
+        uint256 indexed iFrom_,
+        uint256 iTo_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTPfrom_,
+        uint256 qTPto_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+    event TPSwappedForTC(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTP_,
+        uint256 qTC_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+    event TCSwappedForTP(
+        uint256 indexed i_,
+        address indexed sender_,
+        address indexed recipient_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACfee_,
+        uint256 qFeeToken_,
+        uint256 qACVendorMarkup_,
+        uint256 qFeeTokenVendorMarkup_,
+        address vendor_
+    );
+
+    // ------- External functions -------
 
     /**
      * @notice caller sends Collateral Token and receives Collateral Asset
@@ -127,7 +216,7 @@ abstract contract MocCoreShared is MocCore {
 
     /**
      * @notice hook after the TC is minted with operation information result
-     * @param params_ mintTCto function params
+     * @param params_ mintTCto functions params
      * @param qACtotalNeeded_ amount of AC used to mint qTC
      * @param feeCalcs_ platform fee detail breakdown
      */
@@ -151,7 +240,7 @@ abstract contract MocCoreShared is MocCore {
 
     /**
      * @notice hook after the TC is redeemed, with operation information result
-     * @param params_ mintTCto function params
+     * @param params_ redeemTC functions params
      * @param qACRedeemed_ amount of AC redeemed
      * @param feeCalcs_ platform fee detail breakdown
      */
@@ -165,6 +254,188 @@ abstract contract MocCoreShared is MocCore {
             params_.recipient,
             params_.qTC,
             qACRedeemed_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice hook after the TP is minted, with operation information result
+     * @param params_ mintTP functions params
+     * @param qACtotalNeeded_ amount of AC needed to mint qTP
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPMinted(
+        MintTPParams memory params_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TPMinted(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice Hook after the TP is redeemed, with operation information result
+     * @param params_ redeemTPto function params
+     * @param qACtoRedeem_ amount of AC to redeem
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPRedeemed(
+        RedeemTPParams memory params_,
+        uint256 qACtoRedeem_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TPRedeemed(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qACtoRedeem_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice Hook after the TC and TP are minted, with operation information result
+     * @param params_ mintTCandTPto function params
+     * @param qTCMinted_ amount of qTC minted for the given qTP
+     * @param qACtotalNeeded_ total amount of AC needed to mint qTC and qTP
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCandTPMinted(
+        MintTCandTPParams memory params_,
+        uint256 qTCMinted_,
+        uint256 qACtotalNeeded_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TCandTPMinted(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            qTCMinted_,
+            params_.qTP,
+            qACtotalNeeded_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice Hook after the TC and TP are redeemed, with operation information result
+     * @param params_ redeemTCandTPto function params
+     * @param qTPRedeemed_ total amount of TP redeemed
+     * @param qACRedeemed_ total amount of AC redeemed
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCandTPRedeemed(
+        RedeemTCandTPParams memory params_,
+        uint256 qTPRedeemed_,
+        uint256 qACRedeemed_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TCandTPRedeemed(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qTPRedeemed_,
+            qACRedeemed_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice Hook after the TC is swapped for TP, with operation information result
+     * @param params_ swapTCforTP function params
+     * @param qTPMinted_ total amount of TP minted
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTCSwappedForTP(
+        SwapTCforTPParams memory params_,
+        uint256 qTPMinted_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TCSwappedForTP(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTC,
+            qTPMinted_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice Hook after the TP is swapped for TC, with operation information result
+     * @param params_ swapTPforTC function params
+     * @param qTCMinted_ total amount of TC minted
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPSwappedForTC(
+        SwapTPforTCParams memory params_,
+        uint256 qTCMinted_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TPSwappedForTC(
+            params_.i,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qTCMinted_,
+            feeCalcs_.qACFee,
+            feeCalcs_.qFeeToken,
+            feeCalcs_.qACVendorMarkup,
+            feeCalcs_.qFeeTokenVendorMarkup,
+            params_.vendor
+        );
+    }
+
+    /**
+     * @notice Hook after the TP is swapped for another TP, with operation information result
+     * @param params_ swapTPforTP function params
+     * @param qTPMinted_ total amount of TP `iTo` minted
+     * @param feeCalcs_ platform fee detail breakdown
+     */
+    function onTPSwappedForTP(
+        SwapTPforTPParams memory params_,
+        uint256 qTPMinted_,
+        FeeCalcs memory feeCalcs_
+    ) internal override {
+        emit TPSwappedForTP(
+            params_.iFrom,
+            params_.iTo,
+            params_.sender,
+            params_.recipient,
+            params_.qTP,
+            qTPMinted_,
             feeCalcs_.qACFee,
             feeCalcs_.qFeeToken,
             feeCalcs_.qACVendorMarkup,

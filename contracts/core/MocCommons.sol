@@ -100,6 +100,15 @@ abstract contract MocCommons is MocEma {
         address vendor;
     }
 
+    struct RedeemTPParams {
+        uint256 i;
+        uint256 qTP;
+        uint256 qACmin;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
     struct FeeCalcs {
         uint256 qACFee;
         uint256 qFeeToken;
@@ -122,56 +131,14 @@ abstract contract MocCommons is MocEma {
 
     // ------- Events -------
 
-    event TPRedeemed(
+    event LiqTPRedeemed(
         uint256 indexed i_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
+        uint256 qAC_
     );
     event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
-    event TPSwappedForTP(
-        uint256 indexed iFrom_,
-        uint256 iTo_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTPfrom_,
-        uint256 qTPto_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
-    event TPSwappedForTC(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qTC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
-    event TCSwappedForTP(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
 
     // ------- Initializer -------
 

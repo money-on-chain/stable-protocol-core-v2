@@ -140,7 +140,8 @@ contract MocCoreExpansion is MocCommons {
         if (mocACBalance < qACRedeemed) qACRedeemed = mocACBalance;
         // in liquidation doesn't pay fees or markup
         // qACfee, qFeeToken, qACVendorMarkup, qFeeTokenVendorMarkup  = (0, 0, 0, 0)
-        emit TPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed, 0, 0, 0, 0, address(0));
+        // TODO use this function instead
+        emit LiqTPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed);
         // burn qTP from the sender
         tpTokens[i_].burn(sender_, qTP);
     }
@@ -206,20 +207,6 @@ contract MocCoreExpansion is MocCommons {
             swapTPforTPFee
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        emit TPSwappedForTP(
-            params_.iFrom,
-            params_.iTo,
-            params_.sender,
-            params_.recipient,
-            params_.qTP,
-            qTPtoMint,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
-
         _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
         _withdrawAndBurnTP(params_.iFrom, params_.qTP, 0, params_.sender);
     }
@@ -275,18 +262,6 @@ contract MocCoreExpansion is MocCommons {
             swapTPforTCFee
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        emit TPSwappedForTC(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTP,
-            qTCtoMint,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
 
         _withdrawAndBurnTP(params_.i, params_.qTP, 0, params_.sender);
         _depositAndMintTC(qTCtoMint, 0, params_.recipient);
@@ -349,18 +324,6 @@ contract MocCoreExpansion is MocCommons {
             swapTCforTPFee
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        emit TCSwappedForTP(
-            params_.i,
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qTPtoMint,
-            feeCalcs.qACFee,
-            feeCalcs.qFeeToken,
-            feeCalcs.qACVendorMarkup,
-            feeCalcs.qFeeTokenVendorMarkup,
-            params_.vendor
-        );
 
         _withdrawAndBurnTC(params_.qTC, 0, params_.sender);
         _depositAndMintTP(params_.i, qTPtoMint, 0, params_.recipient);

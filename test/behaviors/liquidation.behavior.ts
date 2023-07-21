@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
-import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
+import { Balance, ERRORS, pEth } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 
@@ -126,29 +126,16 @@ const shouldBehaveLikeLiquidable = function () {
             assertPrec(0, await this.mocFunctions.tpBalanceOf(0, bob));
             assertPrec(0, await this.mocFunctions.tpBalanceOf(1, charlie));
           });
-          it("THEN a redeem event is generated for Charlie", async function () {
-            // i: 0
+          it("THEN a liq redeem event is generated for Charlie", async function () {
+            // i: 1
             // sender: charlie || mocWrapper
-            // receiver: charlie || mocWrapper
+            // receiver: otherUser || mocWrapper
             // qTP: 10 TP
             // qAC: 0.43333... AC
-            // qACfee: 0 AC
-            // qACVendorMarkup: 0
-            // qFeeTokenVendorMarkup: 0
+            const isWrapper = this.mocContracts.mocWrapper?.address;
             await expect(tx)
-              .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(
-                1,
-                this.mocContracts.mocWrapper?.address || charlie,
-                this.mocContracts.mocWrapper?.address || otherUser,
-                pEth(10),
-                "43333333333333333247",
-                0,
-                0,
-                0,
-                0,
-                CONSTANTS.ZERO_ADDRESS,
-              );
+              .to.emit(mocImpl, "LiqTPRedeemed")
+              .withArgs(1, isWrapper || charlie, isWrapper || otherUser, pEth(10), "43333333333333333247");
           });
           it("THEN they receive the corresponding AC amount", async function () {
             // Alice, bob and Charlie contribution at 1:1

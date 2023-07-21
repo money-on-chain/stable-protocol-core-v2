@@ -5,6 +5,8 @@ import {
   ERC20Mock__factory,
   MocCARC20Deferred,
   MocCARC20Deferred__factory,
+  MocQueue,
+  MocQueue__factory,
   MocRC20,
   MocRC20__factory,
   MocVendors,
@@ -26,6 +28,7 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
     collateralAsset: ERC20Mock;
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
+    mocQueue: MocQueue;
   }>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
@@ -38,6 +41,7 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
       const mocVendors: MocVendors = MocVendors__factory.connect(await mocImpl.mocVendors(), signer);
       const mocCollateralToken: MocRC20 = MocRC20__factory.connect(await mocImpl.tcToken(), signer);
       const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(await mocImpl.acToken(), signer);
+      const mocQueue: MocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
 
       const { alice, bob, charlie, vendor } = await getNamedAccounts();
       // Fill users accounts with balance so that they can operate
@@ -60,6 +64,7 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
         mocVendors,
         feeToken,
         feeTokenPriceProvider,
+        mocQueue,
       };
     });
   },

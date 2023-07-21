@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocCoreAccessControlled, MocCore } from "../../core/MocCoreAccessControlled.sol";
+import { MocCore } from "../../core/MocCore.sol";
+import { MocQueue, ENQUEUER_ROLE } from "../../queue/MocQueue.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IDispatcher } from "../../interfaces/IDispatcher.sol";
@@ -10,39 +11,14 @@ import { IDispatcher } from "../../interfaces/IDispatcher.sol";
  * @title MocCARC20Deferred: Moc Collateral Asset RC20 with deferred operations
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
-contract MocCARC20Deferred is MocCoreAccessControlled {
-    // ------- Events -------
-    event TCMinted(
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor_,
-        uint256 operId_
-    );
-    event TCRedeemed(
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor_,
-        uint256 operId_
-    );
-
+contract MocCARC20Deferred is MocCore {
     // ------- Structs -------
     struct InitializeParams {
         InitializeCoreParams initializeCoreParams;
         // Collateral Asset Token contract address
         address acTokenAddress;
         // TODO: address dispatcherAddress;
+        address mocQueue;
     }
 
     // ------- Storage -------
@@ -55,29 +31,14 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
 
     // Dispatcher
     IDispatcher public dispatcher;
+    // Queue
+    MocQueue public mocQueue;
 
-    // Amount of Operations created
-    uint256 public operIdCount;
-
-    mapping(uint256 => MintTCParams) public operationsMintTC;
-    mapping(uint256 => MintTPParams) public operationsMintTP;
-    mapping(uint256 => RedeemTCParams) public operationsRedeemTC;
-
-    // Set of Deferrable Operation Types
-    enum OperType {
-        none, // avoid using zero as Type
-        mintTC,
-        redeemTC,
-        mintTP,
-        redeemTP,
-        mintTCandTP,
-        redeemTCandTP,
-        swapTCforTP,
-        swapTPforTC,
-        swapTPforTP
+    modifier onlyMocQueue() {
+        //TODO
+        require(msg.sender == address(mocQueue), "NOT queue");
+        _;
     }
-    // OperId => Operation Type
-    mapping(uint256 => OperType) public operTypes;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -115,8 +76,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         // TODO: initialize with a real dispatcher
         dispatcher = IDispatcher(address(0));
         __MocCore_init(initializeParams_.initializeCoreParams);
-        __AccessControl_init();
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        mocQueue = MocQueue(initializeParams_.mocQueue);
     }
 
     // ------- Internal Functions -------
@@ -148,6 +108,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      */
     function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal override returns (uint256 change) {
         // As we locked qACMax, we need to return the extra amount
+        // TODO: review this
         change = qACMax_ - qACNeeded_;
         // All locked AC is either unlock or returned, no longer on pending Operation
         qACLockedInPending -= qACMax_;
@@ -169,6 +130,30 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
     function onTCMinted(MintTCParams memory p_, uint256 qAC_, FeeCalcs memory fc_) internal override {}
 
     function onTCRedeemed(RedeemTCParams memory p_, uint256 qAC_, FeeCalcs memory fc_) internal override {}
+
+    function onTPMinted(MintTPParams memory p_, uint256 qAC_, FeeCalcs memory fc_) internal override {}
+
+    function onTPRedeemed(RedeemTPParams memory p_, uint256 qAC_, FeeCalcs memory fc_) internal override {}
+
+    function onTCandTPMinted(
+        MintTCandTPParams memory p_,
+        uint256 qTC_,
+        uint256 qAC_,
+        FeeCalcs memory fc_
+    ) internal override {}
+
+    function onTCandTPRedeemed(
+        RedeemTCandTPParams memory p_,
+        uint256 qTP_,
+        uint256 qAC_,
+        FeeCalcs memory fc_
+    ) internal override {}
+
+    function onTCSwappedForTP(SwapTCforTPParams memory p_, uint256 qTP_, FeeCalcs memory fc_) internal override {}
+
+    function onTPSwappedForTC(SwapTPforTCParams memory p_, uint256 qTC_, FeeCalcs memory fc_) internal override {}
+
+    function onTPSwappedForTP(SwapTPforTPParams memory p_, uint256 qTP_, FeeCalcs memory fc_) internal override {}
 
     /* solhint-enable no-empty-blocks */
 
@@ -228,60 +213,6 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
     }
 
     /**
-     * @notice hook after mintedTC Operation execution, emits the TCMinted event
-     * @param operId_ Identifier to track the Operation lifecycle
-     * @param params_ TCMint params
-     * @param qACtotalNeeded_ amount of AC used to mint qTC
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onDeferredTCMinted(
-        uint256 operId_,
-        MintTCParams memory params_,
-        uint256 qACtotalNeeded_,
-        FeeCalcs memory feeCalcs_
-    ) internal {
-        emit TCMinted(
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qACtotalNeeded_,
-            feeCalcs_.qACFee,
-            feeCalcs_.qFeeToken,
-            feeCalcs_.qACVendorMarkup,
-            feeCalcs_.qFeeTokenVendorMarkup,
-            params_.vendor,
-            operId_
-        );
-    }
-
-    /**
-     * @notice hook after redeemTC Operation execution, emits the TCRedeemed event
-     * @param operId_ Identifier to track the Operation lifecycle
-     * @param params_ mintTCto function params
-     * @param qACRedeemed_ amount of AC redeemed
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onDeferredTCRedeemed(
-        uint256 operId_,
-        RedeemTCParams memory params_,
-        uint256 qACRedeemed_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual {
-        emit TCRedeemed(
-            params_.sender,
-            params_.recipient,
-            params_.qTC,
-            qACRedeemed_,
-            feeCalcs_.qACFee,
-            feeCalcs_.qFeeToken,
-            feeCalcs_.qACVendorMarkup,
-            feeCalcs_.qFeeTokenVendorMarkup,
-            params_.vendor,
-            operId_
-        );
-    }
-
-    /**
      * @notice while registering a pending Operation, we need to lock user's funds until it's executed
      * @param qACToLock_ AC amount to be locked
      */
@@ -291,33 +222,6 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
     }
 
     // ------- External Functions -------
-
-    /**
-     * @notice registered executors can process an existent Operations given by the `operId_`
-     * @dev can revert for a number of reason, throws events according to the Oper type
-     * @param operId_ Identifier to track the Operation lifecycle
-     */
-    function execute(uint256 operId_) external onlyRole(EXECUTOR_ROLE) {
-        OperType operType = operTypes[operId_];
-        if (operType == OperType.mintTC) {
-            MintTCParams memory params = operationsMintTC[operId_];
-            (uint256 qACtotalNeeded, , FeeCalcs memory feeCalcs) = _mintTCto(params);
-            onDeferredTCMinted(operId_, params, qACtotalNeeded, feeCalcs);
-            delete operationsMintTC[operId_];
-        } else if (operType == OperType.redeemTC) {
-            RedeemTCParams memory params = operationsRedeemTC[operId_];
-            (uint256 qACtoRedeem, , FeeCalcs memory feeCalcs) = _redeemTCto(params);
-            onDeferredTCRedeemed(operId_, params, qACtoRedeem, feeCalcs);
-            delete operationsRedeemTC[operId_];
-        } else if (operType == OperType.mintTP) {
-            MintTPParams memory params = operationsMintTP[operId_];
-            _mintTPto(params);
-            delete operationsMintTP[operId_];
-        }
-        // TODO: verify who/how keeps track of processed operations, and see if
-        // re-processing or having this deleted doesn't interfere.
-        delete operTypes[operId_];
-    }
 
     /**
      * @notice caller sends Collateral Asset and receives Collateral Token
@@ -379,10 +283,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = operIdCount;
-        operTypes[operId] = OperType.mintTC;
-        operationsMintTC[operId] = params;
-        operIdCount++;
+        operId = mocQueue.queueMintTC(params);
     }
 
     /**
@@ -444,10 +345,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = operIdCount;
-        operTypes[operId] = OperType.redeemTC;
-        operationsRedeemTC[operId] = params;
-        operIdCount++;
+        operId = mocQueue.queueRedeemTC(params);
     }
 
     /**
@@ -526,519 +424,628 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = operIdCount;
-        operTypes[operId] = OperType.mintTP;
-        operationsMintTP[operId] = params;
-        operIdCount++;
+        operId = mocQueue.queueMintTP(params);
     }
 
-    // /**
-    //  * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token
-    //  *  Requires prior sender approval of Collateral Asset to this contract
-    //  *  This operation is done without checking coverage
-    //  *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
-    //  *  and global coverage are not modified.
-    //  *  Reverts if qAC sent are insufficient.
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-    //  * @return qTCtoMint amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTCandTP(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
-    //     MintTCandTPParams memory params = MintTCandTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: address(0)
-    //     });
-    //     return _mintTCandTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function mintTCandTP(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmax_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+        MintTCandTPParams memory params = MintTCandTPParams({
+            i: i_,
+            qTP: qTP_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  *  Requires prior sender approval of Collateral Asset to this contract
-    //  *  This operation is done without checking coverage
-    //  *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
-    //  *  and global coverage are not modified.
-    //  *  Reverts if qAC sent are insufficient.
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-    //  * @return qTCtoMint amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTCandTPViaVendor(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
-    //     MintTCandTPParams memory params = MintTCandTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: vendor_
-    //     });
-    //     return _mintTCandTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Asset and receives Collateral Token and Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param vendor_ address who receives a markup
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function mintTCandTPViaVendor(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address vendor_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+        MintTCandTPParams memory params = MintTCandTPParams({
+            i: i_,
+            qTP: qTP_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
+        });
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Asset and recipient receives Collateral Token and Pegged Token
-    //  *  Requires prior sender approval of Collateral Asset to this contract
-    //  *  This operation is done without checking coverage
-    //  *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
-    //  *  and global coverage are not modified.
-    //  *  Reverts if qAC sent are insufficient.
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @param recipient_ address who receives the Collateral Token and Pegged Token
-    //  * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-    //  * @return qTCtoMint amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTCandTPto(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_,
-    //     address recipient_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
-    //     MintTCandTPParams memory params = MintTCandTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: address(0)
-    //     });
-    //     return _mintTCandTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Collateral Token and Pegged Token
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function mintTCandTPto(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+        MintTCandTPParams memory params = MintTCandTPParams({
+            i: i_,
+            qTP: qTP_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Asset and recipient receives Collateral Token and Pegged Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  *  Requires prior sender approval of Collateral Asset to this contract
-    //  *  This operation is done without checking coverage
-    //  *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
-    //  *  and global coverage are not modified.
-    //  *  Reverts if qAC sent are insufficient.
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of Pegged Token to mint
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent
-    //  * @param recipient_ address who receives the Collateral Token and Pegged Token
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-    //  * @return qTCtoMint amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function mintTCandTPtoViaVendor(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qACmax_,
-    //     address recipient_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeToken) {
-    //     MintTCandTPParams memory params = MintTCandTPParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: vendor_
-    //     });
-    //     return _mintTCandTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Asset and recipient receives Collateral Token and Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  Requires prior sender approval of Collateral Asset to this contract
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qAC sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of Pegged Token to mint
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent
+     * @param recipient_ address who receives the Collateral Token and Pegged Token
+     * @param vendor_ address who receives a markup
+     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function mintTCandTPtoViaVendor(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qACmax_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+        MintTCandTPParams memory params = MintTCandTPParams({
+            i: i_,
+            qTP: qTP_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
+        });
+        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and receives another one
-    //  * @param iFrom_ owned Pegged Token index
-    //  * @param iTo_ target Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTP(
-    //     uint256 iFrom_,
-    //     uint256 iTo_,
-    //     uint256 qTP_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTPParams memory params = SwapTPforTPParams({
-    //         iFrom: iFrom_,
-    //         iTo: iTo_,
-    //         qTP: qTP_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: address(0)
-    //     });
-    //     return _swapTPforTPto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and receives another one
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTP(
+        uint256 iFrom_,
+        uint256 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qACmax_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and receives another one
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  * @param iFrom_ owned Pegged Token index
-    //  * @param iTo_ target Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTPViaVendor(
-    //     uint256 iFrom_,
-    //     uint256 iTo_,
-    //     uint256 qTP_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTPParams memory params = SwapTPforTPParams({
-    //         iFrom: iFrom_,
-    //         iTo: iTo_,
-    //         qTP: qTP_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: vendor_
-    //     });
-    //     return _swapTPforTPto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and receives another one
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param vendor_ address who receives a markup
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTPViaVendor(
+        uint256 iFrom_,
+        uint256 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address vendor_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and recipient receives another one
-    //  * @param iFrom_ owned Pegged Token index
-    //  * @param iTo_ target Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param recipient_ address who receives the target Pegged Token
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTPto(
-    //     uint256 iFrom_,
-    //     uint256 iTo_,
-    //     uint256 qTP_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_,
-    //     address recipient_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTPParams memory params = SwapTPforTPParams({
-    //         iFrom: iFrom_,
-    //         iTo: iTo_,
-    //         qTP: qTP_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: address(0)
-    //     });
-    //     return _swapTPforTPto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the target Pegged Token
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTPto(
+        uint256 iFrom_,
+        uint256 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address recipient_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and recipient receives another one
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  * @param iFrom_ owned Pegged Token index
-    //  * @param iTo_ target Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param recipient_ address who receives the target Pegged Token
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTPtoViaVendor(
-    //     uint256 iFrom_,
-    //     uint256 iTo_,
-    //     uint256 qTP_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_,
-    //     address recipient_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTPParams memory params = SwapTPforTPParams({
-    //         iFrom: iFrom_,
-    //         iTo: iTo_,
-    //         qTP: qTP_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: vendor_
-    //     });
-    //     return _swapTPforTPto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and recipient receives another one
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param iFrom_ owned Pegged Token index
+     * @param iTo_ target Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the target Pegged Token
+     * @param vendor_ address who receives a markup
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTPtoViaVendor(
+        uint256 iFrom_,
+        uint256 iTo_,
+        uint256 qTP_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTPforTPParams memory params = SwapTPforTPParams({
+            iFrom: iFrom_,
+            iTo: iTo_,
+            qTP: qTP_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and receives Collateral Token
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTC(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qTCmin_,
-    //     uint256 qACmax_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTCParams memory params = SwapTPforTCParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qTCmin: qTCmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: address(0)
-    //     });
-    //     return _swapTPforTCto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and receives Collateral Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @return qACFee amount of AC used to pay fee
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTC(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_
+    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and receives Collateral Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTCViaVendor(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qTCmin_,
-    //     uint256 qACmax_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTCParams memory params = SwapTPforTCParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qTCmin: qTCmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: vendor_
-    //     });
-    //     return _swapTPforTCto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param vendor_ address who receives a markup
+     * @return qACFee amount of AC used to pay fee
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTCViaVendor(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_,
+        address vendor_
+    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
+        });
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and recipient receives Collateral Token
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param recipient_ address who receives the Collateral Token
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTCto(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qTCmin_,
-    //     uint256 qACmax_,
-    //     address recipient_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTCParams memory params = SwapTPforTCParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qTCmin: qTCmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: address(0)
-    //     });
-    //     return _swapTPforTCto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and recipient receives Collateral Token
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the Collateral Token
+     * @return qACFee amount of AC used to pay fee
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTCto(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_,
+        address recipient_
+    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
+    }
 
-    // /**
-    //  * @notice caller sends a Pegged Token and recipient receives Collateral Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  * @param i_ Pegged Token index
-    //  * @param qTP_ amount of owned Pegged Token to swap
-    //  * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param recipient_ address who receives the Collateral Token
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Collateral Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTPforTCtoViaVendor(
-    //     uint256 i_,
-    //     uint256 qTP_,
-    //     uint256 qTCmin_,
-    //     uint256 qACmax_,
-    //     address recipient_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTPforTCParams memory params = SwapTPforTCParams({
-    //         i: i_,
-    //         qTP: qTP_,
-    //         qTCmin: qTCmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: vendor_
-    //     });
-    //     return _swapTPforTCto(params);
-    // }
+    /**
+     * @notice caller sends a Pegged Token and recipient receives Collateral Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param i_ Pegged Token index
+     * @param qTP_ amount of owned Pegged Token to swap
+     * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the Collateral Token
+     * @param vendor_ address who receives a markup
+     * @return qACFee amount of AC used to pay fee
+     * @return qTCMinted amount of Collateral Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTPforTCtoViaVendor(
+        uint256 i_,
+        uint256 qTP_,
+        uint256 qTCmin_,
+        uint256 qACmax_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+        SwapTPforTCParams memory params = SwapTPforTCParams({
+            i: i_,
+            qTP: qTP_,
+            qTCmin: qTCmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
+        });
+        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Token and receives Pegged Token
-    //  * @param i_ Pegged Token index
-    //  * @param qTC_ amount of Collateral Token to swap
-    //  * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTCforTP(
-    //     uint256 i_,
-    //     uint256 qTC_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTCforTPParams memory params = SwapTCforTPParams({
-    //         i: i_,
-    //         qTC: qTC_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: address(0)
-    //     });
-    //     return _swapTCforTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Token and receives Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTCforTP(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qACmax_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Token and receives Pegged Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  * @param i_ Pegged Token index
-    //  * @param qTC_ amount of Collateral Token to swap
-    //  * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTCforTPViaVendor(
-    //     uint256 i_,
-    //     uint256 qTC_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTCforTPParams memory params = SwapTCforTPParams({
-    //         i: i_,
-    //         qTC: qTC_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: msg.sender,
-    //         vendor: vendor_
-    //     });
-    //     return _swapTCforTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Token and receives Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param vendor_ address who receives a markup
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTCforTPViaVendor(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address vendor_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Token and recipient receives Pegged Token
-    //  * @param i_ Pegged Token index
-    //  * @param qTC_ amount of Collateral Token to swap
-    //  * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param recipient_ address who receives the Pegged Token
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTCforTPto(
-    //     uint256 i_,
-    //     uint256 qTC_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_,
-    //     address recipient_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTCforTPParams memory params = SwapTCforTPParams({
-    //         i: i_,
-    //         qTC: qTC_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: address(0)
-    //     });
-    //     return _swapTCforTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Token and recipient receives Pegged Token
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the Pegged Token
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTCforTPto(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address recipient_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
+    }
 
-    // /**
-    //  * @notice caller sends Collateral Token and recipient receives Pegged Token
-    //  *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-    //  * @param i_ Pegged Token index
-    //  * @param qTC_ amount of Collateral Token to swap
-    //  * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
-    //  * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
-    //  * @param recipient_ address who receives the Pegged Token
-    //  * @param vendor_ address who receives a markup
-    //  * @return qACFee amount of AC used to pay fee
-    //  * @return qTPMinted amount of Pegged Token minted
-    //  * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
-    //  */
-    // function swapTCforTPtoViaVendor(
-    //     uint256 i_,
-    //     uint256 qTC_,
-    //     uint256 qTPmin_,
-    //     uint256 qACmax_,
-    //     address recipient_,
-    //     address vendor_
-    // ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-    //     SwapTCforTPParams memory params = SwapTCforTPParams({
-    //         i: i_,
-    //         qTC: qTC_,
-    //         qTPmin: qTPmin_,
-    //         qACmax: qACmax_,
-    //         sender: msg.sender,
-    //         recipient: recipient_,
-    //         vendor: vendor_
-    //     });
-    //     return _swapTCforTPto(params);
-    // }
+    /**
+     * @notice caller sends Collateral Token and recipient receives Pegged Token
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param i_ Pegged Token index
+     * @param qTC_ amount of Collateral Token to swap
+     * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
+     * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
+     * @param recipient_ address who receives the Pegged Token
+     * @param vendor_ address who receives a markup
+     * @return qACFee amount of AC used to pay fee
+     * @return qTPMinted amount of Pegged Token minted
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function swapTCforTPtoViaVendor(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTPmin_,
+        uint256 qACmax_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+        SwapTCforTPParams memory params = SwapTCforTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTPmin: qTPmin_,
+            qACmax: qACmax_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
+        });
+        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params);
+    }
+
+    // ------- External Only Queue Functions -------
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _mintTCto for details
+     */
+    function execMintTC(
+        MintTCParams calldata params_
+    ) external onlyMocQueue returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
+        return _mintTCto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _redeemTCto for details
+     */
+    function execRedeemTC(
+        RedeemTCParams calldata params_
+    ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
+        return _redeemTCto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _mintTPto for details
+     */
+    function execMintTP(
+        MintTPParams calldata params_
+    ) external onlyMocQueue returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
+        return _mintTPto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _redeemTPto for details
+     */
+    function execRedeemTP(
+        RedeemTPParams calldata params_
+    ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
+        return _redeemTPto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _mintTCandTPto for details
+     */
+    function execMintTCandTP(
+        MintTCandTPParams calldata params_
+    )
+        external
+        onlyMocQueue
+        returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        return _mintTCandTPto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _redeemTCandTPto for details
+     */
+    function execRedeemTCandTP(
+        RedeemTCandTPParams calldata params_
+    )
+        external
+        onlyMocQueue
+        returns (uint256 qACtoRedeem, uint256 qTPRedeemed, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        return _redeemTCandTPto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _swapTCforTPto for details
+     */
+    function execSwapTCforTP(
+        SwapTCforTPParams calldata params_
+    )
+        external
+        onlyMocQueue
+        returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        return _swapTCforTPto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _swapTPforTCto for details
+     */
+    function execSwapTPforTC(
+        SwapTPforTCParams calldata params_
+    )
+        external
+        onlyMocQueue
+        returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        return _swapTPforTCto(params_);
+    }
+
+    /**
+     * @notice executes Operation based on params, only mocQueue allowed
+     * see MocCore _swapTPforTPto for details
+     */
+    function execSwapTPforTP(
+        SwapTPforTPParams calldata params_
+    )
+        external
+        onlyMocQueue
+        returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
+    {
+        return _swapTPforTPto(params_);
+    }
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
