@@ -1,13 +1,12 @@
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTPBehavior } from "../../behaviors/mintTP.behavior";
-import { pEth, tpParams } from "../../helpers/utils";
-import { MocCARC20Deferred, ERC20Mock } from "../../../typechain";
+import { tpParams } from "../../helpers/utils";
+import { MocCARC20Deferred } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 let mocImpl: MocCARC20Deferred;
-let collateralAsset: ERC20Mock;
 let mocFunctions: any;
 let deployer: Address;
 
@@ -18,16 +17,16 @@ describe("Feature: MocCARC20Deferred mint TP", function () {
       this.mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ mocImpl, collateralAsset } = this.mocContracts);
+      ({ mocImpl } = this.mocContracts);
     });
     mintTPBehavior();
 
     describe("WHEN an user sends 100 AC to put a mint 10 TP operation in the queue", function () {
       beforeEach(async function () {
-        // add collateral to could mint TP
+        // add collateral to be able to mint TP
         await mocFunctions.mintTC({ from: deployer, qTC: 100 });
-        await collateralAsset.approve(mocImpl.address, pEth(100));
-        await mocImpl.mintTP(0, pEth(10), pEth(100));
+        // Register a mintTP operation without executing it
+        await mocFunctions.mintTP({ from: deployer, qTP: 10, execute: false });
       });
       it("THEN AC balance locked is 100 AC", async function () {
         assertPrec(await mocImpl.acBalanceLocked(), 100);

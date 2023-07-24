@@ -12,7 +12,7 @@ const executeLastOperation = async mocImpl => {
 
 const mintTC =
   (mocImpl, collateralAsset) =>
-  async ({ from, qTC, qACmax = qTC * 10, vendor = undefined, applyPrecision = true }) => {
+  async ({ from, qTC, qACmax = qTC * 10, vendor = undefined, applyPrecision = true, execute = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTC = pEth(qTC);
@@ -21,7 +21,7 @@ const mintTC =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTC(qTC, qACmax);
     else await mocImpl.connect(signer).mintTCViaVendor(qTC, qACmax, vendor);
-    return executeLastOperation(mocImpl);
+    return execute && executeLastOperation(mocImpl);
   };
 
 const mintTCto =
@@ -68,7 +68,7 @@ const redeemTCto =
 
 const mintTP =
   (mocImpl, collateralAsset) =>
-  async ({ i = 0, from, qTP, qACmax = qTP * 10, vendor = undefined, applyPrecision = true }) => {
+  async ({ i = 0, from, qTP, qACmax = qTP * 10, vendor = undefined, applyPrecision = true, execute = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -77,7 +77,7 @@ const mintTP =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (!vendor) await mocImpl.connect(signer).mintTP(i, qTP, qACmax);
     else await mocImpl.connect(signer).mintTPViaVendor(i, qTP, qACmax, vendor);
-    return executeLastOperation(mocImpl);
+    return execute && executeLastOperation(mocImpl);
   };
 
 const mintTPto =

@@ -50,8 +50,8 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
     // Collateral Asset token
     IERC20 public acToken;
 
-    // amount of AC locked for pending operations in the queue
-    uint256 public acBalanceLocked;
+    // amount of AC locked on pending operations
+    uint256 public qACLockedInPending;
 
     // Dispatcher
     IDispatcher public dispatcher;
@@ -148,9 +148,9 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      */
     function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal override returns (uint256 change) {
         // As we locked qACMax, we need to return the extra amount
-        // TODO: review this
         change = qACMax_ - qACNeeded_;
-        acBalanceLocked -= qACMax_;
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= qACMax_;
     }
 
     /**
@@ -158,9 +158,9 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
      * @dev Intended to be use as notification after an RC20 AC transfer to this contract
      */
     function refreshACBalance() external {
-        uint256 acBalanceToRefresh = acBalanceOf(address(this)) - nACcb - acBalanceLocked;
-        // On this implementation, AC token balance is nACcb plus the AC locked for pending operations in the queue
-        if (acBalanceToRefresh > 0) _depositAC(acBalanceToRefresh);
+        uint256 unaccountedAcBalance = acBalanceOf(address(this)) - nACcb - qACLockedInPending;
+        // On this implementation, AC token balance is nACcb plus AC locked on pending operations
+        if (unaccountedAcBalance > 0) _depositAC(unaccountedAcBalance);
     }
 
     // Do nothing on Operation hooks, as event is later on emitted with OperId in context
@@ -281,6 +281,15 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         );
     }
 
+    /**
+     * @notice while registering a pending Operation, we need to lock user's funds until it's executed
+     * @param qACToLock_ AC amount to be locked
+     */
+    function lockACInPending(uint256 qACToLock_) internal {
+        qACLockedInPending += qACToLock_;
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACToLock_);
+    }
+
     // ------- External Functions -------
 
     /**
@@ -362,9 +371,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         address recipient_,
         address vendor_
     ) public payable returns (uint256 operId) {
-        // Locks the funds
-        acBalanceLocked += qACmax_;
-        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        lockACInPending(qACmax_);
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -510,9 +517,7 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
         address recipient_,
         address vendor_
     ) public payable returns (uint256 operId) {
-        // Locks the funds
-        acBalanceLocked += qACmax_;
-        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        lockACInPending(qACmax_);
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
@@ -1033,14 +1038,6 @@ contract MocCARC20Deferred is MocCoreAccessControlled {
     //         vendor: vendor_
     //     });
     //     return _swapTCforTPto(params);
-    // }
-
-    /**
-     * @notice Refreshes the AC holdings for the Bucket
-     * @dev Intended to be use as notification after an RC20 AC transfer to this contract
-     */
-    // TODO: needs to discount queued locked AC value
-    // function refreshACBalance() external {
     // }
 
     /**

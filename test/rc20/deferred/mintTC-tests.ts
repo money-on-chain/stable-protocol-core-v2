@@ -3,14 +3,13 @@ import { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTCBehavior } from "../../behaviors/mintTC.behavior";
-import { CONSTANTS, pEth, tpParams } from "../../helpers/utils";
-import { MocCARC20Deferred, ERC20Mock } from "../../../typechain";
+import { CONSTANTS, tpParams } from "../../helpers/utils";
+import { MocCARC20Deferred } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred mint TC", function () {
   let mocImpl: MocCARC20Deferred;
-  let collateralAsset: ERC20Mock;
   let mocFunctions: any;
   let deployer: Address;
 
@@ -21,7 +20,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
       this.mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ mocImpl, collateralAsset } = this.mocContracts);
+      ({ mocImpl } = this.mocContracts);
     });
     mintTCBehavior();
 
@@ -35,10 +34,9 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
       });
     });
 
-    describe("WHEN an user sends 100 AC to put a mint 10 TC operation in the queue", function () {
+    describe("WHEN an user registers a mint 10 TC operation, sending 100 AC", function () {
       beforeEach(async function () {
-        await collateralAsset.approve(mocImpl.address, pEth(100));
-        await mocImpl.mintTC(pEth(10), pEth(100));
+        await mocFunctions.mintTC({ from: deployer, qTC: 10, qACmax: 100, execute: false });
       });
       it("THEN nACcb is 0 AC", async function () {
         assertPrec(await mocImpl.nACcb(), 0);
@@ -57,7 +55,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
           assertPrec(await mocImpl.acBalanceLocked(), 100);
         });
       });
-      describe("AND operation in the queue is executed", function () {
+      describe("AND operation is executed", function () {
         beforeEach(async function () {
           await mocImpl.execute(0);
         });
