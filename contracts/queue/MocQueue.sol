@@ -506,7 +506,10 @@ contract MocQueue is MocAccessControlled {
         delete operTypes[operId_];
     }
 
-    // TODO: only mocCore
+    /**
+     * @notice registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
     function queueMintTC(
         MocCore.MintTCParams calldata params
     ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
@@ -516,7 +519,10 @@ contract MocQueue is MocAccessControlled {
         operIdCount++;
     }
 
-    // TODO: only mocCore
+    /**
+     * @notice registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
     function queueRedeemTC(
         MocCore.RedeemTCParams calldata params
     ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
@@ -526,7 +532,10 @@ contract MocQueue is MocAccessControlled {
         operIdCount++;
     }
 
-    // TODO: only mocCore
+    /**
+     * @notice registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
     function queueMintTP(
         MocCore.MintTPParams calldata params
     ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
@@ -536,5 +545,81 @@ contract MocQueue is MocAccessControlled {
         operIdCount++;
     }
 
-    // ------- Only Authorized -------
+    /**
+     * @notice Registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function queueRedeemTP(
+        MocCore.RedeemTPParams calldata params
+    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        operId = operIdCount;
+        operTypes[operId] = OperType.redeemTP;
+        operationsRedeemTP[operId] = params;
+        operIdCount++;
+    }
+
+    /**
+     * @notice Registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function queueMintTCandTP(
+        MocCore.MintTCandTPParams calldata params
+    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        operId = operIdCount;
+        operTypes[operId] = OperType.mintTCandTP;
+        operationsMintTCandTP[operId] = params;
+        operIdCount++;
+    }
+
+    /**
+     * @notice Registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function queueRedeemTCandTP(
+        MocCore.RedeemTCandTPParams calldata params
+    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        operId = operIdCount;
+        operTypes[operId] = OperType.redeemTCandTP;
+        operationsRedeemTCandTP[operId] = params;
+        operIdCount++;
+    }
+
+    /**
+     * @notice Registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function queueSwapTCforTP(
+        MocCore.SwapTCforTPParams calldata params
+    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        operId = operIdCount;
+        operTypes[operId] = OperType.swapTCforTP;
+        operationsSwapTCforTP[operId] = params;
+        operIdCount++;
+    }
+
+    /**
+     * @notice Registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function queueSwapTPforTC(
+        MocCore.SwapTPforTCParams calldata params
+    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        operId = operIdCount;
+        operTypes[operId] = OperType.swapTPforTC;
+        operationsSwapTPforTC[operId] = params;
+        operIdCount++;
+    }
+
+    /**
+     * @notice Registered enqueuer can queue an Operations
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function queueSwapTPforTP(
+        MocCore.SwapTPforTPParams calldata params
+    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        operId = operIdCount;
+        operTypes[operId] = OperType.swapTPforTP;
+        operationsSwapTPforTP[operId] = params;
+        operIdCount++;
+    }
 }

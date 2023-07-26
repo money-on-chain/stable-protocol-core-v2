@@ -24,6 +24,16 @@ const mintTCandTPBehavior = function () {
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
+  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCandTPMinted")
+      .withArgs(...args);
+  };
+
   describe("Feature: joint Mint TC and TP operation", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
@@ -61,21 +71,20 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_0,
-              operator,
-              alice,
-              pEth("45.414072816449726460"),
-              pEth(2350),
-              pEth("59.847198641765704576"),
-              pEth("4.433125825315978116"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          const args = [
+            TP_0,
+            operator,
+            alice,
+            pEth("45.414072816449726460"),
+            pEth(2350),
+            pEth("59.847198641765704576"),
+            pEth("4.433125825315978116"),
+            0,
+            0,
+            0,
+            noVendor,
+          ];
+          await expectEvent(tx, args);
         });
       });
     });
@@ -177,21 +186,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_0,
-              operator,
-              alice,
-              pEth("45.414072816449726460"),
-              pEth(2350),
-              pEth("59.847198641765704576"),
-              pEth("4.433125825315978116"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            alice,
+            pEth("45.414072816449726460"),
+            pEth(2350),
+            pEth("59.847198641765704576"),
+            pEth("4.433125825315978116"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: Zero Address
@@ -240,21 +247,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_0,
-              operator,
-              bob,
-              pEth("45.414072816449726460"),
-              pEth(2350),
-              pEth("59.847198641765704576"),
-              pEth("4.433125825315978116"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            bob,
+            pEth("45.414072816449726460"),
+            pEth(2350),
+            pEth("59.847198641765704576"),
+            pEth("4.433125825315978116"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
       });
       describe("WHEN alice mints 45.41 TC and 2350 TP via vendor", function () {
@@ -285,21 +290,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_0,
-              operator,
-              alice,
-              pEth("45.414072816449726460"),
-              pEth(2350),
-              pEth("65.388605923410677222"),
-              pEth("4.433125825315978116"),
-              0,
-              pEth("5.541407281644972646"),
-              0,
-              vendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            alice,
+            pEth("45.414072816449726460"),
+            pEth(2350),
+            pEth("65.388605923410677222"),
+            pEth("4.433125825315978116"),
+            0,
+            pEth("5.541407281644972646"),
+            0,
+            vendor,
+          ]);
         });
       });
       describe("WHEN alice mints 45.41 TC and 2350 TP to bob via vendor", function () {
@@ -316,21 +319,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_0,
-              operator,
-              bob,
-              pEth("45.414072816449726460"),
-              pEth(2350),
-              pEth("65.388605923410677222"),
-              pEth("4.433125825315978116"),
-              0,
-              pEth("5.541407281644972646"),
-              0,
-              vendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            bob,
+            pEth("45.414072816449726460"),
+            pEth(2350),
+            pEth("65.388605923410677222"),
+            pEth("4.433125825315978116"),
+            0,
+            pEth("5.541407281644972646"),
+            0,
+            vendor,
+          ]);
         });
       });
       describe("AND TP 0 revalues to 10 making TC price to drop and protocol to be in low coverage", function () {
@@ -365,9 +366,8 @@ const mintTCandTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPMinted")
-              .withArgs(TP_0, operator, alice, pEth(37600), pEth(23500), pEth(12690), pEth(940), 0, 0, 0, noVendor);
+            const args = [TP_0, operator, alice, pEth(37600), pEth(23500), pEth(12690), pEth(940), 0, 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
       });
@@ -404,21 +404,19 @@ const mintTCandTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPMinted")
-              .withArgs(
-                TP_0,
-                operator,
-                alice,
-                pEth("500.802047845527084421"),
-                pEth(23500),
-                pEth("598.471986417657045822"),
-                pEth("44.331258253159781172"),
-                0,
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              alice,
+              pEth("500.802047845527084421"),
+              pEth(23500),
+              pEth("598.471986417657045822"),
+              pEth("44.331258253159781172"),
+              0,
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
       });
@@ -487,21 +485,19 @@ const mintTCandTPBehavior = function () {
             // qFeeToken: 55.4 (8% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPMinted")
-              .withArgs(
-                TP_0,
-                operator,
-                alice,
-                pEth("45.414072816449726460"),
-                pEth(2350),
-                pEth("55.414072816449726460"),
-                0,
-                pEth("2.216562912657989058"),
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              alice,
+              pEth("45.414072816449726460"),
+              pEth(2350),
+              pEth("55.414072816449726460"),
+              0,
+              pEth("2.216562912657989058"),
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
         describe("WHEN alice mints 45.41 TC and 2350 TP to bob", function () {
@@ -538,21 +534,19 @@ const mintTCandTPBehavior = function () {
             // qFeeToken: 55.4 (8% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPMinted")
-              .withArgs(
-                TP_0,
-                operator,
-                bob,
-                pEth("45.414072816449726460"),
-                pEth(2350),
-                pEth("55.414072816449726460"),
-                0,
-                pEth("2.216562912657989058"),
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              bob,
+              pEth("45.414072816449726460"),
+              pEth(2350),
+              pEth("55.414072816449726460"),
+              0,
+              pEth("2.216562912657989058"),
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
       });
@@ -578,21 +572,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_0,
-              operator,
-              alice,
-              pEth("193251373687.020112595744680851"),
-              pEth("10000000000000.000000000000000000"),
-              pEth("254668930390.492359901276595744"),
-              pEth("18864365214.110545177872340425"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            alice,
+            pEth("193251373687.020112595744680851"),
+            pEth("10000000000000.000000000000000000"),
+            pEth("254668930390.492359901276595744"),
+            pEth("18864365214.110545177872340425"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
       });
       describe("WHEN alice mints 100000 TP 4, which ctarg is bigger than ctargemaCA", function () {
@@ -617,21 +609,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_4,
-              operator,
-              alice,
-              pEth("100000.000000000000000000"),
-              pEth(100000),
-              pEth("128571.428571428571428570"),
-              pEth("9523.809523809523809523"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_4,
+            operator,
+            alice,
+            pEth("100000.000000000000000000"),
+            pEth(100000),
+            pEth("128571.428571428571428570"),
+            pEth("9523.809523809523809523"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
       });
       describe("WHEN alice mints 1000000 TP 1, which ctarg is lower than ctargemaCA", function () {
@@ -656,21 +646,19 @@ const mintTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPMinted")
-            .withArgs(
-              TP_1,
-              operator,
-              alice,
-              pEth("603174.603174603174476190"),
-              pEth(1000000),
-              pEth("857142.857142857142719999"),
-              pEth("63492.063492063492053333"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_1,
+            operator,
+            alice,
+            pEth("603174.603174603174476190"),
+            pEth(1000000),
+            pEth("857142.857142857142719999"),
+            pEth("63492.063492063492053333"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
       });
     });

@@ -19,8 +19,17 @@ const redeemTPBehavior = function () {
   const TP_0 = 0;
   const TP_2 = 2;
   const TP_NON_EXISTENT = 5;
-
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+
+  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TPRedeemed")
+      .withArgs(...args);
+  };
 
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {
@@ -145,9 +154,8 @@ const redeemTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPRedeemed")
-            .withArgs(TP_0, operator, operator, pEth(23500), pEth(95), pEth(100 * 0.05), 0, 0, 0, noVendor);
+          const args = [TP_0, operator, operator, pEth(23500), pEth(95), pEth(100 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -208,20 +216,9 @@ const redeemTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPRedeemed")
-            .withArgs(
-              TP_0,
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(2350),
-              pEth(9.5),
-              pEth(10 * 0.05),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          const sender = mocContracts.mocWrapper?.address || bob;
+          const args = [TP_0, operator, sender, pEth(2350), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice redeems 23500 TP via vendor", function () {
@@ -253,9 +250,8 @@ const redeemTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPRedeemed")
-            .withArgs(TP_0, operator, operator, pEth(23500), pEth(85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
+          const args = [TP_0, operator, operator, pEth(23500), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice redeems 23500 TP to bob via vendor", function () {
@@ -273,20 +269,9 @@ const redeemTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TPRedeemed")
-            .withArgs(
-              TP_0,
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(23500),
-              pEth(85),
-              pEth(100 * 0.05),
-              0,
-              pEth(100 * 0.1),
-              0,
-              vendor,
-            );
+          const sender = mocContracts.mocWrapper?.address || bob;
+          const args = [TP_0, operator, sender, pEth(23500), pEth(85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("AND TP 0 has been revaluated to 15.1", function () {
@@ -352,9 +337,8 @@ const redeemTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(TP_0, operator, operator, pEth(3000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor);
+            const args = [TP_0, operator, operator, pEth(3000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
           describe("AND Pegged Token has been devaluated to 1000", function () {
             /*  
@@ -436,9 +420,8 @@ const redeemTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(TP_0, operator, operator, pEth(1000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor);
+            const args = [TP_0, operator, operator, pEth(1000), pEth(9.5), pEth(10 * 0.05), 0, 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
           describe("AND Pegged Token has been devaluated to 1000", function () {
             /*  
@@ -527,9 +510,8 @@ const redeemTPBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(TP_0, operator, operator, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+            const args = [TP_0, operator, operator, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
         describe("WHEN alice redeems 23500 TP to bob", function () {
@@ -567,20 +549,9 @@ const redeemTPBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(
-                TP_0,
-                operator,
-                mocContracts.mocWrapper?.address || bob,
-                pEth(23500),
-                pEth(100),
-                0,
-                pEth(100 * 0.05 * 0.5),
-                0,
-                0,
-                noVendor,
-              );
+            const sender = mocContracts.mocWrapper?.address || bob;
+            const args = [TP_0, operator, sender, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
       });
