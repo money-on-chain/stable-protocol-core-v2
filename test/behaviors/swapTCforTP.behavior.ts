@@ -22,6 +22,16 @@ const swapTCforTPBehavior = function () {
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
+  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCSwappedForTP")
+      .withArgs(...args);
+  };
+
   let tx: ContractTransaction;
   let alicePrevTCBalance: Balance;
   let alicePrevACBalance: Balance;
@@ -142,9 +152,7 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor);
+          await expectEvent(tx, [TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -205,9 +213,7 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor);
+          await expectEvent(tx, [TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
         });
       });
       describe("WHEN alice tries to swap 100 TC for 23500 TP 0 via vendor without sending the AC for the markup", function () {
@@ -247,9 +253,7 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, pEth(100 * 0.1), 0, vendor);
+          await expectEvent(tx, [TP_0, operator, alice, pEth(100), pEth(23500), pEth(1), 0, pEth(10), 0, vendor]);
         });
       });
       describe("WHEN alice swaps 100 TC for 23500 TP 0 to bob via vendor", function () {
@@ -267,9 +271,7 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCSwappedForTP")
-            .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, pEth(100 * 0.1), 0, vendor);
+          await expectEvent(tx, [TP_0, operator, bob, pEth(100), pEth(23500), pEth(1), 0, pEth(10), 0, vendor]);
         });
       });
       describe("AND there are 100000 TC more in the protocol", function () {
@@ -301,9 +303,7 @@ const swapTCforTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCSwappedForTP")
-              .withArgs(TP_0, operator, alice, pEth(3000), pEth(705000), pEth(3000 * 0.01), 0, 0, 0, noVendor);
+            await expectEvent(tx, [TP_0, operator, alice, pEth(3000), pEth(705000), pEth(30), 0, 0, 0, noVendor]);
           });
         });
       });
@@ -340,20 +340,18 @@ const swapTCforTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              await expect(tx)
-                .to.emit(mocImpl, "TCSwappedForTP")
-                .withArgs(
-                  TP_0,
-                  operator,
-                  alice,
-                  pEth(10),
-                  pEth("4731.333333333333333333"),
-                  pEth("0.100666666666666666"),
-                  0,
-                  0,
-                  0,
-                  noVendor,
-                );
+              await expectEvent(tx, [
+                TP_0,
+                operator,
+                alice,
+                pEth(10),
+                pEth("4731.333333333333333333"),
+                pEth("0.100666666666666666"),
+                0,
+                0,
+                0,
+                noVendor,
+              ]);
             });
           });
         });
@@ -411,9 +409,8 @@ const swapTCforTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              await expect(tx)
-                .to.emit(mocImpl, "TCSwappedForTP")
-                .withArgs(TP_0, operator, alice, pEth(10), pEth(955), pEth("0.095500000000000000"), 0, 0, 0, noVendor);
+              const args = [TP_0, operator, alice, pEth(10), pEth(955), pEth("0.0955"), 0, 0, 0, noVendor];
+              await expectEvent(tx, args);
             });
           });
         });
@@ -483,9 +480,7 @@ const swapTCforTPBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCSwappedForTP")
-              .withArgs(TP_0, operator, alice, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor);
+            await expectEvent(tx, [TP_0, operator, alice, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor]);
           });
         });
         describe("WHEN alice swaps 100 TC for 23500 TP 0", function () {
@@ -521,9 +516,7 @@ const swapTCforTPBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCSwappedForTP")
-              .withArgs(TP_0, operator, bob, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor);
+            await expectEvent(tx, [TP_0, operator, bob, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor]);
           });
         });
       });

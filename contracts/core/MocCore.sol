@@ -699,6 +699,7 @@ abstract contract MocCore is MocCommons {
             (uint256, uint256, uint256, FeeCalcs)
         );
         onTCSwappedForTP(params_, qTPtoMint, feeCalcs);
+
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees

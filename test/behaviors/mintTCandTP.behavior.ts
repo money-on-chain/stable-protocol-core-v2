@@ -554,7 +554,9 @@ const mintTCandTPBehavior = function () {
         beforeEach(async function () {
           // assert coverage is above ctargemaCA before the operation
           expect(await mocImpl.getCglb()).to.be.greaterThanOrEqual(await mocImpl.calcCtargemaCA());
-          tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 10000000000000 });
+          const qACmax = 300000000000;
+          const qTP = 10000000000000;
+          tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP, qACmax });
         });
         it("THEN coverage is still above ctargemaCA", async function () {
           // coverage = 5.541407341472665393
