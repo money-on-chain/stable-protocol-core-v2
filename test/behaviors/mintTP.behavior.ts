@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, mineUpTo, pEth } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
@@ -16,6 +16,7 @@ const mintTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
 
   const TP_0 = 0;
@@ -27,16 +28,6 @@ const mintTPBehavior = function () {
   // Available to mint formulas introduce rounding errors, so we tolerate some margin for it
   const availableToMintTolerance = 20000;
 
-  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
-    await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TPMinted")
-      .withArgs(...args);
-  };
-
   describe("Feature: mint Pegged Token", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
@@ -44,6 +35,7 @@ const mintTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
+      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPMinted");
     });
     describe("WHEN alice trie to mint 0 TP", function () {
       it("THEN tx reverts because the amount of TP is too low and out of precision", async function () {

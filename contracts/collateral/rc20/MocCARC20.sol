@@ -100,10 +100,7 @@ contract MocCARC20 is MocCoreShared {
      * @return qACtotalNeeded amount of AC used to mint qTC
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function mintTC(
-        uint256 qTC_,
-        uint256 qACmax_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    function mintTC(uint256 qTC_, uint256 qACmax_) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -128,7 +125,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTC_,
         uint256 qACmax_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -152,7 +149,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTC_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -179,7 +176,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -203,7 +200,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 i_,
         uint256 qTP_,
         uint256 qACmax_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
@@ -231,7 +228,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTP_,
         uint256 qACmax_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
@@ -258,7 +255,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
@@ -288,7 +285,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
             i: i_,
             qTP: qTP_,
@@ -318,7 +315,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 i_,
         uint256 qTP_,
         uint256 qACmax_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -351,7 +348,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTP_,
         uint256 qACmax_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -383,7 +380,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -418,7 +415,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
             qTP: qTP_,
@@ -447,7 +444,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
             iFrom: iFrom_,
             iTo: iTo_,
@@ -481,7 +478,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTPmin_,
         uint256 qACmax_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
             iFrom: iFrom_,
             iTo: iTo_,
@@ -514,7 +511,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
             iFrom: iFrom_,
             iTo: iTo_,
@@ -550,7 +547,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
             iFrom: iFrom_,
             iTo: iTo_,
@@ -579,7 +576,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
             i: i_,
             qTP: qTP_,
@@ -610,7 +607,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTCmin_,
         uint256 qACmax_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
             i: i_,
             qTP: qTP_,
@@ -640,7 +637,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTCmin_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
             i: i_,
             qTP: qTP_,
@@ -673,7 +670,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
             i: i_,
             qTP: qTP_,
@@ -701,7 +698,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
             i: i_,
             qTC: qTC_,
@@ -732,7 +729,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTPmin_,
         uint256 qACmax_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
             i: i_,
             qTC: qTC_,
@@ -762,7 +759,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
             i: i_,
             qTC: qTC_,
@@ -795,7 +792,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
+    ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
             i: i_,
             qTC: qTC_,

@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, expectEventFor } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
@@ -16,6 +16,7 @@ const mintTCandTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   let tx: ContractTransaction;
   const TP_0 = 0;
@@ -24,16 +25,6 @@ const mintTCandTPBehavior = function () {
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
-  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
-    await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCandTPMinted")
-      .withArgs(...args);
-  };
-
   describe("Feature: joint Mint TC and TP operation", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
@@ -41,6 +32,7 @@ const mintTCandTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
+      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPMinted");
     });
     describe("GIVEN the protocol is empty", function () {
       describe("WHEN alice asks for 2350 TP using mintTCandTP", function () {

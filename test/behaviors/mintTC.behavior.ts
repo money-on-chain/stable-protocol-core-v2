@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, pEth, expectEventFor } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20, MocCARC20Deferred } from "../../typechain";
 
@@ -16,19 +16,10 @@ const mintTCBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectTCMinted: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
-
-  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
-    await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCMinted")
-      .withArgs(...args);
-  };
 
   describe("Feature: mint Collateral Token", function () {
     beforeEach(async function () {
@@ -37,9 +28,10 @@ const mintTCBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
+      expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
     });
     describe("WHEN alice tries to mint 0 TC", function () {
-      it("TTHEN tx reverts because the amount of TC is too low and out of precision", async function () {
+      it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
         await expect(mocFunctions.mintTC({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
           mocImpl,
           ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
@@ -92,7 +84,7 @@ const mintTCBehavior = function () {
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
         const args = [operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
-        await expectEvent(tx, args);
+        await expectTCMinted(tx, args);
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
         // from: Zero Address
@@ -165,7 +157,7 @@ const mintTCBehavior = function () {
         // qACVendorMarkup: 10% qAC
         // qFeeTokenVendorMarkup: 0
         const args = [operator, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
-        await expectEvent(tx, args);
+        await expectTCMinted(tx, args);
       });
     });
     describe("WHEN alice mints 100 TC to bob via vendor", function () {
@@ -183,7 +175,7 @@ const mintTCBehavior = function () {
         // qACVendorMarkup: 10% qAC
         // qFeeTokenVendorMarkup: 0
         const args = [operator, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
-        await expectEvent(tx, args);
+        await expectTCMinted(tx, args);
       });
     });
     describe("WHEN feeRetainer is set to 20% AND alice sends 105 Asset to mint 100 TC to bob", function () {
@@ -218,7 +210,7 @@ const mintTCBehavior = function () {
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
         const args = [operator, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
-        await expectEvent(tx, args);
+        await expectTCMinted(tx, args);
       });
     });
     describe("GIVEN 3000 TC and 100 TP are minted", function () {
@@ -403,7 +395,7 @@ const mintTCBehavior = function () {
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           const args = [operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
-          await expectEvent(tx, args);
+          await expectTCMinted(tx, args);
         });
       });
       describe("WHEN alice mints 100 TC to bob", function () {
@@ -439,7 +431,7 @@ const mintTCBehavior = function () {
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           const args = [operator, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
-          await expectEvent(tx, args);
+          await expectTCMinted(tx, args);
         });
       });
     });

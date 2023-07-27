@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, pEth } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20, MocRC20 } from "../../typechain";
 
@@ -17,20 +17,11 @@ const swapTCforTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
-
-  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
-    await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TCSwappedForTP")
-      .withArgs(...args);
-  };
 
   let tx: ContractTransaction;
   let alicePrevTCBalance: Balance;
@@ -45,6 +36,7 @@ const swapTCforTPBehavior = function () {
       ({ mocImpl, feeToken } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
+      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCSwappedForTP");
     });
 
     describe("GIVEN alice has 3000 TC", function () {

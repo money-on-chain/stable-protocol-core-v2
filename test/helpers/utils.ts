@@ -1,4 +1,6 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
+import { expect } from "chai";
+import { ContractTransaction } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/types";
 import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
@@ -289,6 +291,18 @@ export async function ensureERC1820(): Promise<void> {
 
     await ethers.provider.send("eth_sendRawTransaction", [ERC1820_PAYLOAD]);
   }
+}
+
+export function expectEventFor(mocImpl: any, mocFunctions: any, eventName: string): any {
+  return async (tx: ContractTransaction, rawArgs: any[]) => {
+    let args = rawArgs;
+    if (mocFunctions.getEventArgs) {
+      args = mocFunctions.getEventArgs(args);
+    }
+    await expect(tx)
+      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, eventName)
+      .withArgs(...args);
+  };
 }
 
 export { mineUpTo };

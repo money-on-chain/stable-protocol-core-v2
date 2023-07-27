@@ -446,9 +446,10 @@ contract MocQueue is MocAccessControlled {
     /**
      * @notice registered executors can process an existent Operations given by the `operId_`
      * @dev can revert for a number of reason, throws events according to the Oper type
-     * @param operId_ Identifier to track the Operation lifecycle
+     * @param operId_ Identifier for the Operation to be executed
      */
-    function execute(uint256 operId_) external onlyRole(EXECUTOR_ROLE) {
+    function execute(uint256 operId_) external notPaused onlyRole(EXECUTOR_ROLE) {
+        // TODO: handle nonexistent or old IDs
         OperType operType = operTypes[operId_];
         uint256 qAC;
         uint256 qTC;
@@ -622,4 +623,11 @@ contract MocQueue is MocAccessControlled {
         operationsSwapTPforTP[operId] = params;
         operIdCount++;
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

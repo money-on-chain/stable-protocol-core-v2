@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, ERRORS, pEth, CONSTANTS } from "../helpers/utils";
+import { Balance, ERRORS, pEth, CONSTANTS, expectEventFor } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
@@ -16,6 +16,7 @@ const redeemTCandTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
@@ -41,6 +42,7 @@ const redeemTCandTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
+      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPRedeemed");
     });
 
     describe("GIVEN alice has 3000 TC, 23500 TP 0", function () {
@@ -173,21 +175,19 @@ const redeemTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPRedeemed")
-            .withArgs(
-              TP_0,
-              operator,
-              operator,
-              pEth(100),
-              pEth("783.333333333333333333"),
-              pEth("95.066666666666666667"),
-              pEth("8.266666666666666666"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            operator,
+            pEth(100),
+            pEth("783.333333333333333333"),
+            pEth("95.066666666666666667"),
+            pEth("8.266666666666666666"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -249,21 +249,19 @@ const redeemTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPRedeemed")
-            .withArgs(
-              TP_0,
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(100),
-              pEth("783.333333333333333333"),
-              pEth("95.066666666666666667"),
-              pEth("8.266666666666666666"),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            mocContracts.mocWrapper?.address || bob,
+            pEth(100),
+            pEth("783.333333333333333333"),
+            pEth("95.066666666666666667"),
+            pEth("8.266666666666666666"),
+            0,
+            0,
+            0,
+            noVendor,
+          ]);
         });
       });
       describe("WHEN alice redeems 100 TC and 783.33 TP via vendor", function () {
@@ -295,21 +293,19 @@ const redeemTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPRedeemed")
-            .withArgs(
-              TP_0,
-              operator,
-              operator,
-              pEth(100),
-              pEth("783.333333333333333333"),
-              pEth("84.733333333333333334"),
-              pEth("8.266666666666666666"),
-              0,
-              pEth("10.333333333333333333"),
-              0,
-              vendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            operator,
+            pEth(100),
+            pEth("783.333333333333333333"),
+            pEth("84.733333333333333334"),
+            pEth("8.266666666666666666"),
+            0,
+            pEth("10.333333333333333333"),
+            0,
+            vendor,
+          ]);
         });
       });
       describe("WHEN alice redeems 100 TC and 783.33 TP to bob via vendor", function () {
@@ -327,21 +323,19 @@ const redeemTCandTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCandTPRedeemed")
-            .withArgs(
-              TP_0,
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(100),
-              pEth("783.333333333333333333"),
-              pEth("84.733333333333333334"),
-              pEth("8.266666666666666666"),
-              0,
-              pEth("10.333333333333333333"),
-              0,
-              vendor,
-            );
+          await expectEvent(tx, [
+            TP_0,
+            operator,
+            mocContracts.mocWrapper?.address || bob,
+            pEth(100),
+            pEth("783.333333333333333333"),
+            pEth("84.733333333333333334"),
+            pEth("8.266666666666666666"),
+            0,
+            pEth("10.333333333333333333"),
+            0,
+            vendor,
+          ]);
         });
       });
       describe("AND TP 0 revalues to 10 making TC price to drop and protocol to be in low coverage", function () {
@@ -385,21 +379,19 @@ const redeemTCandTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPRedeemed")
-              .withArgs(
-                TP_0,
-                operator,
-                operator,
-                pEth(100),
-                pEth("783.333333333333333333"),
-                pEth("95.066666666666666667"),
-                pEth("8.266666666666666666"),
-                0,
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              operator,
+              pEth(100),
+              pEth("783.333333333333333333"),
+              pEth("95.066666666666666667"),
+              pEth("8.266666666666666666"),
+              0,
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
       });
@@ -445,21 +437,19 @@ const redeemTCandTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPRedeemed")
-              .withArgs(
-                TP_0,
-                operator,
-                operator,
-                pEth(100),
-                pEth(1175),
-                pEth("94.913333333333333272"),
-                pEth("8.253333333333333328"),
-                0,
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              operator,
+              pEth(100),
+              pEth(1175),
+              pEth("94.913333333333333272"),
+              pEth("8.253333333333333328"),
+              0,
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
       });
@@ -527,21 +517,19 @@ const redeemTCandTPBehavior = function () {
             // qFeeToken: 103.33 (8% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPRedeemed")
-              .withArgs(
-                TP_0,
-                operator,
-                operator,
-                pEth(100),
-                pEth("783.333333333333333333"),
-                pEth("103.333333333333333333"),
-                0,
-                pEth("4.133333333333333333"),
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              operator,
+              pEth(100),
+              pEth("783.333333333333333333"),
+              pEth("103.333333333333333333"),
+              0,
+              pEth("4.133333333333333333"),
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
         describe("WHEN alice redeems 100 TC and 783.33 TP to bob", function () {
@@ -580,21 +568,19 @@ const redeemTCandTPBehavior = function () {
             // qFeeToken: 103.33 (8% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPRedeemed")
-              .withArgs(
-                TP_0,
-                operator,
-                mocContracts.mocWrapper?.address || bob,
-                pEth(100),
-                pEth("783.333333333333333333"),
-                pEth("103.333333333333333333"),
-                0,
-                pEth("4.133333333333333333"),
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_0,
+              operator,
+              mocContracts.mocWrapper?.address || bob,
+              pEth(100),
+              pEth("783.333333333333333333"),
+              pEth("103.333333333333333333"),
+              0,
+              pEth("4.133333333333333333"),
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
       });
@@ -640,21 +626,19 @@ const redeemTCandTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPRedeemed")
-              .withArgs(
-                TP_4,
-                operator,
-                operator,
-                pEth(100),
-                pEth("98.735907870033506676"),
-                pEth("109.302292426748728789"),
-                pEth("9.504547167543367720"),
-                0,
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_4,
+              operator,
+              operator,
+              pEth(100),
+              pEth("98.735907870033506676"),
+              pEth("109.302292426748728789"),
+              pEth("9.504547167543367720"),
+              0,
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
         describe("WHEN alice redeems 1000 TC using TP 1, which ctarg is lower than ctargemaCA", function () {
@@ -679,21 +663,19 @@ const redeemTCandTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCandTPRedeemed")
-              .withArgs(
-                TP_1,
-                operator,
-                operator,
-                pEth(1000),
-                pEth("1636.937419950555505676"),
-                pEth("1206.853795496097345756"),
-                pEth("104.943808304008464848"),
-                0,
-                0,
-                0,
-                noVendor,
-              );
+            await expectEvent(tx, [
+              TP_1,
+              operator,
+              operator,
+              pEth(1000),
+              pEth("1636.937419950555505676"),
+              pEth("1206.853795496097345756"),
+              pEth("104.943808304008464848"),
+              0,
+              0,
+              0,
+              noVendor,
+            ]);
           });
         });
       });

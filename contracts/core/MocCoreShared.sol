@@ -130,7 +130,7 @@ abstract contract MocCoreShared is MocCore {
      * @return qACRedeemed amount of AC sent to sender
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
-    function redeemTC(uint256 qTC_, uint256 qACmin_) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -154,7 +154,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 qTC_,
         uint256 qACmin_,
         address vendor_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -177,7 +177,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 qTC_,
         uint256 qACmin_,
         address recipient_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -203,7 +203,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -250,7 +250,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 i_,
         uint256 qTP_,
         uint256 qACmin_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -277,7 +277,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -303,7 +303,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -332,7 +332,7 @@ abstract contract MocCoreShared is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACRedeemed, uint256 qFeeToken) {
+    ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -343,6 +343,146 @@ abstract contract MocCoreShared is MocCore {
         });
         (qACRedeemed, qFeeToken, ) = _redeemTPto(params);
     }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
+     * @return qACRedeemed amount of AC sent to the sender
+     * @return qTPRedeemed amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function redeemTCandTP(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: address(0)
+        });
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and receives coinbase as Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
+     * @param vendor_ address who receives a markup
+     * @return qACRedeemed amount of AC sent to the sender
+     * @return qTPRedeemed amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function redeemTCandTPViaVendor(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address vendor_
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: msg.sender,
+            vendor: vendor_
+        });
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return qACRedeemed amount of AC sent to the `recipient_`
+     * @return qTPRedeemed amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function redeemTCandTPto(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: address(0)
+        });
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param i_ Pegged Token index
+     * @param qTC_ maximum amount of Collateral Token to redeem
+     * @param qTP_ maximum amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @param vendor_ address who receives a markup
+     * @return qACRedeemed amount of AC sent to the `recipient_`
+     * @return qTPRedeemed amount of Pegged Token redeemed
+     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     */
+    function redeemTCandTPtoViaVendor(
+        uint256 i_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_,
+        address vendor_
+    ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
+        RedeemTCandTPParams memory params = RedeemTCandTPParams({
+            i: i_,
+            qTC: qTC_,
+            qTP: qTP_,
+            qACmin: qACmin_,
+            sender: msg.sender,
+            recipient: recipient_,
+            vendor: vendor_
+        });
+        (qACRedeemed, qTPRedeemed, qFeeToken, ) = _redeemTCandTPto(params);
+    }
+
+    // ------------ Internal Functions -------------
 
     /**
      * @notice hook after the TC is redeemed, with operation information result

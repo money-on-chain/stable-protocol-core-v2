@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, pEth } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20, MocRC20 } from "../../typechain";
 
@@ -17,20 +17,11 @@ const swapTPforTCBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
-
-  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
-    await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TPSwappedForTC")
-      .withArgs(...args);
-  };
 
   let tx: ContractTransaction;
   let alicePrevTP0Balance: Balance;
@@ -47,6 +38,7 @@ const swapTPforTCBehavior = function () {
       operator = mocContracts.mocWrapper?.address || alice;
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
+      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTC");
     });
     describe("GIVEN alice has 23500 TP 0", function () {
       beforeEach(async function () {

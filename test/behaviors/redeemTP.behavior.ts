@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, pEth } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
@@ -15,21 +15,12 @@ const redeemTPBehavior = function () {
   let bob: Address;
   let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_2 = 2;
   const TP_NON_EXISTENT = 5;
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
-
-  const expectEvent = async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
-    await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, "TPRedeemed")
-      .withArgs(...args);
-  };
 
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {
@@ -38,6 +29,7 @@ const redeemTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
+      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPRedeemed");
     });
 
     describe("GIVEN alice has 3000 TC, 23500 TP 0 and 93458 TP 2", function () {
