@@ -512,7 +512,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueMintTC(
         MocCore.MintTCParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTC;
         operationsMintTC[operId] = params;
@@ -525,7 +525,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueRedeemTC(
         MocCore.RedeemTCParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.redeemTC;
         operationsRedeemTC[operId] = params;
@@ -538,7 +538,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueMintTP(
         MocCore.MintTPParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTP;
         operationsMintTP[operId] = params;
@@ -551,7 +551,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueRedeemTP(
         MocCore.RedeemTPParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.redeemTP;
         operationsRedeemTP[operId] = params;
@@ -564,7 +564,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueMintTCandTP(
         MocCore.MintTCandTPParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTCandTP;
         operationsMintTCandTP[operId] = params;
@@ -577,7 +577,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueRedeemTCandTP(
         MocCore.RedeemTCandTPParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.redeemTCandTP;
         operationsRedeemTCandTP[operId] = params;
@@ -590,7 +590,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueSwapTCforTP(
         MocCore.SwapTCforTPParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.swapTCforTP;
         operationsSwapTCforTP[operId] = params;
@@ -603,7 +603,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueSwapTPforTC(
         MocCore.SwapTPforTCParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.swapTPforTC;
         operationsSwapTPforTC[operId] = params;
@@ -616,7 +616,7 @@ contract MocQueue is MocAccessControlled {
      */
     function queueSwapTPforTP(
         MocCore.SwapTPforTPParams calldata params
-    ) external onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
         operTypes[operId] = OperType.swapTPforTP;
         operationsSwapTPforTP[operId] = params;

@@ -274,7 +274,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
@@ -337,7 +337,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -414,7 +414,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         MintTPParams memory params = MintTPParams({
             i: i_,
@@ -489,7 +489,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         RedeemTPParams memory params = RedeemTPParams({
             i: i_,
             qTP: qTP_,
@@ -583,7 +583,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         MintTCandTPParams memory params = MintTCandTPParams({
             i: i_,
@@ -678,7 +678,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         SwapTPforTPParams memory params = SwapTPforTPParams({
             iFrom: iFrom_,
@@ -767,7 +767,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         SwapTPforTCParams memory params = SwapTPforTCParams({
             i: i_,
@@ -855,7 +855,7 @@ contract MocCARC20Deferred is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) public payable returns (uint256 operId) {
+    ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         SwapTCforTPParams memory params = SwapTCforTPParams({
             i: i_,
