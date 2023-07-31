@@ -29,7 +29,7 @@ describe("Feature: MocCARC20Deferred mint TP", function () {
         await mocFunctions.mintTP({ from: deployer, qTP: 10, execute: false });
       });
       it("THEN AC balance locked is 100 AC", async function () {
-        assertPrec(await mocImpl.acBalanceLocked(), 100);
+        assertPrec(await mocImpl.qACLockedInPending(), 100);
       });
     });
   });

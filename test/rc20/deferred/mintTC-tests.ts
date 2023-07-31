@@ -42,7 +42,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
         assertPrec(await mocImpl.nACcb(), 0);
       });
       it("THEN AC balance locked is 100 AC", async function () {
-        assertPrec(await mocImpl.acBalanceLocked(), 100);
+        assertPrec(await mocImpl.qACLockedInPending(), 100);
       });
       describe("AND refreshACBalance is called", function () {
         beforeEach(async function () {
@@ -52,7 +52,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
           assertPrec(await mocImpl.nACcb(), 0);
         });
         it("THEN AC balance locked is still 100 AC", async function () {
-          assertPrec(await mocImpl.acBalanceLocked(), 100);
+          assertPrec(await mocImpl.qACLockedInPending(), 100);
         });
       });
       describe("AND operation is executed", function () {
@@ -63,7 +63,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
           assertPrec(await mocImpl.nACcb(), 10);
         });
         it("THEN AC balance locked is 0 AC", async function () {
-          assertPrec(await mocImpl.acBalanceLocked(), 0);
+          assertPrec(await mocImpl.qACLockedInPending(), 0);
         });
       });
     });
