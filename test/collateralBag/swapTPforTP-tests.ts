@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
-import { ERC20Mock, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { ERC20Mock, MocCAWrapper, MocRC20, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCABag } from "../helpers/mocFunctionsCABag";
 import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
 import { ERRORS, deployAsset, pEth, tpParams } from "../helpers/utils";
@@ -16,6 +16,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
+  let tps: Address[];
   const TP_0 = 0;
   const TP_1 = 1;
 
@@ -30,6 +31,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
         mocWrapper,
         assetPriceProviders: [assetPriceProvider],
       } = this.mocContracts);
+      tps = this.mocContracts.mocPeggedTokens.map((it: MocRC20) => it.address);
     });
     swapTPforTPBehavior();
 
@@ -40,7 +42,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
       });
       it("THEN tx fails because asset is invalid", async () => {
         await expect(
-          mocWrapper.swapTPforTP(assetNotWhitelisted.address, 0, 1, 10, 0, 10),
+          mocWrapper.swapTPforTP(assetNotWhitelisted.address, tps[0], tps[1], 10, 0, 10),
         ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
@@ -50,7 +52,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
         // add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
         // mint TP to alice
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ from: alice, qTP: 23500 });
       });
       describe("WHEN alice swap 2350 TP 0 for TP 1", () => {
         beforeEach(async () => {
@@ -67,7 +69,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
           // qAC: 1% for fee of 10 AC
           await expect(tx)
             .to.emit(mocWrapper, "TPSwappedForTPWithWrapper")
-            .withArgs(assetDefault.address, TP_0, TP_1, alice, alice, pEth(2350), pEth(52.5), pEth(0.1));
+            .withArgs(assetDefault.address, tps[0], tps[1], alice, alice, pEth(2350), pEth(52.5), pEth(0.1));
         });
       });
       describe("WHEN alice swap 2350 TP 0 for TP 1 to bob", () => {
@@ -85,7 +87,7 @@ describe("Feature: MocCABag swap TP for TP", function () {
           // qAC: 1% for fee of 10 AC
           await expect(tx)
             .to.emit(mocWrapper, "TPSwappedForTPWithWrapper")
-            .withArgs(assetDefault.address, TP_0, TP_1, alice, bob, pEth(2350), pEth(52.5), pEth(0.1));
+            .withArgs(assetDefault.address, tps[0], tps[1], alice, bob, pEth(2350), pEth(52.5), pEth(0.1));
         });
       });
       describe("AND asset price provider is deprecated", () => {

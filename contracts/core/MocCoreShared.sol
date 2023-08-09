@@ -34,7 +34,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TPMinted(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -46,7 +46,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TPRedeemed(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -58,7 +58,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TCandTPRedeemed(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -71,7 +71,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TCandTPMinted(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -84,8 +84,8 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TPSwappedForTP(
-        uint256 indexed iFrom_,
-        uint256 iTo_,
+        address indexed tpFrom_,
+        address tpTo_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTPfrom_,
@@ -97,7 +97,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TPSwappedForTC(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -109,7 +109,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     );
     event TCSwappedForTP(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -240,19 +240,19 @@ abstract contract MocCoreShared is MocCore {
 
     /**
      * @notice caller sends Pegged Token and receives Collateral Asset
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @return qACRedeemed amount of AC sent to sender
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTP(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_
     ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmin: qACmin_,
             sender: msg.sender,
@@ -265,7 +265,7 @@ abstract contract MocCoreShared is MocCore {
     /**
      * @notice caller sends Pegged Token and receives Collateral Asset
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @param vendor_ address who receives a markup
@@ -273,13 +273,13 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
     ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmin: qACmin_,
             sender: msg.sender,
@@ -291,7 +291,7 @@ abstract contract MocCoreShared is MocCore {
 
     /**
      * @notice caller sends Pegged Token and recipient receives Collateral Asset
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
@@ -299,13 +299,13 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
     ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmin: qACmin_,
             sender: msg.sender,
@@ -318,7 +318,7 @@ abstract contract MocCoreShared is MocCore {
     /**
      * @notice caller sends Pegged Token and recipient receives Collateral Asset
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
@@ -327,14 +327,14 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_,
         address vendor_
     ) external returns (uint256 qACRedeemed, uint256 qFeeToken) {
         RedeemTPParams memory params = RedeemTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmin: qACmin_,
             sender: msg.sender,
@@ -350,7 +350,7 @@ abstract contract MocCoreShared is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
@@ -359,13 +359,13 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTCandTP(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_
     ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTP: qTP_,
             qACmin: qACmin_,
@@ -383,7 +383,7 @@ abstract contract MocCoreShared is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that the sender expects to receive
@@ -393,14 +393,14 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTCandTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
     ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTP: qTP_,
             qACmin: qACmin_,
@@ -417,7 +417,7 @@ abstract contract MocCoreShared is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
@@ -427,14 +427,14 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTCandTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
     ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTP: qTP_,
             qACmin: qACmin_,
@@ -452,7 +452,7 @@ abstract contract MocCoreShared is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ maximum amount of Collateral Token to redeem
      * @param qTP_ maximum amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
@@ -463,7 +463,7 @@ abstract contract MocCoreShared is MocCore {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function redeemTCandTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
@@ -471,7 +471,7 @@ abstract contract MocCoreShared is MocCore {
         address vendor_
     ) external returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256 qFeeToken) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTP: qTP_,
             qACmin: qACmin_,
@@ -520,7 +520,7 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TPMinted(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTP,
@@ -545,7 +545,7 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TPRedeemed(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTP,
@@ -572,7 +572,7 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TCandTPMinted(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             qTCMinted_,
@@ -600,7 +600,7 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TCandTPRedeemed(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTC,
@@ -626,7 +626,7 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TCSwappedForTP(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTC,
@@ -651,7 +651,7 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TPSwappedForTC(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTP,
@@ -676,8 +676,8 @@ abstract contract MocCoreShared is MocCore {
         FeeCalcs memory feeCalcs_
     ) internal override {
         emit TPSwappedForTP(
-            params_.iFrom,
-            params_.iTo,
+            params_.tpFrom,
+            params_.tpTo,
             params_.sender,
             params_.recipient,
             params_.qTP,

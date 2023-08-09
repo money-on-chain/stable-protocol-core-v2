@@ -216,7 +216,7 @@ const mintTCBehavior = function () {
     describe("GIVEN 3000 TC and 100 TP are minted", function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
-        await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 100 });
+        await mocFunctions.mintTP({ from: deployer, qTP: 100 });
       });
       describe("AND Collateral Asset relation with Pegged Token price falls to 1 making TC price falls too", function () {
         /*  

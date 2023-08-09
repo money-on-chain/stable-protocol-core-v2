@@ -9,6 +9,7 @@ import { fixtureDeployedMocCoinbase } from "./fixture";
 describe("Feature: MocCoinbase reentrance tests", () => {
   let mocImpl: MocCACoinbase;
   let mocContracts: any;
+  let tp0: Address;
   let mocFunctions: any;
   let deployer: Address;
   let reentrancyAttacker: ReentrancyAttackerMock;
@@ -22,6 +23,7 @@ describe("Feature: MocCoinbase reentrance tests", () => {
       mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsCoinbase(mocContracts);
       ({ mocImpl } = mocContracts);
+      tp0 = mocContracts.mocPeggedTokens[0].address;
       const factory = await ethers.getContractFactory("ReentrancyAttackerMock");
       reentrancyAttacker = await factory.deploy();
       // mint TC to reentrance attacker contract
@@ -51,43 +53,44 @@ describe("Feature: MocCoinbase reentrance tests", () => {
     });
     describe("WHEN a reentrance attacker contract reentrant mintTP", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("mintTP", [0, pEth(1)]);
+        const op = mocImpl.interface.encodeFunctionData("mintTP", [tp0, pEth(1)]);
         await expectRevertReentrancyGuard(reentracyAttack(op, { value: pEth(100) }));
       });
     });
     describe("WHEN a reentrance attacker contract reentrant redeemTP", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("redeemTP", [0, pEth(1), 0]);
+        const op = mocImpl.interface.encodeFunctionData("redeemTP", [tp0, pEth(1), 0]);
         await expectRevertReentrancyGuard(reentracyAttack(op));
       });
     });
     describe("WHEN a reentrance attacker contract reentrant swapTPforTP", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("swapTPforTP", [0, 1, pEth(1), 0]);
+        const tp1 = mocContracts.mocPeggedTokens[1].address;
+        const op = mocImpl.interface.encodeFunctionData("swapTPforTP", [tp0, tp1, pEth(1), 0]);
         await expectRevertReentrancyGuard(reentracyAttack(op, { value: pEth(100) }));
       });
     });
     describe("WHEN a reentrance attacker contract reentrant swapTPforTC", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("swapTPforTC", [0, pEth(1), 0]);
+        const op = mocImpl.interface.encodeFunctionData("swapTPforTC", [tp0, pEth(1), 0]);
         await expectRevertReentrancyGuard(reentracyAttack(op, { value: pEth(100) }));
       });
     });
     describe("WHEN a reentrance attacker contract reentrant swapTCforTP", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("swapTCforTP", [0, pEth(1), 0]);
+        const op = mocImpl.interface.encodeFunctionData("swapTCforTP", [tp0, pEth(1), 0]);
         await expectRevertReentrancyGuard(reentracyAttack(op, { value: pEth(100) }));
       });
     });
     describe("WHEN a reentrance attacker contract reentrant redeemTCandTP", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("redeemTCandTP", [0, pEth(1), pEth(100), 0]);
+        const op = mocImpl.interface.encodeFunctionData("redeemTCandTP", [tp0, pEth(1), pEth(100), 0]);
         await expectRevertReentrancyGuard(reentracyAttack(op));
       });
     });
     describe("WHEN a reentrance attacker contract reentrant mintTCandTP", () => {
       it("THEN tx fails because there is a reentrant call", async () => {
-        const op = mocImpl.interface.encodeFunctionData("mintTCandTP", [0, pEth(1)]);
+        const op = mocImpl.interface.encodeFunctionData("mintTCandTP", [tp0, pEth(1)]);
         await expectRevertReentrancyGuard(reentracyAttack(op, { value: pEth(100) }));
       });
     });

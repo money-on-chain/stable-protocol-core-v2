@@ -39,7 +39,7 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TPMinted(
-        uint256 indexed i_,
+        address indexed tp,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -52,7 +52,7 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TPRedeemed(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -65,7 +65,7 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TCandTPRedeemed(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -79,7 +79,7 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TCandTPMinted(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -93,8 +93,8 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TPSwappedForTP(
-        uint256 indexed iFrom_,
-        uint256 iTo_,
+        address indexed tpFrom_,
+        address tpTo_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTPfrom_,
@@ -107,7 +107,7 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TPSwappedForTC(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
@@ -120,7 +120,7 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
     event TCSwappedForTP(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTC_,
@@ -252,7 +252,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TPMinted(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTP,
@@ -280,7 +280,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TPRedeemed(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTP,
@@ -310,7 +310,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TCandTPMinted(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             qTCMinted_,
@@ -341,7 +341,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TCandTPRedeemed(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTC,
@@ -370,7 +370,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TCSwappedForTP(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTC,
@@ -398,7 +398,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TPSwappedForTC(
-            params_.i,
+            params_.tp,
             params_.sender,
             params_.recipient,
             params_.qTP,
@@ -426,8 +426,8 @@ contract MocQueue is MocAccessControlled {
         MocCore.FeeCalcs memory feeCalcs_
     ) internal {
         emit TPSwappedForTP(
-            params_.iFrom,
-            params_.iTo,
+            params_.tpFrom,
+            params_.tpTo,
             params_.sender,
             params_.recipient,
             params_.qTP,

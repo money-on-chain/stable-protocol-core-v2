@@ -11,6 +11,7 @@ const shouldBehaveLikeLiquidable = function () {
   let mocCollateralToken: MocRC20;
   let priceProviders: PriceProviderMock[];
   let alice: Address, bob: Address, charlie: Address, otherUser: Address;
+  let tp1: Address;
 
   describe("GIVEN there are open positions by multiple users", function () {
     beforeEach(async function () {
@@ -19,6 +20,7 @@ const shouldBehaveLikeLiquidable = function () {
       await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
       await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
       ({ mocImpl, mocCollateralToken, priceProviders } = this.mocContracts);
+      tp1 = this.mocContracts.mocPeggedTokens[1].address;
     });
     describe("WHEN AC prices falls, and makes the coverage go under liquidation threshold", function () {
       beforeEach(async function () {
@@ -135,7 +137,7 @@ const shouldBehaveLikeLiquidable = function () {
             const isWrapper = this.mocContracts.mocWrapper?.address;
             await expect(tx)
               .to.emit(mocImpl, "LiqTPRedeemed")
-              .withArgs(1, isWrapper || charlie, isWrapper || otherUser, pEth(10), "43333333333333333247");
+              .withArgs(tp1, isWrapper || charlie, isWrapper || otherUser, pEth(10), "43333333333333333247");
           });
           it("THEN they receive the corresponding AC amount", async function () {
             // Alice, bob and Charlie contribution at 1:1

@@ -117,33 +117,34 @@ contract MocCoreExpansion is MocCommons {
      *  to the `recipient_` by MocCore contract
      *  Checks done there:
      *  -  notPaused: the contract must be unpaused
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param sender_ address owner of the TP to be redeemed
      * @param recipient_ address who receives the AC
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
     function liqRedeemTPTo(
-        uint256 i_,
+        address tp_,
         address sender_,
         address recipient_,
         uint256 mocACBalance
     ) external returns (uint256 qACRedeemed) {
         if (!liquidated) revert OnlyWhenLiquidated();
-        uint256 qTP = tpTokens[i_].balanceOf(sender_);
+        uint256 i = _tpi(tp_);
+        uint256 qTP = tpTokens[i].balanceOf(sender_);
         // slither-disable-next-line incorrect-equality
         if (qTP == 0) revert InsufficientTPtoRedeem(qTP, qTP);
         // [PREC]
-        uint256 liqPACtp = tpLiqPrices[i_];
+        uint256 liqPACtp = tpLiqPrices[i];
         // [PREC] = [N] * [PREC] / [PREC]
         qACRedeemed = _divPrec(qTP, liqPACtp);
         // Given rounding errors, the last redeemer might receive a little less
         if (mocACBalance < qACRedeemed) qACRedeemed = mocACBalance;
         // in liquidation doesn't pay fees or markup
         // qACfee, qFeeToken, qACVendorMarkup, qFeeTokenVendorMarkup  = (0, 0, 0, 0)
-        // TODO use this function instead
-        emit LiqTPRedeemed(i_, sender_, recipient_, qTP, qACRedeemed);
+        // TODO use a function instead
+        emit LiqTPRedeemed(tp_, sender_, recipient_, qTP, qACRedeemed);
         // burn qTP from the sender
-        tpTokens[i_].burn(sender_, qTP);
+        tpTokens[i].burn(sender_, qTP);
     }
 
     /**
@@ -178,11 +179,13 @@ contract MocCoreExpansion is MocCommons {
         payable
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        if (params_.iFrom == params_.iTo) revert InvalidValue();
-        uint256 pACtpFrom = getPACtp(params_.iFrom);
-        uint256 pACtpTo = getPACtp(params_.iTo);
-        _updateTPtracking(params_.iFrom, pACtpFrom);
-        _updateTPtracking(params_.iTo, pACtpTo);
+        if (params_.tpFrom == params_.tpTo) revert InvalidValue();
+        uint256 iFrom = _tpi(params_.tpFrom);
+        uint256 iTo = _tpi(params_.tpTo);
+        uint256 pACtpFrom = getPACtp(iFrom);
+        uint256 pACtpTo = getPACtp(iTo);
+        _updateTPtracking(iFrom, pACtpFrom);
+        _updateTPtracking(iTo, pACtpTo);
         // calculate how many total qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtpFrom);
@@ -192,13 +195,13 @@ contract MocCoreExpansion is MocCommons {
         if (qTPtoMint < params_.qTPmin || qTPtoMint == 0) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
 
         // if ctargemaTPto > ctargemaTPfrom we need to check coverage
-        if (_getCtargemaTP(params_.iTo, pACtpTo) > _getCtargemaTP(params_.iFrom, pACtpFrom)) {
+        if (_getCtargemaTP(iTo, pACtpTo) > _getCtargemaTP(iFrom, pACtpFrom)) {
             (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
             // evaluates whether or not the system coverage is healthy enough to mint TP
             // given the target coverage adjusted by the moving average, reverts if it's not
             (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
             // evaluates if there are enough TP available to mint, reverts if it's not
-            _evalTPavailableToMint(params_.iTo, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
+            _evalTPavailableToMint(iTo, qTPtoMint, pACtpTo, ctargemaCA, lckAC, nACgain);
         }
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -207,8 +210,8 @@ contract MocCoreExpansion is MocCommons {
             swapTPforTPFee
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        _depositAndMintTP(params_.iTo, qTPtoMint, 0, params_.recipient);
-        _withdrawAndBurnTP(params_.iFrom, params_.qTP, 0, params_.sender);
+        _depositAndMintTP(iTo, qTPtoMint, 0, params_.recipient);
+        _withdrawAndBurnTP(iFrom, params_.qTP, 0, params_.sender);
     }
 
     /**
@@ -241,8 +244,9 @@ contract MocCoreExpansion is MocCommons {
         returns (uint256 qACSurcharges, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
+        uint256 i = _tpi(params_.tp);
+        uint256 pACtp = pACtps[i];
+        _updateTPtracking(i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TC, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
         // calculate how many total qAC are redeemed TP
@@ -263,7 +267,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
 
-        _withdrawAndBurnTP(params_.i, params_.qTP, 0, params_.sender);
+        _withdrawAndBurnTP(i, params_.qTP, 0, params_.sender);
         _depositAndMintTC(qTCtoMint, 0, params_.recipient);
     }
 
@@ -296,8 +300,9 @@ contract MocCoreExpansion is MocCommons {
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
+        uint256 i = _tpi(params_.tp);
+        uint256 pACtp = pACtps[i];
+        _updateTPtracking(i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to redeem TC
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
@@ -314,7 +319,7 @@ contract MocCoreExpansion is MocCommons {
         // [N] = ([N] * ([N] - [N]) * [PREC] / [N]) / [PREC]
         qTPtoMint = ((params_.qTC * (_getTotalACavailable(nACgain) - lckAC) * pACtp) / nTCcb) / PRECISION;
         // evaluates if there are enough TP available to mint, reverts if it's not
-        _evalTPavailableToMint(params_.i, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
+        _evalTPavailableToMint(i, qTPtoMint, pACtp, ctargemaCA, lckAC, nACgain);
         if (qTPtoMint < params_.qTPmin) revert QtpBelowMinimumRequired(params_.qTPmin, qTPtoMint);
 
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
@@ -326,6 +331,6 @@ contract MocCoreExpansion is MocCommons {
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
 
         _withdrawAndBurnTC(params_.qTC, 0, params_.sender);
-        _depositAndMintTP(params_.i, qTPtoMint, 0, params_.recipient);
+        _depositAndMintTP(i, qTPtoMint, 0, params_.recipient);
     }
 }

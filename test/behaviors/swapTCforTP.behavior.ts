@@ -18,6 +18,7 @@ const swapTCforTPBehavior = function () {
   let operator: Address;
   let vendor: Address;
   let expectEvent: any;
+  let tp0: Address;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
 
@@ -37,6 +38,7 @@ const swapTCforTPBehavior = function () {
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCSwappedForTP");
+      tp0 = mocContracts.mocPeggedTokens[0].address;
     });
 
     describe("GIVEN alice has 3000 TC", function () {
@@ -46,7 +48,7 @@ const swapTCforTPBehavior = function () {
 
       describe("WHEN alice tries to swap 0 TC", function () {
         it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
-          await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 0 })).to.be.revertedWithCustomError(
+          await expect(mocFunctions.swapTCforTP({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
           );
@@ -55,7 +57,7 @@ const swapTCforTPBehavior = function () {
       describe("WHEN alice swap 100 TC sending 0.99(less amount) AC for fees", function () {
         it("THEN tx reverts because AC received is below the minimum required", async function () {
           await expect(
-            mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100, qACmax: "0.999999999999999999" }),
+            mocFunctions.swapTCforTP({ from: alice, qTC: 100, qACmax: "0.999999999999999999" }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
         });
       });
@@ -66,7 +68,7 @@ const swapTCforTPBehavior = function () {
         */
         it("THEN tx reverts because TP received is below the minimum required", async function () {
           await expect(
-            mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100, qTPmin: 23501 }),
+            mocFunctions.swapTCforTP({ from: alice, qTC: 100, qTPmin: 23501 }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.QTP_BELOW_MINIMUM);
         });
       });
@@ -83,7 +85,7 @@ const swapTCforTPBehavior = function () {
         => TP available to mint = 169632
         */
         it("THEN tx reverts because there is not enough TP to mint", async function () {
-          await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 722 })).to.be.revertedWithCustomError(
+          await expect(mocFunctions.swapTCforTP({ from: alice, qTC: 722 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.INSUFFICIENT_TP_TO_MINT,
           );
@@ -108,7 +110,7 @@ const swapTCforTPBehavior = function () {
             mocFunctions.acBalanceOf(mocImpl.address),
             mocFunctions.acBalanceOf(mocFeeFlowAddress),
           ]);
-          tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100, qTPmin: 23500 });
+          tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 100, qTPmin: 23500 });
         });
         it("THEN coverage decrease to 30 value", async function () {
           assertPrec(30, await mocImpl.getCglb());
@@ -144,7 +146,7 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
+          await expectEvent(tx, [tp0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -180,7 +182,7 @@ const swapTCforTPBehavior = function () {
             mocFunctions.tcBalanceOf(alice),
             mocFunctions.assetBalanceOf(alice),
           ]);
-          tx = await mocFunctions.swapTCforTPto({ i: TP_0, from: alice, to: bob, qTC: 100 });
+          tx = await mocFunctions.swapTCforTPto({ from: alice, to: bob, qTC: 100 });
         });
         it("THEN bob TP 0 balance is 23500", async function () {
           assertPrec(23500, await mocFunctions.tpBalanceOf(TP_0, bob));
@@ -205,14 +207,14 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
+          await expectEvent(tx, [tp0, operator, bob, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
         });
       });
       describe("WHEN alice tries to swap 100 TC for 23500 TP 0 via vendor without sending the AC for the markup", function () {
         it("THEN tx reverts because AC received is below the minimum required", async function () {
           // qACmax = 1% for qACfee of 100AC
           await expect(
-            mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100, qACmax: 1, vendor }),
+            mocFunctions.swapTCforTP({ from: alice, qTC: 100, qACmax: 1, vendor }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
         });
       });
@@ -223,7 +225,7 @@ const swapTCforTPBehavior = function () {
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           vendorPrevACBalance = await mocFunctions.acBalanceOf(vendor);
-          tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100, vendor });
+          tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 100, vendor });
         });
         it("THEN alice AC balance decrease 11 Asset (1% qACFee + 10% qACVendorMarkup of 100 qAC)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
@@ -245,13 +247,13 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, operator, alice, pEth(100), pEth(23500), pEth(1), 0, pEth(10), 0, vendor]);
+          await expectEvent(tx, [tp0, operator, alice, pEth(100), pEth(23500), pEth(1), 0, pEth(10), 0, vendor]);
         });
       });
       describe("WHEN alice swaps 100 TC for 23500 TP 0 to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.swapTCforTPto({ i: TP_0, from: alice, to: bob, qTC: 100, vendor });
+          tx = await mocFunctions.swapTCforTPto({ from: alice, to: bob, qTC: 100, vendor });
         });
         it("THEN a TCSwappedForTP event is emitted", async function () {
           // i: 0
@@ -263,7 +265,7 @@ const swapTCforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, operator, bob, pEth(100), pEth(23500), pEth(1), 0, pEth(10), 0, vendor]);
+          await expectEvent(tx, [tp0, operator, bob, pEth(100), pEth(23500), pEth(1), 0, pEth(10), 0, vendor]);
         });
       });
       describe("AND there are 100000 TC more in the protocol", function () {
@@ -273,8 +275,7 @@ const swapTCforTPBehavior = function () {
         describe("WHEN alice tries to swap 3000.1 TC", function () {
           it("THEN tx reverts because alice doesn't have that much TC", async function () {
             // generic revert because in collateral bag implementation fails before trying to transfer the tokens
-            await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: "3000.000000000000000001" })).to.be
-              .reverted;
+            await expect(mocFunctions.swapTCforTP({ from: alice, qTC: "3000.000000000000000001" })).to.be.reverted;
           });
         });
         describe("WHEN alice swaps 3000(all balance) TC for 705000 TP 0", function () {
@@ -283,7 +284,7 @@ const swapTCforTPBehavior = function () {
             3000 AC = 705000 TP 0
             */
           beforeEach(async function () {
-            tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 3000 });
+            tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 3000 });
           });
           it("THEN a TCSwappedForTP event is emitted", async function () {
             // i: 0
@@ -295,13 +296,13 @@ const swapTCforTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [TP_0, operator, alice, pEth(3000), pEth(705000), pEth(30), 0, 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, operator, alice, pEth(3000), pEth(705000), pEth(30), 0, 0, 0, noVendor]);
           });
         });
       });
       describe("AND 23500 TP0 are minted", function () {
         beforeEach(async function () {
-          await mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 23500 });
+          await mocFunctions.mintTP({ from: deployer, qTP: 23500 });
         });
         describe("AND TP 0 has been devaluated to 470 making TC price rices", function () {
           /*  
@@ -320,7 +321,7 @@ const swapTCforTPBehavior = function () {
             10.066AC = 4731.33 TP 0
             */
             beforeEach(async function () {
-              tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 10 });
+              tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 10 });
             });
             it("THEN a TCSwappedForTP event is emitted", async function () {
               // i: 0
@@ -332,18 +333,9 @@ const swapTCforTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              await expectEvent(tx, [
-                TP_0,
-                operator,
-                alice,
-                pEth(10),
-                pEth("4731.333333333333333333"),
-                pEth("0.100666666666666666"),
-                0,
-                0,
-                0,
-                noVendor,
-              ]);
+              const qTP = pEth("4731.333333333333333333");
+              const qACfee = pEth("0.100666666666666666");
+              await expectEvent(tx, [tp0, operator, alice, pEth(10), qTP, qACfee, 0, 0, 0, noVendor]);
             });
           });
         });
@@ -359,7 +351,7 @@ const swapTCforTPBehavior = function () {
           });
           describe("WHEN alice tries to swap 1 TC for TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
-              await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 1 })).to.be.revertedWithCustomError(
+              await expect(mocFunctions.swapTCforTP({ from: alice, qTC: 1 })).to.be.revertedWithCustomError(
                 mocImpl,
                 ERRORS.LOW_COVERAGE,
               );
@@ -379,7 +371,7 @@ const swapTCforTPBehavior = function () {
           describe("WHEN alice tries to swap 1 wei TC for TP", function () {
             it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
               await expect(
-                mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 1, applyPrecision: false }),
+                mocFunctions.swapTCforTP({ from: alice, qTC: 1, applyPrecision: false }),
               ).to.be.revertedWithCustomError(mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
             });
           });
@@ -389,7 +381,7 @@ const swapTCforTPBehavior = function () {
             0.955 AC = 955 TP 0
             */
             beforeEach(async function () {
-              tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 10 });
+              tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 10 });
             });
             it("THEN a TCSwappedForTP event is emitted", async function () {
               // i: 0
@@ -401,7 +393,7 @@ const swapTCforTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              const args = [TP_0, operator, alice, pEth(10), pEth(955), pEth("0.0955"), 0, 0, 0, noVendor];
+              const args = [tp0, operator, alice, pEth(10), pEth(955), pEth("0.0955"), 0, 0, 0, noVendor];
               await expectEvent(tx, args);
             });
           });
@@ -413,7 +405,7 @@ const swapTCforTPBehavior = function () {
           });
           it("THEN tx reverts because coverage is below the protected threshold", async function () {
             expect((await mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
-            await expect(mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+            await expect(mocFunctions.swapTCforTP({ from: alice, qTC: 100 })).to.be.revertedWithCustomError(
               mocImpl,
               ERRORS.LOW_COVERAGE,
             );
@@ -441,7 +433,7 @@ const swapTCforTPBehavior = function () {
         });
         describe("WHEN alice swaps 100 TC for 23500 TP 0", function () {
           beforeEach(async function () {
-            tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 100 });
+            tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 100 });
           });
           it("THEN alice AC balance doesn't change", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
@@ -472,12 +464,12 @@ const swapTCforTPBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [TP_0, operator, alice, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, operator, alice, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor]);
           });
         });
         describe("WHEN alice swaps 100 TC for 23500 TP 0", function () {
           beforeEach(async function () {
-            tx = await mocFunctions.swapTCforTPto({ i: TP_0, from: alice, to: bob, qTC: 100 });
+            tx = await mocFunctions.swapTCforTPto({ from: alice, to: bob, qTC: 100 });
           });
           it("THEN alice AC balance doesn't change", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
@@ -508,7 +500,7 @@ const swapTCforTPBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [TP_0, operator, bob, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, operator, bob, pEth(100), pEth(23500), 0, pEth(0.5), 0, 0, noVendor]);
           });
         });
       });

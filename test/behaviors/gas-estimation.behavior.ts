@@ -47,13 +47,13 @@ const gasEstimationBehavior = function () {
           const ops = {
             mintTC: () => mocFunctions.mintTC({ from: deployer, qTC: 100 }),
             redeemTC: () => mocFunctions.redeemTC({ from: deployer, qTC: 100 }),
-            mintTP: () => mocFunctions.mintTP({ i: TP_0, from: deployer, qTP: 100 }),
-            redeemTP: () => mocFunctions.redeemTP({ i: TP_0, from: deployer, qTP: 100 }),
+            mintTP: () => mocFunctions.mintTP({ from: deployer, qTP: 100 }),
+            redeemTP: () => mocFunctions.redeemTP({ from: deployer, qTP: 100 }),
             swapTPforTP: () => mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: deployer, qTP: 100 }),
-            swapTPforTC: () => mocFunctions.swapTPforTC({ i: TP_0, from: deployer, qTP: 100 }),
-            swapTCforTP: () => mocFunctions.swapTCforTP({ i: TP_0, from: deployer, qTC: 100 }),
-            redeemTCandTP: () => mocFunctions.redeemTCandTP({ i: TP_0, from: deployer, qTC: 1, qTP: 100 }),
-            mintTCandTP: () => mocFunctions.mintTCandTP({ i: TP_0, from: deployer, qTP: 100 }),
+            swapTPforTC: () => mocFunctions.swapTPforTC({ from: deployer, qTP: 100 }),
+            swapTCforTP: () => mocFunctions.swapTCforTP({ from: deployer, qTC: 100 }),
+            redeemTCandTP: () => mocFunctions.redeemTCandTP({ from: deployer, qTC: 1, qTP: 100 }),
+            mintTCandTP: () => mocFunctions.mintTCandTP({ from: deployer, qTP: 100 }),
             execSettlement: async () => {
               await mineUpTo(await mocContracts.mocImpl.bns());
               return mocContracts.mocImpl.execSettlement();

@@ -14,6 +14,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
   let mocFunctions: any;
   let alice: Address;
   let bob: Address;
+  let tp0: Address;
   const TP_0 = 0;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
@@ -27,6 +28,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
         assets: [assetDefault],
         mocWrapper,
       } = this.mocContracts);
+      tp0 = this.mocContracts.mocPeggedTokens[TP_0].address;
     });
     redeemTCandTPBehavior();
 
@@ -37,7 +39,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
       });
       it("THEN tx fails because asset is invalid", async () => {
         await expect(
-          mocWrapper.redeemTCandTP(assetNotWhitelisted.address, TP_0, 10, 10, 10),
+          mocWrapper.redeemTCandTP(assetNotWhitelisted.address, tp0, 10, 10, 10),
         ).to.be.revertedWithCustomError(mocWrapper, ERRORS.INVALID_ADDRESS);
       });
     });
@@ -46,11 +48,11 @@ describe("Feature: MocCABag redeem TC and TP", function () {
       let tx: ContractTransaction;
       beforeEach(async () => {
         await mocFunctions.mintTC({ from: alice, qTC: 3000 });
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ from: alice, qTP: 23500 });
       });
       describe("WHEN alice redeems 100 TC and 783.33 TP 0", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
+          tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500 });
         });
         it("THEN a TCandTPRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
@@ -64,7 +66,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
             .to.emit(mocWrapper, "TCandTPRedeemedWithWrapper")
             .withArgs(
               assetDefault.address,
-              TP_0,
+              tp0,
               alice,
               alice,
               pEth(100),
@@ -75,7 +77,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
       });
       describe("WHEN alice redeems 100 TC and 783.33 TP 0 to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500 });
+          tx = await mocFunctions.redeemTCandTPto({ from: alice, to: bob, qTC: 100, qTP: 23500 });
         });
         it("THEN a TCRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
@@ -89,7 +91,7 @@ describe("Feature: MocCABag redeem TC and TP", function () {
             .to.emit(mocWrapper, "TCandTPRedeemedWithWrapper")
             .withArgs(
               assetDefault.address,
-              TP_0,
+              tp0,
               alice,
               bob,
               pEth(100),

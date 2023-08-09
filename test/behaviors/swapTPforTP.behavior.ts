@@ -18,11 +18,11 @@ const swapTPforTPBehavior = function () {
   let operator: Address;
   let vendor: Address;
   let expectEvent: any;
+  let tps: Address[];
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-  const TP_NON_EXISTENT = 5;
 
   const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
 
@@ -43,10 +43,11 @@ const swapTPforTPBehavior = function () {
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTP");
+      tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
     describe("GIVEN alice has 23500 TP 0", function () {
       beforeEach(async function () {
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ from: alice, qTP: 23500 });
       });
       describe("AND TP 0 price provider is deprecated", function () {
         beforeEach(async function () {
@@ -80,17 +81,14 @@ const swapTPforTPBehavior = function () {
         });
       });
       describe("WHEN alice tries to swap using a non-existent TP", function () {
-        it("THEN tx reverts with panic code 0x32 array out of bounded", async function () {
+        it("THEN tx reverts", async function () {
           // generic revert because collateralbag implementation fail before accessing the tp array
-          await expect(mocFunctions.swapTPforTP({ iFrom: TP_NON_EXISTENT, iTo: TP_0, from: alice, qTP: 23500 })).to.be
-            .reverted;
+          await expect(mocFunctions.swapTPforTP({ tpFrom: alice, iTo: TP_0, from: alice, qTP: 23500 })).to.be.reverted;
         });
       });
       describe("WHEN alice tries to swap TP 0 for a non-existent TP", function () {
-        it("THEN tx reverts with panic code 0x32 array out of bounded", async function () {
-          await expect(
-            mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_NON_EXISTENT, from: alice, qTP: 23500 }),
-          ).to.be.revertedWithPanic("0x32");
+        it("THEN tx reverts", async function () {
+          await expect(mocFunctions.swapTPforTP({ iFrom: TP_0, tpTo: alice, from: alice, qTP: 23500 })).to.be.reverted;
         });
       });
       describe("WHEN alice tries to swap 0 TP 0", function () {
@@ -206,7 +204,7 @@ const swapTPforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, TP_1, operator, alice, pEth(23500), pEth(525), pEth(1), 0, 0, 0, noVendor]);
+          await expectEvent(tx, [tps[0], tps[1], operator, alice, pEth(23500), pEth(525), pEth(1), 0, 0, 0, noVendor]);
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
           // from: alice || mocWrapper
@@ -270,7 +268,7 @@ const swapTPforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [TP_0, TP_1, operator, bob, pEth(2350), pEth(52.5), pEth(10 * 0.01), 0, 0, 0, noVendor];
+          const args = [tps[0], tps[1], operator, bob, pEth(2350), pEth(52.5), pEth(10 * 0.01), 0, 0, 0, noVendor];
           await expectEvent(tx, args);
         });
       });
@@ -320,7 +318,8 @@ const swapTPforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, TP_1, operator, alice, pEth(23500), pEth(525), pEth(1), 0, pEth(10), 0, vendor]);
+          const args = [tps[0], tps[1], operator, alice, pEth(23500), pEth(525), pEth(1), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice swaps 23500 TP 0 for 525 TP 1 to bob via vendor", function () {
@@ -347,7 +346,8 @@ const swapTPforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [TP_0, TP_1, operator, bob, pEth(23500), pEth(525), pEth(1), 0, pEth(10), 0, vendor]);
+          const args = [tps[0], tps[1], operator, bob, pEth(23500), pEth(525), pEth(1), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice swap 2350 TP 0 for 52.5 TP 4. ctargemaTP 4 > ctargemaTP 0, so coverage is checked", function () {
@@ -377,7 +377,7 @@ const swapTPforTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [TP_0, TP_4, operator, alice, pEth(2350), pEth(52.5), pEth(10 * 0.01), 0, 0, 0, noVendor];
+          const args = [tps[0], tps[4], operator, alice, pEth(2350), pEth(52.5), pEth(10 * 0.01), 0, 0, 0, noVendor];
           await expectEvent(tx, args);
         });
       });
@@ -428,19 +428,8 @@ const swapTPforTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [
-              TP_0,
-              TP_1,
-              operator,
-              alice,
-              pEth(2350),
-              pEth(1175),
-              pEth("2.238095238095238095"),
-              0,
-              0,
-              0,
-              noVendor,
-            ]);
+            const qACfee = pEth("2.238095238095238095");
+            await expectEvent(tx, [tps[0], tps[1], operator, alice, pEth(2350), pEth(1175), qACfee, 0, 0, 0, noVendor]);
           });
         });
         describe("WHEN alice swap 2350 TP 0 for 1175 TP 4. ctargemaTP 4 > ctargemaTP 0, so coverage is checked", function () {
@@ -493,7 +482,19 @@ const swapTPforTPBehavior = function () {
             // qFeeToken: 0
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            const args = [TP_0, TP_1, operator, alice, pEth(23500), pEth(262.5), pEth(50 * 0.01), 0, 0, 0, noVendor];
+            const args = [
+              tps[0],
+              tps[1],
+              operator,
+              alice,
+              pEth(23500),
+              pEth(262.5),
+              pEth(50 * 0.01),
+              0,
+              0,
+              0,
+              noVendor,
+            ];
             await expectEvent(tx, args);
           });
         });
@@ -551,7 +552,8 @@ const swapTPforTPBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [TP_0, TP_1, operator, alice, pEth(23500), pEth(525), 0, pEth(0.5), 0, 0, noVendor]);
+            const args = [tps[0], tps[1], operator, alice, pEth(23500), pEth(525), 0, pEth(0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
         describe("WHEN alice swaps 23500 TP 0 for 525 TP 1", function () {
@@ -595,7 +597,8 @@ const swapTPforTPBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [TP_0, TP_1, operator, bob, pEth(23500), pEth(525), 0, pEth(0.5), 0, 0, noVendor]);
+            const args = [tps[0], tps[1], operator, bob, pEth(23500), pEth(525), 0, pEth(0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
       });

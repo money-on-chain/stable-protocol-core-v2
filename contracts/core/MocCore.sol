@@ -340,7 +340,7 @@ abstract contract MocCore is MocCommons {
     }
 
     struct MintTPParams {
-        uint256 i;
+        address tp;
         uint256 qTP;
         uint256 qACmax;
         address sender;
@@ -371,13 +371,14 @@ abstract contract MocCore is MocCommons {
         returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
+        uint256 i = _tpi(params_.tp);
+        uint256 pACtp = pACtps[i];
+        _updateTPtracking(i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to mint TP
         // given the target coverage adjusted by the moving average, reverts if it's not
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(ctargemaCA, pACtps);
         // evaluates if there are enough TP available to mint, reverts if it's not
-        _evalTPavailableToMint(params_.i, params_.qTP, pACtp, ctargemaCA, lckAC, nACgain);
+        _evalTPavailableToMint(i, params_.qTP, pACtp, ctargemaCA, lckAC, nACgain);
         // calculate how many qAC are needed to mint TP
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACNeededtoMint = _divPrec(params_.qTP, pACtp);
@@ -386,7 +387,7 @@ abstract contract MocCore is MocCommons {
             params_.sender,
             params_.vendor,
             qACNeededtoMint,
-            tpMintFee[params_.i]
+            tpMintFee[i]
         );
         qACtotalNeeded = qACNeededtoMint + qACSurcharges;
         if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
@@ -395,7 +396,7 @@ abstract contract MocCore is MocCommons {
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTPMinted(params_, qACtotalNeeded, feeCalcs);
         // update bucket and mint
-        _depositAndMintTP(params_.i, params_.qTP, qACNeededtoMint, params_.recipient);
+        _depositAndMintTP(i, params_.qTP, qACNeededtoMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
@@ -424,8 +425,9 @@ abstract contract MocCore is MocCommons {
         returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
+        uint256 i = _tpi(params_.tp);
+        uint256 pACtp = pACtps[i];
+        _updateTPtracking(i, pACtp);
         // evaluates whether or not the system coverage is healthy enough to redeem TP, reverts if it's not
         _evalCoverage(protThrld, pACtps);
         // calculate how many total qAC are redeemed
@@ -436,7 +438,7 @@ abstract contract MocCore is MocCommons {
             params_.sender,
             params_.vendor,
             qACtotalToRedeem,
-            tpRedeemFee[params_.i]
+            tpRedeemFee[i]
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         // if is 0 reverts because it is trying to redeem an amount below precision
@@ -444,13 +446,13 @@ abstract contract MocCore is MocCommons {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTPRedeemed(params_, qACtoRedeem, feeCalcs);
-        _withdrawAndBurnTP(params_.i, params_.qTP, qACtotalToRedeem, params_.sender);
+        _withdrawAndBurnTP(i, params_.qTP, qACtotalToRedeem, params_.sender);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
 
     struct MintTCandTPParams {
-        uint256 i;
+        address tp;
         uint256 qTP;
         uint256 qACmax;
         address sender;
@@ -487,15 +489,16 @@ abstract contract MocCore is MocCommons {
     {
         uint256 qACNeededtoMint;
         uint256[] memory pACtps = _getPACtps();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
+        uint256 i = _tpi(params_.tp);
+        uint256 pACtp = pACtps[i];
+        _updateTPtracking(i, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
         (qTCtoMint, qACNeededtoMint) = _calcQACforMintTCandTP(
             params_.qTP,
             pACtp,
-            _getCtargemaTP(params_.i, pACtp),
+            _getCtargemaTP(i, pACtp),
             _getPTCac(lckAC, nACgain)
         );
         uint256 qACSurcharges;
@@ -512,14 +515,14 @@ abstract contract MocCore is MocCommons {
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTCandTPMinted(params_, qTCtoMint, qACtotalNeeded, feeCalcs);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
-        _depositAndMintTP(params_.i, params_.qTP, 0, params_.recipient);
+        _depositAndMintTP(i, params_.qTP, 0, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers qAC to the sender and distributes fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
     }
 
     struct RedeemTCandTPParams {
-        uint256 i;
+        address tp;
         uint256 qTC;
         uint256 qTP;
         uint256 qACmin;
@@ -557,8 +560,9 @@ abstract contract MocCore is MocCommons {
         returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
-        uint256 pACtp = pACtps[params_.i];
-        _updateTPtracking(params_.i, pACtp);
+        uint256 i = _tpi(params_.tp);
+        uint256 pACtp = pACtps[i];
+        _updateTPtracking(i, pACtp);
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
@@ -570,7 +574,7 @@ abstract contract MocCore is MocCommons {
         // ...((totalACavailable - lckAC) / lckAC)(ctargemaTP - 1)
         // So, we can simplify (totalACavailable - lckAC)
         // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 aux = (pACtp * (ctargemaCA - ONE)) / (_getCtargemaTP(params_.i, pACtp) - ONE);
+        uint256 aux = (pACtp * (ctargemaCA - ONE)) / (_getCtargemaTP(i, pACtp) - ONE);
         // [N] = ([N] * [N] * [PREC] / [N]) / [PREC]
         qTPtoRedeem = ((params_.qTC * lckAC * aux) / nTCcb) / PRECISION;
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
@@ -588,7 +592,7 @@ abstract contract MocCore is MocCommons {
         onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
 
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
-        _withdrawAndBurnTP(params_.i, qTPtoRedeem, 0, params_.sender);
+        _withdrawAndBurnTP(i, qTPtoRedeem, 0, params_.sender);
 
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
@@ -710,19 +714,19 @@ abstract contract MocCore is MocCommons {
      * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
      * the equivalent AC given the liquidation frozen price.
      * @dev This function is implemented in MocCoreExpansion but with this contract context
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param sender_ address owner of the TP to be redeemed
      * @param recipient_ address who receives the AC
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
     function _liqRedeemTPTo(
-        uint256 i_,
+        address tp_,
         address sender_,
         address recipient_
     ) internal notPaused nonReentrant returns (uint256 qACRedeemed) {
         bytes memory payload = abi.encodeCall(
             MocCoreExpansion(mocCoreExpansion).liqRedeemTPTo,
-            (i_, sender_, recipient_, acBalanceOf(address(this)))
+            (tp_, sender_, recipient_, acBalanceOf(address(this)))
         );
         qACRedeemed = abi.decode(Address.functionDelegateCall(mocCoreExpansion, payload), (uint256));
         // transfer qAC to the recipient, reverts if fail
@@ -788,22 +792,22 @@ abstract contract MocCore is MocCommons {
     /**
      * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
      * the equivalent AC given the liquidation frozen price.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @return qACRedeemed amount of AC sent to sender
      */
-    function liqRedeemTP(uint256 i_) external returns (uint256 qACRedeemed) {
-        return _liqRedeemTPTo(i_, msg.sender, msg.sender);
+    function liqRedeemTP(address tp_) external returns (uint256 qACRedeemed) {
+        return _liqRedeemTPTo(tp_, msg.sender, msg.sender);
     }
 
     /**
      * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
      * the equivalent AC given the liquidation frozen price.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param recipient_ address who receives the AC
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
-    function liqRedeemTPto(uint256 i_, address recipient_) external returns (uint256 qACRedeemed) {
-        return _liqRedeemTPTo(i_, msg.sender, recipient_);
+    function liqRedeemTPto(address tp_, address recipient_) external returns (uint256 qACRedeemed) {
+        return _liqRedeemTPTo(tp_, msg.sender, recipient_);
     }
 
     /**

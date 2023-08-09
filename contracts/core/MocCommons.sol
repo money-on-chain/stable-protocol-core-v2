@@ -70,8 +70,8 @@ abstract contract MocCommons is MocEma {
     // ------- Internal Structs -------
 
     struct SwapTPforTPParams {
-        uint256 iFrom;
-        uint256 iTo;
+        address tpFrom;
+        address tpTo;
         uint256 qTP;
         uint256 qTPmin;
         uint256 qACmax;
@@ -81,7 +81,7 @@ abstract contract MocCommons is MocEma {
     }
 
     struct SwapTPforTCParams {
-        uint256 i;
+        address tp;
         uint256 qTP;
         uint256 qTCmin;
         uint256 qACmax;
@@ -91,7 +91,7 @@ abstract contract MocCommons is MocEma {
     }
 
     struct SwapTCforTPParams {
-        uint256 i;
+        address tp;
         uint256 qTC;
         uint256 qTPmin;
         uint256 qACmax;
@@ -101,7 +101,7 @@ abstract contract MocCommons is MocEma {
     }
 
     struct RedeemTPParams {
-        uint256 i;
+        address tp;
         uint256 qTP;
         uint256 qACmin;
         address sender;
@@ -132,13 +132,13 @@ abstract contract MocCommons is MocEma {
     // ------- Events -------
 
     event LiqTPRedeemed(
-        uint256 indexed i_,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
         uint256 qAC_
     );
-    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
+    event PeggedTokenChange(uint256 i_, PeggedTokenParams peggedTokenParams_);
 
     // ------- Initializer -------
 

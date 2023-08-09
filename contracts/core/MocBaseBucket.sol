@@ -659,6 +659,12 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         return _divPrec(_getTotalACavailable(nACgain_), lckAC_);
     }
 
+    function _tpi(address tpAddress) internal view returns (uint256) {
+        PeggedTokenIndex storage ptIndex = peggedTokenIndex[tpAddress];
+        if (!ptIndex.exists) revert InvalidAddress();
+        return ptIndex.index;
+    }
+
     // ------- Public Functions -------
 
     /**
@@ -690,10 +696,24 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
 
     /**
      * @notice get how many Pegged Token equal 1 Collateral Asset
+     * @param tp_ Pegged Token address
+     * @return price [PREC]
+     */
+    function getPACtp(address tp_) public view virtual returns (uint256) {
+        IPriceProvider priceProvider = pegContainer[_tpi(tp_)].priceProvider;
+        (uint256 price, bool has) = _peekPrice(priceProvider);
+        if (!has) revert MissingProviderPrice(address(priceProvider));
+        return price;
+    }
+
+    // ------- Internal Functions -------
+
+    /**
+     * @notice get how many Pegged Token equal 1 Collateral Asset
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function getPACtp(uint256 i_) public view virtual returns (uint256) {
+    function getPACtp(uint256 i_) internal view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (uint256 price, bool has) = _peekPrice(priceProvider);
         if (!has) revert MissingProviderPrice(address(priceProvider));

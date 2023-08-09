@@ -1,7 +1,7 @@
 import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
-import { MocCACoinbase, NonPayableMock } from "../../typechain";
+import { MocCACoinbase, MocRC20, NonPayableMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { ERRORS, pEth, tpParams } from "../helpers/utils";
@@ -9,6 +9,7 @@ import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase mint TP", function () {
   let mocImpl: MocCACoinbase;
+  let mocPeggedTokens: [MocRC20];
   let mocFunctions: any;
   let deployer: Address;
 
@@ -19,7 +20,7 @@ describe("Feature: MocCoinbase mint TP", function () {
       this.mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
       this.mocFunctions = mocFunctions;
-      ({ mocImpl } = this.mocContracts);
+      ({ mocImpl, mocPeggedTokens } = this.mocContracts);
     });
     mintTPBehavior();
 
@@ -32,7 +33,8 @@ describe("Feature: MocCoinbase mint TP", function () {
         nonPayable = await factory.deploy();
       });
       it("THEN tx fails because contract cannot receive the surplus", async () => {
-        const data = mocImpl.interface.encodeFunctionData("mintTP", [0, pEth(1)]);
+        const tp = mocPeggedTokens[0].address;
+        const data = mocImpl.interface.encodeFunctionData("mintTP", [tp, pEth(1)]);
         await expect(nonPayable.forward(mocImpl.address, data, { value: pEth(100) })).to.be.revertedWithCustomError(
           mocImpl,
           ERRORS.TRANSFER_FAIL,

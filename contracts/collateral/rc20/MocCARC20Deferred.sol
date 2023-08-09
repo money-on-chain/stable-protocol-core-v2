@@ -351,57 +351,57 @@ contract MocCARC20Deferred is MocCore {
     /**
      * @notice caller sends Collateral Asset and receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTP(uint256 i_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
-        return mintTPtoViaVendor(i_, qTP_, qACmax_, msg.sender, address(0));
+    function mintTP(address tp_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
+        return mintTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, address(0));
     }
 
     /**
      * @notice caller sends Collateral Asset and receives Pegged Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
      *   Requires prior sender approval of Collateral Asset to this contract
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param vendor_ address who receives a markup
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return mintTPtoViaVendor(i_, qTP_, qACmax_, msg.sender, vendor_);
+        return mintTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, vendor_);
     }
 
     /**
      * @notice caller sends Collateral Asset and recipient receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return mintTPtoViaVendor(i_, qTP_, qACmax_, recipient_, address(0));
+        return mintTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, address(0));
     }
 
     /**
      * @notice caller sends Collateral Asset and recipient receives Pegged Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
      *   Requires prior sender approval of Collateral Asset to this contract
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
@@ -409,7 +409,7 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_,
@@ -417,7 +417,7 @@ contract MocCARC20Deferred is MocCore {
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         MintTPParams memory params = MintTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -429,54 +429,54 @@ contract MocCARC20Deferred is MocCore {
 
     /**
      * @notice caller sends Pegged Token and receives Collateral Asset
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token address to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @return operId Identifier to track the Operation lifecycle
      */
-    function redeemTP(uint256 i_, uint256 qTP_, uint256 qACmin_) external payable returns (uint256 operId) {
-        return redeemTPtoViaVendor(i_, qTP_, qACmin_, msg.sender, address(0));
+    function redeemTP(address tp_, uint256 qTP_, uint256 qACmin_) external payable returns (uint256 operId) {
+        return redeemTPtoViaVendor(tp_, qTP_, qACmin_, msg.sender, address(0));
     }
 
     /**
      * @notice caller sends Pegged Token and receives Collateral Asset
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token address to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
      * @param vendor_ address who receives a markup
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return redeemTPtoViaVendor(i_, qTP_, qACmin_, msg.sender, vendor_);
+        return redeemTPtoViaVendor(tp_, qTP_, qACmin_, msg.sender, vendor_);
     }
 
     /**
      * @notice caller sends Pegged Token and recipient receives Collateral Asset
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token address to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return redeemTPtoViaVendor(i_, qTP_, qACmin_, recipient_, address(0));
+        return redeemTPtoViaVendor(tp_, qTP_, qACmin_, recipient_, address(0));
     }
 
     /**
      * @notice caller sends Pegged Token and recipient receives Collateral Asset
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index to redeem
+     * @param tp_ Pegged Token address to redeem
      * @param qTP_ amount of Pegged Token to redeem
      * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Asset
@@ -484,14 +484,14 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         RedeemTPParams memory params = RedeemTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmin: qACmin_,
             sender: msg.sender,
@@ -508,13 +508,13 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTCandTP(uint256 i_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
-        return mintTCandTPtoViaVendor(i_, qTP_, qACmax_, msg.sender, address(0));
+    function mintTCandTP(address tp_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
+        return mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -525,19 +525,19 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param vendor_ address who receives a markup
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return mintTCandTPtoViaVendor(i_, qTP_, qACmax_, msg.sender, vendor_);
+        return mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -547,19 +547,19 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return mintTCandTPtoViaVendor(i_, qTP_, qACmax_, recipient_, address(0));
+        return mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -570,7 +570,7 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
@@ -578,7 +578,7 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_,
@@ -586,7 +586,7 @@ contract MocCARC20Deferred is MocCore {
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         MintTCandTPParams memory params = MintTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -602,19 +602,19 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Maximum amount of Collateral Token to redeem
      * @param qTP_ Maximum amount of Pegged Token to redeem
      * @param qACmin_ Minimum amount of Collateral Asset that the sender expects to receive
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTCandTP(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_
     ) external payable returns (uint256 operId) {
-        return redeemTCandTPtoViaVendor(i_, qTC_, qTP_, qACmin_, msg.sender, address(0));
+        return redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, msg.sender, address(0));
     }
 
     /**
@@ -624,7 +624,7 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Maximum amount of Collateral Token to redeem
      * @param qTP_ Maximum amount of Pegged Token to redeem
      * @param qACmin_ Minimum amount of Collateral Asset that the sender expects to receive
@@ -632,13 +632,13 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTCandTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return redeemTCandTPtoViaVendor(i_, qTC_, qTP_, qACmin_, msg.sender, vendor_);
+        return redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, msg.sender, vendor_);
     }
 
     /**
@@ -647,7 +647,7 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Maximum amount of Collateral Token to redeem
      * @param qTP_ Maximum amount of Pegged Token to redeem
      * @param qACmin_ Minimum amount of Collateral Asset that `recipient_` expects to receive
@@ -655,13 +655,13 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTCandTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return redeemTCandTPtoViaVendor(i_, qTC_, qTP_, qACmin_, recipient_, address(0));
+        return redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, recipient_, address(0));
     }
 
     /**
@@ -671,7 +671,7 @@ contract MocCARC20Deferred is MocCore {
      *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
      *  and global coverage are not modified.
      *  Reverts if qTP sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Maximum amount of Collateral Token to redeem
      * @param qTP_ Maximum amount of Pegged Token to redeem
      * @param qACmin_ Minimum amount of Collateral Asset that `recipient_` expects to receive
@@ -680,7 +680,7 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function redeemTCandTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTP_,
         uint256 qACmin_,
@@ -688,7 +688,7 @@ contract MocCARC20Deferred is MocCore {
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTP: qTP_,
             qACmin: qACmin_,
@@ -701,28 +701,28 @@ contract MocCARC20Deferred is MocCore {
 
     /**
      * @notice caller sends a Pegged Token and receives another one
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTP(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_
     ) external payable returns (uint256 operId) {
-        return swapTPforTPtoViaVendor(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, msg.sender, address(0));
+        return swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, msg.sender, address(0));
     }
 
     /**
      * @notice caller sends a Pegged Token and receives another one
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -730,20 +730,20 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTPViaVendor(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return swapTPforTPtoViaVendor(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, msg.sender, vendor_);
+        return swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, msg.sender, vendor_);
     }
 
     /**
      * @notice caller sends a Pegged Token and recipient receives another one
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -751,21 +751,21 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTPto(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return swapTPforTPtoViaVendor(iFrom_, iTo_, qTP_, qTPmin_, qACmax_, recipient_, address(0));
+        return swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, recipient_, address(0));
     }
 
     /**
      * @notice caller sends a Pegged Token and recipient receives another one
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -774,8 +774,8 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTPtoViaVendor(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -784,8 +784,8 @@ contract MocCARC20Deferred is MocCore {
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         SwapTPforTPParams memory params = SwapTPforTPParams({
-            iFrom: iFrom_,
-            iTo: iTo_,
+            tpFrom: tpFrom_,
+            tpTo: tpTo_,
             qTP: qTP_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -798,25 +798,25 @@ contract MocCARC20Deferred is MocCore {
 
     /**
      * @notice caller sends a Pegged Token and receives Collateral Token
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTC(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_
     ) external payable returns (uint256 operId) {
-        return swapTPforTCtoViaVendor(i_, qTP_, qTCmin_, qACmax_, msg.sender, address(0));
+        return swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, msg.sender, address(0));
     }
 
     /**
      * @notice caller sends a Pegged Token and receives Collateral Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -824,18 +824,18 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTCViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return swapTPforTCtoViaVendor(i_, qTP_, qTCmin_, qACmax_, msg.sender, vendor_);
+        return swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, msg.sender, vendor_);
     }
 
     /**
      * @notice caller sends a Pegged Token and recipient receives Collateral Token
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -843,19 +843,19 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTCto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return swapTPforTCtoViaVendor(i_, qTP_, qTCmin_, qACmax_, recipient_, address(0));
+        return swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, recipient_, address(0));
     }
 
     /**
      * @notice caller sends a Pegged Token and recipient receives Collateral Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -864,7 +864,7 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTCtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
@@ -873,7 +873,7 @@ contract MocCARC20Deferred is MocCore {
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         SwapTPforTCParams memory params = SwapTPforTCParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qTCmin: qTCmin_,
             qACmax: qACmax_,
@@ -886,25 +886,25 @@ contract MocCARC20Deferred is MocCore {
 
     /**
      * @notice Caller sends a Collateral Token and receives Pegged Token.
-     * @param i_ Collateral Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Amount of owned Collateral Token to swap
      * @param qTPmin_ Minimum amount of Pegged Token that the sender expects to receive
      * @param qACmax_ Maximum amount of Collateral Asset that can be spent in fees
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTP(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_
     ) external payable returns (uint256 operId) {
-        return swapTCforTPtoViaVendor(i_, qTC_, qTPmin_, qACmax_, msg.sender, address(0));
+        return swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, msg.sender, address(0));
     }
 
     /**
      * @notice Caller sends a Collateral Token and receives Pegged Token.
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not.
-     * @param i_ Collateral Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Amount of owned Collateral Token to swap
      * @param qTPmin_ Minimum amount of Pegged Token that the sender expects to receive
      * @param qACmax_ Maximum amount of Collateral Asset that can be spent in fees
@@ -912,18 +912,18 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return swapTCforTPtoViaVendor(i_, qTC_, qTPmin_, qACmax_, msg.sender, vendor_);
+        return swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, msg.sender, vendor_);
     }
 
     /**
      * @notice Caller sends a Collateral Token and recipient receives Pegged Token.
-     * @param i_ Collateral Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Amount of owned Collateral Token to swap
      * @param qTPmin_ Minimum amount of Pegged Token that `recipient_` expects to receive
      * @param qACmax_ Maximum amount of Collateral Asset that can be spent in fees
@@ -931,19 +931,19 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return swapTCforTPtoViaVendor(i_, qTC_, qTPmin_, qACmax_, recipient_, address(0));
+        return swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, recipient_, address(0));
     }
 
     /**
      * @notice Caller sends a Collateral Token and recipient receives Pegged Token.
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not.
-     * @param i_ Collateral Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ Amount of owned Collateral Token to swap
      * @param qTPmin_ Minimum amount of Pegged Token that `recipient_` expects to receive
      * @param qACmax_ Maximum amount of Collateral Asset that can be spent in fees
@@ -952,7 +952,7 @@ contract MocCARC20Deferred is MocCore {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -961,7 +961,7 @@ contract MocCARC20Deferred is MocCore {
     ) public payable notLiquidated notPaused returns (uint256 operId) {
         lockACInPending(qACmax_);
         SwapTCforTPParams memory params = SwapTCforTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,

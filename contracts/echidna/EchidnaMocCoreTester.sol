@@ -136,7 +136,8 @@ contract EchidnaMocCoreTester {
 
         // mint TP 0 tokens to echidna
         acToken.approve(address(mocCARC20), 1000 ether);
-        mocCARC20.mintTP(0, 23500 ether, 1000 ether);
+        address tp0 = address(mocCARC20.tpTokens(0));
+        mocCARC20.mintTP(tp0, 23500 ether, 1000 ether);
     }
 
     function addPeggedToken(PeggedTokenParams memory peggedTokenParams_, uint96 price_) public {
@@ -251,14 +252,15 @@ contract EchidnaMocCoreTester {
             uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tpMintFee(i_));
             // approve tokens to MocCore
             acToken.approve(address(mocCARC20), qACmaxIncludingFee);
-            TPData memory tpDataBefore = _getTPData(i_);
+            address tpi = address(mocCARC20.tpTokens(i_));
+            TPData memory tpDataBefore = _getTPData(tpi);
             // we don't want to revert if echidna sends insufficient qAC
             qTP_ = qTP_ % ((qACmax_ * tpDataBefore.tpPrice) / PRECISION);
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
                 int256(qTP_) > mocCARC20.getTPAvailableToMint(i_);
             bool reverted;
-            try mocCARC20.mintTP(i_, qTP_, qACmaxIncludingFee) returns (uint256 qACspent, uint256) {
-                TPData memory tpDataAfter = _getTPData(i_);
+            try mocCARC20.mintTP(tpi, qTP_, qACmaxIncludingFee) returns (uint256 qACspent, uint256) {
+                TPData memory tpDataAfter = _getTPData(tpi);
                 uint256 qACusedToMint = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 i = i_;
                 uint256 fee = (qACusedToMint * mocCARC20.tpMintFee(i) * (PRECISION - mocCARC20.feeRetainer())) /
@@ -291,15 +293,16 @@ contract EchidnaMocCoreTester {
 
     function redeemTP(uint256 i_, uint256 qTP_) public {
         i_ = i_ % totalPeggedTokensAdded;
-        TPData memory tpDataBefore = _getTPData(i_);
+        address tpi = address(mocCARC20.tpTokens(i_));
+        TPData memory tpDataBefore = _getTPData(tpi);
         if (tpDataBefore.tpBalanceSender > 0) {
             // we don't want to revert if echidna tries to redeem qTP that don´t have
             qTP_ = (qTP_ % tpDataBefore.tpBalanceSender) + 1;
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.protThrld();
             bool reverted;
             // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
-            try mocCARC20.redeemTP(i_, qTP_, 0) returns (uint256 qACRedeemed, uint256) {
-                TPData memory tpDataAfter = _getTPData(i_);
+            try mocCARC20.redeemTP(tpi, qTP_, 0) returns (uint256 qACRedeemed, uint256) {
+                TPData memory tpDataAfter = _getTPData(tpi);
                 uint256 qACTotalRedeemed = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
@@ -334,12 +337,13 @@ contract EchidnaMocCoreTester {
         // approve max tokens to MocCore
         uint256 qACmax = acToken.balanceOf(address(this));
         acToken.approve(address(mocCARC20), qACmax);
-        TPData memory tpDataBefore = _getTPData(i_);
+        address tpi = address(mocCARC20.tpTokens(i_));
+        TPData memory tpDataBefore = _getTPData(tpi);
         TCData memory tcDataBefore = _getTCData();
         bool coverageShouldIncrease = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
-        try mocCARC20.mintTCandTP(uint8(i_), qTP_, qACmax) returns (uint256 qACspent, uint256 qTC, uint256) {
+        try mocCARC20.mintTCandTP(tpi, qTP_, qACmax) returns (uint256 qACspent, uint256 qTC, uint256) {
             TCData memory tcDataAfter = _getTCData();
-            TPData memory tpDataAfter = _getTPData(i_);
+            TPData memory tpDataAfter = _getTPData(tpi);
             uint256 qACusedToMint = (qTP_ * PRECISION) /
                 tpDataBefore.tpPrice +
                 (qTC * tcDataBefore.tcPrice) /
@@ -374,20 +378,17 @@ contract EchidnaMocCoreTester {
 
     function redeemTCandTP(uint256 i_, uint256 qTC_, uint256 qTP_) public {
         i_ = i_ % totalPeggedTokensAdded;
-        TPData memory tpDataBefore = _getTPData(i_);
+        address tpi = address(mocCARC20.tpTokens(i_));
+        TPData memory tpDataBefore = _getTPData(tpi);
         TCData memory tcDataBefore = _getTCData();
         // we don't want to revert if echidna tries to redeem qTC that don´t have
         qTC_ = (qTC_ % tcDataBefore.tcBalanceSender) + 1;
         // we don't want to revert if echidna tries to redeem qTP that don´t have
         qTP_ = (qTP_ % tpDataBefore.tpBalanceSender) + 1;
         bool coverageBelow = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
-        try mocCARC20.redeemTCandTP(uint8(i_), qTC_, qTP_, 0) returns (
-            uint256 qACRedeemed,
-            uint256 qTPRedeemed,
-            uint256
-        ) {
+        try mocCARC20.redeemTCandTP(tpi, qTC_, qTP_, 0) returns (uint256 qACRedeemed, uint256 qTPRedeemed, uint256) {
             TCData memory tcDataAfter = _getTCData();
-            TPData memory tpDataAfter = _getTPData(i_);
+            TPData memory tpDataAfter = _getTPData(tpi);
             uint256 qACTotalRedeemed = (qTPRedeemed * PRECISION) /
                 tpDataBefore.tpPrice +
                 (qTC_ * tcDataBefore.tcPrice) /
@@ -460,13 +461,13 @@ contract EchidnaMocCoreTester {
         });
     }
 
-    function _getTPData(uint256 i_) internal view returns (TPData memory tpData) {
+    function _getTPData(address tp_) internal view returns (TPData memory tpData) {
         tpData = TPData({
             coverage: mocCARC20.getCglb(),
-            tpPrice: mocCARC20.getPACtp(uint8(i_)),
+            tpPrice: mocCARC20.getPACtp(tp_),
             acBalanceSender: acToken.balanceOf(address(this)),
             acBalanceMocFlow: acToken.balanceOf(mocFeeFlow),
-            tpBalanceSender: mocCARC20.tpTokens(i_).balanceOf(address(this))
+            tpBalanceSender: MocRC20(tp_).balanceOf(address(this))
         });
     }
 

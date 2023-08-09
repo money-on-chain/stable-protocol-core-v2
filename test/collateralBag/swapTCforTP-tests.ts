@@ -14,6 +14,7 @@ describe("Feature: MocCABag swap TC for TP", function () {
   let mocFunctions: any;
   let alice: Address;
   let bob: Address;
+  let tp0: Address;
   const TP_0 = 0;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
@@ -26,6 +27,7 @@ describe("Feature: MocCABag swap TC for TP", function () {
         assets: [assetDefault],
         mocWrapper,
       } = this.mocContracts);
+      tp0 = this.mocContracts.mocPeggedTokens[TP_0].address;
     });
     swapTCforTPBehavior();
 
@@ -35,7 +37,7 @@ describe("Feature: MocCABag swap TC for TP", function () {
         assetNotWhitelisted = await deployAsset();
       });
       it("THEN tx fails because asset is invalid", async () => {
-        await expect(mocWrapper.swapTCforTP(assetNotWhitelisted.address, 0, 10, 0, 10)).to.be.revertedWithCustomError(
+        await expect(mocWrapper.swapTCforTP(assetNotWhitelisted.address, tp0, 10, 0, 10)).to.be.revertedWithCustomError(
           mocWrapper,
           ERRORS.INVALID_ADDRESS,
         );
@@ -45,11 +47,11 @@ describe("Feature: MocCABag swap TC for TP", function () {
       let tx: ContractTransaction;
       beforeEach(async () => {
         // mint TC to alice
-        await mocFunctions.mintTC({ i: TP_0, from: alice, qTC: 3000 });
+        await mocFunctions.mintTC({ from: alice, qTC: 3000 });
       });
       describe("WHEN alice swap 10 TC for TP 0", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 10 });
+          tx = await mocFunctions.swapTCforTP({ from: alice, qTC: 10 });
         });
         it("THEN a TCSwappedForTPWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
@@ -61,12 +63,12 @@ describe("Feature: MocCABag swap TC for TP", function () {
           // qAC: 1% for fee of 10 AC
           await expect(tx)
             .to.emit(mocWrapper, "TCSwappedForTPWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(10), pEth(2350), pEth(0.1));
+            .withArgs(assetDefault.address, tp0, alice, alice, pEth(10), pEth(2350), pEth(0.1));
         });
       });
       describe("WHEN alice swap 10 TC for TP 0 to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.swapTCforTPto({ i: TP_0, from: alice, to: bob, qTC: 10 });
+          tx = await mocFunctions.swapTCforTPto({ from: alice, to: bob, qTC: 10 });
         });
         it("THEN a TCSwappedForTPWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
@@ -78,7 +80,7 @@ describe("Feature: MocCABag swap TC for TP", function () {
           // qAC: 1% for fee 10 AC
           await expect(tx)
             .to.emit(mocWrapper, "TCSwappedForTPWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(10), pEth(2350), pEth(0.1));
+            .withArgs(assetDefault.address, tp0, alice, bob, pEth(10), pEth(2350), pEth(0.1));
         });
       });
     });

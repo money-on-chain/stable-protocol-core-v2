@@ -14,7 +14,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
   let mocFunctions: any;
   let alice: Address;
   let bob: Address;
-  const TP_0 = 0;
+  let tp0: Address;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
     beforeEach(async function () {
@@ -27,6 +27,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
         assets: [assetDefault],
         mocWrapper,
       } = this.mocContracts);
+      tp0 = this.mocContracts.mocPeggedTokens[0].address;
     });
     mintTCandTPBehavior();
 
@@ -36,7 +37,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
         assetNotWhitelisted = await deployAsset();
       });
       it("THEN tx fails because asset is invalid", async () => {
-        await expect(mocWrapper.mintTCandTP(assetNotWhitelisted.address, TP_0, 10, 10)).to.be.revertedWithCustomError(
+        await expect(mocWrapper.mintTCandTP(assetNotWhitelisted.address, tp0, 10, 10)).to.be.revertedWithCustomError(
           mocWrapper,
           ERRORS.INVALID_ADDRESS,
         );
@@ -45,7 +46,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
     describe("WHEN alice mints 23500 TP 0", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
-        tx = await mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 23500 });
+        tx = await mocFunctions.mintTCandTP({ from: alice, qTP: 23500 });
       });
       it("THEN a TCandTPMintedWithWrapper event is emitted by MocWrapper", async function () {
         // asset: assetDefault
@@ -59,7 +60,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
           .to.emit(mocWrapper, "TCandTPMintedWithWrapper")
           .withArgs(
             assetDefault.address,
-            TP_0,
+            tp0,
             alice,
             alice,
             pEth("454.140728164497264600"),
@@ -71,7 +72,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
     describe("WHEN alice mints 23500 TP 0 to bob", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
-        tx = await mocFunctions.mintTCandTPto({ i: TP_0, from: alice, to: bob, qTP: 23500 });
+        tx = await mocFunctions.mintTCandTPto({ from: alice, to: bob, qTP: 23500 });
       });
       it("THEN a TCandTPMintedWithWrapper event is emitted by MocWrapper", async function () {
         // asset: assetDefault
@@ -85,7 +86,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
           .to.emit(mocWrapper, "TCandTPMintedWithWrapper")
           .withArgs(
             assetDefault.address,
-            TP_0,
+            tp0,
             alice,
             bob,
             pEth("454.140728164497264600"),

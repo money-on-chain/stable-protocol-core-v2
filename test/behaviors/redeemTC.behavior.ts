@@ -215,7 +215,7 @@ const redeemTCBehavior = function () {
       });
       describe("AND alice mints 2350 TP0, so there are 254.5859272 TC available to reedem", function () {
         beforeEach(async function () {
-          await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
+          await mocFunctions.mintTP({ from: alice, qTP: 2350 });
         });
         /*  
         nAC = 310   

@@ -190,19 +190,19 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends Collateral Asset and receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract 
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACtotalNeeded amount of AC used to mint qTP
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTP(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_
     ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -216,7 +216,7 @@ contract MocCARC20 is MocCoreShared {
      * @notice caller sends Collateral Asset and receives Pegged Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
      *   Requires prior sender approval of Collateral Asset to this contract
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param vendor_ address who receives a markup
@@ -224,13 +224,13 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address vendor_
     ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -243,7 +243,7 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends Collateral Asset and recipient receives Pegged Token
         Requires prior sender approval of Collateral Asset to this contract 
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
@@ -251,13 +251,13 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
     ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -271,7 +271,7 @@ contract MocCARC20 is MocCoreShared {
      * @notice caller sends Collateral Asset and recipient receives Pegged Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
      *   Requires prior sender approval of Collateral Asset to this contract
-     * @param i_ Pegged Token index to mint
+     * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
@@ -280,14 +280,14 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_,
         address vendor_
     ) external returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
         MintTPParams memory params = MintTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -304,7 +304,7 @@ contract MocCARC20 is MocCoreShared {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
@@ -312,12 +312,12 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTP(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_
     ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -335,7 +335,7 @@ contract MocCARC20 is MocCoreShared {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param vendor_ address who receives a markup
@@ -344,13 +344,13 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address vendor_
     ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -367,7 +367,7 @@ contract MocCARC20 is MocCoreShared {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
@@ -376,13 +376,13 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_
     ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -400,7 +400,7 @@ contract MocCARC20 is MocCoreShared {
      *  Collateral Token and Pegged Token are minted in equivalent proportions so that its price
      *  and global coverage are not modified.
      *  Reverts if qAC sent are insufficient.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
@@ -410,14 +410,14 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function mintTCandTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_,
         address vendor_
     ) external returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
         MintTCandTPParams memory params = MintTCandTPParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qACmax: qACmax_,
             sender: msg.sender,
@@ -429,8 +429,8 @@ contract MocCARC20 is MocCoreShared {
 
     /**
      * @notice caller sends a Pegged Token and receives another one
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -439,15 +439,15 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTP(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
-            iFrom: iFrom_,
-            iTo: iTo_,
+            tpFrom: tpFrom_,
+            tpTo: tpTo_,
             qTP: qTP_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -461,8 +461,8 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends a Pegged Token and receives another one
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -472,16 +472,16 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTPViaVendor(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address vendor_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
-            iFrom: iFrom_,
-            iTo: iTo_,
+            tpFrom: tpFrom_,
+            tpTo: tpTo_,
             qTP: qTP_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -494,8 +494,8 @@ contract MocCARC20 is MocCoreShared {
 
     /**
      * @notice caller sends a Pegged Token and recipient receives another one
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -505,16 +505,16 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTPto(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
-            iFrom: iFrom_,
-            iTo: iTo_,
+            tpFrom: tpFrom_,
+            tpTo: tpTo_,
             qTP: qTP_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -528,8 +528,8 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends a Pegged Token and recipient receives another one
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param iFrom_ owned Pegged Token index
-     * @param iTo_ target Pegged Token index
+     * @param tpFrom_ owned Pegged Token address
+     * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -540,8 +540,8 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTPtoViaVendor(
-        uint256 iFrom_,
-        uint256 iTo_,
+        address tpFrom_,
+        address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -549,8 +549,8 @@ contract MocCARC20 is MocCoreShared {
         address vendor_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
-            iFrom: iFrom_,
-            iTo: iTo_,
+            tpFrom: tpFrom_,
+            tpTo: tpTo_,
             qTP: qTP_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -563,7 +563,7 @@ contract MocCARC20 is MocCoreShared {
 
     /**
      * @notice caller sends a Pegged Token and receives Collateral Token
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -572,13 +572,13 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTC(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_
     ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qTCmin: qTCmin_,
             qACmax: qACmax_,
@@ -592,7 +592,7 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends a Pegged Token and receives Collateral Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -602,14 +602,14 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTCViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
         address vendor_
     ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qTCmin: qTCmin_,
             qACmax: qACmax_,
@@ -622,7 +622,7 @@ contract MocCARC20 is MocCoreShared {
 
     /**
      * @notice caller sends a Pegged Token and recipient receives Collateral Token
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -632,14 +632,14 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTCto(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
         address recipient_
     ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qTCmin: qTCmin_,
             qACmax: qACmax_,
@@ -653,7 +653,7 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends a Pegged Token and recipient receives Collateral Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -664,7 +664,7 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTPforTCtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         uint256 qACmax_,
@@ -672,7 +672,7 @@ contract MocCARC20 is MocCoreShared {
         address vendor_
     ) external returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
-            i: i_,
+            tp: tp_,
             qTP: qTP_,
             qTCmin: qTCmin_,
             qACmax: qACmax_,
@@ -685,7 +685,7 @@ contract MocCARC20 is MocCoreShared {
 
     /**
      * @notice caller sends Collateral Token and receives Pegged Token
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -694,13 +694,13 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTCforTP(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -714,7 +714,7 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends Collateral Token and receives Pegged Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -724,14 +724,14 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTCforTPViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address vendor_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -744,7 +744,7 @@ contract MocCARC20 is MocCoreShared {
 
     /**
      * @notice caller sends Collateral Token and recipient receives Pegged Token
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -754,14 +754,14 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTCforTPto(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,
@@ -775,7 +775,7 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @notice caller sends Collateral Token and recipient receives Pegged Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
@@ -786,7 +786,7 @@ contract MocCARC20 is MocCoreShared {
      * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
      */
     function swapTCforTPtoViaVendor(
-        uint256 i_,
+        address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         uint256 qACmax_,
@@ -794,7 +794,7 @@ contract MocCARC20 is MocCoreShared {
         address vendor_
     ) external returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
-            i: i_,
+            tp: tp_,
             qTC: qTC_,
             qTPmin: qTPmin_,
             qACmax: qACmax_,

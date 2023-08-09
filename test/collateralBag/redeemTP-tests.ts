@@ -17,6 +17,7 @@ describe("Feature: MocCABag redeem TP", function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
+  let tp0: Address;
   const TP_0 = 0;
 
   describe("GIVEN a MocCABag implementation deployed", function () {
@@ -30,6 +31,7 @@ describe("Feature: MocCABag redeem TP", function () {
         mocWrapper,
         assetPriceProviders: [assetPriceProvider],
       } = this.mocContracts);
+      tp0 = this.mocContracts.mocPeggedTokens[TP_0].address;
     });
     redeemTPBehavior();
 
@@ -39,7 +41,7 @@ describe("Feature: MocCABag redeem TP", function () {
         assetNotWhitelisted = await deployAsset();
       });
       it("THEN tx fails because asset is invalid", async () => {
-        await expect(mocWrapper.redeemTP(assetNotWhitelisted.address, 0, 10, 10)).to.be.revertedWithCustomError(
+        await expect(mocWrapper.redeemTP(assetNotWhitelisted.address, tp0, 10, 10)).to.be.revertedWithCustomError(
           mocWrapper,
           ERRORS.INVALID_ADDRESS,
         );
@@ -52,11 +54,11 @@ describe("Feature: MocCABag redeem TP", function () {
         // add collateral
         await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
         // mint TP to alice
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ from: alice, qTP: 23500 });
       });
       describe("WHEN alice redeems 2350 TP", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2350 });
+          tx = await mocFunctions.redeemTP({ from: alice, qTP: 2350 });
         });
         it("THEN a TPRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
@@ -67,12 +69,12 @@ describe("Feature: MocCABag redeem TP", function () {
           // qAC: 10AC - 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocWrapper, "TPRedeemedWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, alice, pEth(2350), pEth(9.5));
+            .withArgs(assetDefault.address, tp0, alice, alice, pEth(2350), pEth(9.5));
         });
       });
       describe("WHEN alice redeems 2350 TP to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.redeemTPto({ i: TP_0, from: alice, to: bob, qTP: 2350 });
+          tx = await mocFunctions.redeemTPto({ from: alice, to: bob, qTP: 2350 });
         });
         it("THEN a TPRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
@@ -83,7 +85,7 @@ describe("Feature: MocCABag redeem TP", function () {
           // qAC: 10AC - 5% for Moc Fee Flow
           await expect(tx)
             .to.emit(mocWrapper, "TPRedeemedWithWrapper")
-            .withArgs(assetDefault.address, TP_0, alice, bob, pEth(2350), pEth(9.5));
+            .withArgs(assetDefault.address, tp0, alice, bob, pEth(2350), pEth(9.5));
         });
       });
       describe("AND asset price provider is deprecated", () => {
@@ -92,7 +94,7 @@ describe("Feature: MocCABag redeem TP", function () {
         });
         describe("WHEN alice tries to redeem 2350 TP", () => {
           it("THEN tx fails because invalid price provider", async () => {
-            await expect(mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2350 })).to.be.revertedWithCustomError(
+            await expect(mocFunctions.redeemTP({ from: alice, qTP: 2350 })).to.be.revertedWithCustomError(
               mocWrapper,
               ERRORS.MISSING_PROVIDER_PRICE,
             );
@@ -113,7 +115,7 @@ describe("Feature: MocCABag redeem TP", function () {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
-            await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
+            await mocFunctions.redeemTP({ from: alice, qTP: 23500, asset: newAsset });
           });
           it("THEN alice receives 105.55 of the new asset instead of 95", async () => {
             //asset reward = 95 currency / 0.9 asset price
@@ -135,7 +137,7 @@ describe("Feature: MocCABag redeem TP", function () {
           let aliceNewAssetPrevBalance: Balance;
           beforeEach(async () => {
             aliceNewAssetPrevBalance = await mocFunctions.assetBalanceOf(alice, newAsset);
-            await mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 23500, asset: newAsset });
+            await mocFunctions.redeemTP({ from: alice, qTP: 23500, asset: newAsset });
           });
           it("THEN alice receives 86.36 of the new asset instead of 95", async () => {
             //asset reward = 95 currency / 1.1 asset price

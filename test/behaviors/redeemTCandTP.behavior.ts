@@ -17,6 +17,7 @@ const redeemTCandTPBehavior = function () {
   let operator: Address;
   let vendor: Address;
   let expectEvent: any;
+  let tps: Address[];
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
@@ -43,43 +44,45 @@ const redeemTCandTPBehavior = function () {
       ({ alice, bob, vendor } = await getNamedAccounts());
       operator = mocContracts.mocWrapper?.address || alice;
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPRedeemed");
+      tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
 
     describe("GIVEN alice has 3000 TC, 23500 TP 0", function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: alice, qTC: 3000 });
-        await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 23500 });
+        await mocFunctions.mintTP({ from: alice, qTP: 23500 });
       });
       describe("WHEN alice tries to redeem 0 TP", function () {
         it("THEN tx reverts because the amount of TP is invalid", async function () {
-          await expect(
-            mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 0 }),
-          ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_QTP_SENT);
+          await expect(mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 0 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.INSUFFICIENT_QTP_SENT,
+          );
         });
       });
       describe("WHEN alice tries to redeem 0 TC", function () {
         it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
-          await expect(
-            mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 0, qTP: 23500 }),
-          ).to.be.revertedWithCustomError(mocImpl, ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO);
+          await expect(mocFunctions.redeemTCandTP({ from: alice, qTC: 0, qTP: 23500 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
+          );
         });
       });
       describe("WHEN alice tries to redeem 100 TC and 23500 TP to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
-          await expect(
-            mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 100, qTP: 23500 }),
-          ).to.be.reverted;
+          await expect(mocFunctions.redeemTCandTPto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 100, qTP: 23500 }))
+            .to.be.reverted;
         });
       });
       describe("WHEN alice tries to redeem 3001 TC and 2350000 TP", function () {
         it("THEN tx reverts because alice doesn't have that much TC and TP", async function () {
-          await expect(mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 3001, qTP: 2350000 })).to.be.reverted;
+          await expect(mocFunctions.redeemTCandTP({ from: alice, qTC: 3001, qTP: 2350000 })).to.be.reverted;
         });
       });
       describe("WHEN alice redeems 100 TC and 723500 TP expecting 98.17 Asset", function () {
         it("THEN tx reverts because Asset received is below the minimum required", async function () {
           await expect(
-            mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500, qACmin: 98.17 }),
+            mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500, qACmin: 98.17 }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.QAC_BELOW_MINIMUM);
         });
       });
@@ -93,7 +96,7 @@ const redeemTCandTPBehavior = function () {
         */
         it("THEN tx reverts because sent insufficient amount of TP", async function () {
           await expect(
-            mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 1000, qTP: "783.333333333333333334" }),
+            mocFunctions.redeemTCandTP({ from: alice, qTC: 1000, qTP: "783.333333333333333334" }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_QTP_SENT);
         });
       });
@@ -128,7 +131,7 @@ const redeemTCandTPBehavior = function () {
             mocFunctions.acBalanceOf(mocImpl.address),
             mocFunctions.acBalanceOf(mocFeeFlowAddress),
           ]);
-          tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: "783.333333333333333333" });
+          tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: "783.333333333333333333" });
         });
         it("THEN coverage did not change", async function () {
           assertPrec(coverageBefore, await mocImpl.getCglb());
@@ -176,7 +179,7 @@ const redeemTCandTPBehavior = function () {
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
-            TP_0,
+            tps[TP_0],
             operator,
             operator,
             pEth(100),
@@ -222,7 +225,7 @@ const redeemTCandTPBehavior = function () {
             mocImpl.getLeverageTC(),
             mocFunctions.assetBalanceOf(bob),
           ]);
-          tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500 });
+          tx = await mocFunctions.redeemTCandTPto({ from: alice, to: bob, qTC: 100, qTP: 23500 });
         });
         it("THEN coverage did not change", async function () {
           assertPrec(coverageBefore, await mocImpl.getCglb());
@@ -250,7 +253,7 @@ const redeemTCandTPBehavior = function () {
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
-            TP_0,
+            tps[TP_0],
             operator,
             mocContracts.mocWrapper?.address || bob,
             pEth(100),
@@ -270,7 +273,7 @@ const redeemTCandTPBehavior = function () {
         beforeEach(async function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           vendorPrevACBalance = await mocFunctions.acBalanceOf(vendor);
-          tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500, vendor });
+          tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500, vendor });
         });
         it("THEN alice AC balance increase 84.73 Asset (103.33 qAC - 8% qACFee - 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
@@ -294,7 +297,7 @@ const redeemTCandTPBehavior = function () {
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
-            TP_0,
+            tps[TP_0],
             operator,
             operator,
             pEth(100),
@@ -310,7 +313,7 @@ const redeemTCandTPBehavior = function () {
       });
       describe("WHEN alice redeems 100 TC and 783.33 TP to bob via vendor", function () {
         beforeEach(async function () {
-          tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500, vendor });
+          tx = await mocFunctions.redeemTCandTPto({ from: alice, to: bob, qTC: 100, qTP: 23500, vendor });
         });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
@@ -324,7 +327,7 @@ const redeemTCandTPBehavior = function () {
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
-            TP_0,
+            tps[TP_0],
             operator,
             mocContracts.mocWrapper?.address || bob,
             pEth(100),
@@ -357,7 +360,7 @@ const redeemTCandTPBehavior = function () {
               mocImpl.getPTCac(),
               mocImpl.getLeverageTC(),
             ]);
-            tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
+            tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500 });
           });
           it("THEN coverage did not change", async function () {
             assertPrec(coverageBefore, await mocImpl.getCglb());
@@ -380,7 +383,7 @@ const redeemTCandTPBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
-              TP_0,
+              tps[TP_0],
               operator,
               operator,
               pEth(100),
@@ -415,7 +418,7 @@ const redeemTCandTPBehavior = function () {
               mocImpl.getPTCac(),
               mocImpl.getLeverageTC(),
             ]);
-            tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
+            tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500 });
           });
           it("THEN coverage did not change", async function () {
             assertPrec(coverageBefore, await mocImpl.getCglb(), undefined, 1);
@@ -438,7 +441,7 @@ const redeemTCandTPBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
-              TP_0,
+              tps[TP_0],
               operator,
               operator,
               pEth(100),
@@ -460,9 +463,10 @@ const redeemTCandTPBehavior = function () {
         });
         it("THEN tx reverts because coverage is below the protected threshold", async function () {
           expect((await mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
-          await expect(
-            mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 }),
-          ).to.be.revertedWithCustomError(mocImpl, ERRORS.LOW_COVERAGE);
+          await expect(mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.LOW_COVERAGE,
+          );
         });
       });
       describe("AND alice has FeeToken to pay fees", function () {
@@ -485,7 +489,7 @@ const redeemTCandTPBehavior = function () {
           let alicePrevACBalance: Balance;
           beforeEach(async function () {
             alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
-            tx = await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 100, qTP: 23500 });
+            tx = await mocFunctions.redeemTCandTP({ from: alice, qTC: 100, qTP: 23500 });
           });
           it("THEN alice AC balance increase 103.33 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
@@ -518,7 +522,7 @@ const redeemTCandTPBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
-              TP_0,
+              tps[TP_0],
               operator,
               operator,
               pEth(100),
@@ -536,7 +540,7 @@ const redeemTCandTPBehavior = function () {
           let bobPrevACBalance: Balance;
           beforeEach(async function () {
             bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
-            tx = await mocFunctions.redeemTCandTPto({ i: TP_0, from: alice, to: bob, qTC: 100, qTP: 23500 });
+            tx = await mocFunctions.redeemTCandTPto({ from: alice, to: bob, qTC: 100, qTP: 23500 });
           });
           it("THEN bob AC balance increase 103.33 Asset", async function () {
             const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);
@@ -569,7 +573,7 @@ const redeemTCandTPBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
-              TP_0,
+              tps[TP_0],
               operator,
               mocContracts.mocWrapper?.address || bob,
               pEth(100),
@@ -586,7 +590,7 @@ const redeemTCandTPBehavior = function () {
       });
       describe("WHEN alice redeems all", function () {
         beforeEach(async function () {
-          await mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 3000, qTP: 23500 });
+          await mocFunctions.redeemTCandTP({ from: alice, qTC: 3000, qTP: 23500 });
         });
         it("THEN coverage is max uint256", async function () {
           assertPrec(await mocImpl.getCglb(), CONSTANTS.MAX_UINT256);
@@ -627,7 +631,7 @@ const redeemTCandTPBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
-              TP_4,
+              tps[TP_4],
               operator,
               operator,
               pEth(100),
@@ -664,7 +668,7 @@ const redeemTCandTPBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
-              TP_1,
+              tps[TP_1],
               operator,
               operator,
               pEth(1000),
