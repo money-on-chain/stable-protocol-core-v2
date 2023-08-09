@@ -115,12 +115,12 @@ const redeemTCBehavior = function () {
           await expectEvent(tx, args);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          // from: alice || mocWrapper
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
           // to: Zero Address
           // amount: 300 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth(300));
+            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(300));
         });
       });
       describe("WHEN alice redeems 300 TC to bob", function () {

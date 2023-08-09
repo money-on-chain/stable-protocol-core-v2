@@ -3,8 +3,10 @@ pragma solidity 0.8.18;
 
 import { MocCore } from "../../core/MocCore.sol";
 import { MocQueue, ENQUEUER_ROLE } from "../../queue/MocQueue.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { IDispatcher } from "../../interfaces/IDispatcher.sol";
 
 /**
@@ -216,9 +218,25 @@ contract MocCARC20Deferred is MocCore {
      * @notice while registering a pending Operation, we need to lock user's funds until it's executed
      * @param qACToLock_ AC amount to be locked
      */
-    function lockACInPending(uint256 qACToLock_) internal {
+    function _lockACInPending(uint256 qACToLock_) internal {
         qACLockedInPending += qACToLock_;
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACToLock_);
+    }
+
+    /**
+     * @notice while registering a pending Operation, we need to lock user's tokens until it's executed
+     * @param qTCToLock_ TC amount to be locked
+     */
+    function _lockTCInPending(uint256 qTCToLock_) internal {
+        SafeERC20Upgradeable.safeTransferFrom(tcToken, msg.sender, address(this), qTCToLock_);
+    }
+
+    /**
+     * @notice while registering a pending Operation, we need to lock user's tokens until it's executed
+     * @param qTPToLock_ TP amount to be locked
+     */
+    function _lockTPInPending(IERC20Upgradeable tpToken, uint256 qTPToLock_) internal {
+        SafeERC20Upgradeable.safeTransferFrom(tpToken, msg.sender, address(this), qTPToLock_);
     }
 
     // ------- External Functions -------
@@ -275,7 +293,6 @@ contract MocCARC20Deferred is MocCore {
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
-        lockACInPending(qACmax_);
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -284,6 +301,7 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueMintTC(params);
+        _lockACInPending(qACmax_);
     }
 
     /**
@@ -346,6 +364,7 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueRedeemTC(params);
+        _lockTCInPending(qTC_);
     }
 
     /**
@@ -415,7 +434,6 @@ contract MocCARC20Deferred is MocCore {
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
-        lockACInPending(qACmax_);
         MintTPParams memory params = MintTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -425,6 +443,7 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueMintTP(params);
+        _lockACInPending(qACmax_);
     }
 
     /**
@@ -499,6 +518,7 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueRedeemTP(params);
+        _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
 
     /**
@@ -584,7 +604,6 @@ contract MocCARC20Deferred is MocCore {
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
-        lockACInPending(qACmax_);
         MintTCandTPParams memory params = MintTCandTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -594,6 +613,7 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueMintTCandTP(params);
+        _lockACInPending(qACmax_);
     }
 
     /**
@@ -697,6 +717,8 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueRedeemTCandTP(params);
+        _lockTCInPending(qTC_);
+        _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
 
     /**
@@ -782,7 +804,6 @@ contract MocCARC20Deferred is MocCore {
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
-        lockACInPending(qACmax_);
         SwapTPforTPParams memory params = SwapTPforTPParams({
             tpFrom: tpFrom_,
             tpTo: tpTo_,
@@ -794,6 +815,8 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueSwapTPforTP(params);
+        _lockTPInPending(IERC20Upgradeable(tpFrom_), qTP_);
+        _lockACInPending(qACmax_);
     }
 
     /**
@@ -871,7 +894,6 @@ contract MocCARC20Deferred is MocCore {
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
-        lockACInPending(qACmax_);
         SwapTPforTCParams memory params = SwapTPforTCParams({
             tp: tp_,
             qTP: qTP_,
@@ -882,6 +904,8 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueSwapTPforTC(params);
+        _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
+        _lockACInPending(qACmax_);
     }
 
     /**
@@ -959,7 +983,6 @@ contract MocCARC20Deferred is MocCore {
         address recipient_,
         address vendor_
     ) public payable notLiquidated notPaused returns (uint256 operId) {
-        lockACInPending(qACmax_);
         SwapTCforTPParams memory params = SwapTCforTPParams({
             tp: tp_,
             qTC: qTC_,
@@ -970,6 +993,8 @@ contract MocCARC20Deferred is MocCore {
             vendor: vendor_
         });
         operId = mocQueue.queueSwapTCforTP(params);
+        _lockTCInPending(qTC_);
+        _lockACInPending(qACmax_);
     }
 
     // ------- External Only Queue Functions -------
@@ -991,7 +1016,9 @@ contract MocCARC20Deferred is MocCore {
     function execRedeemTC(
         RedeemTCParams calldata params_
     ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
-        return _redeemTCto(params_);
+        RedeemTCParams memory params = params_;
+        // Override sender, as funds are now locked here
+        return _redeemTCto(params, address(this));
     }
 
     /**
@@ -1011,7 +1038,7 @@ contract MocCARC20Deferred is MocCore {
     function execRedeemTP(
         RedeemTPParams calldata params_
     ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
-        return _redeemTPto(params_);
+        return _redeemTPto(params_, address(this));
     }
 
     /**
@@ -1039,7 +1066,12 @@ contract MocCARC20Deferred is MocCore {
         onlyMocQueue
         returns (uint256 qACtoRedeem, uint256 qTPRedeemed, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _redeemTCandTPto(params_);
+        (qACtoRedeem, qTPRedeemed, qFeeTokenTotalNeeded, feeCalcs) = _redeemTCandTPto(params_, address(this));
+        // return the unused locked TPs
+        unchecked {
+            uint256 qTPDif = params_.qTP - qTPRedeemed;
+            SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(params_.tp), params_.sender, qTPDif);
+        }
     }
 
     /**
@@ -1053,7 +1085,7 @@ contract MocCARC20Deferred is MocCore {
         onlyMocQueue
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _swapTCforTPto(params_);
+        return _swapTCforTPto(params_, address(this));
     }
 
     /**
@@ -1067,7 +1099,7 @@ contract MocCARC20Deferred is MocCore {
         onlyMocQueue
         returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _swapTPforTCto(params_);
+        return _swapTPforTCto(params_, address(this));
     }
 
     /**
@@ -1081,7 +1113,7 @@ contract MocCARC20Deferred is MocCore {
         onlyMocQueue
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _swapTPforTPto(params_);
+        return _swapTPforTPto(params_, address(this));
     }
 
     /**

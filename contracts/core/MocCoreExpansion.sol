@@ -173,7 +173,8 @@ contract MocCoreExpansion is MocCommons {
      *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
      */
     function swapTPforTPto(
-        SwapTPforTPParams memory params_
+        SwapTPforTPParams memory params_,
+        address operator
     )
         external
         payable
@@ -211,7 +212,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         _depositAndMintTP(iTo, qTPtoMint, 0, params_.recipient);
-        _withdrawAndBurnTP(iFrom, params_.qTP, 0, params_.sender);
+        _withdrawAndBurnTP(iFrom, params_.qTP, 0, operator);
     }
 
     /**
@@ -237,7 +238,8 @@ contract MocCoreExpansion is MocCommons {
      *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
      */
     function swapTPforTCto(
-        SwapTPforTCParams memory params_
+        SwapTPforTCParams memory params_,
+        address operator
     )
         external
         payable
@@ -267,7 +269,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
 
-        _withdrawAndBurnTP(i, params_.qTP, 0, params_.sender);
+        _withdrawAndBurnTP(i, params_.qTP, 0, operator);
         _depositAndMintTC(qTCtoMint, 0, params_.recipient);
     }
 
@@ -293,7 +295,8 @@ contract MocCoreExpansion is MocCommons {
      *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
      */
     function swapTCforTPto(
-        SwapTCforTPParams memory params_
+        SwapTCforTPParams memory params_,
+        address operator
     )
         external
         payable
@@ -330,7 +333,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
 
-        _withdrawAndBurnTC(params_.qTC, 0, params_.sender);
+        _withdrawAndBurnTC(params_.qTC, 0, operator);
         _depositAndMintTP(i, qTPtoMint, 0, params_.recipient);
     }
 }

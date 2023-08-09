@@ -54,8 +54,10 @@ const redeemTPBehavior = function () {
       });
       describe("WHEN alice tries to redeem a non-existent TP", function () {
         it("THEN tx reverts with invalid address", async function () {
-          // TODO: review this: generic revert because on collateralbag implementation fail before accessing the tp array
-          await expect(mocFunctions.redeemTP({ tp: alice, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
+          const fakeTP = mocContracts.mocCollateralToken.address;
+          const signer = await ethers.getSigner(alice);
+          await mocContracts.mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, pEth(100));
+          await expect(mocFunctions.redeemTP({ tp: fakeTP, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.INVALID_ADDRESS,
           );
@@ -154,12 +156,12 @@ const redeemTPBehavior = function () {
           await expectEvent(tx, args);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          // from: alice || mocWrapper
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth(23500));
+            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(23500));
         });
       });
       describe("WHEN alice redeems 2350 TP to bob", function () {

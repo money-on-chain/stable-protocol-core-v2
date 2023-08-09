@@ -29,7 +29,6 @@ const mintTP =
       qTP = pEth(qTP);
       qACmax = pEth(qACmax);
     }
-
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     tp = tp || mocPeggedTokens[i].address;
     if (to) {
@@ -81,8 +80,8 @@ const mintTCandTP =
 const swapTPforTP =
   (mocImpl, collateralAsset, mocPeggedTokens) =>
   async ({
-    iFrom,
-    iTo,
+    iFrom = 0,
+    iTo = 1,
     tpFrom,
     tpTo,
     from,

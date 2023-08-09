@@ -193,20 +193,20 @@ const redeemTCandTPBehavior = function () {
           ]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          // from: alice || mocWrapper
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
           // to: Zero Address
           // amount: 100 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth(100));
+            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(100));
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          // from: alice || mocWrapper
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
           // to: Zero Address
           // amount: 783.33 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth("783.333333333333333333"));
+            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth("783.333333333333333333"));
         });
       });
       describe("WHEN alice redeems 100 TC and 23500 TP (more amount of TP) to bob", function () {

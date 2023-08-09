@@ -149,12 +149,13 @@ const swapTCforTPBehavior = function () {
           await expectEvent(tx, [tp0, operator, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
           // from: alice || mocWrapper
           // to: Zero Address
           // amount: 100 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth(100));
+            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(100));
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
           // from: Zero Address

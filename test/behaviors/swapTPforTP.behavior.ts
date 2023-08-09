@@ -207,12 +207,12 @@ const swapTPforTPBehavior = function () {
           await expectEvent(tx, [tps[0], tps[1], operator, alice, pEth(23500), pEth(525), pEth(1), 0, 0, 0, noVendor]);
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
-          // from: alice || mocWrapper
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth(23500));
+            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(23500));
         });
         it("THEN a Pegged Token 1 Transfer event is emitted", async function () {
           // from: Zero Address

@@ -292,6 +292,7 @@ abstract contract MocCore is MocCommons {
     /**
      * @notice redeem Collateral Asset in exchange for Collateral Token
      * @param params_ redeemTCto function params
+     * TODO: operator
      * @dev
      *      qTC_ amount of Collateral Token to redeem
      *      qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
@@ -304,7 +305,8 @@ abstract contract MocCore is MocCommons {
      */
 
     function _redeemTCto(
-        RedeemTCParams memory params_
+        RedeemTCParams memory params_,
+        address operator
     )
         internal
         notLiquidated
@@ -333,8 +335,8 @@ abstract contract MocCore is MocCommons {
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTCRedeemed(params_, qACtoRedeem, feeCalcs);
-
-        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
+        // use msg.sender, as the token "source" is always the actual tx sender
+        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
@@ -417,7 +419,8 @@ abstract contract MocCore is MocCommons {
      * @return feeCalcs platform fee detail breakdown
      */
     function _redeemTPto(
-        RedeemTPParams memory params_
+        RedeemTPParams memory params_,
+        address operator
     )
         internal
         notLiquidated
@@ -446,7 +449,7 @@ abstract contract MocCore is MocCommons {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTPRedeemed(params_, qACtoRedeem, feeCalcs);
-        _withdrawAndBurnTP(i, params_.qTP, qACtotalToRedeem, params_.sender);
+        _withdrawAndBurnTP(i, params_.qTP, qACtotalToRedeem, operator);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
@@ -552,7 +555,8 @@ abstract contract MocCore is MocCommons {
      * @return feeCalcs platform fee detail breakdown
      */
     function _redeemTCandTPto(
-        RedeemTCandTPParams memory params_
+        RedeemTCandTPParams memory params_,
+        address operator
     )
         internal
         notLiquidated
@@ -591,8 +595,8 @@ abstract contract MocCore is MocCommons {
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
 
-        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, params_.sender);
-        _withdrawAndBurnTP(i, qTPtoRedeem, 0, params_.sender);
+        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
+        _withdrawAndBurnTP(i, qTPtoRedeem, 0, operator);
 
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
@@ -618,14 +622,15 @@ abstract contract MocCore is MocCommons {
      * @return feeCalcs platform fee detail breakdown
      */
     function _swapTPforTPto(
-        SwapTPforTPParams memory params_
+        SwapTPforTPParams memory params_,
+        address operator
     )
         internal
         notLiquidated
         notPaused
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTPto, (params_));
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTPto, (params_, operator));
         (qACSurcharges, qTPMinted, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
@@ -654,14 +659,15 @@ abstract contract MocCore is MocCommons {
      * @return feeCalcs platform fee detail breakdown
      */
     function _swapTPforTCto(
-        SwapTPforTCParams memory params_
+        SwapTPforTCParams memory params_,
+        address operator
     )
         internal
         notLiquidated
         notPaused
         returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTCto, (params_));
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTPforTCto, (params_, operator));
         (qACSurcharges, qTCMinted, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
@@ -690,14 +696,15 @@ abstract contract MocCore is MocCommons {
      * @return feeCalcs platform fee detail breakdown
      */
     function _swapTCforTPto(
-        SwapTCforTPParams memory params_
+        SwapTCforTPParams memory params_,
+        address operator
     )
         internal
         notLiquidated
         notPaused
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTCforTPto, (params_));
+        bytes memory payload = abi.encodeCall(MocCoreExpansion(mocCoreExpansion).swapTCforTPto, (params_, operator));
         (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs) = abi.decode(
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
