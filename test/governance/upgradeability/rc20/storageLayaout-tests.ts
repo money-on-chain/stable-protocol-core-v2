@@ -16,10 +16,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
         const mocRC20MockFactory = await ethers.getContractFactory("MocCARC20Mock");
         // forces the import of an existing proxy to be used with this plugin
         await upgrades.forceImport(mocProxy.address, mocRC20Factory);
-        await upgrades.upgradeProxy(mocProxy.address, mocRC20MockFactory, {
-          // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455
-          unsafeAllow: ["delegatecall"],
-        });
+        await upgrades.upgradeProxy(mocProxy.address, mocRC20MockFactory);
       });
     });
     describe("WHEN check storage layout compatibility between MocCore and MocCoreExpansion", () => {
@@ -28,7 +25,7 @@ describe("Feature: Check MocCARC20 storage layout compatibility using openzeppel
         const mocRC20Factory = await ethers.getContractFactory("MocCARC20");
         const mocCoreExpansionFactory = await ethers.getContractFactory("MocCoreExpansion");
         await upgrades.validateUpgrade(mocCoreExpansionFactory, mocRC20Factory, {
-          // FIXME: this is needed because of this issue: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/455
+          // we allow delegatecall to use MocCoreExpansion
           unsafeAllow: ["delegatecall"],
         });
       });
