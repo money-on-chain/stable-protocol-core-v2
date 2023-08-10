@@ -16,10 +16,7 @@ describe("Feature: Check MocCoinbase storage layout compatibility using openzepp
         const mocCoinbaseMockFactory = await ethers.getContractFactory("MocCoinbaseMock");
         // forces the import of an existing proxy to be used with this plugin
         await upgrades.forceImport(mocProxy.address, mocCoinbaseFactory);
-        await upgrades.upgradeProxy(mocProxy.address, mocCoinbaseMockFactory, {
-          // we allow delegatecall to use MocCoreExpansion
-          unsafeAllow: ["delegatecall"],
-        });
+        await upgrades.upgradeProxy(mocProxy.address, mocCoinbaseMockFactory);
       });
     });
     describe("WHEN check storage layout compatibility between MocCore and MocCoreExpansion", () => {
