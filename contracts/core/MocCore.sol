@@ -1058,14 +1058,15 @@ abstract contract MocCore is MocCommons {
      * @dev because it is a view function we are not calculating the new ema,
      *  since we are using the last ema calculation, this may differ a little from the real amount
      *  of TP available to mint. Consider it an approximation.
-     * @param i_ Pegged Token index
+     * @param tp_ Pegged Token address
      * @return tpAvailableToMint [N]
      */
-    function getTPAvailableToMint(uint256 i_) external view returns (int256 tpAvailableToMint) {
+    function getTPAvailableToMint(address tp_) external view returns (int256 tpAvailableToMint) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _calcCtargemaCA();
-        uint256 pACtp = pACtps[i_];
+        uint256 i = _tpi(tp_);
+        uint256 pACtp = pACtps[i];
         (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps);
-        return _getTPAvailableToMintSigned(ctargemaCA, _getCtargemaTP(i_, pACtp), pACtp, lckAC, nACgain);
+        return _getTPAvailableToMintSigned(ctargemaCA, _getCtargemaTP(i, pACtp), pACtp, lckAC, nACgain);
     }
 
     /**

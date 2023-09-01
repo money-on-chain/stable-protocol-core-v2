@@ -161,7 +161,7 @@ const mintTPBehavior = function () {
             .withArgs(CONSTANTS.ZERO_ADDRESS, alice, pEth(23500));
         });
         it("THEN now there are 131738.22 TP available to mint", async function () {
-          assertPrec("131738.223809919415159579", await mocImpl.getTPAvailableToMint(TP_0));
+          assertPrec("131738.223809919415159579", await mocImpl.getTPAvailableToMint(tp0));
         });
         describe("AND alice tries to mint 131738.23 TP more", function () {
           /*  
@@ -189,8 +189,9 @@ const mintTPBehavior = function () {
             expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
           });
           it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-            assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0", availableToMintTolerance);
-            assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1");
+            assertPrec(0, await mocImpl.getTPAvailableToMint(tp0), "TP 0", availableToMintTolerance);
+            const tp1 = mocContracts.mocPeggedTokens[TP_1].address;
+            assertPrec(0, await mocImpl.getTPAvailableToMint(tp1), "TP 1");
           });
         });
         describe("AND alice sends 2350000(exceeded amount) Asset to mint 23500 TP", function () {
@@ -355,7 +356,7 @@ const mintTPBehavior = function () {
             assertPrec("4.999574468085106382", await mocImpl.getCglb());
           });
           it("THEN the are -2.5 TP 0 available to mint", async function () {
-            assertPrec("-2.5", await mocImpl.getTPAvailableToMint(TP_0), undefined, availableToMintTolerance);
+            assertPrec("-2.5", await mocImpl.getTPAvailableToMint(tp0), undefined, availableToMintTolerance);
           });
           describe("WHEN Alice tries to mint 1 TP", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
@@ -379,7 +380,7 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, 38);
           });
           it("THEN there are 75 TP available to mint", async function () {
-            assertPrec("75.000000000000000020", await mocImpl.getTPAvailableToMint(TP_0));
+            assertPrec("75.000000000000000020", await mocImpl.getTPAvailableToMint(tp0));
           });
           describe("WHEN Alice tries to mint 75.1 TP", function () {
             it("THEN tx reverts because there is not enough TP to mint", async function () {
@@ -406,7 +407,7 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, 300);
           });
           it("THEN there are 121847.2421 TP available to mint", async function () {
-            assertPrec("121847.242150377340925125", await mocImpl.getTPAvailableToMint(TP_0));
+            assertPrec("121847.242150377340925125", await mocImpl.getTPAvailableToMint(tp0));
           });
           it("THEN the coverage is 34.74", async function () {
             assertPrec("34.742056074766355140", await mocImpl.getCglb());
@@ -425,7 +426,7 @@ const mintTPBehavior = function () {
               await mocImpl.updateEmas();
             });
             it("THEN there are 125449.0669 TP available to mint", async function () {
-              assertPrec("125449.066971443529804161", await mocImpl.getTPAvailableToMint(TP_0));
+              assertPrec("125449.066971443529804161", await mocImpl.getTPAvailableToMint(tp0));
             });
           });
           describe("AND 3000 TP 0 are minted", function () {
@@ -468,7 +469,7 @@ const mintTPBehavior = function () {
                 await mocFunctions.pokePrice(TP_0, 1000);
               });
               it("THEN there are 66087.4 TP available to mint", async function () {
-                assertPrec("66087.407998395976575724", await mocImpl.getTPAvailableToMint(TP_0));
+                assertPrec("66087.407998395976575724", await mocImpl.getTPAvailableToMint(tp0));
               });
               it("THEN the coverage is 45.44", async function () {
                 assertPrec("45.445421245421245421", await mocImpl.getCglb());
@@ -487,7 +488,7 @@ const mintTPBehavior = function () {
                   await mocImpl.updateEmas();
                 });
                 it("THEN there are 92369.57 TP available to mint", async function () {
-                  assertPrec("92369.578979910128584434", await mocImpl.getTPAvailableToMint(TP_0));
+                  assertPrec("92369.578979910128584434", await mocImpl.getTPAvailableToMint(tp0));
                 });
               });
             });
@@ -507,7 +508,7 @@ const mintTPBehavior = function () {
                 await mocFunctions.pokePrice(TP_0, 250);
               });
               it("THEN there are 126295.71 TP available to mint", async function () {
-                assertPrec("126295.710817372538465788", await mocImpl.getTPAvailableToMint(TP_0));
+                assertPrec("126295.710817372538465788", await mocImpl.getTPAvailableToMint(tp0));
               });
               it("THEN the coverage is 28.79", async function () {
                 assertPrec("28.792592592592592592", await mocImpl.getCglb());
@@ -526,7 +527,7 @@ const mintTPBehavior = function () {
                   await mocImpl.updateEmas();
                 });
                 it("THEN there are 127951.22 TP available to mint", async function () {
-                  assertPrec("127951.224154539014099053", await mocImpl.getTPAvailableToMint(TP_0));
+                  assertPrec("127951.224154539014099053", await mocImpl.getTPAvailableToMint(tp0));
                 });
               });
             });
@@ -548,7 +549,7 @@ const mintTPBehavior = function () {
             await mocFunctions.pokePrice(TP_0, 100);
           });
           it("THEN there are 48125 TP available to mint", async function () {
-            assertPrec(48125, await mocImpl.getTPAvailableToMint(TP_0));
+            assertPrec(48125, await mocImpl.getTPAvailableToMint(tp0));
           });
           it("THEN the coverage is 13.19", async function () {
             assertPrec("13.191489361702127659", await mocImpl.getCglb());
@@ -567,7 +568,7 @@ const mintTPBehavior = function () {
               await mocImpl.updateEmas();
             });
             it("THEN there are 48125 TP available to mint", async function () {
-              assertPrec(48125, await mocImpl.getTPAvailableToMint(TP_0));
+              assertPrec(48125, await mocImpl.getTPAvailableToMint(tp0));
             });
           });
           describe("AND 1000 TP are minted", function () {
@@ -610,7 +611,7 @@ const mintTPBehavior = function () {
                 await mocFunctions.pokePrice(TP_0, 1000);
               });
               it("THEN there are 67122.83 TP available to mint", async function () {
-                assertPrec("67122.836865805061029229", await mocImpl.getTPAvailableToMint(TP_0));
+                assertPrec("67122.836865805061029229", await mocImpl.getTPAvailableToMint(tp0));
               });
               it("THEN the coverage is 46.11", async function () {
                 assertPrec("46.118215613382899628", await mocImpl.getCglb());
@@ -629,7 +630,7 @@ const mintTPBehavior = function () {
                   await mocImpl.updateEmas();
                 });
                 it("THEN there are 93411.93 TP available to mint", async function () {
-                  assertPrec("93411.939256558090641158", await mocImpl.getTPAvailableToMint(TP_0));
+                  assertPrec("93411.939256558090641158", await mocImpl.getTPAvailableToMint(tp0));
                 });
               });
             });
@@ -638,7 +639,8 @@ const mintTPBehavior = function () {
 
         describe("AND alice asks for mint TP 1, which ctargemaTP is smaller than ctargemaCA", function () {
           it("THEN there are 4220.76 TP 1 available to mint", async function () {
-            assertPrec("4220.766687516754535893", await mocImpl.getTPAvailableToMint(TP_1));
+            const tp1 = mocContracts.mocPeggedTokens[TP_1].address;
+            assertPrec("4220.766687516754535893", await mocImpl.getTPAvailableToMint(tp1));
           });
           describe("WHEN Alice tries to mint 4220.77 TP1", function () {
             /*  
@@ -682,8 +684,9 @@ const mintTPBehavior = function () {
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 1 available to mint", async function () {
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0", availableToMintTolerance);
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_1), "TP 1", availableToMintTolerance);
+              assertPrec(0, await mocImpl.getTPAvailableToMint(tp0), "TP 0", availableToMintTolerance);
+              const tp1 = mocContracts.mocPeggedTokens[TP_1].address;
+              assertPrec(0, await mocImpl.getTPAvailableToMint(tp1), "TP 1", availableToMintTolerance);
             });
           });
           describe("WHEN alice mints 525 TP 1", function () {
@@ -743,7 +746,8 @@ const mintTPBehavior = function () {
         });
         describe("AND alice asks for mint TP 4, which ctargemaTP is greater than ctargemaCA", function () {
           it("THEN there are 2545.85 TP 4 available to mint", async function () {
-            assertPrec("2545.859271835502735400", await mocImpl.getTPAvailableToMint(TP_4));
+            const tp4 = mocContracts.mocPeggedTokens[TP_4].address;
+            assertPrec("2545.859271835502735400", await mocImpl.getTPAvailableToMint(tp4));
           });
           describe("WHEN Alice tries to mint 2545.86 TP4", function () {
             /*  
@@ -787,8 +791,9 @@ const mintTPBehavior = function () {
               expect(actualCoverage).to.be.greaterThanOrEqual(actualCtargemaCA);
             });
             it("THEN there are 0 TP 0 and TP 4 available to mint", async function () {
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_0), "TP 0", availableToMintTolerance);
-              assertPrec(0, await mocImpl.getTPAvailableToMint(TP_4), "TP 4", availableToMintTolerance);
+              assertPrec(0, await mocImpl.getTPAvailableToMint(tp0), "TP 0", availableToMintTolerance);
+              const tp4 = mocContracts.mocPeggedTokens[TP_4].address;
+              assertPrec(0, await mocImpl.getTPAvailableToMint(tp4), "TP 4", availableToMintTolerance);
             });
           });
         });
