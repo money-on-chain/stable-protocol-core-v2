@@ -880,7 +880,7 @@ abstract contract MocCore is MocCommons {
         uint256 pegAmount = pegContainer.length;
         uint256[] memory tpToMint = new uint256[](pegAmount);
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 pACtp = getPACtp(i);
+            uint256 pACtp = _getPACtp(i);
             _updateTPtracking(i, pACtp);
             int256 iou = tpiou[i];
             if (iou > 0) {

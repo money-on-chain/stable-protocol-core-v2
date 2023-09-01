@@ -63,7 +63,7 @@ contract MocCoreExpansion is MocCommons {
         tpEma.push(EmaItem({ ema: peggedTokenParams_.tpEma, sf: peggedTokenParams_.tpEmaSf }));
         tpiou.push();
         // reverts if price provider is invalid
-        pACtpLstop.push(getPACtp(newTPindex));
+        pACtpLstop.push(_getPACtp(newTPindex));
         // emit the event
         emit PeggedTokenChange(newTPindex, peggedTokenParams_);
     }
@@ -183,8 +183,8 @@ contract MocCoreExpansion is MocCommons {
         if (params_.tpFrom == params_.tpTo) revert InvalidValue();
         uint256 iFrom = _tpi(params_.tpFrom);
         uint256 iTo = _tpi(params_.tpTo);
-        uint256 pACtpFrom = getPACtp(iFrom);
-        uint256 pACtpTo = getPACtp(iTo);
+        uint256 pACtpFrom = _getPACtp(iFrom);
+        uint256 pACtpTo = _getPACtp(iTo);
         _updateTPtracking(iFrom, pACtpFrom);
         _updateTPtracking(iTo, pACtpTo);
         // calculate how many total qAC are redeemed

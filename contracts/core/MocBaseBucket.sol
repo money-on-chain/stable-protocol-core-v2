@@ -528,7 +528,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         // for each peg, calculates the proportion of AC reserves it's locked
 
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            pACtps[i] = getPACtp(i);
+            pACtps[i] = _getPACtp(i);
             // [N] = [N] * [PREC] / [PREC]
             lckAC += _divPrec(pegContainer[i].nTP, pACtps[i]);
         }
@@ -713,7 +713,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function getPACtp(uint256 i_) internal view virtual returns (uint256) {
+    function _getPACtp(uint256 i_) internal view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (uint256 price, bool has) = _peekPrice(priceProvider);
         if (!has) revert MissingProviderPrice(address(priceProvider));
@@ -740,7 +740,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 pegAmount = pegContainer.length;
         pACtps = new uint256[](pegAmount);
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            pACtps[i] = getPACtp(i);
+            pACtps[i] = _getPACtp(i);
         }
     }
 
