@@ -389,7 +389,7 @@ abstract contract MocCore is MocCommons {
             params_.sender,
             params_.vendor,
             qACNeededtoMint,
-            tpMintFee[i]
+            tpMintFees[params_.tp]
         );
         qACtotalNeeded = qACNeededtoMint + qACSurcharges;
         if (qACtotalNeeded > params_.qACmax) revert InsufficientQacSent(params_.qACmax, qACtotalNeeded);
@@ -441,7 +441,7 @@ abstract contract MocCore is MocCommons {
             params_.sender,
             params_.vendor,
             qACtotalToRedeem,
-            tpRedeemFee[i]
+            tpRedeemFees[params_.tp]
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         // if is 0 reverts because it is trying to redeem an amount below precision

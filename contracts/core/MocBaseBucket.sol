@@ -144,10 +144,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // e.g. if tcMintFee = 1%, FeeTokenPct = 50% => qFeeToken = 0.5%
     uint256 public feeTokenPct; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
-    // addition fee pct applied on Pegged Tokens mint [PREC]
-    uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // addition fee pct applied on Pegged Tokens redeem [PREC]
-    uint256[] public tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // Pegged Token => addition fee pct applied on TP mint [PREC]
+    mapping(address => uint256) public tpMintFees; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // Pegged Token =>  addition fee pct applied on TP redeem [PREC]
+    mapping(address => uint256) public tpRedeemFees; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
     address public mocFeeFlowAddress;

@@ -56,9 +56,9 @@ contract MocCoreExpansion is MocCommons {
         // set target coverage
         tpCtarg.push(peggedTokenParams_.tpCtarg);
         // set mint fee pct
-        tpMintFee.push(peggedTokenParams_.tpMintFee);
+        tpMintFees[peggedTokenParams_.tpTokenAddress] = peggedTokenParams_.tpMintFee;
         // set redeem fee pct
-        tpRedeemFee.push(peggedTokenParams_.tpRedeemFee);
+        tpRedeemFees[peggedTokenParams_.tpTokenAddress] = peggedTokenParams_.tpRedeemFee;
         // set EMA initial value and smoothing factor
         tpEma.push(EmaItem({ ema: peggedTokenParams_.tpEma, sf: peggedTokenParams_.tpEmaSf }));
         tpiou.push();
@@ -101,9 +101,9 @@ contract MocCoreExpansion is MocCommons {
         // set target coverage
         tpCtarg[i] = peggedTokenParams_.tpCtarg;
         // set mint fee pct
-        tpMintFee[i] = peggedTokenParams_.tpMintFee;
+        tpMintFees[peggedTokenParams_.tpTokenAddress] = peggedTokenParams_.tpMintFee;
         // set redeem fee pct
-        tpRedeemFee[i] = peggedTokenParams_.tpRedeemFee;
+        tpRedeemFees[peggedTokenParams_.tpTokenAddress] = peggedTokenParams_.tpRedeemFee;
         // set EMA initial value and smoothing factor
         tpEma[i].sf = peggedTokenParams_.tpEmaSf;
         // emit the event

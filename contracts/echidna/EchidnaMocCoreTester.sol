@@ -249,10 +249,10 @@ contract EchidnaMocCoreTester {
     function mintTP(uint256 i_, uint256 qTP_, uint256 qACmax_) public {
         if (qACmax_ > 0) {
             i_ = i_ % totalPeggedTokensAdded;
-            uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tpMintFee(i_));
+            address tpi = address(mocCARC20.tpTokens(i_));
+            uint256 qACmaxIncludingFee = qACmax_ * (PRECISION + mocCARC20.tpMintFees(tpi));
             // approve tokens to MocCore
             acToken.approve(address(mocCARC20), qACmaxIncludingFee);
-            address tpi = address(mocCARC20.tpTokens(i_));
             TPData memory tpDataBefore = _getTPData(tpi);
             // we don't want to revert if echidna sends insufficient qAC
             qTP_ = qTP_ % ((qACmax_ * tpDataBefore.tpPrice) / PRECISION);
@@ -263,11 +263,11 @@ contract EchidnaMocCoreTester {
                 TPData memory tpDataAfter = _getTPData(tpi);
                 uint256 qACusedToMint = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 i = i_;
-                uint256 fee = (qACusedToMint * mocCARC20.tpMintFee(i) * (PRECISION - mocCARC20.feeRetainer())) /
+                uint256 fee = (qACusedToMint * mocCARC20.tpMintFees(tpi) * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
 
                 // assert: qACspent should be qACusedToMint + qAC fee
-                assert(qACspent == (qACusedToMint * (PRECISION + mocCARC20.tpMintFee(i))) / PRECISION);
+                assert(qACspent == (qACusedToMint * (PRECISION + mocCARC20.tpMintFees(tpi))) / PRECISION);
                 // assert: echidna AC balance should decrease by qAC spent
                 assert(tpDataAfter.acBalanceSender == tpDataBefore.acBalanceSender - qACspent);
                 // assert: Moc Flow balance should increase by qAC fee
@@ -304,11 +304,11 @@ contract EchidnaMocCoreTester {
             try mocCARC20.redeemTP(tpi, qTP_, 0) returns (uint256 qACRedeemed, uint256) {
                 TPData memory tpDataAfter = _getTPData(tpi);
                 uint256 qACTotalRedeemed = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
-                uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFee(i_) * (PRECISION - mocCARC20.feeRetainer())) /
+                uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFees(tpi) * (PRECISION - mocCARC20.feeRetainer())) /
                     (PRECISION * PRECISION);
                 // assert: qACRedeemed should be equal to qACTotalRedeemed - qAC fee
                 // use tolerance 1 because possible rounding errors
-                assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tpRedeemFee(i_))) / PRECISION <= 1);
+                assert(qACRedeemed - (qACTotalRedeemed * (PRECISION - mocCARC20.tpRedeemFees(tpi))) / PRECISION <= 1);
                 // assert: echidna AC balance should decrease by qAC redeemed
                 assert(tpDataAfter.acBalanceSender == tpDataBefore.acBalanceSender + qACRedeemed);
                 // assert: Moc Flow balance should increase by qAC fee

@@ -66,9 +66,9 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
             // Pegged Token target coverage [PREC]
             mocCore.tpCtarg(i),
             // additional fee pct applied on mint [PREC]
-            mocCore.tpMintFee(i),
+            mocCore.tpMintFees(address(tpToEdit)),
             // additional fee pct applied on redeem [PREC]
-            mocCore.tpRedeemFee(i),
+            mocCore.tpRedeemFees(address(tpToEdit)),
             // Emma is not editable, only initialized
             0,
             // Pegged Token smoothing factor [PREC]
