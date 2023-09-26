@@ -2,7 +2,8 @@
 pragma solidity 0.8.18;
 
 import { MocAccessControlled } from "../utils/MocAccessControlled.sol";
-import { MocCore } from "../core/MocCore.sol";
+import { MocCore, MocCommons } from "../core/MocCore.sol";
+import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
 
 bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
@@ -13,6 +14,10 @@ bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
  */
 contract MocQueue is MocAccessControlled {
     // ------- Events -------
+    event OperationError(uint256 operId_, bytes4 errorCode_, string msg_);
+    event UnhandledError(uint256 operId_, bytes reason_);
+
+    event OperationQueued(address indexed bucket_, uint256 operId_, OperType operType_);
 
     event TCMinted(
         address indexed sender_,
@@ -191,7 +196,7 @@ contract MocQueue is MocAccessControlled {
      * @param qACtotalNeeded_ amount of AC used to mint qTC
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTCMinted(
+    function _onDeferredTCMinted(
         uint256 operId_,
         MocCore.MintTCParams memory params_,
         uint256 qACtotalNeeded_,
@@ -218,7 +223,7 @@ contract MocQueue is MocAccessControlled {
      * @param qACRedeemed_ amount of AC redeemed
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTCRedeemed(
+    function _onDeferredTCRedeemed(
         uint256 operId_,
         MocCore.RedeemTCParams memory params_,
         uint256 qACRedeemed_,
@@ -245,7 +250,7 @@ contract MocQueue is MocAccessControlled {
      * @param qACtotalNeeded_ amount of AC needed to mint qTP
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTPMinted(
+    function _onDeferredTPMinted(
         uint256 operId_,
         MocCore.MintTPParams memory params_,
         uint256 qACtotalNeeded_,
@@ -273,7 +278,7 @@ contract MocQueue is MocAccessControlled {
      * @param qACRedeemed_ amount of AC redeemed
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTPRedeemed(
+    function _onDeferredTPRedeemed(
         uint256 operId_,
         MocCore.RedeemTPParams memory params_,
         uint256 qACRedeemed_,
@@ -302,7 +307,7 @@ contract MocQueue is MocAccessControlled {
      * @param qACtotalNeeded_ total amount of AC needed to mint qTC and qTP
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTCandTPMinted(
+    function _onDeferredTCandTPMinted(
         uint256 operId_,
         MocCore.MintTCandTPParams memory params_,
         uint256 qTCMinted_,
@@ -333,7 +338,7 @@ contract MocQueue is MocAccessControlled {
      * @param qACRedeemed_ total amount of AC redeemed
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTCandTPRedeemed(
+    function _onDeferredTCandTPRedeemed(
         uint256 operId_,
         MocCore.RedeemTCandTPParams memory params_,
         uint256 qTPRedeemed_,
@@ -363,7 +368,7 @@ contract MocQueue is MocAccessControlled {
      * @param qTPMinted_ total amount of TP swapped
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTCforTPSwapped(
+    function _onDeferredTCforTPSwapped(
         uint256 operId_,
         MocCore.SwapTCforTPParams memory params_,
         uint256 qTPMinted_,
@@ -391,7 +396,7 @@ contract MocQueue is MocAccessControlled {
      * @param qTCMinted_ total amount of TC minted
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTPforTCSwapped(
+    function _onDeferredTPforTCSwapped(
         uint256 operId_,
         MocCore.SwapTPforTCParams memory params_,
         uint256 qTCMinted_,
@@ -419,7 +424,7 @@ contract MocQueue is MocAccessControlled {
      * @param qTPMinted_ total amount of TP `iTo` minted
      * @param feeCalcs_ platform fee detail breakdown
      */
-    function onDeferredTPforTPSwapped(
+    function _onDeferredTPforTPSwapped(
         uint256 operId_,
         MocCore.SwapTPforTPParams memory params_,
         uint256 qTPMinted_,
@@ -441,6 +446,34 @@ contract MocQueue is MocAccessControlled {
         );
     }
 
+    /**
+     * @notice Executes mint TC handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TCMinted, OperationError} events
+     */
+    function _executeMintTC(uint256 operId_) internal virtual {
+        MocCore.MintTCParams memory params = operationsMintTC[operId_];
+        try mocCore.execMintTC(params) returns (uint256 _qACtotalNeeded, uint256, MocCore.FeeCalcs memory _feeCalcs) {
+            _onDeferredTCMinted(operId_, params, _qACtotalNeeded, _feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient qac sent");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            // TODO: charge execution fees if not already
+            mocCore.unlockACInPending(params.sender, params.qACmax);
+        }
+        // Independently from the result, we delete the operation params
+        delete operationsMintTC[operId_];
+    }
+
     // ------- External Functions -------
 
     /**
@@ -456,49 +489,46 @@ contract MocQueue is MocAccessControlled {
         uint256 qTP;
         MocCore.FeeCalcs memory feeCalcs;
         if (operType == OperType.mintTC) {
-            MocCore.MintTCParams memory params = operationsMintTC[operId_];
-            (qAC, , feeCalcs) = mocCore.execMintTC(params);
-            onDeferredTCMinted(operId_, params, qAC, feeCalcs);
-            delete operationsMintTC[operId_];
+            _executeMintTC(operId_);
         } else if (operType == OperType.redeemTC) {
             MocCore.RedeemTCParams memory params = operationsRedeemTC[operId_];
             (qAC, , feeCalcs) = mocCore.execRedeemTC(params);
-            onDeferredTCRedeemed(operId_, params, qAC, feeCalcs);
+            _onDeferredTCRedeemed(operId_, params, qAC, feeCalcs);
             delete operationsRedeemTC[operId_];
         } else if (operType == OperType.mintTP) {
             MocCore.MintTPParams memory params = operationsMintTP[operId_];
             (qAC, , feeCalcs) = mocCore.execMintTP(params);
-            onDeferredTPMinted(operId_, params, qAC, feeCalcs);
+            _onDeferredTPMinted(operId_, params, qAC, feeCalcs);
             delete operationsMintTP[operId_];
         } else if (operType == OperType.redeemTP) {
             MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
             (qAC, , feeCalcs) = mocCore.execRedeemTP(params);
-            onDeferredTPRedeemed(operId_, params, qAC, feeCalcs);
+            _onDeferredTPRedeemed(operId_, params, qAC, feeCalcs);
             delete operationsRedeemTP[operId_];
         } else if (operType == OperType.mintTCandTP) {
             MocCore.MintTCandTPParams memory params = operationsMintTCandTP[operId_];
             (qAC, qTC, , feeCalcs) = mocCore.execMintTCandTP(params);
-            onDeferredTCandTPMinted(operId_, params, qTC, qAC, feeCalcs);
+            _onDeferredTCandTPMinted(operId_, params, qTC, qAC, feeCalcs);
             delete operationsMintTCandTP[operId_];
         } else if (operType == OperType.redeemTCandTP) {
             MocCore.RedeemTCandTPParams memory params = operationsRedeemTCandTP[operId_];
             (qAC, qTP, , feeCalcs) = mocCore.execRedeemTCandTP(params);
-            onDeferredTCandTPRedeemed(operId_, params, qTP, qAC, feeCalcs);
+            _onDeferredTCandTPRedeemed(operId_, params, qTP, qAC, feeCalcs);
             delete operationsRedeemTCandTP[operId_];
         } else if (operType == OperType.swapTCforTP) {
             MocCore.SwapTCforTPParams memory params = operationsSwapTCforTP[operId_];
             (, qTP, , feeCalcs) = mocCore.execSwapTCforTP(params);
-            onDeferredTCforTPSwapped(operId_, params, qTP, feeCalcs);
+            _onDeferredTCforTPSwapped(operId_, params, qTP, feeCalcs);
             delete operationsSwapTCforTP[operId_];
         } else if (operType == OperType.swapTPforTC) {
             MocCore.SwapTPforTCParams memory params = operationsSwapTPforTC[operId_];
             (, qTC, , feeCalcs) = mocCore.execSwapTPforTC(params);
-            onDeferredTPforTCSwapped(operId_, params, qTC, feeCalcs);
+            _onDeferredTPforTCSwapped(operId_, params, qTC, feeCalcs);
             delete operationsSwapTPforTC[operId_];
         } else if (operType == OperType.swapTPforTP) {
             MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
             (, qTP, , feeCalcs) = mocCore.execSwapTPforTP(params);
-            onDeferredTPforTPSwapped(operId_, params, qTP, feeCalcs);
+            _onDeferredTPforTPSwapped(operId_, params, qTP, feeCalcs);
             delete operationsSwapTPforTP[operId_];
         }
 
@@ -517,6 +547,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTC;
         operationsMintTC[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.mintTC);
         operIdCount++;
     }
 

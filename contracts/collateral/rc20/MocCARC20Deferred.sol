@@ -1117,6 +1117,48 @@ contract MocCARC20Deferred is MocCore {
     }
 
     /**
+     * @notice while executing a pending Operation, if it fails we need to unlock user's funds
+     * @param owner_ funds owner, address to be returned to
+     * @param qACToUnlock_ AC amount to be unlocked
+     */
+    function unlockACInPending(address owner_, uint256 qACToUnlock_) external onlyMocQueue {
+        unchecked {
+            qACLockedInPending -= qACToUnlock_;
+        }
+        SafeERC20.safeTransfer(acToken, owner_, qACToUnlock_);
+    }
+
+    /**
+     * @notice while executing a pending Operation, if it fails we need to unlock user's tokens
+     * @param owner_ funds owner, address to be returned to
+     * @param qTCToUnlock_ TC amount to be unlocked
+     */
+    function unlockTCInPending(address owner_, uint256 qTCToUnlock_) external onlyMocQueue {
+        SafeERC20Upgradeable.safeTransfer(tcToken, owner_, qTCToUnlock_);
+    }
+
+    /**
+     * @notice while executing a pending Operation, if it fails we need to unlock user's tokens
+     * @param owner_ funds owner, address to be returned to
+     * @param tpToken_ TP to be unlocked
+     * @param qTPToUnlock_ TP amount to be unlocked
+     */
+    function unlockTPInPending(address owner_, IERC20Upgradeable tpToken_, uint256 qTPToUnlock_) external onlyMocQueue {
+        SafeERC20Upgradeable.safeTransfer(tpToken_, owner_, qTPToUnlock_);
+    }
+
+    // ------- Only Authorized Changer Functions -------
+
+    /**
+     * @dev sets Moc Queue contract address
+     * @param mocQueue_ moc queue new contract address
+     */
+    function setMocQueue(address mocQueue_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        mocQueue = MocQueue(mocQueue_);
+    }
+
+    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps

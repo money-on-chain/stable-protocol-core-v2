@@ -36,8 +36,11 @@ const allowTCnTPWrap = (mocImpl, mocCollateralToken, mocPeggedTokens, f) => asyn
 };
 
 const executeWrap = (mocImpl, f) => async args => {
+  if (args.execute === false) {
+    return f(args);
+  }
   await f(args);
-  return args.execute === false || executeLastOperation(mocImpl)();
+  return executeLastOperation(mocImpl)();
 };
 
 // TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready

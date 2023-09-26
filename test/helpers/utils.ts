@@ -29,6 +29,19 @@ export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUS
 export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
 export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
+export enum OperType {
+  none, // avoid using zero as Type
+  mintTC,
+  redeemTC,
+  mintTP,
+  redeemTP,
+  mintTCandTP,
+  redeemTCandTP,
+  swapTCforTP,
+  swapTPforTC,
+  swapTPforTP,
+}
+
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
   if (typeof eth === "number") ethStr = eth.toLocaleString("fullwide", { useGrouping: false }).replace(",", ".");
