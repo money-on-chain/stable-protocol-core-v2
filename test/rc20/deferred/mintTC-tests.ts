@@ -4,7 +4,7 @@ import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTCBehavior } from "../../behaviors/mintTC.behavior";
-import { Balance, CONSTANTS, ERRORS, OperType, pEth, tpParams } from "../../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
@@ -101,7 +101,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
         it("THEN Operations fails with InsufficientQacSent, and Operation Error event is emitted", async function () {
           await expect(execTx)
             .to.emit(mocQueue, "OperationError")
-            .withArgs(operId, "0x0b63f1a7", "Insufficient qac sent");
+            .withArgs(operId, ERROR_SELECTOR.INSUFFICIENT_QAC_SENT, "Insufficient qac sent");
         });
         it("THEN AC is returned", async function () {
           assertPrec(await mocImpl.qACLockedInPending(), 0);
@@ -131,7 +131,9 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
               execTx = await mocFunctions.executeLastOperation();
             });
             it("THEN Operations fails with Unhandled Error", async function () {
-              await expect(execTx).to.emit(mocQueue, "UnhandledError").withArgs(operId, "0xf3e39b5d");
+              await expect(execTx)
+                .to.emit(mocQueue, "UnhandledError")
+                .withArgs(operId, ERROR_SELECTOR.QAC_NEEDED_MUST_BE_GREATER_ZERO);
             });
             it("THEN AC is returned", async function () {
               assertPrec(await mocImpl.qACLockedInPending(), 0);
@@ -157,7 +159,9 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
               execTx = await mocFunctions.executeLastOperation();
             });
             it("THEN Operations fails with Low coverage, and Operation Error event is emitted", async function () {
-              await expect(execTx).to.emit(mocQueue, "OperationError").withArgs(operId, "0x79121201", "Low coverage");
+              await expect(execTx)
+                .to.emit(mocQueue, "OperationError")
+                .withArgs(operId, ERROR_SELECTOR.LOW_COVERAGE, "Low coverage");
             });
             it("THEN AC is returned", async function () {
               assertPrec(await mocImpl.qACLockedInPending(), 0);

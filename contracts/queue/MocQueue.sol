@@ -450,7 +450,7 @@ contract MocQueue is MocAccessControlled {
      * @notice Executes mint TC handling any error
      * @param operId_ operation id
      *
-     * May emit {TCMinted, OperationError} events
+     * May emit {TCMinted, OperationError, UnhandledError} events
      */
     function _executeMintTC(uint256 operId_) internal virtual {
         MocCore.MintTCParams memory params = operationsMintTC[operId_];
@@ -474,6 +474,35 @@ contract MocQueue is MocAccessControlled {
         delete operationsMintTC[operId_];
     }
 
+    /**
+     * @notice Executes redeem TC handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TCRedeemed, OperationError, UnhandledError} events
+     */
+    function _executeRedeemTC(uint256 operId_) internal virtual {
+        MocCore.RedeemTCParams memory params = operationsRedeemTC[operId_];
+        try mocCore.execRedeemTC(params) returns (uint256 _qACRedeemed, uint256, MocCore.FeeCalcs memory _feeCalcs) {
+            _onDeferredTCRedeemed(operId_, params, _qACRedeemed, _feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+            if (errorSelector == MocCommons.InsufficientTCtoRedeem.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient tc to redeem");
+            } else if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
+                emit OperationError(operId_, errorSelector, "qAC below minimum required");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            mocCore.unlockTCInPending(params.sender, params.qTC);
+        }
+        // Independently from the result, we delete the operation params
+        delete operationsRedeemTC[operId_];
+    }
+
     // ------- External Functions -------
 
     /**
@@ -491,10 +520,7 @@ contract MocQueue is MocAccessControlled {
         if (operType == OperType.mintTC) {
             _executeMintTC(operId_);
         } else if (operType == OperType.redeemTC) {
-            MocCore.RedeemTCParams memory params = operationsRedeemTC[operId_];
-            (qAC, , feeCalcs) = mocCore.execRedeemTC(params);
-            _onDeferredTCRedeemed(operId_, params, qAC, feeCalcs);
-            delete operationsRedeemTC[operId_];
+            _executeRedeemTC(operId_);
         } else if (operType == OperType.mintTP) {
             MocCore.MintTPParams memory params = operationsMintTP[operId_];
             (qAC, , feeCalcs) = mocCore.execMintTP(params);

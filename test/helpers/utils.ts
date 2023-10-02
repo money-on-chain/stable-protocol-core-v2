@@ -268,6 +268,16 @@ export const ERRORS = {
   MISSING_BLOCKS_TO_TC_INTEREST_PAYMENT: "MissingBlocksToTCInterestPayment",
 };
 
+const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);
+
+export const ERROR_SELECTOR = {
+  LOW_COVERAGE: getSelectorFor(ERRORS.LOW_COVERAGE + "(uint256,uint256)"),
+  INSUFFICIENT_QAC_SENT: getSelectorFor(ERRORS.INSUFFICIENT_QAC_SENT + "(uint256,uint256)"),
+  INSUFFICIENT_TC_TO_REDEEM: getSelectorFor(ERRORS.INSUFFICIENT_TC_TO_REDEEM + "(uint256,uint256)"),
+  QAC_NEEDED_MUST_BE_GREATER_ZERO: getSelectorFor(ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO + "()"),
+  QAC_BELOW_MINIMUM: getSelectorFor(ERRORS.QAC_BELOW_MINIMUM + "(uint256,uint256)"),
+};
+
 export const CONSTANTS = {
   ZERO_ADDRESS: ethers.constants.AddressZero,
   MAX_UINT256: ethers.constants.MaxUint256,
