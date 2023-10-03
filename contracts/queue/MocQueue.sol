@@ -503,6 +503,36 @@ contract MocQueue is MocAccessControlled {
         delete operationsRedeemTC[operId_];
     }
 
+    /**
+     * @notice Executes mint TP handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TPMinted, OperationError, UnhandledError} events
+     */
+    function _executeMintTP(uint256 operId_) internal virtual {
+        MocCore.MintTPParams memory params = operationsMintTP[operId_];
+        try mocCore.execMintTP(params) returns (uint256 _qACtotalNeeded, uint256, MocCore.FeeCalcs memory _feeCalcs) {
+            _onDeferredTPMinted(operId_, params, _qACtotalNeeded, _feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+            if (errorSelector == MocCommons.InsufficientTPtoMint.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient tp to mint");
+            } else if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient qac sent");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            // TODO: charge execution fees if not already
+            mocCore.unlockACInPending(params.sender, params.qACmax);
+        }
+        // Independently from the result, we delete the operation params
+        delete operationsMintTP[operId_];
+    }
+
     // ------- External Functions -------
 
     /**
@@ -522,10 +552,7 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.redeemTC) {
             _executeRedeemTC(operId_);
         } else if (operType == OperType.mintTP) {
-            MocCore.MintTPParams memory params = operationsMintTP[operId_];
-            (qAC, , feeCalcs) = mocCore.execMintTP(params);
-            _onDeferredTPMinted(operId_, params, qAC, feeCalcs);
-            delete operationsMintTP[operId_];
+            _executeMintTP(operId_);
         } else if (operType == OperType.redeemTP) {
             MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
             (qAC, , feeCalcs) = mocCore.execRedeemTP(params);
@@ -587,6 +614,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.redeemTC;
         operationsRedeemTC[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.redeemTC);
         operIdCount++;
     }
 
@@ -600,6 +628,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTP;
         operationsMintTP[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.mintTP);
         operIdCount++;
     }
 
@@ -613,6 +642,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.redeemTP;
         operationsRedeemTP[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.redeemTP);
         operIdCount++;
     }
 
@@ -626,6 +656,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.mintTCandTP;
         operationsMintTCandTP[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.mintTCandTP);
         operIdCount++;
     }
 
@@ -639,6 +670,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.redeemTCandTP;
         operationsRedeemTCandTP[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.redeemTCandTP);
         operIdCount++;
     }
 
@@ -652,6 +684,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.swapTCforTP;
         operationsSwapTCforTP[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.swapTCforTP);
         operIdCount++;
     }
 
@@ -665,6 +698,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.swapTPforTC;
         operationsSwapTPforTC[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.swapTPforTC);
         operIdCount++;
     }
 
@@ -678,6 +712,7 @@ contract MocQueue is MocAccessControlled {
         operId = operIdCount;
         operTypes[operId] = OperType.swapTPforTP;
         operationsSwapTPforTP[operId] = params;
+        emit OperationQueued(msg.sender, operId, OperType.swapTPforTP);
         operIdCount++;
     }
 

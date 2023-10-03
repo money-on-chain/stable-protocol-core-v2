@@ -5,7 +5,7 @@ import { ContractTransaction, BigNumber } from "ethers";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { redeemTCBehavior } from "../../behaviors/redeemTC.behavior";
-import { Balance, ERROR_SELECTOR, pEth, tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
@@ -118,8 +118,15 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
       });
 
       describe("WHEN she registers an Operation to redeems 12 TC", function () {
+        let queueTx: ContractTransaction;
         beforeEach(async function () {
-          await mocFunctions.redeemTC({ from: alice, qTC: 12, execute: false });
+          operId = await mocQueue.operIdCount();
+          queueTx = await mocFunctions.redeemTC({ from: alice, qTC: 12, execute: false });
+        });
+        it("THEN an operation queued event is emitted", async function () {
+          await expect(queueTx)
+            .to.emit(mocQueue, "OperationQueued")
+            .withArgs(mocImpl.address, operId, OperType.redeemTC);
         });
         it("THEN Alice TC balance decreases by 12, as her funds are locked", async function () {
           assertPrec(await mocFunctions.tcBalanceOf(alice), 8);
