@@ -1,38 +1,105 @@
+import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { getNamedAccounts } from "hardhat";
-import { MocCARC20Deferred } from "../../../typechain";
+import { ContractTransaction, BigNumber } from "ethers";
+import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { redeemTPBehavior } from "../../behaviors/redeemTP.behavior";
-import { tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred redeem TP", function () {
-  let mocImpl: MocCARC20Deferred;
-  let mocFunctions: any;
-  let alice: Address;
-  let bob: Address;
-  const TP_0 = 0;
-
-  describe("GIVEN a MocCARC20Deferred implementation deployed", function () {
+  describe("GIVEN a MocCARC20Deferred implementation deployed with mocQueueMock", function () {
     beforeEach(async function () {
-      ({ alice, bob } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams);
+      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
-      this.mocFunctions = mocFunctions;
-      ({ mocImpl } = this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
     });
     redeemTPBehavior();
-
-    describe("GIVEN Alice has 20 TP", function () {
+  });
+  describe("GIVEN a MocCARC20Deferred implementation deployed behind MocQueue", function () {
+    let mocImpl: MocCARC20Deferred;
+    let mocFunctions: any;
+    let mocQueue: MocQueue;
+    let operId: BigNumber;
+    let alice: Address;
+    let bob: Address;
+    const TP_0 = 0;
+    beforeEach(async function () {
+      ({ alice, bob } = await getNamedAccounts());
+      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
+      const mocContracts = await fixtureDeploy();
+      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      ({ mocImpl, mocQueue } = mocContracts);
+    });
+    describe("GIVEN there are 100 TC and Alice has 20 TP", function () {
+      let queueTx: ContractTransaction;
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: bob, qTC: 100 });
         await mocFunctions.mintTP({ from: alice, qTP: 20 });
       });
+
+      describe("WHEN alice registers a redeems 20 TP Operation, expecting at least 21 AC", function () {
+        beforeEach(async function () {
+          operId = await mocQueue.operIdCount();
+          await mocFunctions.redeemTP({ from: alice, qTP: 20, qACmin: 21, execute: false });
+        });
+        describe("AND execution is evaluated", function () {
+          let execTx: ContractTransaction;
+          let prevTPBalance: Balance;
+          beforeEach(async function () {
+            prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
+            execTx = await mocFunctions.executeLastOperation();
+          });
+          it("THEN Operations fails with qAC below min expected, and Operation Error event is emitted", async function () {
+            await expect(execTx)
+              .to.emit(mocQueue, "OperationError")
+              .withArgs(operId, ERROR_SELECTOR.QAC_BELOW_MINIMUM, "qAC below minimum required");
+          });
+          it("THEN TP is returned", async function () {
+            assertPrec(prevTPBalance.add(pEth(20)), await mocFunctions.tpBalanceOf(TP_0, alice));
+          });
+        });
+      });
+      describe("AND Pegged Token revaluates", function () {
+        beforeEach(async function () {
+          await mocFunctions.mintTP({ from: bob, qTP: 20000 });
+          await mocFunctions.pokePrice(TP_0, "0.1");
+        });
+        describe("WHEN Alice registers a redeem Operation for her TPs", function () {
+          beforeEach(async function () {
+            operId = await mocQueue.operIdCount();
+            await mocFunctions.redeemTP({ from: alice, qTP: 20, execute: false });
+          });
+          describe("AND execution is evaluated", function () {
+            let execTx: ContractTransaction;
+            let prevTPBalance: Balance;
+            beforeEach(async function () {
+              prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
+              execTx = await mocFunctions.executeLastOperation();
+            });
+            it("THEN Operations fails with LowCoverage, and Operation Error event is emitted", async function () {
+              await expect(execTx)
+                .to.emit(mocQueue, "OperationError")
+                .withArgs(operId, ERROR_SELECTOR.LOW_COVERAGE, "Low coverage");
+            });
+            it("THEN TP is returned", async function () {
+              assertPrec(prevTPBalance.add(pEth(20)), await mocFunctions.tpBalanceOf(TP_0, alice));
+            });
+          });
+        });
+      });
+
       describe("WHEN she registers an Operation to redeems 12 TP", function () {
         beforeEach(async function () {
-          await mocFunctions.redeemTP({ from: alice, qTP: 12, execute: false });
+          operId = await mocQueue.operIdCount();
+          queueTx = await mocFunctions.redeemTP({ from: alice, qTP: 12, execute: false });
+        });
+        it("THEN an operation queued event is emitted", async function () {
+          await expect(queueTx)
+            .to.emit(mocQueue, "OperationQueued")
+            .withArgs(mocImpl.address, operId, OperType.redeemTP);
         });
         it("THEN Alice TP balance decreases by 12, as her funds are locked", async function () {
           assertPrec(await mocFunctions.tpBalanceOf(TP_0, alice), 8);

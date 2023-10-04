@@ -66,7 +66,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
         beforeEach(async function () {
           await mocFunctions.mintTP({ from: deployer, qTP: 200 });
         });
-        describe("WHEN Alice registers an redeem Operation for her TCs", function () {
+        describe("WHEN Alice registers a redeem Operation for her TCs", function () {
           beforeEach(async function () {
             operId = await mocQueue.operIdCount();
             await mocFunctions.redeemTC({ from: alice, qTC: 20, execute: false });
@@ -92,7 +92,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
           beforeEach(async function () {
             await mocFunctions.pokePrice(TP_0, "35");
           });
-          describe("WHEN Alice registers an redeem Operation for her TCs", function () {
+          describe("WHEN Alice registers a redeem Operation for her TCs", function () {
             beforeEach(async function () {
               operId = await mocQueue.operIdCount();
               await mocFunctions.redeemTC({ from: alice, qTC: 20, execute: false });

@@ -5,6 +5,7 @@ import { MocAccessControlled } from "../utils/MocAccessControlled.sol";
 import { MocCore, MocCommons } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
@@ -533,6 +534,33 @@ contract MocQueue is MocAccessControlled {
         delete operationsMintTP[operId_];
     }
 
+    /**
+     * @notice Executes redeem TP handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TPRedeemed, OperationError, UnhandledError} events
+     */
+    function _executeRedeemTP(uint256 operId_) internal virtual {
+        MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
+        try mocCore.execRedeemTP(params) returns (uint256 _qACRedeemed, uint256, MocCore.FeeCalcs memory _feeCalcs) {
+            _onDeferredTPRedeemed(operId_, params, _qACRedeemed, _feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+            if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
+                emit OperationError(operId_, errorSelector, "qAC below minimum required");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
+        }
+        // Independently from the result, we delete the operation params
+        delete operationsRedeemTP[operId_];
+    }
+
     // ------- External Functions -------
 
     /**
@@ -554,10 +582,7 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.mintTP) {
             _executeMintTP(operId_);
         } else if (operType == OperType.redeemTP) {
-            MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
-            (qAC, , feeCalcs) = mocCore.execRedeemTP(params);
-            _onDeferredTPRedeemed(operId_, params, qAC, feeCalcs);
-            delete operationsRedeemTP[operId_];
+            _executeRedeemTP(operId_);
         } else if (operType == OperType.mintTCandTP) {
             MocCore.MintTCandTPParams memory params = operationsMintTCandTP[operId_];
             (qAC, qTC, , feeCalcs) = mocCore.execMintTCandTP(params);
