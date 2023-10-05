@@ -455,6 +455,8 @@ contract MocQueue is MocAccessControlled {
      */
     function _executeMintTC(uint256 operId_) internal virtual {
         MocCore.MintTCParams memory params = operationsMintTC[operId_];
+        // Independently from the result, we delete the operation params
+        delete operationsMintTC[operId_];
         try mocCore.execMintTC(params) returns (uint256 _qACtotalNeeded, uint256, MocCore.FeeCalcs memory _feeCalcs) {
             _onDeferredTCMinted(operId_, params, _qACtotalNeeded, _feeCalcs);
         } catch (bytes memory returnData) {
@@ -471,8 +473,6 @@ contract MocQueue is MocAccessControlled {
             // TODO: charge execution fees if not already
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
-        delete operationsMintTC[operId_];
     }
 
     /**
@@ -483,6 +483,8 @@ contract MocQueue is MocAccessControlled {
      */
     function _executeRedeemTC(uint256 operId_) internal virtual {
         MocCore.RedeemTCParams memory params = operationsRedeemTC[operId_];
+        // Independently from the result, we delete the operation params
+        delete operationsRedeemTC[operId_];
         try mocCore.execRedeemTC(params) returns (uint256 _qACRedeemed, uint256, MocCore.FeeCalcs memory _feeCalcs) {
             _onDeferredTCRedeemed(operId_, params, _qACRedeemed, _feeCalcs);
         } catch (bytes memory returnData) {
@@ -500,8 +502,6 @@ contract MocQueue is MocAccessControlled {
             // On a failed Operation, we unlock user funds
             mocCore.unlockTCInPending(params.sender, params.qTC);
         }
-        // Independently from the result, we delete the operation params
-        delete operationsRedeemTC[operId_];
     }
 
     /**
@@ -512,6 +512,8 @@ contract MocQueue is MocAccessControlled {
      */
     function _executeMintTP(uint256 operId_) internal virtual {
         MocCore.MintTPParams memory params = operationsMintTP[operId_];
+        // Independently from the result, we delete the operation params
+        delete operationsMintTP[operId_];
         try mocCore.execMintTP(params) returns (uint256 _qACtotalNeeded, uint256, MocCore.FeeCalcs memory _feeCalcs) {
             _onDeferredTPMinted(operId_, params, _qACtotalNeeded, _feeCalcs);
         } catch (bytes memory returnData) {
@@ -530,8 +532,6 @@ contract MocQueue is MocAccessControlled {
             // TODO: charge execution fees if not already
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
-        delete operationsMintTP[operId_];
     }
 
     /**
@@ -542,6 +542,8 @@ contract MocQueue is MocAccessControlled {
      */
     function _executeRedeemTP(uint256 operId_) internal virtual {
         MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
+        // Independently from the result, we delete the operation params
+        delete operationsRedeemTP[operId_];
         try mocCore.execRedeemTP(params) returns (uint256 _qACRedeemed, uint256, MocCore.FeeCalcs memory _feeCalcs) {
             _onDeferredTPRedeemed(operId_, params, _qACRedeemed, _feeCalcs);
         } catch (bytes memory returnData) {
@@ -557,8 +559,39 @@ contract MocQueue is MocAccessControlled {
             // On a failed Operation, we unlock user funds
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
         }
+    }
+
+    /**
+     * @notice Executes mint TC and TP handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TCandTPMinted, OperationError, UnhandledError} events
+     */
+    function _executeMintTCandTP(uint256 operId_) internal virtual {
+        MocCore.MintTCandTPParams memory params = operationsMintTCandTP[operId_];
         // Independently from the result, we delete the operation params
-        delete operationsRedeemTP[operId_];
+        delete operationsMintTCandTP[operId_];
+        try mocCore.execMintTCandTP(params) returns (
+            uint256 _qACtotalNeeded,
+            uint256 _qTcMinted,
+            uint256,
+            MocCore.FeeCalcs memory _feeCalcs
+        ) {
+            _onDeferredTCandTPMinted(operId_, params, _qTcMinted, _qACtotalNeeded, _feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient qac sent");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            // TODO: charge execution fees if not already
+            mocCore.unlockACInPending(params.sender, params.qACmax);
+        }
     }
 
     // ------- External Functions -------
@@ -584,10 +617,7 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.redeemTP) {
             _executeRedeemTP(operId_);
         } else if (operType == OperType.mintTCandTP) {
-            MocCore.MintTCandTPParams memory params = operationsMintTCandTP[operId_];
-            (qAC, qTC, , feeCalcs) = mocCore.execMintTCandTP(params);
-            _onDeferredTCandTPMinted(operId_, params, qTC, qAC, feeCalcs);
-            delete operationsMintTCandTP[operId_];
+            _executeMintTCandTP(operId_);
         } else if (operType == OperType.redeemTCandTP) {
             MocCore.RedeemTCandTPParams memory params = operationsRedeemTCandTP[operId_];
             (qAC, qTP, , feeCalcs) = mocCore.execRedeemTCandTP(params);
