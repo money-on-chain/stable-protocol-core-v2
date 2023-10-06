@@ -44,4 +44,13 @@ contract MocQueueMock is MocQueue {
         _onDeferredTCandTPMinted(operId_, params, _qTPMinted, _qACtotalNeeded, _feeCalcs);
         delete operationsMintTCandTP[operId_];
     }
+
+    function _executeRedeemTCandTP(uint256 operId_) internal override {
+        MocCore.RedeemTCandTPParams memory params = operationsRedeemTCandTP[operId_];
+        (uint256 _qACRedeemed, uint256 _qTPRedeemed, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execRedeemTCandTP(
+            params
+        );
+        _onDeferredTCandTPRedeemed(operId_, params, _qTPRedeemed, _qACRedeemed, _feeCalcs);
+        delete operationsRedeemTCandTP[operId_];
+    }
 }
