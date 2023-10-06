@@ -96,6 +96,7 @@ const config: HardhatUserConfig = {
       chainId: chainIds.hardhat,
       gasPrice: 0,
       initialBaseFeePerGas: 0,
+      hardfork: "london", // FIXME: latest evm version supported by rsk explorers, keep it updated
       // TODO: remove this
       allowUnlimitedContractSize: true,
       deployParameters: {
@@ -167,6 +168,7 @@ const config: HardhatUserConfig = {
         },
       },
       viaIR: process.env.VIA_IR === undefined ? true : process.env.VIA_IR == "true",
+      evmVersion: "london", // FIXME: latest evm version supported by rsk explorers, keep it updated
       outputSelection: {
         "*": {
           "*": ["storageLayout"],

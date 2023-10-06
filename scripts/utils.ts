@@ -41,7 +41,8 @@ export const deployUUPSArtifact = async ({
     contract,
     from: deployer,
     proxy: {
-      proxyContract: "UUPS",
+      proxyContract: "ERC1967Proxy",
+      proxyArgs: ["{implementation}", "{data}"],
       execute,
     },
     gasLimit,
