@@ -629,6 +629,42 @@ contract MocQueue is MocAccessControlled {
         }
     }
 
+    /**
+     * @notice Executes swap TC and TP handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TCandTPSwapped, OperationError, UnhandledError} events
+     */
+    function _executeSwapTCforTP(uint256 operId_) internal virtual {
+        MocCore.SwapTCforTPParams memory params = operationsSwapTCforTP[operId_];
+        // Independently from the result, we delete the operation params
+        delete operationsSwapTCforTP[operId_];
+        try mocCore.execSwapTCforTP(params) returns (
+            uint256,
+            uint256 qTPMinted,
+            uint256,
+            MocCore.FeeCalcs memory _feeCalcs
+        ) {
+            _onDeferredTCforTPSwapped(operId_, params, qTPMinted, _feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+
+            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient qac sent");
+            } else if (errorSelector == MocCommons.QtpBelowMinimumRequired.selector) {
+                emit OperationError(operId_, errorSelector, "qTp below minimum required");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            mocCore.unlockTCInPending(params.sender, params.qTC);
+            mocCore.unlockACInPending(params.sender, params.qACmax);
+        }
+    }
+
     // ------- External Functions -------
 
     /**
@@ -655,10 +691,7 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.redeemTCandTP) {
             _executeRedeemTCandTP(operId_);
         } else if (operType == OperType.swapTCforTP) {
-            MocCore.SwapTCforTPParams memory params = operationsSwapTCforTP[operId_];
-            (, qTP, , feeCalcs) = mocCore.execSwapTCforTP(params);
-            _onDeferredTCforTPSwapped(operId_, params, qTP, feeCalcs);
-            delete operationsSwapTCforTP[operId_];
+            _executeSwapTCforTP(operId_);
         } else if (operType == OperType.swapTPforTC) {
             MocCore.SwapTPforTCParams memory params = operationsSwapTPforTC[operId_];
             (, qTC, , feeCalcs) = mocCore.execSwapTPforTC(params);
