@@ -67,4 +67,11 @@ contract MocQueueMock is MocQueue {
         (, uint256 qTCMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execSwapTPforTC(params);
         _onDeferredTPforTCSwapped(operId_, params, qTCMinted, _feeCalcs);
     }
+
+    function _executeSwapTPforTP(uint256 operId_) internal override {
+        MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
+        delete operationsSwapTPforTP[operId_];
+        (, uint256 qTPMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execSwapTPforTP(params);
+        _onDeferredTPforTPSwapped(operId_, params, qTPMinted, _feeCalcs);
+    }
 }

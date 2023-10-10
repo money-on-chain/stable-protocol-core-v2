@@ -701,6 +701,42 @@ contract MocQueue is MocAccessControlled {
         }
     }
 
+    /**
+     * @notice Executes swap TP for TP handling any error
+     * @param operId_ operation id
+     *
+     * May emit {TPforTPSwapped, OperationError, UnhandledError} events
+     */
+    function _executeSwapTPforTP(uint256 operId_) internal virtual {
+        MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
+        // Independently from the result, we delete the operation params
+        delete operationsSwapTPforTP[operId_];
+        try mocCore.execSwapTPforTP(params) returns (
+            uint256,
+            uint256 qTPMinted,
+            uint256,
+            MocCore.FeeCalcs memory feeCalcs
+        ) {
+            _onDeferredTPforTPSwapped(operId_, params, qTPMinted, feeCalcs);
+        } catch (bytes memory returnData) {
+            // TODO: analyze if it's necessary to decode error params, returnData needs to be
+            // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
+            bytes4 errorSelector = bytes4(returnData);
+
+            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+                emit OperationError(operId_, errorSelector, "Insufficient qac sent");
+            } else if (errorSelector == MocCommons.QtpBelowMinimumRequired.selector) {
+                emit OperationError(operId_, errorSelector, "qTp below minimum required");
+            } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
+                emit OperationError(operId_, errorSelector, "Low coverage");
+            } else emit UnhandledError(operId_, returnData);
+
+            // On a failed Operation, we unlock user funds
+            mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tpFrom), params.qTP);
+            mocCore.unlockACInPending(params.sender, params.qACmax);
+        }
+    }
+
     // ------- External Functions -------
 
     /**
@@ -711,8 +747,6 @@ contract MocQueue is MocAccessControlled {
     function execute(uint256 operId_) external notPaused onlyRole(EXECUTOR_ROLE) {
         // TODO: handle nonexistent or old IDs
         OperType operType = operTypes[operId_];
-        uint256 qTP;
-        MocCore.FeeCalcs memory feeCalcs;
         if (operType == OperType.mintTC) {
             _executeMintTC(operId_);
         } else if (operType == OperType.redeemTC) {
@@ -730,12 +764,8 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.swapTPforTC) {
             _executeSwapTPforTC(operId_);
         } else if (operType == OperType.swapTPforTP) {
-            MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
-            (, qTP, , feeCalcs) = mocCore.execSwapTPforTP(params);
-            _onDeferredTPforTPSwapped(operId_, params, qTP, feeCalcs);
-            delete operationsSwapTPforTP[operId_];
+            _executeSwapTPforTP(operId_);
         }
-
         // TODO: verify who/how keeps track of processed operations, and see if
         // re-processing or having this deleted doesn't interfere.
         delete operTypes[operId_];
