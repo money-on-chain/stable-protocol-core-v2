@@ -91,6 +91,8 @@ abstract contract MocCore is MocCommons {
      * @notice transfer Collateral Asset
      * @dev this function must be overridden by the AC implementation
      *  and revert if transfer fails.
+     * IMPORTANT: if ac transfer could trigger custom gas consumption for the Collateral
+     * used (like coinbase fallback or ERC777), gasLimit should be capped
      * @param to_ address who receives the Collateral Asset
      * @param amount_ amount of Collateral Asset to transfer
      */

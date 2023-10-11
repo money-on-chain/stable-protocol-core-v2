@@ -1,18 +1,20 @@
 // @ts-nocheck
 import { ethers, getNamedAccounts } from "hardhat";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
-import { MocQueue__factory } from "../../typechain";
 import { mocFunctionsRC20 } from "./mocFunctionsRC20";
 import { pEth } from "./utils";
 
-const executeLastOperation = mocImpl => async () => {
-  const { deployer } = await getNamedAccounts();
-  const whitelistedExecutor = await ethers.getSigner(deployer);
-  // TODO: maybe cash this
-  const mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), ethers.provider.getSigner());
-  const operIdCount = await mocQueue.operIdCount();
-  return mocQueue.connect(whitelistedExecutor).execute(operIdCount - 1);
-};
+const executeQueue =
+  mocQueue =>
+  async ({ from } = {}) => {
+    let signer;
+    if (!from) {
+      // deployer is a whitelisted executor
+      from = (await getNamedAccounts()).deployer;
+    }
+    signer = await ethers.getSigner(from);
+    return mocQueue.connect(signer).execute();
+  };
 
 const allowTCWrap = (mocImpl, mocCollateralToken, f) => async args => {
   const signer = await ethers.getSigner(args.from);
@@ -35,12 +37,12 @@ const allowTCnTPWrap = (mocImpl, mocCollateralToken, mocPeggedTokens, f) => asyn
   return f(args);
 };
 
-const executeWrap = (mocImpl, f) => async args => {
+const executeWrap = (mocQueue, f) => async args => {
   if (args.execute === false) {
     return f(args);
   }
   await f(args);
-  return executeLastOperation(mocImpl)();
+  return executeQueue(mocQueue)();
 };
 
 // TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready
@@ -63,16 +65,16 @@ export const mocFunctionsRC20Deferred = async ({
   });
   return {
     ...rc20Functions,
-    mintTC: executeWrap(mocImpl, rc20Functions.mintTC),
-    mintTCto: executeWrap(mocImpl, rc20Functions.mintTC),
-    redeemTC: executeWrap(mocImpl, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.redeemTC)),
-    redeemTCto: executeWrap(mocImpl, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.redeemTC)),
-    mintTP: executeWrap(mocImpl, rc20Functions.mintTP),
-    mintTPto: executeWrap(mocImpl, rc20Functions.mintTP),
-    redeemTP: executeWrap(mocImpl, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.redeemTP)),
-    redeemTPto: executeWrap(mocImpl, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.redeemTP)),
-    mintTCandTP: executeWrap(mocImpl, rc20Functions.mintTCandTP),
-    mintTCandTPto: executeWrap(mocImpl, rc20Functions.mintTCandTP),
+    mintTC: executeWrap(mocQueue, rc20Functions.mintTC),
+    mintTCto: executeWrap(mocQueue, rc20Functions.mintTC),
+    redeemTC: executeWrap(mocQueue, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.redeemTC)),
+    redeemTCto: executeWrap(mocQueue, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.redeemTC)),
+    mintTP: executeWrap(mocQueue, rc20Functions.mintTP),
+    mintTPto: executeWrap(mocQueue, rc20Functions.mintTP),
+    redeemTP: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.redeemTP)),
+    redeemTPto: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.redeemTP)),
+    mintTCandTP: executeWrap(mocQueue, rc20Functions.mintTCandTP),
+    mintTCandTPto: executeWrap(mocQueue, rc20Functions.mintTCandTP),
     redeemTCandTP: executeWrap(
       mocImpl,
       allowTCnTPWrap(mocImpl, mocCollateralToken, mocPeggedTokens, rc20Functions.redeemTCandTP),
@@ -81,17 +83,14 @@ export const mocFunctionsRC20Deferred = async ({
       mocImpl,
       allowTCnTPWrap(mocImpl, mocCollateralToken, mocPeggedTokens, rc20Functions.redeemTCandTP),
     ),
-    // TODO: enqueue liq as well?
-    //liqRedeemTP: executeWrap(mocImpl, rc20Functions.liqRedeemTP),
-    //liqRedeemTPto: executeWrap(mocImpl, rc20Functions.liqRedeemTP),
-    swapTPforTP: executeWrap(mocImpl, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP)),
-    swapTPforTPto: executeWrap(mocImpl, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP)),
-    swapTPforTC: executeWrap(mocImpl, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTC)),
-    swapTPforTCto: executeWrap(mocImpl, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTC)),
-    swapTCforTP: executeWrap(mocImpl, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.swapTCforTP)),
-    swapTCforTPto: executeWrap(mocImpl, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.swapTCforTP)),
+    swapTPforTP: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP)),
+    swapTPforTPto: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP)),
+    swapTPforTC: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTC)),
+    swapTPforTCto: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTC)),
+    swapTCforTP: executeWrap(mocQueue, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.swapTCforTP)),
+    swapTCforTPto: executeWrap(mocQueue, allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.swapTCforTP)),
     getEventArgs: getEventArgs,
-    executeLastOperation: executeLastOperation(mocImpl),
+    executeQueue: executeQueue(mocQueue),
     getEventSource: () => mocQueue,
     getOperator: () => mocImpl.address,
   };

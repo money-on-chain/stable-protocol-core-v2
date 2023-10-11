@@ -60,7 +60,7 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
         });
         describe("WHEN the operation is executed", function () {
           beforeEach(async function () {
-            await mocFunctions.executeLastOperation();
+            await mocFunctions.executeQueue();
           });
           it("THEN Alice TC balance doesn't change as all is redeemed", async function () {
             assertPrec(await mocFunctions.tcBalanceOf(alice), 3000 - 100);
@@ -85,7 +85,7 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
             beforeEach(async function () {
               prevTCBalance = await mocFunctions.tcBalanceOf(alice);
               prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-              execTx = await mocFunctions.executeLastOperation();
+              execTx = await mocFunctions.executeQueue();
             });
             it("THEN Operations fails with Low Coverage, and Operation Error event is emitted", async function () {
               await expect(execTx)
@@ -111,7 +111,7 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
           beforeEach(async function () {
             prevTCBalance = await mocFunctions.tcBalanceOf(alice);
             prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-            execTx = await mocFunctions.executeLastOperation();
+            execTx = await mocFunctions.executeQueue();
           });
           it("THEN Operations fails with Insufficient qTP, and Operation Error event is emitted", async function () {
             await expect(execTx)
@@ -136,7 +136,7 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
           beforeEach(async function () {
             prevTCBalance = await mocFunctions.tcBalanceOf(alice);
             prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
-            execTx = await mocFunctions.executeLastOperation();
+            execTx = await mocFunctions.executeQueue();
           });
           it("THEN Operations fails with Insufficient qTP, and Operation Error event is emitted", async function () {
             await expect(execTx)

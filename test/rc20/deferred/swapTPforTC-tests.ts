@@ -56,7 +56,7 @@ describe("Feature: MocCARC20Deferred swap TP for TC", function () {
         });
         describe("WHEN the operation is executed", function () {
           beforeEach(async function () {
-            await mocFunctions.executeLastOperation();
+            await mocFunctions.executeQueue();
           });
           it("THEN Alice TP balance doesn't change", async function () {
             assertPrec(await mocFunctions.tpBalanceOf(TP_0, alice), 8);
@@ -77,7 +77,7 @@ describe("Feature: MocCARC20Deferred swap TP for TC", function () {
             beforeEach(async function () {
               prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
               prevACBalance = await mocFunctions.acBalanceOf(alice);
-              execTx = await mocFunctions.executeLastOperation();
+              execTx = await mocFunctions.executeQueue();
             });
             it("THEN Operations fails with Low Coverage, and Operation Error event is emitted", async function () {
               await expect(execTx)
@@ -103,7 +103,7 @@ describe("Feature: MocCARC20Deferred swap TP for TC", function () {
           beforeEach(async function () {
             prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
             prevACBalance = await mocFunctions.acBalanceOf(alice);
-            execTx = await mocFunctions.executeLastOperation();
+            execTx = await mocFunctions.executeQueue();
           });
           it("THEN Operations fails with Insufficient qac sent, and Operation Error event is emitted", async function () {
             await expect(execTx)
@@ -128,7 +128,7 @@ describe("Feature: MocCARC20Deferred swap TP for TC", function () {
           beforeEach(async function () {
             prevTPBalance = await mocFunctions.tpBalanceOf(TP_0, alice);
             prevACBalance = await mocFunctions.acBalanceOf(alice);
-            execTx = await mocFunctions.executeLastOperation();
+            execTx = await mocFunctions.executeQueue();
           });
           it("THEN Operations fails with qTC below minimum required, and Operation Error event is emitted", async function () {
             await expect(execTx)

@@ -6,6 +6,7 @@ import { MocCore, MocCommons } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
@@ -19,6 +20,7 @@ contract MocQueue is MocAccessControlled {
     event UnhandledError(uint256 operId_, bytes reason_);
 
     event OperationQueued(address indexed bucket_, uint256 operId_, OperType operType_);
+    event OperationExecuted(address indexed executor, uint256 operId_);
 
     event TCMinted(
         address indexed sender_,
@@ -151,6 +153,8 @@ contract MocQueue is MocAccessControlled {
 
     // Amount of Operations created
     uint256 public operIdCount;
+    // first operation to be executed
+    uint256 public firstOperId;
 
     // TODO: import structs
     mapping(uint256 => MocCore.MintTCParams) public operationsMintTC;
@@ -737,15 +741,13 @@ contract MocQueue is MocAccessControlled {
         }
     }
 
-    // ------- External Functions -------
-
     /**
-     * @notice registered executors can process an existent Operations given by the `operId_`
-     * @dev can revert for a number of reason, throws events according to the Oper type
+     * @notice executes the given Operation by the `operId_`
+     * @dev does not revert on Operation failure, throws Process and Error
+     * events according to the Oper type and result
      * @param operId_ Identifier for the Operation to be executed
      */
-    function execute(uint256 operId_) external notPaused onlyRole(EXECUTOR_ROLE) {
-        // TODO: handle nonexistent or old IDs
+    function execute(uint256 operId_) internal {
         OperType operType = operTypes[operId_];
         if (operType == OperType.mintTC) {
             _executeMintTC(operId_);
@@ -766,9 +768,33 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.swapTPforTP) {
             _executeSwapTPforTP(operId_);
         }
-        // TODO: verify who/how keeps track of processed operations, and see if
-        // re-processing or having this deleted doesn't interfere.
         delete operTypes[operId_];
+    }
+
+    // ------- External Functions -------
+
+    // TODO: define this number and move to constant section
+    // Gas restricted batch size to guarantee no gas limit failure
+    uint256 public constant MAX_OPER_PER_BATCH = 10;
+
+    /**
+     * @notice registered executors can process Operations in the queue
+     * @dev does not revert on Operation failure, throws Process and Error
+     * events according to the Oper type and result
+     */
+    function execute() external notPaused onlyRole(EXECUTOR_ROLE) {
+        uint256 operId = firstOperId;
+        uint256 batchLength;
+        unchecked {
+            batchLength = Math.min(operIdCount, operId + MAX_OPER_PER_BATCH);
+        }
+        // loop through all pending Operations
+        for (; operId < batchLength; operId = unchecked_inc(operId)) {
+            execute(operId);
+            emit OperationExecuted(msg.sender, operId);
+        }
+        // Define new reference to queue beginning
+        firstOperId = operId;
     }
 
     /**

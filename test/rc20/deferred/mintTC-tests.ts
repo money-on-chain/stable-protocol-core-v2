@@ -76,7 +76,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
       });
       describe("AND operation is executed", function () {
         beforeEach(async function () {
-          await mocFunctions.executeLastOperation();
+          await mocFunctions.executeQueue();
         });
         it("THEN nACcb is 10 AC", async function () {
           assertPrec(await mocImpl.nACcb(), 10);
@@ -96,7 +96,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
         let prevACBalance: Balance;
         beforeEach(async function () {
           prevACBalance = await mocFunctions.acBalanceOf(deployer);
-          execTx = await mocFunctions.executeLastOperation();
+          execTx = await mocFunctions.executeQueue();
         });
         it("THEN Operations fails with InsufficientQacSent, and Operation Error event is emitted", async function () {
           await expect(execTx)
@@ -128,7 +128,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
             let prevACBalance: Balance;
             beforeEach(async function () {
               prevACBalance = await mocFunctions.acBalanceOf(alice);
-              execTx = await mocFunctions.executeLastOperation();
+              execTx = await mocFunctions.executeQueue();
             });
             it("THEN Operations fails with Unhandled Error", async function () {
               await expect(execTx)
@@ -156,7 +156,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
             let prevACBalance: Balance;
             beforeEach(async function () {
               prevACBalance = await mocFunctions.acBalanceOf(alice);
-              execTx = await mocFunctions.executeLastOperation();
+              execTx = await mocFunctions.executeQueue();
             });
             it("THEN Operations fails with Low coverage, and Operation Error event is emitted", async function () {
               await expect(execTx)
@@ -186,7 +186,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
         let prevACBalance: Balance;
         beforeEach(async function () {
           prevACBalance = await mocFunctions.acBalanceOf(alice);
-          execTx = await mocFunctions.executeLastOperation();
+          execTx = await mocFunctions.executeQueue();
         });
         it("THEN Operations fails with Unhandled Error", async function () {
           await expect(execTx).to.emit(mocQueue, "UnhandledError").withArgs(operId, encodedMintToZeroAddressError);

@@ -49,7 +49,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
           let prevTCBalance: Balance;
           beforeEach(async function () {
             prevTCBalance = await mocFunctions.tcBalanceOf(alice);
-            execTx = await mocFunctions.executeLastOperation();
+            execTx = await mocFunctions.executeQueue();
           });
           it("THEN Operations fails with qAC below min expected, and Operation Error event is emitted", async function () {
             await expect(execTx)
@@ -76,7 +76,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
             let prevTCBalance: Balance;
             beforeEach(async function () {
               prevTCBalance = await mocFunctions.tcBalanceOf(alice);
-              execTx = await mocFunctions.executeLastOperation();
+              execTx = await mocFunctions.executeQueue();
             });
             it("THEN Operations fails with Insufficient tc to redeem, and Operation Error event is emitted", async function () {
               await expect(execTx)
@@ -102,7 +102,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
               let prevTCBalance: Balance;
               beforeEach(async function () {
                 prevTCBalance = await mocFunctions.tcBalanceOf(alice);
-                execTx = await mocFunctions.executeLastOperation();
+                execTx = await mocFunctions.executeQueue();
               });
               it("THEN Operations fails with LowCoverage, and Operation Error event is emitted", async function () {
                 await expect(execTx)
@@ -136,7 +136,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
         });
         describe("WHEN the operation is executed", function () {
           beforeEach(async function () {
-            await mocFunctions.executeLastOperation();
+            await mocFunctions.executeQueue();
           });
           it("THEN Alice TC balance doesn't change", async function () {
             assertPrec(await mocFunctions.tcBalanceOf(alice), 8);

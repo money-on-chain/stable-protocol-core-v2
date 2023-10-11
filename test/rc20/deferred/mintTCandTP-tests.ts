@@ -43,7 +43,7 @@ describe("Feature: MocCARC20Deferred mint TC and TP", function () {
         let prevACBalance: Balance;
         beforeEach(async function () {
           prevACBalance = await mocFunctions.acBalanceOf(alice);
-          execTx = await mocFunctions.executeLastOperation();
+          execTx = await mocFunctions.executeQueue();
         });
         it("THEN Operations fails with InsufficientQacSent, and Operation Error event is emitted", async function () {
           await expect(execTx)
@@ -76,7 +76,7 @@ describe("Feature: MocCARC20Deferred mint TC and TP", function () {
       });
       describe("AND queue execution is evaluated", function () {
         beforeEach(async function () {
-          await mocFunctions.executeLastOperation();
+          await mocFunctions.executeQueue();
         });
         it("THEN AC balance locked is 0 AC", async function () {
           assertPrec(await mocImpl.qACLockedInPending(), 0);
@@ -101,7 +101,7 @@ describe("Feature: MocCARC20Deferred mint TC and TP", function () {
             let prevACBalance: Balance;
             beforeEach(async function () {
               prevACBalance = await mocFunctions.acBalanceOf(alice);
-              execTx = await mocFunctions.executeLastOperation();
+              execTx = await mocFunctions.executeQueue();
             });
             it("THEN Operations fails with Low coverage, and Operation Error event is emitted", async function () {
               await expect(execTx)
