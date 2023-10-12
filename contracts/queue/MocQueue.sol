@@ -20,7 +20,7 @@ contract MocQueue is MocAccessControlled {
     event UnhandledError(uint256 operId_, bytes reason_);
 
     event OperationQueued(address indexed bucket_, uint256 operId_, OperType operType_);
-    event OperationExecuted(address indexed executor, uint256 operId_);
+    event OperationExecuted(address indexed executor, uint256 indexed operId_);
 
     event TCMinted(
         address indexed sender_,
@@ -784,12 +784,12 @@ contract MocQueue is MocAccessControlled {
      */
     function execute() external notPaused onlyRole(EXECUTOR_ROLE) {
         uint256 operId = firstOperId;
-        uint256 batchLength;
+        uint256 lastOperId;
         unchecked {
-            batchLength = Math.min(operIdCount, operId + MAX_OPER_PER_BATCH);
+            lastOperId = Math.min(operIdCount, operId + MAX_OPER_PER_BATCH);
         }
         // loop through all pending Operations
-        for (; operId < batchLength; operId = unchecked_inc(operId)) {
+        for (; operId < lastOperId; operId = unchecked_inc(operId)) {
             execute(operId);
             emit OperationExecuted(msg.sender, operId);
         }

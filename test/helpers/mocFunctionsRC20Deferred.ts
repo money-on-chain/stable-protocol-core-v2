@@ -76,11 +76,11 @@ export const mocFunctionsRC20Deferred = async ({
     mintTCandTP: executeWrap(mocQueue, rc20Functions.mintTCandTP),
     mintTCandTPto: executeWrap(mocQueue, rc20Functions.mintTCandTP),
     redeemTCandTP: executeWrap(
-      mocImpl,
+      mocQueue,
       allowTCnTPWrap(mocImpl, mocCollateralToken, mocPeggedTokens, rc20Functions.redeemTCandTP),
     ),
     redeemTCandTPto: executeWrap(
-      mocImpl,
+      mocQueue,
       allowTCnTPWrap(mocImpl, mocCollateralToken, mocPeggedTokens, rc20Functions.redeemTCandTP),
     ),
     swapTPforTP: executeWrap(mocQueue, allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP)),

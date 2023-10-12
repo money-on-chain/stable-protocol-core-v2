@@ -52,6 +52,7 @@ contract MocCACoinbase is MocCoreShared {
             if (to_ == address(0)) revert InvalidAddress();
             // solhint-disable-next-line avoid-low-level-calls
             // TODO: when queued CA coinbase is allowed, this transfer should be gas capped
+            // TODO: queue should also handle this fail when returning funds (unlocking)
             (bool success, ) = to_.call{ value: amount_ }("");
             if (!success) revert TransferFailed();
         }

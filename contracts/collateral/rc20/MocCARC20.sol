@@ -63,7 +63,6 @@ contract MocCARC20 is MocCoreShared {
      * @inheritdoc MocCore
      * @dev this function could revert during safeTransfer call.
      *  safeTransfer will revert if token transfer reverts or returns 0
-     * IMPORTANT: if an ERC777 is used as Collateral, this transfer gasLimit should be capped
      */
     function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
