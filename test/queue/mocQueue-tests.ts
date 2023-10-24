@@ -160,6 +160,8 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
       describe("AND queue is executed", function () {
         beforeEach(async function () {
           execTx = await mocFunctions.executeQueue({ from: executor });
+          //const gasUsed = (await execTx.wait()).gasUsed.toNumber();
+          //console.log("GAS USED ON FULL QUEUE EXEC:", gasUsed);
         });
         it("THEN only max batch size operations are executed", async function () {
           await expect(execTx)

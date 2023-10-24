@@ -7,7 +7,7 @@ import { EXECUTOR_ROLE } from "../../test/helpers/utils";
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
-  const { mocAddresses } = getNetworkDeployParams(hre);
+  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
 
   let { pauserAddress } = mocAddresses;
@@ -19,7 +19,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre,
     artifactBaseName: "MocQueue",
     contract: "MocQueue",
-    initializeArgs: [governorAddress, pauserAddress],
+    initializeArgs: [governorAddress, pauserAddress, queueParams.minOperWaitingBlk],
   });
 
   const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);

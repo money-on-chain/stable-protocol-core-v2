@@ -16,7 +16,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
 
-  // TODO: Deployer has admin priviledges as this stage
+  // TODO: Deployer has admin privileges as this stage
   console.log(`Registering mocRC20 bucket as enqueuer: ${mocCARC20.address}`);
   await mocQueue.registerBucket(mocCARC20.address);
 

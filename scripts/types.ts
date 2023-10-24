@@ -107,6 +107,10 @@ export type DeployParameters = {
     // Whitelisted addresses that are authorized to execute deferred Operations
     authorizedExecutors: Address[];
   };
+  queueParams: {
+    // min amount of blocks the Operation should wait in the Queue before execution
+    minOperWaitingBlk: number;
+  };
   // gas limit applied for each tx during deployment
   // Hardhat gas limit config cannot be used because we are using ethers.js library. https://github.com/NomicFoundation/hardhat/pull/2406
   gasLimit: number;

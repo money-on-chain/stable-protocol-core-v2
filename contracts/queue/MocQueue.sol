@@ -141,6 +141,14 @@ contract MocQueue is MocAccessControlled {
         uint256 operId_
     );
 
+    // ------- Structs -------
+    struct OperInfo {
+        // Operation Type
+        OperType operType;
+        // block number on which the Operation was queued
+        uint256 queuedBlk;
+    }
+
     // ------- Storage -------
 
     MocCARC20Deferred public mocCore;
@@ -180,16 +188,21 @@ contract MocQueue is MocAccessControlled {
         swapTPforTC,
         swapTPforTP
     }
-    // OperId => Operation Type
-    mapping(uint256 => OperType) public operTypes;
+
+    // OperId => Operation Type | block.number
+    mapping(uint256 => OperInfo) public opersInfo;
+
+    // min amount of blocks the Operation should wait in the Queue before execution
+    uint256 public minOperWaitingBlk;
 
     // ------- Initializer -------
 
-    function initialize(address governor_, address pauser_) external initializer {
+    function initialize(address governor_, address pauser_, uint256 minOperWaitingBlk_) external initializer {
         __AccessControl_init();
         __MocUpgradable_init(governor_, pauser_);
         // TODO:
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        minOperWaitingBlk = minOperWaitingBlk_;
     }
 
     // ------- Internal Functions -------
@@ -747,8 +760,10 @@ contract MocQueue is MocAccessControlled {
      * events according to the Oper type and result
      * @param operId_ Identifier for the Operation to be executed
      */
-    function execute(uint256 operId_) internal {
-        OperType operType = operTypes[operId_];
+    function execute(uint256 operId_) internal returns (bool executed) {
+        OperInfo storage operInfo = opersInfo[operId_];
+        if (operInfo.queuedBlk + minOperWaitingBlk > block.number) return false;
+        OperType operType = operInfo.operType;
         if (operType == OperType.mintTC) {
             _executeMintTC(operId_);
         } else if (operType == OperType.redeemTC) {
@@ -768,7 +783,8 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.swapTPforTP) {
             _executeSwapTPforTP(operId_);
         }
-        delete operTypes[operId_];
+        delete opersInfo[operId_];
+        return true;
     }
 
     // ------- External Functions -------
@@ -789,9 +805,13 @@ contract MocQueue is MocAccessControlled {
             lastOperId = Math.min(operIdCount, operId + MAX_OPER_PER_BATCH);
         }
         // loop through all pending Operations
-        for (; operId < lastOperId; operId = unchecked_inc(operId)) {
-            execute(operId);
-            emit OperationExecuted(msg.sender, operId);
+        while (operId < lastOperId) {
+            if (execute(operId)) {
+                emit OperationExecuted(msg.sender, operId);
+                operId = unchecked_inc(operId);
+            } else {
+                break;
+            }
         }
         // Define new reference to queue beginning
         firstOperId = operId;
@@ -805,7 +825,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.MintTCParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.mintTC;
+        opersInfo[operId] = OperInfo(OperType.mintTC, block.number);
         operationsMintTC[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.mintTC);
         operIdCount++;
@@ -819,7 +839,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.RedeemTCParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.redeemTC;
+        opersInfo[operId] = OperInfo(OperType.redeemTC, block.number);
         operationsRedeemTC[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.redeemTC);
         operIdCount++;
@@ -833,7 +853,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.MintTPParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.mintTP;
+        opersInfo[operId] = OperInfo(OperType.mintTP, block.number);
         operationsMintTP[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.mintTP);
         operIdCount++;
@@ -847,7 +867,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.RedeemTPParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.redeemTP;
+        opersInfo[operId] = OperInfo(OperType.redeemTP, block.number);
         operationsRedeemTP[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.redeemTP);
         operIdCount++;
@@ -861,7 +881,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.MintTCandTPParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.mintTCandTP;
+        opersInfo[operId] = OperInfo(OperType.mintTCandTP, block.number);
         operationsMintTCandTP[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.mintTCandTP);
         operIdCount++;
@@ -875,7 +895,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.RedeemTCandTPParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.redeemTCandTP;
+        opersInfo[operId] = OperInfo(OperType.redeemTCandTP, block.number);
         operationsRedeemTCandTP[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.redeemTCandTP);
         operIdCount++;
@@ -889,7 +909,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.SwapTCforTPParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.swapTCforTP;
+        opersInfo[operId] = OperInfo(OperType.swapTCforTP, block.number);
         operationsSwapTCforTP[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.swapTCforTP);
         operIdCount++;
@@ -903,7 +923,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.SwapTPforTCParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.swapTPforTC;
+        opersInfo[operId] = OperInfo(OperType.swapTPforTC, block.number);
         operationsSwapTPforTC[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.swapTPforTC);
         operIdCount++;
@@ -917,7 +937,7 @@ contract MocQueue is MocAccessControlled {
         MocCore.SwapTPforTPParams calldata params
     ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
         operId = operIdCount;
-        operTypes[operId] = OperType.swapTPforTP;
+        opersInfo[operId] = OperInfo(OperType.swapTPforTP, block.number);
         operationsSwapTPforTP[operId] = params;
         emit OperationQueued(msg.sender, operId, OperType.swapTPforTP);
         operIdCount++;

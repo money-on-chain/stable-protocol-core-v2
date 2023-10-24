@@ -138,6 +138,7 @@ const config: HardhatUserConfig = {
           tcInterestCollectorAddress: "0x27a00Af444928D689DDec7B4D17c0E4a8c9d407F",
           authorizedExecutors: [],
         },
+        queueParams: { minOperWaitingBlk: 1 },
         gasLimit: 30000000, // high value to avoid coverage issue. https://github.com/NomicFoundation/hardhat/issues/3121
       },
       tags: ["local"],
