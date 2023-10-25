@@ -138,7 +138,20 @@ const config: HardhatUserConfig = {
           tcInterestCollectorAddress: "0x27a00Af444928D689DDec7B4D17c0E4a8c9d407F",
           authorizedExecutors: [],
         },
-        queueParams: { minOperWaitingBlk: 1 },
+        queueParams: {
+          minOperWaitingBlk: 1,
+          execFeeParams: {
+            tpMintExecFee: BigNumber.from((1e8).toString()),
+            tpRedeemExecFee: BigNumber.from((1e8).toString()),
+            tcMintExecFee: BigNumber.from((1e8).toString()),
+            tcRedeemExecFee: BigNumber.from((1e8).toString()),
+            swapTPforTPExecFee: BigNumber.from((2e8).toString()),
+            swapTPforTCExecFee: BigNumber.from((2e8).toString()),
+            swapTCforTPExecFee: BigNumber.from((2e8).toString()),
+            redeemTCandTPExecFee: BigNumber.from((2e8).toString()),
+            mintTCandTPExecFee: BigNumber.from((2e8).toString()),
+          },
+        },
         gasLimit: 30000000, // high value to avoid coverage issue. https://github.com/NomicFoundation/hardhat/issues/3121
       },
       tags: ["local"],

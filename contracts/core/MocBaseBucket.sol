@@ -126,9 +126,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
 
     // pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
     uint256 public feeRetainer; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // addition fee pct applied on Collateral Tokens mint [PREC]
+    // additional fee pct applied on Collateral Tokens mint [PREC]
     uint256 public tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // addition fee pct applied on Collateral Tokens redeem [PREC]
+    // additional fee pct applied on Collateral Tokens redeem [PREC]
     uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // additional fee pct applied on swap a Pegged Token for another Pegged Token [PREC]
     uint256 public swapTPforTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18

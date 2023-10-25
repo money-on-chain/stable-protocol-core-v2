@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocAccessControlled } from "../utils/MocAccessControlled.sol";
+import { MocQueueExecFees } from "./MocQueueExecFees.sol";
 import { MocCore, MocCommons } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
@@ -14,7 +14,7 @@ bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
 /**
  * @title MocQueue: Allows queue Operation deferral execution processing
  */
-contract MocQueue is MocAccessControlled {
+contract MocQueue is MocQueueExecFees {
     // ------- Events -------
     event OperationError(uint256 operId_, bytes4 errorCode_, string msg_);
     event UnhandledError(uint256 operId_, bytes reason_);
@@ -197,9 +197,15 @@ contract MocQueue is MocAccessControlled {
 
     // ------- Initializer -------
 
-    function initialize(address governor_, address pauser_, uint256 minOperWaitingBlk_) external initializer {
+    function initialize(
+        address governor_,
+        address pauser_,
+        uint256 minOperWaitingBlk_,
+        InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_
+    ) external initializer {
         __AccessControl_init();
         __MocUpgradable_init(governor_, pauser_);
+        __MocQueueExecFees_init(mocQueueExecFeesParams_);
         // TODO:
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         minOperWaitingBlk = minOperWaitingBlk_;
@@ -824,7 +830,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueMintTC(
         MocCore.MintTCParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(tcMintExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.mintTC, uint248(block.number));
         operationsMintTC[operId] = params;
@@ -838,7 +845,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueRedeemTC(
         MocCore.RedeemTCParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(tcRedeemExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.redeemTC, uint248(block.number));
         operationsRedeemTC[operId] = params;
@@ -852,7 +860,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueMintTP(
         MocCore.MintTPParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(tpMintExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.mintTP, uint248(block.number));
         operationsMintTP[operId] = params;
@@ -866,7 +875,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueRedeemTP(
         MocCore.RedeemTPParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(tpRedeemExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.redeemTP, uint248(block.number));
         operationsRedeemTP[operId] = params;
@@ -880,7 +890,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueMintTCandTP(
         MocCore.MintTCandTPParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(mintTCandTPExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.mintTCandTP, uint248(block.number));
         operationsMintTCandTP[operId] = params;
@@ -894,7 +905,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueRedeemTCandTP(
         MocCore.RedeemTCandTPParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(redeemTCandTPExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.redeemTCandTP, uint248(block.number));
         operationsRedeemTCandTP[operId] = params;
@@ -908,7 +920,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueSwapTCforTP(
         MocCore.SwapTCforTPParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(swapTCforTPExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.swapTCforTP, uint248(block.number));
         operationsSwapTCforTP[operId] = params;
@@ -922,7 +935,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueSwapTPforTC(
         MocCore.SwapTPforTCParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(swapTPforTCExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.swapTPforTC, uint248(block.number));
         operationsSwapTPforTC[operId] = params;
@@ -936,7 +950,8 @@ contract MocQueue is MocAccessControlled {
      */
     function queueSwapTPforTP(
         MocCore.SwapTPforTPParams calldata params
-    ) external notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+    ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
+        verifyExecFee(swapTPforTPExecFee);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.swapTPforTP, uint248(block.number));
         operationsSwapTPforTP[operId] = params;

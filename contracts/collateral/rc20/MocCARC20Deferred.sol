@@ -301,7 +301,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTC(params);
+        operId = mocQueue.queueMintTC{ value: msg.value }(params);
         _lockACInPending(qACmax_);
     }
 
@@ -364,7 +364,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTC(params);
+        operId = mocQueue.queueRedeemTC{ value: msg.value }(params);
         _lockTCInPending(qTC_);
     }
 
@@ -443,7 +443,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTP(params);
+        operId = mocQueue.queueMintTP{ value: msg.value }(params);
         _lockACInPending(qACmax_);
     }
 
@@ -518,7 +518,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTP(params);
+        operId = mocQueue.queueRedeemTP{ value: msg.value }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
 
@@ -613,7 +613,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTCandTP(params);
+        operId = mocQueue.queueMintTCandTP{ value: msg.value }(params);
         _lockACInPending(qACmax_);
     }
 
@@ -717,7 +717,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTCandTP(params);
+        operId = mocQueue.queueRedeemTCandTP{ value: msg.value }(params);
         _lockTCInPending(qTC_);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
@@ -815,7 +815,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTP(params);
+        operId = mocQueue.queueSwapTPforTP{ value: msg.value }(params);
         _lockTPInPending(IERC20Upgradeable(tpFrom_), qTP_);
         _lockACInPending(qACmax_);
     }
@@ -904,7 +904,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTC(params);
+        operId = mocQueue.queueSwapTPforTC{ value: msg.value }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
         _lockACInPending(qACmax_);
     }
@@ -993,7 +993,7 @@ contract MocCARC20Deferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTCforTP(params);
+        operId = mocQueue.queueSwapTCforTP{ value: msg.value }(params);
         _lockTCInPending(qTC_);
         _lockACInPending(qACmax_);
     }

@@ -110,6 +110,17 @@ export type DeployParameters = {
   queueParams: {
     // min amount of blocks the Operation should wait in the Queue before execution
     minOperWaitingBlk: number;
+    execFeeParams: {
+      tpMintExecFee: BigNumber;
+      tpRedeemExecFee: BigNumber;
+      tcMintExecFee: BigNumber;
+      tcRedeemExecFee: BigNumber;
+      swapTPforTPExecFee: BigNumber;
+      swapTPforTCExecFee: BigNumber;
+      swapTCforTPExecFee: BigNumber;
+      redeemTCandTPExecFee: BigNumber;
+      mintTCandTPExecFee: BigNumber;
+    };
   };
   // gas limit applied for each tx during deployment
   // Hardhat gas limit config cannot be used because we are using ethers.js library. https://github.com/NomicFoundation/hardhat/pull/2406
