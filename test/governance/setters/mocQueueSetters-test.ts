@@ -1,0 +1,60 @@
+import { expect } from "chai";
+import { deployments, ethers } from "hardhat";
+import memoizee from "memoizee";
+import { GovernorMock, GovernorMock__factory, MocQueue, MocQueue__factory } from "../../../typechain";
+import { ERRORS } from "../../helpers/utils";
+
+const fixtureDeploy = memoizee(
+  (): (() => Promise<{
+    mocQueue: MocQueue;
+  }>) => {
+    return deployments.createFixture(async ({ ethers }) => {
+      await deployments.fixture();
+      const signer = ethers.provider.getSigner();
+
+      const deployedMocQueue = await deployments.getOrNull("MocQueueProxy");
+      if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
+      const mocQueue: MocQueue = MocQueue__factory.connect(deployedMocQueue.address, signer);
+
+      return {
+        mocQueue,
+      };
+    });
+  },
+);
+
+describe("Feature: Verify all MocQueue config settings are protected by governance", () => {
+  let governorMock: GovernorMock;
+  let mocQueue: MocQueue;
+
+  before(async () => {
+    ({ mocQueue } = await fixtureDeploy()());
+    const governorAddress = await mocQueue.governor();
+    governorMock = GovernorMock__factory.connect(governorAddress, ethers.provider.getSigner());
+  });
+
+  describe("GIVEN the Governor has authorized the change", () => {
+    before(async () => {
+      await governorMock.setIsAuthorized(true);
+    });
+    describe(`WHEN setMinOperWaitingBlk is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocQueue.setMinOperWaitingBlk(100);
+        expect(await mocQueue.minOperWaitingBlk()).to.be.equal(100);
+      });
+    });
+  });
+  describe("GIVEN the Governor has not authorized the change", () => {
+    let expectRevertNotAuthorized: (it: any) => any;
+    before(async () => {
+      await governorMock.setIsAuthorized(false);
+
+      expectRevertNotAuthorized = it => expect(it).to.be.revertedWithCustomError(mocQueue, ERRORS.NOT_AUTH_CHANGER);
+    });
+    describe("WHEN minOperWaitingBlk is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocQueue.setMinOperWaitingBlk(42));
+      });
+    });
+  });
+});

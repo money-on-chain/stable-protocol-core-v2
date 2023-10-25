@@ -24,7 +24,7 @@ const fixtureDeploy = memoizee(
   },
 );
 
-describe("Feature: Verify that all config settings are protected by governance", () => {
+describe("Feature: Verify all MocVendors config settings are protected by governance", () => {
   let governorMock: GovernorMock;
   let mocVendors: MocVendors;
   let mockAddress: Address;

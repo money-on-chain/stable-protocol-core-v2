@@ -1,10 +1,10 @@
 import { expect } from "chai";
-import { ethers, getNamedAccounts } from "hardhat";
+import { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
-import { EXECUTOR_ROLE, mineUpTo, tpParams } from "../helpers/utils";
-import { MocCARC20Deferred, MocQueue, MocQueue__factory } from "../../typechain";
+import { mineUpTo, tpParams } from "../helpers/utils";
+import { MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
 
 describe("Feature: MocQueue Operation min waiting Blk", function () {
@@ -13,7 +13,6 @@ describe("Feature: MocQueue Operation min waiting Blk", function () {
   let executor: Address;
 
   describe("GIVEN a MocQueue with min waiting set to 10 blocks", function () {
-    let mocImpl: MocCARC20Deferred;
     let mocQueue: MocQueue;
     let operId: BigNumber;
     let alice: Address;
@@ -23,20 +22,9 @@ describe("Feature: MocQueue Operation min waiting Blk", function () {
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
 
-      ({ mocImpl, mocQueue } = mocContracts);
-
-      const mocQueueFactory = await ethers.getContractFactory("MocQueue");
-      const mocQueueDeployed = await mocQueueFactory.deploy();
-
-      mocQueue = MocQueue__factory.connect(mocQueueDeployed.address, ethers.provider.getSigner());
-      await mocQueue.initialize(await mocImpl.governor(), await mocImpl.pauser(), 10);
-      await Promise.all([
-        mocImpl.setMocQueue(mocQueue.address),
-        mocQueue.registerBucket(mocImpl.address),
-        mocQueue.grantRole(EXECUTOR_ROLE, deployer),
-      ]);
-      mocContracts.mocQueue = mocQueue;
+      ({ mocQueue } = mocContracts);
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      await mocQueue.setMinOperWaitingBlk(10);
     });
     describe("WHEN both Alice and Bob register a valid operation", function () {
       let execTx: ContractTransaction;

@@ -7,7 +7,7 @@ import { ERRORS } from "../../helpers/utils";
 
 const fixtureDeploy = fixtureDeployedMocCoinbase(1);
 
-describe("Feature: Verify that all config settings are protected by governance", () => {
+describe("Feature: Verify all MocCore config settings are protected by governance", () => {
   let mocProxy: MocCACoinbase;
   let governorMock: GovernorMock;
   let mockAddress: Address;
@@ -169,7 +169,6 @@ describe("Feature: Verify that all config settings are protected by governance",
     let expectRevertNotAuthorized: (it: any) => any;
     before(async () => {
       await governorMock.setIsAuthorized(false);
-
       expectRevertNotAuthorized = it => expect(it).to.be.revertedWithCustomError(mocProxy, ERRORS.NOT_AUTH_CHANGER);
     });
     describe("WHEN setEmaCalculationBlockSpan is invoked", () => {
@@ -305,6 +304,11 @@ describe("Feature: Verify that all config settings are protected by governance",
     describe("WHEN setMocVendors is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setMocVendors(mockAddress));
+      });
+    });
+    describe("WHEN setMocCoreExpansion is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMocCoreExpansion(mockAddress));
       });
     });
   });
