@@ -9,7 +9,10 @@ import { MocAccessControlled } from "../utils/MocAccessControlled.sol";
 abstract contract MocQueueExecFees is MocAccessControlled {
     // ------- Custom Errors -------
 
+    // Wrong amount of coinbase set as execution fee
     error WrongExecutionFee(uint256 expectedValue);
+    // Failure on Executor payment address coinbase transfer
+    error ExecutionFeePaymentFailed();
 
     // ------- Structs -------
 

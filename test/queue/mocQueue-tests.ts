@@ -1,14 +1,24 @@
 import { expect } from "chai";
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
-import { CONSTANTS, ENQUEUER_ROLE, EXECUTOR_ROLE, OperType, tpParams } from "../helpers/utils";
+import {
+  Balance,
+  CONSTANTS,
+  ENQUEUER_ROLE,
+  EXECUTOR_ROLE,
+  OperType,
+  ethersGetBalance,
+  tpParams,
+} from "../helpers/utils";
 import { MocCARC20Deferred, MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
   const vendor = CONSTANTS.ZERO_ADDRESS;
+  const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
   let mocFunctions: any;
   let deployer: Address;
   let executor: Address;
@@ -20,6 +30,7 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
     let operId: BigNumber;
     let alice: Address;
     let bob: Address;
+    let executorBalanceBefore: Balance;
     let expectEnqueuerRevert: (queueTx: Promise<ContractTransaction>) => any;
     let commonParams: { sender: Address; recipient: Address; vendor: Address };
     beforeEach(async function () {
@@ -109,6 +120,10 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           .to.emit(mocQueue, "OperationQueued")
           .withArgs(mocImpl.address, operId.add(1), OperType.mintTC);
       });
+      it("THEN mocQueue receives coinbase for those two operations", async function () {
+        const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+        await expect(mocQueueBalance).to.be.equal(execFeeParams.tcMintExecFee.mul(2));
+      });
       it("THEN if an unauthorized user tries to execute the queue, it fails", async function () {
         await expect(mocFunctions.executeQueue({ from: bob })).to.be.revertedWith(
           `AccessControl: account ${bob.toLowerCase()} is missing role ${EXECUTOR_ROLE}`,
@@ -116,11 +131,18 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
       });
       describe("AND queue is executed by an authorized executor", function () {
         beforeEach(async function () {
+          executorBalanceBefore = await ethersGetBalance(deployer);
           execTx = await mocFunctions.executeQueue({ from: executor });
         });
         it("THEN two operation executed event are emitted", async function () {
           await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId);
           await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(1));
+        });
+        it("THEN execution Fees are delivered", async function () {
+          const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+          await expect(mocQueueBalance).to.be.equal(0);
+          const executorBalanceAfter = await ethersGetBalance(deployer);
+          await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
         });
       });
     });
@@ -128,6 +150,7 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
       let execTx: ContractTransaction;
       beforeEach(async function () {
         executor = deployer;
+        executorBalanceBefore = await ethersGetBalance(executor);
         operId = await mocQueue.operIdCount();
         await mocFunctions.mintTC({ from: bob, qTC: 10, qACmax: 1, execute: false });
         await mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 100, execute: false });
@@ -142,6 +165,12 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
         it("THEN two operation executed event are emitted", async function () {
           await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId);
           await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(1));
+        });
+        it("THEN execution Fees are delivered the same", async function () {
+          const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+          await expect(mocQueueBalance).to.be.equal(0);
+          const executorBalanceAfter = await ethersGetBalance(deployer);
+          await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
         });
       });
     });

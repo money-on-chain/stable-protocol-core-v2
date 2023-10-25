@@ -4,24 +4,35 @@ import { pEth } from "./utils";
 
 const redeemTC =
   mocImpl =>
-  async ({ from, to, qTC, qACmin = 0, vendor = undefined, applyPrecision = true }) => {
+  async ({ from, to, qTC, qACmin = 0, vendor = undefined, netParams = { gasPrice: 0 }, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTCto(qTC, qACmin, to, { gasPrice: 0 });
-      return mocImpl.connect(signer).redeemTCtoViaVendor(qTC, qACmin, to, vendor, { gasPrice: 0 });
+      if (!vendor) return mocImpl.connect(signer).redeemTCto(qTC, qACmin, to, netParams);
+      return mocImpl.connect(signer).redeemTCtoViaVendor(qTC, qACmin, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTC(qTC, qACmin, { gasPrice: 0 });
-      return mocImpl.connect(signer).redeemTCViaVendor(qTC, qACmin, vendor, { gasPrice: 0 });
+      if (!vendor) return mocImpl.connect(signer).redeemTC(qTC, qACmin, netParams);
+      return mocImpl.connect(signer).redeemTCViaVendor(qTC, qACmin, vendor, netParams);
     }
   };
 
 const redeemTCandTP =
   (mocImpl, mocPeggedTokens) =>
-  async ({ i = 0, tp, from, to, qTC, qTP, qACmin = 0, vendor = undefined, applyPrecision = true }) => {
+  async ({
+    i = 0,
+    tp,
+    from,
+    to,
+    qTC,
+    qTP,
+    qACmin = 0,
+    vendor = undefined,
+    netParams = { gasPrice: 0 },
+    applyPrecision = true,
+  }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTP = pEth(qTP);
@@ -30,11 +41,11 @@ const redeemTCandTP =
     }
     tp = tp || mocPeggedTokens[i].address;
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTCandTPto(tp, qTC, qTP, qACmin, to, { gasPrice: 0 });
-      return mocImpl.connect(signer).redeemTCandTPtoViaVendor(tp, qTC, qTP, qACmin, to, vendor, { gasPrice: 0 });
+      if (!vendor) return mocImpl.connect(signer).redeemTCandTPto(tp, qTC, qTP, qACmin, to, netParams);
+      return mocImpl.connect(signer).redeemTCandTPtoViaVendor(tp, qTC, qTP, qACmin, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTCandTP(tp, qTC, qTP, qACmin, { gasPrice: 0 });
-      return mocImpl.connect(signer).redeemTCandTPViaVendor(tp, qTC, qTP, qACmin, vendor, { gasPrice: 0 });
+      if (!vendor) return mocImpl.connect(signer).redeemTCandTP(tp, qTC, qTP, qACmin, netParams);
+      return mocImpl.connect(signer).redeemTCandTPViaVendor(tp, qTC, qTP, qACmin, vendor, netParams);
     }
   };
 

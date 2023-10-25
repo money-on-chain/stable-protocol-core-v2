@@ -233,6 +233,8 @@ export async function deployAndAddAssetsERC777(
 
 export type Balance = BigNumber;
 
+export const ethersGetBalance = (account: Address) => ethers.provider.getBalance(account);
+
 export const ERRORS = {
   BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",

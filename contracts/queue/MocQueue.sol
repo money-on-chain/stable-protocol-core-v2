@@ -765,30 +765,41 @@ contract MocQueue is MocQueueExecFees {
      * @dev does not revert on Operation failure, throws Process and Error
      * events according to the Oper type and result
      * @param operId_ Identifier for the Operation to be executed
+     * @return executed true if the Operations was executed
+     * @return executionFee execution fees corresponding to this Operation
      */
-    function execute(uint256 operId_, uint256 limitBlk) internal returns (bool executed) {
+    function execute(uint256 operId_, uint256 limitBlk) internal returns (bool executed, uint256 executionFee) {
         OperInfo memory operInfo = opersInfo[operId_];
         delete opersInfo[operId_];
-        if (operInfo.queuedBlk > limitBlk) return false;
+        if (operInfo.queuedBlk > limitBlk) return (false, 0);
         OperType operType = operInfo.operType;
         if (operType == OperType.mintTC) {
             _executeMintTC(operId_);
+            executionFee = tcMintExecFee;
         } else if (operType == OperType.redeemTC) {
             _executeRedeemTC(operId_);
+            executionFee = tcRedeemExecFee;
         } else if (operType == OperType.mintTP) {
             _executeMintTP(operId_);
+            executionFee = tpMintExecFee;
         } else if (operType == OperType.redeemTP) {
             _executeRedeemTP(operId_);
+            executionFee = tpRedeemExecFee;
         } else if (operType == OperType.mintTCandTP) {
             _executeMintTCandTP(operId_);
+            executionFee = mintTCandTPExecFee;
         } else if (operType == OperType.redeemTCandTP) {
             _executeRedeemTCandTP(operId_);
+            executionFee = redeemTCandTPExecFee;
         } else if (operType == OperType.swapTCforTP) {
             _executeSwapTCforTP(operId_);
+            executionFee = swapTCforTPExecFee;
         } else if (operType == OperType.swapTPforTC) {
             _executeSwapTPforTC(operId_);
+            executionFee = swapTPforTCExecFee;
         } else if (operType == OperType.swapTPforTP) {
             _executeSwapTPforTP(operId_);
+            executionFee = swapTPforTPExecFee;
         }
         return true;
     }
@@ -804,24 +815,34 @@ contract MocQueue is MocQueueExecFees {
      * @dev does not revert on Operation failure, throws Process and Error
      * events according to the Oper type and result
      */
-    function execute() external notPaused onlyRole(EXECUTOR_ROLE) {
+    function execute(address executionFeeRecipient) external notPaused onlyRole(EXECUTOR_ROLE) {
         uint256 operId = firstOperId;
         uint256 lastOperId;
         unchecked {
             lastOperId = Math.min(operIdCount, operId + MAX_OPER_PER_BATCH);
         }
         uint256 limitBlk = block.number - minOperWaitingBlk;
+        uint256 totalExecutionFee;
         // loop through all pending Operations
         while (operId < lastOperId) {
-            if (execute(operId, limitBlk)) {
+            (bool executed, uint256 executionFee) = execute(operId, limitBlk);
+            if (executed) {
                 emit OperationExecuted(msg.sender, operId);
                 operId = unchecked_inc(operId);
+                unchecked {
+                    totalExecutionFee += executionFee;
+                }
             } else {
                 break;
             }
         }
         // Define new reference to queue beginning
         firstOperId = operId;
+        if (totalExecutionFee > 0) {
+            // solhint-disable-next-line avoid-low-level-calls
+            (bool success, ) = executionFeeRecipient.call{ value: totalExecutionFee }("");
+            if (!success) revert ExecutionFeePaymentFailed();
+        }
     }
 
     /**

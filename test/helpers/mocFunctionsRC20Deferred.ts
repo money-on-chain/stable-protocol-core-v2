@@ -7,14 +7,17 @@ import { pEth } from "./utils";
 
 const executeQueue =
   mocQueue =>
-  async ({ from } = {}) => {
+  async ({ from, recipient } = {}) => {
     let signer;
     if (!from) {
       // deployer is a whitelisted executor
       from = (await getNamedAccounts()).deployer;
     }
+    if (!recipient) {
+      recipient = (await getNamedAccounts()).deployer;
+    }
     signer = await ethers.getSigner(from);
-    return mocQueue.connect(signer).execute();
+    return mocQueue.connect(signer).execute(recipient);
   };
 
 const allowTCWrap = (mocImpl, mocCollateralToken, f) => async args => {

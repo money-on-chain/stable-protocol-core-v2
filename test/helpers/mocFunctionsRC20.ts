@@ -42,10 +42,10 @@ const mintTP =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     tp = tp || mocPeggedTokens[i].address;
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).mintTPto(tp, qTP, qACmax, to);
+      if (!vendor) return mocImpl.connect(signer).mintTPto(tp, qTP, qACmax, to, netParams);
       return mocImpl.connect(signer).mintTPtoViaVendor(tp, qTP, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).mintTP(tp, qTP, qACmax);
+      if (!vendor) return mocImpl.connect(signer).mintTP(tp, qTP, qACmax, netParams);
       return mocImpl.connect(signer).mintTPViaVendor(tp, qTP, qACmax, vendor, netParams);
     }
   };
@@ -60,10 +60,10 @@ const redeemTP =
     }
     tp = tp || mocPeggedTokens[i].address;
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTPto(tp, qTP, qACmin, to);
+      if (!vendor) return mocImpl.connect(signer).redeemTPto(tp, qTP, qACmin, to, netParams);
       return mocImpl.connect(signer).redeemTPtoViaVendor(tp, qTP, qACmin, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTP(tp, qTP, qACmin);
+      if (!vendor) return mocImpl.connect(signer).redeemTP(tp, qTP, qACmin, netParams);
       return mocImpl.connect(signer).redeemTPViaVendor(tp, qTP, qACmin, vendor, netParams);
     }
   };
@@ -89,10 +89,10 @@ const mintTCandTP =
     tp = tp || mocPeggedTokens[i].address;
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).mintTCandTPto(tp, qTP, qACmax, to);
+      if (!vendor) return mocImpl.connect(signer).mintTCandTPto(tp, qTP, qACmax, to, netParams);
       return mocImpl.connect(signer).mintTCandTPtoViaVendor(tp, qTP, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).mintTCandTP(tp, qTP, qACmax);
+      if (!vendor) return mocImpl.connect(signer).mintTCandTP(tp, qTP, qACmax, netParams);
       return mocImpl.connect(signer).mintTCandTPViaVendor(tp, qTP, qACmax, vendor, netParams);
     }
   };
@@ -123,10 +123,10 @@ const swapTPforTP =
     tpFrom = tpFrom || mocPeggedTokens[iFrom].address;
     tpTo = tpTo || mocPeggedTokens[iTo].address;
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTPto(tpFrom, tpTo, qTP, qTPmin, qACmax, to);
+      if (!vendor) return mocImpl.connect(signer).swapTPforTPto(tpFrom, tpTo, qTP, qTPmin, qACmax, to, netParams);
       return mocImpl.connect(signer).swapTPforTPtoViaVendor(tpFrom, tpTo, qTP, qTPmin, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTP(tpFrom, tpTo, qTP, qTPmin, qACmax);
+      if (!vendor) return mocImpl.connect(signer).swapTPforTP(tpFrom, tpTo, qTP, qTPmin, qACmax, netParams);
       return mocImpl.connect(signer).swapTPforTPViaVendor(tpFrom, tpTo, qTP, qTPmin, qACmax, vendor, netParams);
     }
   };
@@ -154,10 +154,10 @@ const swapTPforTC =
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     tp = tp || mocPeggedTokens[i].address;
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTCto(tp, qTP, qTCmin, qACmax, to);
+      if (!vendor) return mocImpl.connect(signer).swapTPforTCto(tp, qTP, qTCmin, qACmax, to, netParams);
       return mocImpl.connect(signer).swapTPforTCtoViaVendor(tp, qTP, qTCmin, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTC(tp, qTP, qTCmin, qACmax);
+      if (!vendor) return mocImpl.connect(signer).swapTPforTC(tp, qTP, qTCmin, qACmax, netParams);
       return mocImpl.connect(signer).swapTPforTCViaVendor(tp, qTP, qTCmin, qACmax, vendor, netParams);
     }
   };
@@ -185,10 +185,10 @@ const swapTCforTP =
     tp = tp || mocPeggedTokens[i].address;
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).swapTCforTPto(tp, qTC, qTPmin, qACmax, to);
+      if (!vendor) return mocImpl.connect(signer).swapTCforTPto(tp, qTC, qTPmin, qACmax, to, netParams);
       return mocImpl.connect(signer).swapTCforTPtoViaVendor(tp, qTC, qTPmin, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTCforTP(tp, qTC, qTPmin, qACmax);
+      if (!vendor) return mocImpl.connect(signer).swapTCforTP(tp, qTC, qTPmin, qACmax, netParams);
       return mocImpl.connect(signer).swapTCforTPViaVendor(tp, qTC, qTPmin, qACmax, vendor, netParams);
     }
   };

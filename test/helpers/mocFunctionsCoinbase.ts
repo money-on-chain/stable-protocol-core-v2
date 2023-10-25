@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ethers } from "hardhat";
-import { pEth } from "./utils";
+import { ethersGetBalance, pEth } from "./utils";
 import { mocFunctionsCommons } from "./mocFunctionsCommons";
 
 const gasPrice = 0;
@@ -158,8 +158,6 @@ const swapTCforTP =
     }
   };
 
-const ethersGetBalance = () => account => ethers.provider.getBalance(account);
-
 export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => {
   return {
     mintTC: mintTC(mocImpl),
@@ -176,8 +174,8 @@ export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeg
     swapTPforTCto: swapTPforTC(mocImpl, mocPeggedTokens),
     swapTCforTP: swapTCforTP(mocImpl, mocPeggedTokens),
     swapTCforTPto: swapTCforTP(mocImpl, mocPeggedTokens),
-    assetBalanceOf: ethersGetBalance(),
-    acBalanceOf: ethersGetBalance(),
+    assetBalanceOf: ethersGetBalance,
+    acBalanceOf: ethersGetBalance,
     ...(await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders })),
   };
 };
