@@ -199,12 +199,18 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           await expect(await mocQueue.firstOperId()).to.be.equal(operId.add(maxSize));
         });
         describe("AND if queue is executed again", function () {
+          let receiverBalanceBefore: Balance;
           beforeEach(async function () {
-            execTx = await mocFunctions.executeQueue({ from: executor });
+            receiverBalanceBefore = await ethersGetBalance(alice);
+            execTx = await mocFunctions.executeQueue({ from: executor, recipient: alice });
           });
           it("THEN the remaining operations are executed", async function () {
             await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(maxSize));
             await expect(await mocQueue.firstOperId()).to.be.equal(operId.add(maxSize + 1));
+          });
+          it("THEN execution Fees are delivered to the receiver account", async function () {
+            const receiverBalanceAfter = await ethersGetBalance(alice);
+            await expect(receiverBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.add(receiverBalanceBefore));
           });
         });
       });

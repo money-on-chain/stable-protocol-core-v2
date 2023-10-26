@@ -801,7 +801,7 @@ contract MocQueue is MocQueueExecFees {
             _executeSwapTPforTP(operId_);
             executionFee = swapTPforTPExecFee;
         }
-        return true;
+        return (true, executionFee);
     }
 
     // ------- External Functions -------
