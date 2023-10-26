@@ -268,6 +268,7 @@ export const ERRORS = {
   UNSTOPPABLE: "Unstoppable",
   MISSING_BLOCKS_TO_SETTLEMENT: "MissingBlocksToSettlement",
   MISSING_BLOCKS_TO_TC_INTEREST_PAYMENT: "MissingBlocksToTCInterestPayment",
+  EXEC_FEE_PAYMENT_FAILED: "ExecutionFeePaymentFailed",
 };
 
 const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);

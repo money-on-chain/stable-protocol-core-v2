@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import hre, { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
@@ -7,12 +7,13 @@ import {
   Balance,
   CONSTANTS,
   ENQUEUER_ROLE,
+  ERRORS,
   EXECUTOR_ROLE,
   OperType,
   ethersGetBalance,
   tpParams,
 } from "../helpers/utils";
-import { MocCARC20Deferred, MocQueue } from "../../typechain";
+import { MocCARC20Deferred, MocQueue, NonPayableMock } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
 import { getNetworkDeployParams } from "../../scripts/utils";
 
@@ -128,6 +129,18 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
         await expect(mocFunctions.executeQueue({ from: bob })).to.be.revertedWith(
           `AccessControl: account ${bob.toLowerCase()} is missing role ${EXECUTOR_ROLE}`,
         );
+      });
+      describe("AND an authorized user tries to receive the execution fee on a non payable contract", () => {
+        let nonPayable: NonPayableMock;
+        beforeEach(async () => {
+          const factory = await ethers.getContractFactory("NonPayableMock");
+          nonPayable = await factory.deploy();
+        });
+        it("THEN tx fails because contract cannot receive the execution fee", async () => {
+          await expect(
+            mocFunctions.executeQueue({ from: executor, recipient: nonPayable.address }),
+          ).to.be.revertedWithCustomError(mocQueue, ERRORS.EXEC_FEE_PAYMENT_FAILED);
+        });
       });
       describe("AND queue is executed by an authorized executor", function () {
         beforeEach(async function () {
