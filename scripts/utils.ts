@@ -54,7 +54,7 @@ export const deployUUPSArtifact = async ({
 
 export const deployCollateralToken = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
   const { ctParams } = getNetworkDeployParams(hre);
-  const governorAddress = getGovernorAddresses(hre);
+  const governorAddress = await getGovernorAddresses(hre);
   const { deployer } = await hre.getNamedAccounts();
 
   await deployUUPSArtifact({
@@ -125,12 +125,12 @@ export const addPeggedTokensAndChangeGovernor = async (
   const gasLimit = getNetworkDeployParams(hre).gasLimit;
   if (tpParams) {
     const { deployments } = hre;
-    const signer = ethers.provider.getSigner();
     for (let i = 0; i < tpParams.tpParams.length; i++) {
       await deployUUPSArtifact({ hre, artifactBaseName: tpParams.tpParams[i].name, contract: "MocRC20" });
       const mocRC20TP = await deployments.getOrNull(tpParams.tpParams[i].name + "Proxy");
       if (!mocRC20TP) throw new Error(`No ${tpParams.tpParams[i].name} deployed`);
 
+      const signer = ethers.provider.getSigner();
       const mocRC20Proxy = await ethers.getContractAt("MocRC20", mocRC20TP.address, signer);
       console.log(`Initializing ${tpParams.tpParams[i].name} PeggedToken...`);
       await waitForTxConfirmation(

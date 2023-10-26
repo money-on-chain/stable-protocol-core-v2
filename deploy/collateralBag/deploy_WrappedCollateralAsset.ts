@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { deployUUPSArtifact, getGovernorAddresses } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const governorAddress = getGovernorAddresses(hre);
+  const governorAddress = await getGovernorAddresses(hre);
   const { deployer } = await hre.getNamedAccounts();
 
   await deployUUPSArtifact({
