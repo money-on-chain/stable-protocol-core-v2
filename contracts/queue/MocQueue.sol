@@ -761,7 +761,8 @@ contract MocQueue is MocAccessControlled {
      * @param operId_ Identifier for the Operation to be executed
      */
     function execute(uint256 operId_, uint256 limitBlk) internal returns (bool executed) {
-        OperInfo storage operInfo = opersInfo[operId_];
+        OperInfo memory operInfo = opersInfo[operId_];
+        delete opersInfo[operId_];
         if (operInfo.queuedBlk > limitBlk) return false;
         OperType operType = operInfo.operType;
         if (operType == OperType.mintTC) {
@@ -783,7 +784,6 @@ contract MocQueue is MocAccessControlled {
         } else if (operType == OperType.swapTPforTP) {
             _executeSwapTPforTP(operId_);
         }
-        delete opersInfo[operId_];
         return true;
     }
 
