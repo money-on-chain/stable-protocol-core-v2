@@ -980,6 +980,13 @@ contract MocQueue is MocQueueExecFees {
         operIdCount++;
     }
 
+    /**
+     * @notice true if the queue is empty
+     */
+    function isEmpty() public view override returns (bool) {
+        return firstOperId == operIdCount;
+    }
+
     // ------- Only Authorized Changer Functions -------
 
     /**

@@ -13,6 +13,8 @@ abstract contract MocQueueExecFees is MocAccessControlled {
     error WrongExecutionFee(uint256 expectedValue);
     // Failure on Executor payment address coinbase transfer
     error ExecutionFeePaymentFailed();
+    // Action not allow when queue is not empty
+    error NotAllowOnNoneEmptyQueue();
 
     // ------- Structs -------
 
@@ -61,6 +63,30 @@ abstract contract MocQueueExecFees is MocAccessControlled {
     function __MocQueueExecFees_init(
         InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_
     ) internal onlyInitializing {
+        _setExecutionFees(mocQueueExecFeesParams_);
+    }
+
+    // ------- Abstract Functions -------
+
+    /**
+     * @notice true if the queue is empty
+     */
+    function isEmpty() public view virtual returns (bool isEmpty);
+
+    // ------- Internal Functions -------
+
+    /**
+     * @notice verifies that operation execution fee sent (msg.value) is equal to `operationFee`
+     * reverts, with WrongExecutionFee error is not.
+     */
+    function verifyExecFee(uint256 operationFee) internal {
+        if (operationFee != msg.value) revert WrongExecutionFee(operationFee);
+    }
+
+    /**
+     * @notice sets Execution Fees absolute values for each operation type
+     */
+    function _setExecutionFees(InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_) internal {
         tcMintExecFee = mocQueueExecFeesParams_.tcMintExecFee;
         tcRedeemExecFee = mocQueueExecFeesParams_.tcRedeemExecFee;
         tpMintExecFee = mocQueueExecFeesParams_.tpMintExecFee;
@@ -72,15 +98,23 @@ abstract contract MocQueueExecFees is MocAccessControlled {
         mintTCandTPExecFee = mocQueueExecFeesParams_.mintTCandTPExecFee;
     }
 
-    // ------- Internal Functions -------
-
-    function verifyExecFee(uint256 operationFee) internal {
-        if (operationFee != msg.value) revert WrongExecutionFee(operationFee);
+    /**
+     * @notice verifies if the queue is empty, reverts if not
+     */
+    function _verifyEmptyQueue() internal view {
+        if (!isEmpty()) revert NotAllowOnNoneEmptyQueue();
     }
 
     // ------- External Functions -------
 
     // ------- Only Authorized Changer Functions -------
+
+    function updateExecutionFees(
+        InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_
+    ) external onlyAuthorizedChanger {
+        _verifyEmptyQueue();
+        _setExecutionFees(mocQueueExecFeesParams_);
+    }
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new

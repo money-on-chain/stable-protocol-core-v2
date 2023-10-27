@@ -130,6 +130,15 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           `AccessControl: account ${bob.toLowerCase()} is missing role ${EXECUTOR_ROLE}`,
         );
       });
+      describe(`AND updateExecutionFees is invoked`, () => {
+        it(`THEN it fails with none empty queue Error`, async function () {
+          const execFeeParamsToUpdate = Object.assign(execFeeParams, { tcMintExecFee: 42 });
+          await expect(mocQueue.updateExecutionFees(execFeeParamsToUpdate)).to.be.revertedWithCustomError(
+            mocQueue,
+            ERRORS.NOT_ALLOW_ON_EMPTY_QUEUE,
+          );
+        });
+      });
       describe("AND an authorized user tries to receive the execution fee on a non payable contract", () => {
         let nonPayable: NonPayableMock;
         beforeEach(async () => {
@@ -156,6 +165,14 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           await expect(mocQueueBalance).to.be.equal(0);
           const executorBalanceAfter = await ethersGetBalance(deployer);
           await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
+        });
+        describe(`WHEN updateExecutionFees is invoked now that the queue is empty`, () => {
+          it(`THEN exec fee gets updated`, async function () {
+            const execFeeParamsToUpdate = Object.assign(execFeeParams, { tcMintExecFee: 42 });
+            await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
+            const actualTcMintExecFee = await mocQueue.tcMintExecFee();
+            expect(42, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
+          });
         });
       });
     });

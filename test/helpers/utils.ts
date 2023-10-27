@@ -269,6 +269,7 @@ export const ERRORS = {
   MISSING_BLOCKS_TO_SETTLEMENT: "MissingBlocksToSettlement",
   MISSING_BLOCKS_TO_TC_INTEREST_PAYMENT: "MissingBlocksToTCInterestPayment",
   EXEC_FEE_PAYMENT_FAILED: "ExecutionFeePaymentFailed",
+  NOT_ALLOW_ON_EMPTY_QUEUE: "NotAllowOnNoneEmptyQueue",
 };
 
 const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);
