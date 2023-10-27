@@ -1,12 +1,13 @@
 import { expect } from "chai";
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTPBehavior } from "../../behaviors/mintTP.behavior";
-import { Balance, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
+import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred mint TP", function () {
@@ -27,6 +28,8 @@ describe("Feature: MocCARC20Deferred mint TP", function () {
     let deployer: Address;
     let alice: Address;
     const TP_0 = 0;
+    const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
+
     beforeEach(async function () {
       ({ deployer, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
@@ -69,11 +72,19 @@ describe("Feature: MocCARC20Deferred mint TP", function () {
         await expect(queueTx).to.emit(mocQueue, "OperationQueued").withArgs(mocImpl.address, operId, OperType.mintTP);
       });
       describe("AND operation is executed", function () {
+        let executorBalanceBefore: Balance;
         beforeEach(async function () {
+          executorBalanceBefore = await ethersGetBalance(deployer);
           await mocFunctions.executeQueue();
         });
         it("THEN AC balance locked is 0 AC", async function () {
           assertPrec(await mocImpl.qACLockedInPending(), 0);
+        });
+        it("THEN queue executor receives the corresponding execution fees", async function () {
+          const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+          await expect(mocQueueBalance).to.be.equal(0);
+          const executorBalanceAfter = await ethersGetBalance(deployer);
+          await expect(executorBalanceAfter).to.be.equal(execFeeParams.tpMintExecFee.add(executorBalanceBefore));
         });
       });
       describe("AND Collateral Asset relation with Pegged Token price falls leaving the system below coverage", function () {

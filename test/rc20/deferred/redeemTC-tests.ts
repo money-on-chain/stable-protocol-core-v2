@@ -1,12 +1,13 @@
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { redeemTCBehavior } from "../../behaviors/redeemTC.behavior";
-import { Balance, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
+import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred redeem TC", function () {
@@ -27,6 +28,7 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
     let deployer: Address;
     let alice: Address;
     const TP_0 = 0;
+    const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
     beforeEach(async function () {
       ({ deployer, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
@@ -135,7 +137,9 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
           assertPrec(await mocFunctions.tcBalanceOf(mocImpl.address), 12);
         });
         describe("WHEN the operation is executed", function () {
+          let executorBalanceBefore: Balance;
           beforeEach(async function () {
+            executorBalanceBefore = await ethersGetBalance(deployer);
             await mocFunctions.executeQueue();
           });
           it("THEN Alice TC balance doesn't change", async function () {
@@ -143,6 +147,12 @@ describe("Feature: MocCARC20Deferred redeem TC", function () {
           });
           it("THEN Bucket TC balance is back to zero as tokes were burned", async function () {
             assertPrec(await mocFunctions.tcBalanceOf(mocImpl.address), 0);
+          });
+          it("THEN queue executor receives the corresponding execution fees", async function () {
+            const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+            await expect(mocQueueBalance).to.be.equal(0);
+            const executorBalanceAfter = await ethersGetBalance(deployer);
+            await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcRedeemExecFee.add(executorBalanceBefore));
           });
         });
       });

@@ -1,12 +1,13 @@
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTCandTPBehavior } from "../../behaviors/mintTCandTP.behavior";
-import { Balance, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
+import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred mint TC and TP", function () {
@@ -23,11 +24,13 @@ describe("Feature: MocCARC20Deferred mint TC and TP", function () {
     let mocFunctions: any;
     let mocQueue: MocQueue;
     let operId: BigNumber;
+    let deployer: Address;
     let alice: Address;
     let bob: Address;
     const TP_0 = 0;
+    const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
     beforeEach(async function () {
-      ({ alice, bob } = await getNamedAccounts());
+      ({ alice, bob, deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
@@ -75,11 +78,19 @@ describe("Feature: MocCARC20Deferred mint TC and TP", function () {
           .withArgs(mocImpl.address, operId, OperType.mintTCandTP);
       });
       describe("AND queue execution is evaluated", function () {
+        let executorBalanceBefore: Balance;
         beforeEach(async function () {
+          executorBalanceBefore = await ethersGetBalance(deployer);
           await mocFunctions.executeQueue();
         });
         it("THEN AC balance locked is 0 AC", async function () {
           assertPrec(await mocImpl.qACLockedInPending(), 0);
+        });
+        it("THEN queue executor receives the corresponding execution fees", async function () {
+          const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+          await expect(mocQueueBalance).to.be.equal(0);
+          const executorBalanceAfter = await ethersGetBalance(deployer);
+          await expect(executorBalanceAfter).to.be.equal(execFeeParams.mintTCandTPExecFee.add(executorBalanceBefore));
         });
       });
     });

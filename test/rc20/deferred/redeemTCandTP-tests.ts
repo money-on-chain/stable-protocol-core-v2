@@ -1,12 +1,13 @@
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
-import { getNamedAccounts } from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { redeemTCandTPBehavior } from "../../behaviors/redeemTCandTP.behavior";
-import { Balance, ERROR_SELECTOR, OperType, pEth, tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
+import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
@@ -25,9 +26,11 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
     let mocQueue: MocQueue;
     let operId: BigNumber;
     let alice: Address;
+    let executor: Address;
     const TP_0 = 0;
+    const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
     beforeEach(async function () {
-      ({ alice } = await getNamedAccounts());
+      ({ alice, deployer: executor } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
@@ -59,7 +62,9 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
           assertPrec(await mocFunctions.tpBalanceOf(TP_0, mocImpl.address), 800);
         });
         describe("WHEN the operation is executed", function () {
+          let executorBalanceBefore: Balance;
           beforeEach(async function () {
+            executorBalanceBefore = await ethersGetBalance(executor);
             await mocFunctions.executeQueue();
           });
           it("THEN Alice TC balance doesn't change as all is redeemed", async function () {
@@ -71,6 +76,14 @@ describe("Feature: MocCARC20Deferred redeem TC and TP", function () {
           it("THEN Bucket balances are back to zero as tokes were burned or returned", async function () {
             assertPrec(await mocFunctions.tcBalanceOf(mocImpl.address), 0);
             assertPrec(await mocFunctions.tpBalanceOf(TP_0, mocImpl.address), 0);
+          });
+          it("THEN queue executor receives the corresponding execution fees", async function () {
+            const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+            await expect(mocQueueBalance).to.be.equal(0);
+            const executorBalanceAfter = await ethersGetBalance(executor);
+            await expect(executorBalanceAfter).to.be.equal(
+              execFeeParams.redeemTCandTPExecFee.add(executorBalanceBefore),
+            );
           });
         });
         describe("AND Pegged Token has been revaluated leaving the protocol below coverage", function () {

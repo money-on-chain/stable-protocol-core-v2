@@ -132,7 +132,7 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
       });
       describe(`AND updateExecutionFees is invoked`, () => {
         it(`THEN it fails with none empty queue Error`, async function () {
-          const execFeeParamsToUpdate = Object.assign(execFeeParams, { tcMintExecFee: 42 });
+          const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: 42 });
           await expect(mocQueue.updateExecutionFees(execFeeParamsToUpdate)).to.be.revertedWithCustomError(
             mocQueue,
             ERRORS.NOT_ALLOW_ON_EMPTY_QUEUE,
@@ -168,10 +168,10 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
         });
         describe(`WHEN updateExecutionFees is invoked now that the queue is empty`, () => {
           it(`THEN exec fee gets updated`, async function () {
-            const execFeeParamsToUpdate = Object.assign(execFeeParams, { tcMintExecFee: 42 });
+            const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: 42 });
             await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
             const actualTcMintExecFee = await mocQueue.tcMintExecFee();
-            expect(42, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
+            await expect(42, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
           });
         });
       });

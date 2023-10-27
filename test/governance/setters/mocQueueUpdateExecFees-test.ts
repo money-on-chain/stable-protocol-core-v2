@@ -65,7 +65,7 @@ describe("Feature: MocQueue execution fees update", () => {
       execFeeKeys.forEach(execFeeKey => {
         describe(`WHEN updateExecutionFees is invoked to update ${execFeeKey}`, () => {
           it(`THEN only ${execFeeKey} is updated`, async function () {
-            const execFeeParamsToUpdate = Object.assign(execFeeParams, { [execFeeKey]: 42 });
+            const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { [execFeeKey]: 42 });
             await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
             await expectExecutionFee(execFeeParamsToUpdate);
           });
