@@ -114,7 +114,10 @@ contract EchidnaMocWrapperTester {
             tpMintFee: (5 * PRECISION) / 100, // 5%
             tpRedeemFee: (5 * PRECISION) / 100, // 5%
             tpEma: 212 * PRECISION,
-            tpEmaSf: (5 * PRECISION) / 100 // 0.05
+            tpEmaSf: (5 * PRECISION) / 100, // 0.05,
+            maxAbsoluteOpProviderAddress: address(0),
+            maxOpDiffProviderAddress: address(0),
+            decayBlockSpan: 720
         });
         addPeggedToken(peggedTokenParams, 235 ether);
         // start with 0 total supply

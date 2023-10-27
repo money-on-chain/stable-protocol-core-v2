@@ -3,6 +3,9 @@ pragma solidity 0.8.18;
 
 import { MocVendors } from "../vendors/MocVendors.sol";
 import { MocEma } from "./MocEma.sol";
+import { IDataProvider } from "../interfaces/IDataProvider.sol";
+import { SignedMath } from "@openzeppelin/contracts/utils/math/SignedMath.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // ------- External Structs -------
 
@@ -21,6 +24,14 @@ struct PeggedTokenParams {
     uint256 tpEma;
     // Pegged Token smoothing factor [PREC]
     uint256 tpEmaSf;
+    // absolute maximum transaction allowed for a certain number of blocks
+    // if absoluteAccumulator is above this value the operation will be rejected
+    address maxAbsoluteOpProviderAddress;
+    // differential maximum transaction allowed for a certain number of blocks
+    // if operationalDifference is above this value the operation will be rejected
+    address maxOpDiffProviderAddress;
+    // number of blocks that have to elapse for the linear decay factor to be 0
+    uint256 decayBlockSpan;
 }
 
 //    +-----------------+
@@ -128,6 +139,9 @@ abstract contract MocCommons is MocEma {
     error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
     error QacNeededMustBeGreaterThanZero();
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
+    error MissingProviderData(address dataProviderAddress_);
+    error MaxAbsoluteOperationReached(uint256 max_, uint256 new_);
+    error MaxOperationDifferenceReached(uint256 max_, uint256 new_);
 
     // ------- Events -------
 
@@ -263,6 +277,101 @@ abstract contract MocCommons is MocEma {
         uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+    }
+
+    /**
+     * @notice ask to oracles for flux capacitor settings
+     * @param tp_ Pegged Token address
+     * @return absolute maximum transaction allowed for a certain number of blocks
+     * @return differential maximum transaction allowed for a certain number of blocks
+     */
+    function _peekFluxCapacitorSettings(address tp_) internal view returns (uint256, uint256) {
+        bytes32 maxAbsoluteOp;
+        bytes32 maxOpDiff;
+        bool has;
+        // get max absolute operation
+        IDataProvider dataProvider = maxAbsoluteOpProvider[tp_];
+        (maxAbsoluteOp, has) = dataProvider.peek();
+        if (!has) revert MissingProviderData(address(dataProvider));
+        // get max operational difference
+        dataProvider = maxOpDiffProvider[tp_];
+        (maxOpDiff, has) = dataProvider.peek();
+        if (!has) revert MissingProviderData(address(dataProvider));
+        return (uint256(maxAbsoluteOp), uint256(maxOpDiff));
+    }
+
+    /**
+     * @notice returns lineal decay factor
+     * @param tp_ Pegged Token address
+     * @return newAbsoluteAccumulator absolute accumulator updated by lineal decay factor [N]
+     * @return newDifferentialAccumulator differential accumulator updated by lineal decay factor [N]
+     */
+    function _calcAccWithDecayFactor(
+        address tp_
+    ) internal view returns (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) {
+        unchecked {
+            // [N] = [N] - [N]
+            uint256 blocksElapsed = block.number - lastOperationBlockNumber[tp_];
+            // [PREC] = [N] * [PREC] / [N]
+            uint256 blocksRatio = (blocksElapsed * PRECISION) / decayBlockSpan[tp_];
+            if (blocksRatio >= ONE) return (0, 0);
+            uint256 decayFactor = ONE - blocksRatio;
+            // [N] = [N] * [PREC] / [PREC]
+            newAbsoluteAccumulator = (absoluteAccumulator[tp_] * decayFactor) / PRECISION;
+            // [N] = [N] * [PREC] / [PREC]
+            newDifferentialAccumulator = (differentialAccumulator[tp_] * int256(decayFactor)) / int256(PRECISION);
+            return (newAbsoluteAccumulator, newDifferentialAccumulator);
+        }
+    }
+
+    /**
+     * @notice common function used to update accumulators during a TP operation
+     *  reverts if not allowed
+     * @dev the only difference between a redeem and a mint operation is that in the first one,
+     * the qAC is subtracted on newDifferentialAccumulator instead of added
+     * @param tp_ Pegged Token address
+     * @param qAC_ amount of Collateral Asset used to mint
+     * @param redeemFlag_ true if it is a redeem TP operation
+     */
+    function _updateAccumulators(address tp_, uint256 qAC_, bool redeemFlag_) internal {
+        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings(tp_);
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(tp_);
+        unchecked {
+            newAbsoluteAccumulator += qAC_;
+            int256 qACInt = int256(qAC_);
+            if (redeemFlag_) qACInt = -qACInt;
+            newDifferentialAccumulator += qACInt;
+            // cannot underflow, always newDifferentialAccumulator <= newAbsoluteAccumulator
+            uint256 operationalDifference = newAbsoluteAccumulator - SignedMath.abs(newDifferentialAccumulator);
+            if (newAbsoluteAccumulator > maxAbsoluteOperation)
+                revert MaxAbsoluteOperationReached(maxAbsoluteOperation, newAbsoluteAccumulator);
+            if (operationalDifference > maxOperationalDifference)
+                revert MaxOperationDifferenceReached(maxOperationalDifference, operationalDifference);
+            // update storage
+            absoluteAccumulator[tp_] = newAbsoluteAccumulator;
+            differentialAccumulator[tp_] = newDifferentialAccumulator;
+            lastOperationBlockNumber[tp_] = block.number;
+        }
+    }
+
+    /**
+     * @notice update accumulators during a mint TP operation
+     *  reverts if not allowed
+     * @param tp_ Pegged Token address
+     * @param qAC_ amount of Collateral Asset used to mint
+     */
+    function _updateAccumulatorsOnMintTP(address tp_, uint256 qAC_) internal {
+        _updateAccumulators(tp_, qAC_, false);
+    }
+
+    /**
+     * @notice update accumulators during a redeem operation
+     *  reverts if not allowed
+     * @param tp_ Pegged Token address
+     * @param qAC_ reserve amount used for redeem
+     */
+    function _updateAccumulatorsOnRedeemTP(address tp_, uint256 qAC_) internal {
+        _updateAccumulators(tp_, qAC_, true);
     }
 
     /**

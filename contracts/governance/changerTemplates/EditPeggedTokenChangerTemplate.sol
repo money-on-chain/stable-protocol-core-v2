@@ -72,7 +72,10 @@ contract EditPeggedTokenChangerTemplate is IChangeContract, MocHelper, Ownable {
             // Emma is not editable, only initialized
             0,
             // Pegged Token smoothing factor [PREC]
-            emaSf
+            emaSf,
+            address(mocCore.maxAbsoluteOpProvider(address(tpToEdit))),
+            address(mocCore.maxOpDiffProvider(address(tpToEdit))),
+            mocCore.decayBlockSpan(address(tpToEdit))
         );
     }
 

@@ -399,6 +399,8 @@ abstract contract MocCore is MocCommons {
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTPMinted(params_, qACtotalNeeded, feeCalcs);
+        // update flux capacitor and reverts if not allowed by accumulators
+        _updateAccumulatorsOnMintTP(params_.tp, qACNeededtoMint);
         // update bucket and mint
         _depositAndMintTP(i, params_.qTP, qACNeededtoMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -451,6 +453,8 @@ abstract contract MocCore is MocCommons {
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTPRedeemed(params_, qACtoRedeem, feeCalcs);
+        // update flux capacitor and reverts if not allowed by accumulators
+        _updateAccumulatorsOnRedeemTP(params_.tp, qACtoRedeem);
         _withdrawAndBurnTP(i, params_.qTP, qACtotalToRedeem, operator);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
@@ -519,6 +523,8 @@ abstract contract MocCore is MocCommons {
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTCandTPMinted(params_, qTCtoMint, qACtotalNeeded, feeCalcs);
+        // update flux capacitor and reverts if not allowed by accumulators
+        _updateAccumulatorsOnMintTP(params_.tp, qACNeededtoMint);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
         _depositAndMintTP(i, params_.qTP, 0, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -596,7 +602,8 @@ abstract contract MocCore is MocCommons {
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
-
+        // update flux capacitor and reverts if not allowed by accumulators
+        _updateAccumulatorsOnRedeemTP(params_.tp, qACtoRedeem);
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
         _withdrawAndBurnTP(i, qTPtoRedeem, 0, operator);
 

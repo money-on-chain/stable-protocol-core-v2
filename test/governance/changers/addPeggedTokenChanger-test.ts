@@ -39,6 +39,9 @@ export function deployChangerClosure(mocProxy: MocCore) {
       tpRedeemFee = tpParamsDefault.redeemFee,
       tpEma = tpParamsDefault.initialEma,
       tpEmaSf = tpParamsDefault.smoothingFactor,
+      maxAbsoluteOpProviderAddress = priceProvider.address, // TODO: dummy address
+      maxOpDiffProviderAddress = priceProvider.address, // TODO: dummy address
+      decayBlockSpan = tpParamsDefault.decayBlockSpan,
     }: {
       tpTokenAddress?: Address;
       priceProviderAddress?: Address;
@@ -47,6 +50,9 @@ export function deployChangerClosure(mocProxy: MocCore) {
       tpRedeemFee?: BigNumberish;
       tpEma?: BigNumberish;
       tpEmaSf?: BigNumberish;
+      maxAbsoluteOpProviderAddress?: Address;
+      maxOpDiffProviderAddress?: Address;
+      decayBlockSpan?: BigNumberish;
     } = {}) => {
       return changerFactory.deploy(mocProxy.address, {
         tpTokenAddress,
@@ -56,6 +62,9 @@ export function deployChangerClosure(mocProxy: MocCore) {
         tpRedeemFee,
         tpEma,
         tpEmaSf,
+        maxAbsoluteOpProviderAddress,
+        maxOpDiffProviderAddress,
+        decayBlockSpan,
       });
     };
     return { mocPeggedToken, priceProvider, deployAddChanger };

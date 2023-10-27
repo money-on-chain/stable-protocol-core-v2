@@ -14,6 +14,7 @@ import {
   ERC777Mock,
   MocTC__factory,
   PriceProviderMock,
+  DataProviderMock,
 } from "../../typechain";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
@@ -28,6 +29,14 @@ export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURN
 export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
 export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
 export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
+
+export const CONSTANTS = {
+  ZERO_ADDRESS: ethers.constants.AddressZero,
+  MAX_UINT256: ethers.constants.MaxUint256,
+  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
+  PRECISION: BigNumber.from((1e18).toString()),
+  ONE: BigNumber.from((1e18).toString()),
+};
 
 export enum OperType {
   none, // avoid using zero as Type
@@ -89,6 +98,9 @@ export const tpParamsDefault = {
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
   initialEma: PCT_BASE, // 1
   smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
+  maxAbsoluteOp: CONSTANTS.MAX_UINT256,
+  maxOpDiff: CONSTANTS.MAX_UINT256,
+  decayBlockSpan: 720,
 };
 
 export const tpParams = [
@@ -133,6 +145,9 @@ const getTPparams = ({
   redeemFee = tpParamsDefault.redeemFee,
   initialEma = tpParamsDefault.initialEma,
   smoothingFactor = tpParamsDefault.smoothingFactor,
+  maxAbsoluteOp = tpParamsDefault.maxAbsoluteOp,
+  maxOpDiff = tpParamsDefault.maxOpDiff,
+  decayBlockSpan = tpParamsDefault.decayBlockSpan,
 }) => {
   return {
     price,
@@ -141,6 +156,9 @@ const getTPparams = ({
     redeemFee,
     initialEma,
     smoothingFactor,
+    maxAbsoluteOp,
+    maxOpDiff,
+    decayBlockSpan,
   };
 };
 
@@ -148,14 +166,23 @@ export async function deployAndAddPeggedTokens(
   mocImpl: MocCore,
   amountPegTokens: number,
   tpParams?: any[],
-): Promise<{ mocPeggedTokens: MocRC20[]; priceProviders: PriceProviderMock[] }> {
+): Promise<{
+  mocPeggedTokens: MocRC20[];
+  priceProviders: PriceProviderMock[];
+  maxAbsoluteOpProviders: DataProviderMock[];
+  maxOpDiffProviders: DataProviderMock[];
+}> {
   const mocPeggedTokens: Array<MocRC20> = [];
   const priceProviders: Array<PriceProviderMock> = [];
+  const maxAbsoluteOpProviders: Array<DataProviderMock> = [];
+  const maxOpDiffProviders: Array<DataProviderMock> = [];
   const governorAddress = await mocImpl.governor();
   for (let i = 0; i < amountPegTokens; i++) {
     const peggedToken = await deployPeggedToken({ adminAddress: mocImpl.address, governorAddress });
     const params = tpParams ? getTPparams(tpParams[i]) : getTPparams({});
     const priceProvider = await deployPriceProvider(params.price);
+    const maxAbsoluteOpProvider = await deployDataProvider(params.maxAbsoluteOp);
+    const maxOpDiffProvider = await deployDataProvider(params.maxOpDiff);
     await mocImpl.addPeggedToken({
       tpTokenAddress: peggedToken.address,
       priceProviderAddress: priceProvider.address,
@@ -164,16 +191,24 @@ export async function deployAndAddPeggedTokens(
       tpRedeemFee: params.redeemFee,
       tpEma: params.initialEma,
       tpEmaSf: params.smoothingFactor,
+      maxAbsoluteOpProviderAddress: maxAbsoluteOpProvider.address,
+      maxOpDiffProviderAddress: maxOpDiffProvider.address,
+      decayBlockSpan: params.decayBlockSpan,
     });
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);
   }
-  return { mocPeggedTokens, priceProviders };
+  return { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders };
 }
 
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
   const factory = await ethers.getContractFactory("PriceProviderMock");
   return factory.deploy(price);
+}
+
+export async function deployDataProvider(data: BigNumber): Promise<DataProviderMock> {
+  const factory = await ethers.getContractFactory("DataProviderMock");
+  return factory.deploy(data);
 }
 
 export async function deployAeropagusGovernor(deployer: Address): Promise<IGovernor> {
@@ -287,14 +322,6 @@ export const ERROR_SELECTOR = {
   QAC_BELOW_MINIMUM: getSelectorFor(ERRORS.QAC_BELOW_MINIMUM + "(uint256,uint256)"),
   QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
-};
-
-export const CONSTANTS = {
-  ZERO_ADDRESS: ethers.constants.AddressZero,
-  MAX_UINT256: ethers.constants.MaxUint256,
-  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
-  PRECISION: BigNumber.from((1e18).toString()),
-  ONE: BigNumber.from((1e18).toString()),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {

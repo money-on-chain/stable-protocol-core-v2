@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { MocTC, IMocRC20 } from "../tokens/MocTC.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
+import { IDataProvider } from "../interfaces/IDataProvider.sol";
 import { MocUpgradable } from "../governance/MocUpgradable.sol";
 /* solhint-disable-next-line max-line-length */
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -181,6 +182,23 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     int256[] internal tpiou;
     // Pegged Token price used at last operation(redeem or mint) [PREC]
     uint256[] internal pACtpLstop;
+
+    // ------- Storage Flux Capacitor -------
+
+    // absolute maximum transaction allowed for a certain number of blocks
+    // if absoluteAccumulator is above this value the operation will be rejected
+    mapping(address => IDataProvider) public maxAbsoluteOpProvider;
+    // differential maximum transaction allowed for a certain number of blocks
+    // if operationalDifference is above this value the operation will be rejected
+    mapping(address => IDataProvider) public maxOpDiffProvider;
+    // number of blocks that have to elapse for the linear decay factor to be 0
+    mapping(address => uint256) public decayBlockSpan;
+    // accumulator increased by minting and redeeming TP operations
+    mapping(address => uint256) public absoluteAccumulator;
+    // accumulator increased by minting and decreased by redeeming TP operations
+    mapping(address => int256) public differentialAccumulator;
+    // last block number where an operation was submitted
+    mapping(address => uint256) public lastOperationBlockNumber;
 
     // ------- Storage TC Holders Interest Payment -------
 
