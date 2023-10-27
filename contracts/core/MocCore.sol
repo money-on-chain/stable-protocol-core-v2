@@ -497,6 +497,7 @@ abstract contract MocCore is MocCommons {
         returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         uint256 qACNeededtoMint;
+        uint256 qACtoMintTP;
         uint256[] memory pACtps = _getPACtps();
         uint256 i = _tpi(params_.tp);
         uint256 pACtp = pACtps[i];
@@ -504,7 +505,7 @@ abstract contract MocCore is MocCommons {
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
-        (qTCtoMint, qACNeededtoMint) = _calcQACforMintTCandTP(
+        (qTCtoMint, qACNeededtoMint, qACtoMintTP) = _calcQACforMintTCandTP(
             params_.qTP,
             pACtp,
             _getCtargemaTP(i, pACtp),
@@ -524,7 +525,7 @@ abstract contract MocCore is MocCommons {
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTCandTPMinted(params_, qTCtoMint, qACtotalNeeded, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnMintTP(params_.tp, qACNeededtoMint);
+        _updateAccumulatorsOnMintTP(params_.tp, qACtoMintTP);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
         _depositAndMintTP(i, params_.qTP, 0, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -591,7 +592,12 @@ abstract contract MocCore is MocCommons {
         qTPtoRedeem = ((params_.qTC * lckAC * aux) / nTCcb) / PRECISION;
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
         // if qTC == 0 => qTPtoRedeem == 0 and will revert because QacNeededMustBeGreaterThanZero
-        uint256 qACtotalToRedeem = _calcQACforRedeemTCandTP(params_.qTC, qTPtoRedeem, pACtp, _getPTCac(lckAC, nACgain));
+        (uint256 qACtotalToRedeem, uint256 qACtoRedeemTP) = _calcQACforRedeemTCandTP(
+            params_.qTC,
+            qTPtoRedeem,
+            pACtp,
+            _getPTCac(lckAC, nACgain)
+        );
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -603,7 +609,7 @@ abstract contract MocCore is MocCommons {
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnRedeemTP(params_.tp, qACtoRedeem);
+        _updateAccumulatorsOnRedeemTP(params_.tp, qACtoRedeemTP);
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
         _withdrawAndBurnTP(i, qTPtoRedeem, 0, operator);
 
@@ -834,22 +840,25 @@ abstract contract MocCore is MocCommons {
      * @param ctargemaTP_ target coverage adjusted by the moving average of the value of a Pegged Token
      * @param pTCac_ Collateral Token price [PREC]
      * @return qTCtoMint amount of Collateral Token to mint [N]
-     * @return qACNeededtoMint amount of Collateral Asset needed to mint [N]
+     * @return qACNeededtoMint total amount of Collateral Asset needed to mint [N]
+     * @return qACtoMintTP amount of Collateral Asset used to mint Pegged Token [N]
      */
     function _calcQACforMintTCandTP(
         uint256 qTP_,
         uint256 pACtp_,
         uint256 ctargemaTP_,
         uint256 pTCac_
-    ) internal pure returns (uint256 qTCtoMint, uint256 qACNeededtoMint) {
+    ) internal pure returns (uint256 qTCtoMint, uint256 qACNeededtoMint, uint256 qACtoMintTP) {
         // calculate how many TC are needed to mint TP and total qAC used for mint both
         // [N] = [N] * ([PREC] - [PREC]) / [PREC]
         qACNeededtoMint = (qTP_ * (ctargemaTP_ - ONE)) / pACtp_;
         // [N] = [N] *  [PREC] / [PREC]
         qTCtoMint = _divPrec(qACNeededtoMint, pTCac_);
-        // [N] = [N] + [N] *  [PREC] / [PREC]
-        qACNeededtoMint = qACNeededtoMint + _divPrec(qTP_, pACtp_);
-        return (qTCtoMint, qACNeededtoMint);
+        // [N] = [N] *  [PREC] / [PREC]
+        qACtoMintTP = _divPrec(qTP_, pACtp_);
+        // [N] = [N] + [N]
+        qACNeededtoMint = qACNeededtoMint + qACtoMintTP;
+        return (qTCtoMint, qACNeededtoMint, qACtoMintTP);
     }
 
     /**
@@ -859,26 +868,27 @@ abstract contract MocCore is MocCommons {
      * @param qTP_ amount of Pegged Token to redeem
      * @param pACtp_ Pegged Token price [PREC]
      * @param pTCac_ Collateral Token price [PREC]
-     * @return qACtotalToRedeem amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACtotalToRedeem total amount of Collateral Asset needed to redeem, including fees [N]
+     * @return qACtoRedeemTP amount of Collateral Asset used to redeem Pegged Token [N]
      */
     function _calcQACforRedeemTCandTP(
         uint256 qTC_,
         uint256 qTP_,
         uint256 pACtp_,
         uint256 pTCac_
-    ) internal pure returns (uint256 qACtotalToRedeem) {
+    ) internal pure returns (uint256 qACtotalToRedeem, uint256 qACtoRedeemTP) {
         // calculate how many total qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
-        qACtotalToRedeem = _divPrec(qTP_, pACtp_);
+        qACtoRedeemTP = _divPrec(qTP_, pACtp_);
         // if is 0 reverts because it is trying to redeem an amount of TP below precision
         // we check it here to prevent qTP == 0 && qTC != 0
         // slither-disable-next-line incorrect-equality
-        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
+        if (qACtoRedeemTP == 0) revert QacNeededMustBeGreaterThanZero();
         // calculate how many qAC are redeemed because TC
         // [N] = [N] * [PREC] / [PREC]
         // TODO: rounding error could be avoid replacing here with qTC_ * totalACavailable / nTCcb
-        qACtotalToRedeem += _mulPrec(qTC_, pTCac_);
-        return qACtotalToRedeem;
+        qACtotalToRedeem = qACtoRedeemTP + _mulPrec(qTC_, pTCac_);
+        return (qACtotalToRedeem, qACtoRedeemTP);
     }
 
     /**

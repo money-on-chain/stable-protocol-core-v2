@@ -11,6 +11,7 @@ import {
   MocVendors__factory,
   PriceProviderMock,
   PriceProviderMock__factory,
+  DataProviderMock,
 } from "../../typechain";
 import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
 
@@ -25,6 +26,8 @@ export const fixtureDeployedMocCoinbase = memoizee(
     priceProviders: PriceProviderMock[];
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
+    maxAbsoluteOpProviders: DataProviderMock[];
+    maxOpDiffProviders: DataProviderMock[];
   }>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
@@ -38,7 +41,8 @@ export const fixtureDeployedMocCoinbase = memoizee(
       if (!deployedTCContract) throw new Error("No CollateralTokenCoinbaseProxy deployed.");
       const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
 
-      const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
+      const { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders } =
+        await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
       const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
       const feeTokenPriceProvider = PriceProviderMock__factory.connect(await mocImpl.feeTokenPriceProvider(), signer);
@@ -58,6 +62,8 @@ export const fixtureDeployedMocCoinbase = memoizee(
         priceProviders,
         feeToken,
         feeTokenPriceProvider,
+        maxAbsoluteOpProviders,
+        maxOpDiffProviders,
       };
     });
   },

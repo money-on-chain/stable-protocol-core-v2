@@ -17,6 +17,7 @@ import {
   MocVendors,
   MocVendors__factory,
   PriceProviderMock__factory,
+  DataProviderMock,
 } from "../../typechain";
 import { deployAndAddAssets, deployAndAddPeggedTokens, ensureERC1820, pEth } from "../helpers/utils";
 
@@ -33,6 +34,8 @@ export type MoCContracts = {
   mocVendors: MocVendors;
   feeToken: ERC20Mock;
   feeTokenPriceProvider: PriceProviderMock;
+  maxAbsoluteOpProviders: DataProviderMock[];
+  maxOpDiffProviders: DataProviderMock[];
 };
 
 export const fixtureDeployedMocCABag = memoizee(
@@ -70,7 +73,8 @@ export const fixtureDeployedMocCABag = memoizee(
       if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 
-      const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
+      const { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders } =
+        await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
       const { assets, assetPriceProviders } = await deployAndAddAssets(mocWrapper, amountAssets);
 
@@ -94,6 +98,8 @@ export const fixtureDeployedMocCABag = memoizee(
         mocVendors,
         feeToken,
         feeTokenPriceProvider,
+        maxAbsoluteOpProviders,
+        maxOpDiffProviders,
       };
     });
   },

@@ -221,8 +221,8 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnMintTP(params_.tpFrom, qACtotalToRedeem);
-        _updateAccumulatorsOnRedeemTP(params_.tpTo, qACtotalToRedeem);
+        _updateAccumulatorsOnRedeemTP(params_.tpFrom, qACtotalToRedeem);
+        _updateAccumulatorsOnMintTP(params_.tpTo, qACtotalToRedeem);
         _depositAndMintTP(iTo, qTPtoMint, 0, params_.recipient);
         _withdrawAndBurnTP(iFrom, params_.qTP, 0, operator);
     }

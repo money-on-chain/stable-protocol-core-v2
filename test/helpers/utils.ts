@@ -100,7 +100,7 @@ export const tpParamsDefault = {
   smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
   maxAbsoluteOp: CONSTANTS.MAX_UINT256,
   maxOpDiff: CONSTANTS.MAX_UINT256,
-  decayBlockSpan: 720,
+  decayBlockSpan: 2880,
 };
 
 export const tpParams = [
@@ -197,6 +197,8 @@ export async function deployAndAddPeggedTokens(
     });
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);
+    maxAbsoluteOpProviders.push(maxAbsoluteOpProvider);
+    maxOpDiffProviders.push(maxOpDiffProvider);
   }
   return { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders };
 }
@@ -307,6 +309,9 @@ export const ERRORS = {
   EXEC_FEE_PAYMENT_FAILED: "ExecutionFeePaymentFailed",
   NOT_ALLOW_ON_EMPTY_QUEUE: "NotAllowOnNoneEmptyQueue",
   WRONG_EXEC_FEES: "WrongExecutionFee",
+  MAX_ABSOLUTE_REACHED: "MaxAbsoluteOperationReached",
+  MAX_DIFFERENTIAL_REACHED: "MaxOperationDifferenceReached",
+  MISSING_PROVIDER_DATA: "MissingProviderData",
 };
 
 const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);
