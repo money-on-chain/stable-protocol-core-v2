@@ -222,7 +222,7 @@ const mintTCandTPBehavior = function () {
         coverage = (3100 + 54.4) / 110  
         */
         beforeEach(async function () {
-          tx = await mocFunctions.mintTCandTPto({ from: alice, to: bob, qTP: 2350 });
+          tx = await mocFunctions.mintTCandTP({ from: alice, to: bob, qTP: 2350 });
         });
         it("THEN bob TC balance increase 45.41 TC", async function () {
           assertPrec("45.414072816449726460", await mocFunctions.tcBalanceOf(bob));
@@ -301,7 +301,7 @@ const mintTCandTPBehavior = function () {
       });
       describe("WHEN alice mints 45.41 TC and 2350 TP to bob via vendor", function () {
         beforeEach(async function () {
-          tx = await mocFunctions.mintTCandTPto({ from: alice, to: bob, qTP: 2350, vendor });
+          tx = await mocFunctions.mintTCandTP({ from: alice, to: bob, qTP: 2350, vendor });
         });
         it("THEN a TCandTPMinted event is emitted", async function () {
           // i : 0
@@ -496,7 +496,7 @@ const mintTCandTPBehavior = function () {
         });
         describe("WHEN alice mints 45.41 TC and 2350 TP to bob", function () {
           beforeEach(async function () {
-            tx = await mocFunctions.mintTCandTPto({ from: alice, to: bob, qTP: 2350 });
+            tx = await mocFunctions.mintTCandTP({ from: alice, to: bob, qTP: 2350 });
           });
           it("THEN alice AC balance decrease 55.41 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);

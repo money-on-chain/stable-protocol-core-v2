@@ -81,11 +81,8 @@ const tTransfer =
 /// Functions shared across different CA implementations
 export const mocFunctionsCommons = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => ({
   redeemTC: redeemTC(mocImpl),
-  redeemTCto: redeemTC(mocImpl),
   redeemTCandTP: redeemTCandTP(mocImpl, mocPeggedTokens),
-  redeemTCandTPto: redeemTCandTP(mocImpl, mocPeggedTokens),
   liqRedeemTP: liqRedeemTP(mocImpl, mocPeggedTokens),
-  liqRedeemTPto: liqRedeemTP(mocImpl, mocPeggedTokens),
   tcBalanceOf: tBalanceOf(mocCollateralToken),
   tpBalanceOf: tpBalanceOf(mocPeggedTokens),
   tcTransfer: tTransfer(mocCollateralToken),

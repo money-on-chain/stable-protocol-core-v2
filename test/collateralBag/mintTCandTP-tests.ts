@@ -72,7 +72,7 @@ describe("Feature: MocCABag mint TC and TP", function () {
     describe("WHEN alice mints 23500 TP 0 to bob", () => {
       let tx: ContractTransaction;
       beforeEach(async () => {
-        tx = await mocFunctions.mintTCandTPto({ from: alice, to: bob, qTP: 23500 });
+        tx = await mocFunctions.mintTCandTP({ from: alice, to: bob, qTP: 23500 });
       });
       it("THEN a TCandTPMintedWithWrapper event is emitted by MocWrapper", async function () {
         // asset: assetDefault

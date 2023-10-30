@@ -27,9 +27,9 @@ describe("Feature: MocCoinbase reentrance tests", () => {
       const factory = await ethers.getContractFactory("ReentrancyAttackerMock");
       reentrancyAttacker = await factory.deploy();
       // mint TC to reentrance attacker contract
-      await mocFunctions.mintTCto({ from: deployer, to: reentrancyAttacker.address, qTC: 1000 });
+      await mocFunctions.mintTC({ from: deployer, to: reentrancyAttacker.address, qTC: 1000 });
       // mint TP to reentrance attacker contract
-      await mocFunctions.mintTPto({ from: deployer, to: reentrancyAttacker.address, qTP: 100 });
+      await mocFunctions.mintTP({ from: deployer, to: reentrancyAttacker.address, qTP: 100 });
 
       reentracyAttack = async (op: string, overrides?: any) => {
         overrides

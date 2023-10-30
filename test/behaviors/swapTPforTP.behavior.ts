@@ -101,7 +101,7 @@ const swapTPforTPBehavior = function () {
       describe("WHEN alice tries to swap 1 TP 0 to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
           await expect(
-            mocFunctions.swapTPforTPto({ iFrom: TP_0, iTo: TP_1, from: alice, to: CONSTANTS.ZERO_ADDRESS, qTP: 23500 }),
+            mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, to: CONSTANTS.ZERO_ADDRESS, qTP: 23500 }),
           ).to.be.revertedWith("ERC20: mint to the zero address");
         });
       });
@@ -234,7 +234,7 @@ const swapTPforTPBehavior = function () {
           coverageBefore = await mocImpl.getCglb();
           alicePrevTP0Balance = await mocFunctions.tpBalanceOf(TP_0, alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
-          tx = await mocFunctions.swapTPforTPto({
+          tx = await mocFunctions.swapTPforTP({
             iFrom: TP_0,
             iTo: TP_1,
             from: alice,
@@ -325,7 +325,7 @@ const swapTPforTPBehavior = function () {
       describe("WHEN alice swaps 23500 TP 0 for 525 TP 1 to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.swapTPforTPto({
+          tx = await mocFunctions.swapTPforTP({
             iFrom: TP_0,
             iTo: TP_1,
             from: alice,
@@ -558,7 +558,7 @@ const swapTPforTPBehavior = function () {
         });
         describe("WHEN alice swaps 23500 TP 0 for 525 TP 1", function () {
           beforeEach(async function () {
-            tx = await mocFunctions.swapTPforTPto({
+            tx = await mocFunctions.swapTPforTP({
               iFrom: TP_0,
               iTo: TP_1,
               from: alice,

@@ -74,7 +74,7 @@ describe("Feature: MocCABag redeem TP", function () {
       });
       describe("WHEN alice redeems 2350 TP to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.redeemTPto({ from: alice, to: bob, qTP: 2350 });
+          tx = await mocFunctions.redeemTP({ from: alice, to: bob, qTP: 2350 });
         });
         it("THEN a TPRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault

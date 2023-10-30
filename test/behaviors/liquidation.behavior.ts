@@ -122,7 +122,7 @@ const shouldBehaveLikeLiquidable = function () {
               [bob, charlie, otherUser].map(account => this.mocFunctions.assetBalanceOf(account)),
             );
             await this.mocFunctions.liqRedeemTP({ from: bob });
-            tx = await this.mocFunctions.liqRedeemTPto({ i: 1, from: charlie, to: otherUser });
+            tx = await this.mocFunctions.liqRedeemTP({ i: 1, from: charlie, to: otherUser });
           });
           it("THEN theirs TP are burned", async function () {
             assertPrec(0, await this.mocFunctions.tpBalanceOf(0, bob));

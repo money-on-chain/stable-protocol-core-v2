@@ -31,7 +31,7 @@ describe("Feature: MocCoinbase redeem TC", function () {
       describe("WHEN it tries to redeemTC", () => {
         it("THEN tx fails because contract cannot receive the coinbase as Collateral Asset", async () => {
           // mint TC to non payable contract
-          await mocFunctions.mintTCto({ from: deployer, to: nonPayable.address, qTC: 1000 });
+          await mocFunctions.mintTC({ from: deployer, to: nonPayable.address, qTC: 1000 });
           const data = mocImpl.interface.encodeFunctionData("redeemTC", [pEth(1), 0]);
           await expect(nonPayable.forward(mocImpl.address, data)).to.be.revertedWithCustomError(
             mocImpl,
@@ -44,7 +44,7 @@ describe("Feature: MocCoinbase redeem TC", function () {
           // mint TC to deployer
           await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
           await expect(
-            mocFunctions.redeemTCto({ from: deployer, to: nonPayable.address, qTC: 1000 }),
+            mocFunctions.redeemTC({ from: deployer, to: nonPayable.address, qTC: 1000 }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.TRANSFER_FAIL);
         });
       });

@@ -167,7 +167,7 @@ const swapTPforTCBehavior = function () {
         beforeEach(async function () {
           alicePrevTP0Balance = await mocFunctions.tpBalanceOf(TP_0, alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
-          tx = await mocFunctions.swapTPforTCto({
+          tx = await mocFunctions.swapTPforTC({
             i: TP_0,
             from: alice,
             to: bob,
@@ -247,7 +247,7 @@ const swapTPforTCBehavior = function () {
       describe("WHEN alice swaps 23500 TP 0 for 100 TC to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.swapTPforTCto({ from: alice, to: bob, qTP: 23500, vendor });
+          tx = await mocFunctions.swapTPforTC({ from: alice, to: bob, qTP: 23500, vendor });
         });
         it("THEN a TPSwappedForTC event is emitted", async function () {
           // iFrom: 0
@@ -419,7 +419,7 @@ const swapTPforTCBehavior = function () {
         });
         describe("WHEN alice swaps 23500 TP 0 for 100 TC", function () {
           beforeEach(async function () {
-            tx = await mocFunctions.swapTPforTCto({ from: alice, to: bob, qTP: 23500, qTCmin: 100 });
+            tx = await mocFunctions.swapTPforTC({ from: alice, to: bob, qTP: 23500, qTCmin: 100 });
           });
           it("THEN alice AC balance doesn't change", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);

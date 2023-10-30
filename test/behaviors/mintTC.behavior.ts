@@ -48,7 +48,7 @@ const mintTCBehavior = function () {
     });
     describe("WHEN alice sends 100 Asset to mint 100 TC to the zero address", function () {
       it("THEN tx reverts because recipient is the zero address", async function () {
-        await expect(mocFunctions.mintTCto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 100 })).to.be.revertedWith(
+        await expect(mocFunctions.mintTC({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 100 })).to.be.revertedWith(
           ERRORS.MINT_TO_ZERO_ADDRESS,
         );
       });
@@ -163,7 +163,7 @@ const mintTCBehavior = function () {
     describe("WHEN alice mints 100 TC to bob via vendor", function () {
       let tx: ContractTransaction;
       beforeEach(async function () {
-        tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 100, vendor });
+        tx = await mocFunctions.mintTC({ from: alice, to: bob, qTC: 100, vendor });
       });
       it("THEN a TCMinted event is emitted", async function () {
         // sender: alice || mocWrapper
@@ -184,7 +184,7 @@ const mintTCBehavior = function () {
       beforeEach(async function () {
         alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
         await mocImpl.setFeeRetainer(pEth(0.2)); // 20%
-        tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 100 });
+        tx = await mocFunctions.mintTC({ from: alice, to: bob, qTC: 100 });
       });
       it("THEN bob receives 100 TC", async function () {
         assertPrec(100, await mocFunctions.tcBalanceOf(bob));
@@ -400,7 +400,7 @@ const mintTCBehavior = function () {
       });
       describe("WHEN alice mints 100 TC to bob", function () {
         beforeEach(async function () {
-          tx = await mocFunctions.mintTCto({ from: alice, to: bob, qTC: 100 });
+          tx = await mocFunctions.mintTC({ from: alice, to: bob, qTC: 100 });
         });
         it("THEN alice AC balance decrease 100 Asset", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);

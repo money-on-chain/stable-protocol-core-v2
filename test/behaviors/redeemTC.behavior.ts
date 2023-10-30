@@ -44,7 +44,7 @@ const redeemTCBehavior = function () {
       });
       describe("WHEN alice tries to redeem 300 TC to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
-          await expect(mocFunctions.redeemTCto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 300 })).to.be.reverted;
+          await expect(mocFunctions.redeemTC({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 300 })).to.be.reverted;
         });
       });
       describe("WHEN alice tries to redeem 301 TC", function () {
@@ -130,7 +130,7 @@ const redeemTCBehavior = function () {
         beforeEach(async function () {
           bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 300 });
+          tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 300 });
         });
         it("THEN alice has 0 TC", async function () {
           assertPrec(0, await mocFunctions.tcBalanceOf(alice));
@@ -197,7 +197,7 @@ const redeemTCBehavior = function () {
       describe("WHEN alice redeems 100 TC to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 100, vendor });
+          tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 100, vendor });
         });
         it("THEN a TCRedeemed event is emitted", async function () {
           // sender: alice || mocWrapper
@@ -541,7 +541,7 @@ const redeemTCBehavior = function () {
           let bobPrevACBalance: Balance;
           beforeEach(async function () {
             bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
-            tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 100 });
+            tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 100 });
           });
           it("THEN bob AC balance increase 100 Asset", async function () {
             const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);

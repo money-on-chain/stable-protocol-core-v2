@@ -66,7 +66,7 @@ describe("Feature: MocCABag redeem TC", function () {
       });
       describe("WHEN alice redeems 10 TC to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 10 });
+          tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 10 });
         });
         it("THEN a TCRedeemedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault

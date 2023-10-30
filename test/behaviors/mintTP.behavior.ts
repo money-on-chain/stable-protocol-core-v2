@@ -89,7 +89,7 @@ const mintTPBehavior = function () {
       });
       describe("WHEN alice sends 100 Asset to mint 100 TP to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
-          await expect(mocFunctions.mintTPto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTP: 100 })).to.be.revertedWith(
+          await expect(mocFunctions.mintTP({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTP: 100 })).to.be.revertedWith(
             ERRORS.MINT_TO_ZERO_ADDRESS,
           );
         });
@@ -252,7 +252,7 @@ const mintTPBehavior = function () {
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          tx = await mocFunctions.mintTPto({ from: alice, to: bob, qTP: 23500 });
+          tx = await mocFunctions.mintTP({ from: alice, to: bob, qTP: 23500 });
         });
         it("THEN bob receives 23500 TP", async function () {
           assertPrec(23500, await mocFunctions.tpBalanceOf(TP_0, bob));
@@ -322,7 +322,7 @@ const mintTPBehavior = function () {
       describe("WHEN alice mints 23500 TP to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.mintTPto({ from: alice, to: bob, qTP: 23500, vendor });
+          tx = await mocFunctions.mintTP({ from: alice, to: bob, qTP: 23500, vendor });
         });
         it("THEN a TPMinted event is emitted", async function () {
           // i : 0
@@ -869,7 +869,7 @@ const mintTPBehavior = function () {
         });
         describe("WHEN alice mints 23500 TP to bob", function () {
           beforeEach(async function () {
-            tx = await mocFunctions.mintTPto({ from: alice, to: bob, qTP: 23500 });
+            tx = await mocFunctions.mintTP({ from: alice, to: bob, qTP: 23500 });
           });
           it("THEN alice AC balance decrease 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);

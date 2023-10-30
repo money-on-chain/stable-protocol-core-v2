@@ -73,7 +73,7 @@ const redeemTPBehavior = function () {
       });
       describe("WHEN alice tries to redeem 1 TP to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
-          await expect(mocFunctions.redeemTPto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTP: 1 })).to.be.reverted;
+          await expect(mocFunctions.redeemTP({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTP: 1 })).to.be.reverted;
         });
       });
       describe("WHEN alice tries to redeem 1 wei TP", function () {
@@ -182,7 +182,7 @@ const redeemTPBehavior = function () {
           bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
           mocPrevACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          tx = await mocFunctions.redeemTPto({ from: alice, to: bob, qTP: 2350 });
+          tx = await mocFunctions.redeemTP({ from: alice, to: bob, qTP: 2350 });
         });
         it("THEN alice TP 0 balances decrease 2350 TP", async function () {
           const aliceActualTP0Balance = await mocFunctions.tpBalanceOf(TP_0, alice);
@@ -255,7 +255,7 @@ const redeemTPBehavior = function () {
       describe("WHEN alice redeems 23500 TP to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.redeemTPto({ from: alice, to: bob, qTP: 23500, vendor });
+          tx = await mocFunctions.redeemTP({ from: alice, to: bob, qTP: 23500, vendor });
         });
         it("THEN a TPRedeemed event is emitted", async function () {
           // i: 0
@@ -516,7 +516,7 @@ const redeemTPBehavior = function () {
           let bobPrevACBalance: Balance;
           beforeEach(async function () {
             bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
-            tx = await mocFunctions.redeemTPto({ from: alice, to: bob, qTP: 23500 });
+            tx = await mocFunctions.redeemTP({ from: alice, to: bob, qTP: 23500 });
           });
           it("THEN bob AC balance increase 100 Asset", async function () {
             const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);

@@ -41,7 +41,7 @@ const allowTCnTPWrap = (mocImpl, mocCollateralToken, mocPeggedTokens, f) => asyn
   return f(args);
 };
 
-const executeWrap = (mocQueue, execFee, f) => async args => {
+const execWrap = (mocQueue, execFee, f) => async args => {
   // if not value provided, send enough coinbase to pay execution fee
   if (args.netParams === undefined) args.netParams = { value: execFee };
   if (args.execute === false) {
@@ -62,82 +62,31 @@ export const mocFunctionsRC20Deferred = async ({
   priceProviders,
   mocQueue,
 }) => {
-  const rc20Functions = await mocFunctionsRC20({
+  const rc20Fncs = await mocFunctionsRC20({
     mocImpl,
     collateralAsset,
     mocCollateralToken,
     mocPeggedTokens,
     priceProviders,
   });
-  const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
+  const mocTC = mocCollateralToken;
+  const mocTPs = mocPeggedTokens;
+  const { execFeeParams: execFee } = getNetworkDeployParams(hre).queueParams;
   return {
-    ...rc20Functions,
-    mintTC: executeWrap(mocQueue, execFeeParams.tcMintExecFee, rc20Functions.mintTC),
-    mintTCto: executeWrap(mocQueue, execFeeParams.tcMintExecFee, rc20Functions.mintTC),
-    redeemTC: executeWrap(
+    ...rc20Fncs,
+    mintTC: execWrap(mocQueue, execFee.tcMintExecFee, rc20Fncs.mintTC),
+    redeemTC: execWrap(mocQueue, execFee.tcRedeemExecFee, allowTCWrap(mocImpl, mocTC, rc20Fncs.redeemTC)),
+    mintTP: execWrap(mocQueue, execFee.tpMintExecFee, rc20Fncs.mintTP),
+    redeemTP: execWrap(mocQueue, execFee.tpRedeemExecFee, allowTPWrap(mocImpl, mocTPs, rc20Fncs.redeemTP)),
+    mintTCandTP: execWrap(mocQueue, execFee.mintTCandTPExecFee, rc20Fncs.mintTCandTP),
+    redeemTCandTP: execWrap(
       mocQueue,
-      execFeeParams.tcRedeemExecFee,
-      allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.redeemTC),
+      execFee.redeemTCandTPExecFee,
+      allowTCnTPWrap(mocImpl, mocTC, mocTPs, rc20Fncs.redeemTCandTP),
     ),
-    redeemTCto: executeWrap(
-      mocQueue,
-      execFeeParams.tcRedeemExecFee,
-      allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.redeemTC),
-    ),
-    mintTP: executeWrap(mocQueue, execFeeParams.tpMintExecFee, rc20Functions.mintTP),
-    mintTPto: executeWrap(mocQueue, execFeeParams.tpMintExecFee, rc20Functions.mintTP),
-    redeemTP: executeWrap(
-      mocQueue,
-      execFeeParams.tpRedeemExecFee,
-      allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.redeemTP),
-    ),
-    redeemTPto: executeWrap(
-      mocQueue,
-      execFeeParams.tpRedeemExecFee,
-      allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.redeemTP),
-    ),
-    mintTCandTP: executeWrap(mocQueue, execFeeParams.mintTCandTPExecFee, rc20Functions.mintTCandTP),
-    mintTCandTPto: executeWrap(mocQueue, execFeeParams.mintTCandTPExecFee, rc20Functions.mintTCandTP),
-    redeemTCandTP: executeWrap(
-      mocQueue,
-      execFeeParams.redeemTCandTPExecFee,
-      allowTCnTPWrap(mocImpl, mocCollateralToken, mocPeggedTokens, rc20Functions.redeemTCandTP),
-    ),
-    redeemTCandTPto: executeWrap(
-      mocQueue,
-      execFeeParams.redeemTCandTPExecFee,
-      allowTCnTPWrap(mocImpl, mocCollateralToken, mocPeggedTokens, rc20Functions.redeemTCandTP),
-    ),
-    swapTPforTP: executeWrap(
-      mocQueue,
-      execFeeParams.swapTPforTPExecFee,
-      allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP),
-    ),
-    swapTPforTPto: executeWrap(
-      mocQueue,
-      execFeeParams.swapTPforTPExecFee,
-      allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTP),
-    ),
-    swapTPforTC: executeWrap(
-      mocQueue,
-      execFeeParams.swapTPforTCExecFee,
-      allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTC),
-    ),
-    swapTPforTCto: executeWrap(
-      mocQueue,
-      execFeeParams.swapTPforTCExecFee,
-      allowTPWrap(mocImpl, mocPeggedTokens, rc20Functions.swapTPforTC),
-    ),
-    swapTCforTP: executeWrap(
-      mocQueue,
-      execFeeParams.swapTCforTPExecFee,
-      allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.swapTCforTP),
-    ),
-    swapTCforTPto: executeWrap(
-      mocQueue,
-      execFeeParams.swapTCforTPExecFee,
-      allowTCWrap(mocImpl, mocCollateralToken, rc20Functions.swapTCforTP),
-    ),
+    swapTPforTP: execWrap(mocQueue, execFee.swapTPforTPExecFee, allowTPWrap(mocImpl, mocTPs, rc20Fncs.swapTPforTP)),
+    swapTPforTC: execWrap(mocQueue, execFee.swapTPforTCExecFee, allowTPWrap(mocImpl, mocTPs, rc20Fncs.swapTPforTC)),
+    swapTCforTP: execWrap(mocQueue, execFee.swapTCforTPExecFee, allowTCWrap(mocImpl, mocTC, rc20Fncs.swapTCforTP)),
     getEventArgs: getEventArgs,
     executeQueue: executeQueue(mocQueue),
     getEventSource: () => mocQueue,

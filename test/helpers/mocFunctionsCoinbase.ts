@@ -7,26 +7,19 @@ const gasPrice = 0;
 
 const mintTC =
   mocImpl =>
-  async ({ from, qTC, qACmax = qTC * 10, vendor = undefined, applyPrecision = true }) => {
-    const signer = await ethers.getSigner(from);
-    if (applyPrecision) {
-      qTC = pEth(qTC);
-      qACmax = pEth(qACmax);
-    }
-    if (!vendor) return mocImpl.connect(signer).mintTC(qTC, { value: qACmax, gasPrice });
-    return mocImpl.connect(signer).mintTCViaVendor(qTC, vendor, { value: qACmax, gasPrice });
-  };
-
-const mintTCto =
-  mocImpl =>
   async ({ from, to, qTC, qACmax = qTC * 10, vendor = undefined, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTC = pEth(qTC);
       qACmax = pEth(qACmax);
     }
-    if (!vendor) return mocImpl.connect(signer).mintTCto(qTC, to, { value: qACmax, gasPrice });
-    return mocImpl.connect(signer).mintTCtoViaVendor(qTC, to, vendor, { value: qACmax, gasPrice });
+    if (to) {
+      if (!vendor) return mocImpl.connect(signer).mintTCto(qTC, to, { value: qACmax, gasPrice });
+      return mocImpl.connect(signer).mintTCtoViaVendor(qTC, to, vendor, { value: qACmax, gasPrice });
+    } else {
+      if (!vendor) return mocImpl.connect(signer).mintTC(qTC, { value: qACmax, gasPrice });
+      return mocImpl.connect(signer).mintTCViaVendor(qTC, vendor, { value: qACmax, gasPrice });
+    }
   };
 
 const mintTP =
@@ -161,19 +154,12 @@ const swapTCforTP =
 export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => {
   return {
     mintTC: mintTC(mocImpl),
-    mintTCto: mintTCto(mocImpl),
     mintTP: mintTP(mocImpl, mocPeggedTokens),
-    mintTPto: mintTP(mocImpl, mocPeggedTokens),
     redeemTP: redeemTP(mocImpl, mocPeggedTokens),
-    redeemTPto: redeemTP(mocImpl, mocPeggedTokens),
     mintTCandTP: mintTCandTP(mocImpl, mocPeggedTokens),
-    mintTCandTPto: mintTCandTP(mocImpl, mocPeggedTokens),
     swapTPforTP: swapTPforTP(mocImpl, mocPeggedTokens),
-    swapTPforTPto: swapTPforTP(mocImpl, mocPeggedTokens),
     swapTPforTC: swapTPforTC(mocImpl, mocPeggedTokens),
-    swapTPforTCto: swapTPforTC(mocImpl, mocPeggedTokens),
     swapTCforTP: swapTCforTP(mocImpl, mocPeggedTokens),
-    swapTCforTPto: swapTCforTP(mocImpl, mocPeggedTokens),
     assetBalanceOf: ethersGetBalance,
     acBalanceOf: ethersGetBalance,
     ...(await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders })),

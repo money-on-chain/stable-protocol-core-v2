@@ -76,7 +76,7 @@ describe("Feature: MocCABag mint TP", function () {
       });
       describe("WHEN alice mints 2350 TP to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.mintTPto({ from: alice, to: bob, qTP: 2350 });
+          tx = await mocFunctions.mintTP({ from: alice, to: bob, qTP: 2350 });
         });
         it("THEN a TPMintedWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault

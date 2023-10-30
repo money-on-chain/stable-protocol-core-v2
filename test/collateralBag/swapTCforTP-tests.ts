@@ -68,7 +68,7 @@ describe("Feature: MocCABag swap TC for TP", function () {
       });
       describe("WHEN alice swap 10 TC for TP 0 to bob", () => {
         beforeEach(async () => {
-          tx = await mocFunctions.swapTCforTPto({ from: alice, to: bob, qTC: 10 });
+          tx = await mocFunctions.swapTCforTP({ from: alice, to: bob, qTC: 10 });
         });
         it("THEN a TCSwappedForTPWithWrapper event is emitted by MocWrapper", async function () {
           // asset: assetDefault
