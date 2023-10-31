@@ -57,7 +57,7 @@ contract MocCAWrapperMock is MocCAWrapper, UpgradableMock {
 /**
  * @title MocUpgradeChangerMock
  * @dev Only for upgradeability testing purposes. Extends UpgraderUUPSTemplate so that it
- * can upgrade, via UUPS, the original Moc CA implementation
+ * can upgrade, via UUPS, the original Moc compatible implementation
  */
 // solhint-disable no-empty-blocks
 contract MocUpgradeChangerMock is UpgraderUUPSChangerTemplate {

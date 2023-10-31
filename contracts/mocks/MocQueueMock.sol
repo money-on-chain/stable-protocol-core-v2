@@ -2,12 +2,13 @@
 pragma solidity 0.8.18;
 
 import { MocQueue, MocCore } from "../queue/MocQueue.sol";
+import { UpgradableMock } from "./upgradeability/MocUpgradeMocks.sol";
 
 /**
  * @title MocQueueMock: Allows Deferral execution without error handling
  * @dev Intended to allow Deferral testing using behaviors, including error tests
  */
-contract MocQueueMock is MocQueue {
+contract MocQueueMock is MocQueue, UpgradableMock {
     function _executeMintTC(uint256 operId_) internal override {
         MocCore.MintTCParams memory params = operationsMintTC[operId_];
         delete operationsMintTC[operId_];
@@ -73,5 +74,9 @@ contract MocQueueMock is MocQueue {
         delete operationsSwapTPforTP[operId_];
         (, uint256 qTPMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execSwapTPforTP(params);
         _onDeferredTPforTPSwapped(operId_, params, qTPMinted, _feeCalcs);
+    }
+
+    function getCustomMockValue() external view override returns (uint256) {
+        return newVariable + tcMintExecFee;
     }
 }
