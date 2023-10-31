@@ -311,6 +311,8 @@ export const ERRORS = {
   WRONG_EXEC_FEES: "WrongExecutionFee",
   MAX_ABSOLUTE_REACHED: "MaxAbsoluteOperationReached",
   MAX_DIFFERENTIAL_REACHED: "MaxOperationDifferenceReached",
+  MAX_FLUX_CAPACITOR_REACHED: "MaxFluxCapacitorOperationReached",
+  INVALID_FLUX_CAPACITOR_OPERATION: "InvalidFluxCapacitorOperation",
   MISSING_PROVIDER_DATA: "MissingProviderData",
 };
 
@@ -327,6 +329,7 @@ export const ERROR_SELECTOR = {
   QAC_BELOW_MINIMUM: getSelectorFor(ERRORS.QAC_BELOW_MINIMUM + "(uint256,uint256)"),
   QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
+  INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {

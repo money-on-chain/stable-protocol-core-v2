@@ -54,7 +54,7 @@ const fluxCapacitorBehavior = function () {
       it("THEN fails because max absolute operation was reached", async () => {
         await expect(
           opOneBlock(() => mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350235 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10001 AC are redeemed from TP0", () => {
@@ -62,14 +62,14 @@ const fluxCapacitorBehavior = function () {
         // 10001 AC / 0.95(5% fees) * 235 pACtp = 2473931
         await expect(
           opOneBlock(() => mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 2473931 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10001 AC are used to swap TP0 for TP1", () => {
       it("THEN fails because max absolute operation was reached", async () => {
         await expect(
           opOneBlock(() => mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 2350235 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10000 AC are used to swap TP0 for TP1", () => {
@@ -89,7 +89,7 @@ const fluxCapacitorBehavior = function () {
       it("THEN fails because max absolute operation was reached", async () => {
         await expect(
           opOneBlock(() => mocFunctions.swapTPforTC({ i: TP_0, from: alice, qTP: 2350235 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10000 AC are used to swap TP0 for TC", () => {
@@ -105,7 +105,7 @@ const fluxCapacitorBehavior = function () {
       it("THEN fails because max absolute operation was reached", async () => {
         await expect(
           opOneBlock(() => mocFunctions.swapTCforTP({ i: TP_0, from: alice, qTC: 10001 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10000 AC are used to swap TC for TP0", () => {
@@ -121,7 +121,7 @@ const fluxCapacitorBehavior = function () {
       it("THEN fails because max absolute operation was reached", async () => {
         await expect(
           opOneBlock(() => mocFunctions.mintTCandTP({ i: TP_0, from: alice, qTP: 2350235 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10000 AC are used to mint TC and TP", () => {
@@ -137,7 +137,7 @@ const fluxCapacitorBehavior = function () {
       it("THEN fails because max absolute operation was reached", async () => {
         await expect(
           opOneBlock(() => mocFunctions.redeemTCandTP({ i: TP_0, from: alice, qTC: 10000001, qTP: 2350235 })),
-        ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+        ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10000 AC are used to redeem TC and TP0", () => {
@@ -189,7 +189,7 @@ const fluxCapacitorBehavior = function () {
         it("THEN fails because max absolute operation was reached ", async () => {
           await expect(
             opOneBlock(() => mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 940705 })),
-          ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_ABSOLUTE_REACHED);
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_FLUX_CAPACITOR_REACHED);
         });
       });
       describe("WHEN 2501 AC are redeemed from TP0", () => {
@@ -197,7 +197,7 @@ const fluxCapacitorBehavior = function () {
           // 2501 AC / 0.95(5% fees) * 235 pACtp = 618668
           await expect(
             opOneBlock(() => mocFunctions.redeemTP({ i: TP_0, from: alice, qTP: 618668 })),
-          ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_DIFFERENTIAL_REACHED);
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.MAX_FLUX_CAPACITOR_REACHED);
         });
       });
       describe("AND maxAbsoluteOpProviders is set to 2000 AC, below actual accumulators value", () => {

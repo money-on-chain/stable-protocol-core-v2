@@ -9,71 +9,80 @@ import { UpgradableMock } from "./upgradeability/MocUpgradeMocks.sol";
  * @dev Intended to allow Deferral testing using behaviors, including error tests
  */
 contract MocQueueMock is MocQueue, UpgradableMock {
-    function _executeMintTC(uint256 operId_) internal override {
+    function _executeMintTC(uint256 operId_) internal override returns (bool executed) {
         MocCore.MintTCParams memory params = operationsMintTC[operId_];
         delete operationsMintTC[operId_];
         (uint256 _qACtotalNeeded, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execMintTC(params);
         _onDeferredTCMinted(operId_, params, _qACtotalNeeded, _feeCalcs);
+        return true;
     }
 
-    function _executeRedeemTC(uint256 operId_) internal override {
+    function _executeRedeemTC(uint256 operId_) internal override returns (bool executed) {
         MocCore.RedeemTCParams memory params = operationsRedeemTC[operId_];
         delete operationsRedeemTC[operId_];
         (uint256 _qACRedeemed, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execRedeemTC(params);
         _onDeferredTCRedeemed(operId_, params, _qACRedeemed, _feeCalcs);
+        return true;
     }
 
-    function _executeMintTP(uint256 operId_) internal override {
+    function _executeMintTP(uint256 operId_) internal override returns (bool executed) {
         MocCore.MintTPParams memory params = operationsMintTP[operId_];
         delete operationsMintTP[operId_];
         (uint256 _qACtotalNeeded, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execMintTP(params);
         _onDeferredTPMinted(operId_, params, _qACtotalNeeded, _feeCalcs);
+        return true;
     }
 
-    function _executeRedeemTP(uint256 operId_) internal override {
+    function _executeRedeemTP(uint256 operId_) internal override returns (bool executed) {
         MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
         delete operationsRedeemTP[operId_];
         (uint256 _qACRedeemed, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execRedeemTP(params);
         _onDeferredTPRedeemed(operId_, params, _qACRedeemed, _feeCalcs);
+        return true;
     }
 
-    function _executeMintTCandTP(uint256 operId_) internal override {
+    function _executeMintTCandTP(uint256 operId_) internal override returns (bool executed) {
         MocCore.MintTCandTPParams memory params = operationsMintTCandTP[operId_];
         delete operationsMintTCandTP[operId_];
         (uint256 _qACtotalNeeded, uint256 _qTPMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execMintTCandTP(
             params
         );
         _onDeferredTCandTPMinted(operId_, params, _qTPMinted, _qACtotalNeeded, _feeCalcs);
+        return true;
     }
 
-    function _executeRedeemTCandTP(uint256 operId_) internal override {
+    function _executeRedeemTCandTP(uint256 operId_) internal override returns (bool executed) {
         MocCore.RedeemTCandTPParams memory params = operationsRedeemTCandTP[operId_];
         delete operationsRedeemTCandTP[operId_];
         (uint256 _qACRedeemed, uint256 _qTPRedeemed, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execRedeemTCandTP(
             params
         );
         _onDeferredTCandTPRedeemed(operId_, params, _qTPRedeemed, _qACRedeemed, _feeCalcs);
+        return true;
     }
 
-    function _executeSwapTCforTP(uint256 operId_) internal override {
+    function _executeSwapTCforTP(uint256 operId_) internal override returns (bool executed) {
         MocCore.SwapTCforTPParams memory params = operationsSwapTCforTP[operId_];
         delete operationsSwapTCforTP[operId_];
         (, uint256 qTPMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execSwapTCforTP(params);
         _onDeferredTCforTPSwapped(operId_, params, qTPMinted, _feeCalcs);
+        return true;
     }
 
-    function _executeSwapTPforTC(uint256 operId_) internal override {
+    function _executeSwapTPforTC(uint256 operId_) internal override returns (bool executed) {
         MocCore.SwapTPforTCParams memory params = operationsSwapTPforTC[operId_];
         delete operationsSwapTPforTC[operId_];
         (, uint256 qTCMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execSwapTPforTC(params);
         _onDeferredTPforTCSwapped(operId_, params, qTCMinted, _feeCalcs);
+        return true;
     }
 
-    function _executeSwapTPforTP(uint256 operId_) internal override {
+    function _executeSwapTPforTP(uint256 operId_) internal override returns (bool executed) {
         MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
         delete operationsSwapTPforTP[operId_];
         (, uint256 qTPMinted, , MocCore.FeeCalcs memory _feeCalcs) = mocCore.execSwapTPforTP(params);
         _onDeferredTPforTPSwapped(operId_, params, qTPMinted, _feeCalcs);
+        return true;
     }
 
     function getCustomMockValue() external view override returns (uint256) {

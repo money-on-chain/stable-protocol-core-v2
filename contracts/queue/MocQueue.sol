@@ -475,10 +475,11 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     /**
      * @notice Executes mint TC handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TCMinted, OperationError, UnhandledError} events
      */
-    function _executeMintTC(uint256 operId_) internal virtual {
+    function _executeMintTC(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.MintTCParams memory params = operationsMintTC[operId_];
         // Independently from the result, we delete the operation params
         delete operationsMintTC[operId_];
@@ -497,15 +498,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
+        return true;
     }
 
     /**
      * @notice Executes redeem TC handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TCRedeemed, OperationError, UnhandledError} events
      */
-    function _executeRedeemTC(uint256 operId_) internal virtual {
+    function _executeRedeemTC(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.RedeemTCParams memory params = operationsRedeemTC[operId_];
         // Independently from the result, we delete the operation params
         delete operationsRedeemTC[operId_];
@@ -526,15 +529,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocCore.unlockTCInPending(params.sender, params.qTC);
         }
+        return true;
     }
 
     /**
      * @notice Executes mint TP handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TPMinted, OperationError, UnhandledError} events
      */
-    function _executeMintTP(uint256 operId_) internal virtual {
+    function _executeMintTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.MintTPParams memory params = operationsMintTP[operId_];
         // Independently from the result, we delete the operation params
         delete operationsMintTP[operId_];
@@ -544,7 +549,14 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-            if (errorSelector == MocCommons.InsufficientTPtoMint.selector) {
+            if (errorSelector == MocCommons.MaxFluxCapacitorOperationReached.selector) {
+                // this error is handled to stop the batch execution, so the operation can be executed again
+                // after blocks pass and the flux capacitor is free again
+                emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
+                // restore the operation ID to be executed on the next batch
+                operationsMintTP[operId_] = params;
+                return false;
+            } else if (errorSelector == MocCommons.InsufficientTPtoMint.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient tp to mint");
             } else if (errorSelector == MocCommons.InsufficientQacSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient qac sent");
@@ -555,15 +567,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
+        return true;
     }
 
     /**
      * @notice Executes redeem TP handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TPRedeemed, OperationError, UnhandledError} events
      */
-    function _executeRedeemTP(uint256 operId_) internal virtual {
+    function _executeRedeemTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.RedeemTPParams memory params = operationsRedeemTP[operId_];
         // Independently from the result, we delete the operation params
         delete operationsRedeemTP[operId_];
@@ -573,7 +587,14 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-            if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
+            if (errorSelector == MocCommons.MaxFluxCapacitorOperationReached.selector) {
+                // this error is handled to stop the batch execution, so the operation can be executed again
+                // after blocks pass and the flux capacitor is free again
+                emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
+                // restore the operation ID to be executed on the next batch
+                operationsRedeemTP[operId_] = params;
+                return false;
+            } else if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qAC below minimum required");
             } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
                 emit OperationError(operId_, errorSelector, "Low coverage");
@@ -582,15 +603,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
         }
+        return true;
     }
 
     /**
      * @notice Executes mint TC and TP handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TCandTPMinted, OperationError, UnhandledError} events
      */
-    function _executeMintTCandTP(uint256 operId_) internal virtual {
+    function _executeMintTCandTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.MintTCandTPParams memory params = operationsMintTCandTP[operId_];
         // Independently from the result, we delete the operation params
         delete operationsMintTCandTP[operId_];
@@ -605,7 +628,14 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+            if (errorSelector == MocCommons.MaxFluxCapacitorOperationReached.selector) {
+                // this error is handled to stop the batch execution, so the operation can be executed again
+                // after blocks pass and the flux capacitor is free again
+                emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
+                // restore the operation ID to be executed on the next batch
+                operationsMintTCandTP[operId_] = params;
+                return false;
+            } else if (errorSelector == MocCommons.InsufficientQacSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient qac sent");
             } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
                 emit OperationError(operId_, errorSelector, "Low coverage");
@@ -614,15 +644,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
+        return true;
     }
 
     /**
      * @notice Executes redeem TC and TP handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TCandTPRedeemed, OperationError, UnhandledError} events
      */
-    function _executeRedeemTCandTP(uint256 operId_) internal virtual {
+    function _executeRedeemTCandTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.RedeemTCandTPParams memory params = operationsRedeemTCandTP[operId_];
         // Independently from the result, we delete the operation params
         delete operationsRedeemTCandTP[operId_];
@@ -637,7 +669,14 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-            if (errorSelector == MocCore.InsufficientQtpSent.selector) {
+            if (errorSelector == MocCommons.MaxFluxCapacitorOperationReached.selector) {
+                // this error is handled to stop the batch execution, so the operation can be executed again
+                // after blocks pass and the flux capacitor is free again
+                emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
+                // restore the operation ID to be executed on the next batch
+                operationsRedeemTCandTP[operId_] = params;
+                return false;
+            } else if (errorSelector == MocCore.InsufficientQtpSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient tp sent");
             } else if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qAC below minimum required");
@@ -649,15 +688,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
             mocCore.unlockTCInPending(params.sender, params.qTC);
         }
+        return true;
     }
 
     /**
      * @notice Executes swap TC for TP handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TCforTPSwapped, OperationError, UnhandledError} events
      */
-    function _executeSwapTCforTP(uint256 operId_) internal virtual {
+    function _executeSwapTCforTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.SwapTCforTPParams memory params = operationsSwapTCforTP[operId_];
         // Independently from the result, we delete the operation params
         delete operationsSwapTCforTP[operId_];
@@ -672,8 +713,14 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-
-            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+            if (errorSelector == MocCommons.MaxFluxCapacitorOperationReached.selector) {
+                // this error is handled to stop the batch execution, so the operation can be executed again
+                // after blocks pass and the flux capacitor is free again
+                emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
+                // restore the operation ID to be executed on the next batch
+                operationsSwapTCforTP[operId_] = params;
+                return false;
+            } else if (errorSelector == MocCommons.InsufficientQacSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient qac sent");
             } else if (errorSelector == MocCommons.QtpBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qTp below minimum required");
@@ -685,15 +732,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocCore.unlockTCInPending(params.sender, params.qTC);
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
+        return true;
     }
 
     /**
      * @notice Executes swap TP for TC handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TPforTCSwapped, OperationError, UnhandledError} events
      */
-    function _executeSwapTPforTC(uint256 operId_) internal virtual {
+    function _executeSwapTPforTC(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.SwapTPforTCParams memory params = operationsSwapTPforTC[operId_];
         // Independently from the result, we delete the operation params
         delete operationsSwapTPforTC[operId_];
@@ -708,8 +757,14 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-
-            if (errorSelector == MocCommons.InsufficientQacSent.selector) {
+            if (errorSelector == MocCommons.MaxFluxCapacitorOperationReached.selector) {
+                // this error is handled to stop the batch execution, so the operation can be executed again
+                // after blocks pass and the flux capacitor is free again
+                emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
+                // restore the operation ID to be executed on the next batch
+                operationsSwapTPforTC[operId_] = params;
+                return false;
+            } else if (errorSelector == MocCommons.InsufficientQacSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient qac sent");
             } else if (errorSelector == MocCommons.QtcBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qTc below minimum required");
@@ -721,15 +776,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
+        return true;
     }
 
     /**
      * @notice Executes swap TP for TP handling any error
      * @param operId_ operation id
+     * @return executed true if the Operations was executed
      *
      * May emit {TPforTPSwapped, OperationError, UnhandledError} events
      */
-    function _executeSwapTPforTP(uint256 operId_) internal virtual {
+    function _executeSwapTPforTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
         // Independently from the result, we delete the operation params
         delete operationsSwapTPforTP[operId_];
@@ -744,7 +801,6 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // TODO: analyze if it's necessary to decode error params, returnData needs to be
             // padded/shifted as decode only takes bytes32 chunks and error selector is just 4 bytes.
             bytes4 errorSelector = bytes4(returnData);
-
             if (errorSelector == MocCommons.InsufficientQacSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient qac sent");
             } else if (errorSelector == MocCommons.QtpBelowMinimumRequired.selector) {
@@ -757,6 +813,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tpFrom), params.qTP);
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
+        return true;
     }
 
     /**
@@ -770,37 +827,42 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function execute(uint256 operId_, uint256 limitBlk) internal returns (bool executed, uint256 executionFee) {
         OperInfo memory operInfo = opersInfo[operId_];
         delete opersInfo[operId_];
-        if (operInfo.queuedBlk > limitBlk) return (false, 0);
+        if (operInfo.queuedBlk > limitBlk) {
+            executed = false;
+            executionFee = 0;
+        }
         OperType operType = operInfo.operType;
         if (operType == OperType.mintTC) {
-            _executeMintTC(operId_);
+            executed = _executeMintTC(operId_);
             executionFee = tcMintExecFee;
         } else if (operType == OperType.redeemTC) {
-            _executeRedeemTC(operId_);
+            executed = _executeRedeemTC(operId_);
             executionFee = tcRedeemExecFee;
         } else if (operType == OperType.mintTP) {
-            _executeMintTP(operId_);
+            executed = _executeMintTP(operId_);
             executionFee = tpMintExecFee;
         } else if (operType == OperType.redeemTP) {
-            _executeRedeemTP(operId_);
+            executed = _executeRedeemTP(operId_);
             executionFee = tpRedeemExecFee;
         } else if (operType == OperType.mintTCandTP) {
-            _executeMintTCandTP(operId_);
+            executed = _executeMintTCandTP(operId_);
             executionFee = mintTCandTPExecFee;
         } else if (operType == OperType.redeemTCandTP) {
-            _executeRedeemTCandTP(operId_);
+            executed = _executeRedeemTCandTP(operId_);
             executionFee = redeemTCandTPExecFee;
         } else if (operType == OperType.swapTCforTP) {
-            _executeSwapTCforTP(operId_);
+            executed = _executeSwapTCforTP(operId_);
             executionFee = swapTCforTPExecFee;
         } else if (operType == OperType.swapTPforTC) {
-            _executeSwapTPforTC(operId_);
+            executed = _executeSwapTPforTC(operId_);
             executionFee = swapTPforTCExecFee;
         } else if (operType == OperType.swapTPforTP) {
-            _executeSwapTPforTP(operId_);
+            executed = _executeSwapTPforTP(operId_);
             executionFee = swapTPforTPExecFee;
         }
-        return (true, executionFee);
+        // restore the operation ID to be executed on the next batch
+        if (!executed) opersInfo[operId_] = operInfo;
+        return (executed, executionFee);
     }
 
     // ------- External Functions -------

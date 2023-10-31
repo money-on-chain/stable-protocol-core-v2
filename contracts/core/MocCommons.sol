@@ -140,8 +140,8 @@ abstract contract MocCommons is MocEma {
     error QacNeededMustBeGreaterThanZero();
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
     error MissingProviderData(address dataProviderAddress_);
-    error MaxAbsoluteOperationReached(uint256 max_, uint256 new_);
-    error MaxOperationDifferenceReached(uint256 max_, uint256 new_);
+    error MaxFluxCapacitorOperationReached(uint256 max_, uint256 new_);
+    error InvalidFluxCapacitorOperation();
 
     // ------- Events -------
 
@@ -337,6 +337,7 @@ abstract contract MocCommons is MocEma {
      */
     function _updateAccumulators(address tp_, uint256 qAC_, bool redeemFlag_) internal {
         (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings(tp_);
+        if (qAC_ > maxAbsoluteOperation) revert InvalidFluxCapacitorOperation();
         (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(tp_, 0);
         unchecked {
             newAbsoluteAccumulator += qAC_;
@@ -346,9 +347,9 @@ abstract contract MocCommons is MocEma {
             // cannot underflow, always newDifferentialAccumulator <= newAbsoluteAccumulator
             uint256 operationalDifference = newAbsoluteAccumulator - SignedMath.abs(newDifferentialAccumulator);
             if (newAbsoluteAccumulator > maxAbsoluteOperation)
-                revert MaxAbsoluteOperationReached(maxAbsoluteOperation, newAbsoluteAccumulator);
+                revert MaxFluxCapacitorOperationReached(maxAbsoluteOperation, newAbsoluteAccumulator);
             if (operationalDifference > maxOperationalDifference)
-                revert MaxOperationDifferenceReached(maxOperationalDifference, operationalDifference);
+                revert MaxFluxCapacitorOperationReached(maxOperationalDifference, operationalDifference);
             // update storage
             absoluteAccumulator[tp_] = newAbsoluteAccumulator;
             differentialAccumulator[tp_] = newDifferentialAccumulator;
