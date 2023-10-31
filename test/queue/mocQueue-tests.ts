@@ -176,6 +176,24 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
         });
       });
     });
+    describe("WHEN Bob tries to register an operation, sending less execution fees than expected", function () {
+      let queueTx: ContractTransaction;
+      beforeEach(async function () {
+        queueTx = mocFunctions.mintTC({ from: bob, qTC: 10, qACmax: 1, execute: false, netParams: { value: 1 } });
+      });
+      it("THEN Tx fails with wrong execution fee", async function () {
+        await expect(queueTx).to.be.revertedWithCustomError(mocQueue, ERRORS.WRONG_EXEC_FEES);
+      });
+    });
+    describe("WHEN Alice tries to register an operation, sending more execution fees than expected", function () {
+      let queueTx: ContractTransaction;
+      beforeEach(async function () {
+        queueTx = mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 1, execute: false, netParams: { value: 5e10 } });
+      });
+      it("THEN Tx fails with wrong execution fee", async function () {
+        await expect(queueTx).to.be.revertedWithCustomError(mocQueue, ERRORS.WRONG_EXEC_FEES);
+      });
+    });
     describe("WHEN Bob registers an invalid operation, and Alice a valid afterwards", function () {
       let execTx: ContractTransaction;
       beforeEach(async function () {
