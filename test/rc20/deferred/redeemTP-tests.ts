@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import hre, { getNamedAccounts } from "hardhat";
-import { ContractTransaction, BigNumber } from "ethers";
+import { ContractTransaction } from "ethers";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { redeemTPBehavior } from "../../behaviors/redeemTP.behavior";
-import { Balance, ERROR_SELECTOR, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
 import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
@@ -23,7 +23,7 @@ describe("Feature: MocCARC20Deferred redeem TP", function () {
     let mocImpl: MocCARC20Deferred;
     let mocFunctions: any;
     let mocQueue: MocQueue;
-    let operId: BigNumber;
+    let operId: OperId;
     let alice: Address;
     let bob: Address;
     let executor: Address;

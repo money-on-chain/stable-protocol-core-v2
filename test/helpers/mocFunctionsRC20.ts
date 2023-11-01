@@ -199,15 +199,19 @@ export const mocFunctionsRC20 = async ({
   mocCollateralToken,
   mocPeggedTokens,
   priceProviders,
-}) => ({
-  mintTC: mintTC(mocImpl, collateralAsset),
-  mintTP: mintTP(mocImpl, collateralAsset, mocPeggedTokens),
-  redeemTP: redeemTP(mocImpl, mocPeggedTokens),
-  mintTCandTP: mintTCandTP(mocImpl, collateralAsset, mocPeggedTokens),
-  swapTPforTP: swapTPforTP(mocImpl, collateralAsset, mocPeggedTokens),
-  swapTPforTC: swapTPforTC(mocImpl, collateralAsset, mocPeggedTokens),
-  swapTCforTP: swapTCforTP(mocImpl, collateralAsset, mocPeggedTokens),
-  assetBalanceOf: tBalanceOf(collateralAsset),
-  acBalanceOf: tBalanceOf(collateralAsset),
-  ...(await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders })),
-});
+}) => {
+  const commonFncs = await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
+  return {
+    mintTC: mintTC(mocImpl, collateralAsset),
+    mintTP: mintTP(mocImpl, collateralAsset, mocPeggedTokens),
+    redeemTP: redeemTP(mocImpl, mocPeggedTokens),
+    mintTCandTP: mintTCandTP(mocImpl, collateralAsset, mocPeggedTokens),
+    swapTPforTP: swapTPforTP(mocImpl, collateralAsset, mocPeggedTokens),
+    swapTPforTC: swapTPforTC(mocImpl, collateralAsset, mocPeggedTokens),
+    swapTCforTP: swapTCforTP(mocImpl, collateralAsset, mocPeggedTokens),
+    assetBalanceOf: tBalanceOf(collateralAsset),
+    acBalanceOf: tBalanceOf(collateralAsset),
+    acTransfer: commonFncs.tTransfer(collateralAsset),
+    ...commonFncs,
+  };
+};

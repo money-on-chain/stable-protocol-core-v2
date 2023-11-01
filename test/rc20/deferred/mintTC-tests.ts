@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import hre, { getNamedAccounts, ethers } from "hardhat";
-import { ContractTransaction, BigNumber } from "ethers";
+import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTCBehavior } from "../../behaviors/mintTC.behavior";
@@ -9,6 +9,7 @@ import {
   CONSTANTS,
   ERRORS,
   ERROR_SELECTOR,
+  OperId,
   OperType,
   ethersGetBalance,
   pEth,
@@ -48,7 +49,7 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
   describe("GIVEN a MocCARC20Deferred implementation deployed behind MocQueue", function () {
     let mocImpl: MocCARC20Deferred;
     let mocQueue: MocQueue;
-    let operId: BigNumber;
+    let operId: OperId;
     let alice: Address;
     let executorBalanceBefore: Balance;
     const TP_0 = 0;

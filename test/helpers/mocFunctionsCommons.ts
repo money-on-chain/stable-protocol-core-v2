@@ -78,6 +78,17 @@ const tTransfer =
     return token.connect(signer).transfer(to, amount, { gasPrice: 0 });
   };
 
+const coinbaseTransfer = async ({ from, to, amount, applyPrecision = true }) => {
+  const signer = await ethers.getSigner(from);
+  if (applyPrecision) {
+    amount = pEth(amount);
+  }
+  return signer.sendTransaction({
+    to,
+    value: amount,
+  });
+};
+
 /// Functions shared across different CA implementations
 export const mocFunctionsCommons = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => ({
   redeemTC: redeemTC(mocImpl),
@@ -87,5 +98,7 @@ export const mocFunctionsCommons = async ({ mocImpl, mocCollateralToken, mocPegg
   tpBalanceOf: tpBalanceOf(mocPeggedTokens),
   tcTransfer: tTransfer(mocCollateralToken),
   tpTransfer: tpTransfer(mocPeggedTokens),
+  coinbaseTransfer,
+  tTransfer,
   pokePrice: pokePrice(priceProviders),
 });

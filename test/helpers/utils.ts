@@ -232,6 +232,7 @@ export async function deployAndAddAssetsERC777(
 }
 
 export type Balance = BigNumber;
+export type OperId = BigNumber;
 
 export const ethersGetBalance = (account: Address) => ethers.provider.getBalance(account);
 

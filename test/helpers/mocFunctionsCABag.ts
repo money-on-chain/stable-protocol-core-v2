@@ -290,6 +290,7 @@ export const mocFunctionsCABag = async ({
     swapTCforTP: swapTCforTP(mocWrapper, mocPeggedTokens, mocCollateralToken, defaultAsset),
     assetBalanceOf: balanceOf(defaultAsset),
     acBalanceOf: tBalanceOf(wcaToken),
+    acTransfer: commons.tTransfer(wcaToken),
     addOrEditAsset: addOrEditAsset(mocWrapper),
     tcBalanceOf: commons.tcBalanceOf,
     tpBalanceOf: commons.tpBalanceOf,

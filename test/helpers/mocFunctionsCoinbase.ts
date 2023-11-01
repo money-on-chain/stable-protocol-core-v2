@@ -152,6 +152,7 @@ const swapTCforTP =
   };
 
 export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => {
+  const commonFncs = await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
   return {
     mintTC: mintTC(mocImpl),
     mintTP: mintTP(mocImpl, mocPeggedTokens),
@@ -162,6 +163,7 @@ export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeg
     swapTCforTP: swapTCforTP(mocImpl, mocPeggedTokens),
     assetBalanceOf: ethersGetBalance,
     acBalanceOf: ethersGetBalance,
-    ...(await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders })),
+    acTransfer: commonFncs.coinbaseTransfer,
+    ...commonFncs,
   };
 };

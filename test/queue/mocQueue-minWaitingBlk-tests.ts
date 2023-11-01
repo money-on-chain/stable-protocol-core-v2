@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { getNamedAccounts } from "hardhat";
-import { ContractTransaction, BigNumber } from "ethers";
+import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
-import { mineUpTo, tpParams } from "../helpers/utils";
+import { OperId, mineUpTo, tpParams } from "../helpers/utils";
 import { MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
 
@@ -14,7 +14,7 @@ describe("Feature: MocQueue Operation min waiting Blk", function () {
 
   describe("GIVEN a MocQueue with min waiting set to 10 blocks", function () {
     let mocQueue: MocQueue;
-    let operId: BigNumber;
+    let operId: OperId;
     let alice: Address;
     let bob: Address;
     beforeEach(async function () {

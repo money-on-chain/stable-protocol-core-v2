@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import hre, { getNamedAccounts, ethers } from "hardhat";
-import { ContractTransaction, BigNumber } from "ethers";
+import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
 import {
@@ -9,6 +9,7 @@ import {
   ENQUEUER_ROLE,
   ERRORS,
   EXECUTOR_ROLE,
+  OperId,
   OperType,
   ethersGetBalance,
   tpParams,
@@ -28,7 +29,7 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
     let mocImpl: MocCARC20Deferred;
     let mocQueue: MocQueue;
     let tp: Address;
-    let operId: BigNumber;
+    let operId: OperId;
     let alice: Address;
     let bob: Address;
     let executorBalanceBefore: Balance;
