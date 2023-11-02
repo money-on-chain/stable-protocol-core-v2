@@ -164,7 +164,6 @@ contract MocQueue is MocQueueExecFees {
     // first operation to be executed
     uint256 public firstOperId;
 
-    // TODO: import structs
     mapping(uint256 => MocCore.MintTCParams) public operationsMintTC;
     mapping(uint256 => MocCore.MintTPParams) public operationsMintTP;
     mapping(uint256 => MocCore.RedeemTCParams) public operationsRedeemTC;
@@ -493,7 +492,6 @@ contract MocQueue is MocQueueExecFees {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            // TODO: charge execution fees if not already
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
     }
@@ -552,7 +550,6 @@ contract MocQueue is MocQueueExecFees {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            // TODO: charge execution fees if not already
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
     }
@@ -612,7 +609,6 @@ contract MocQueue is MocQueueExecFees {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            // TODO: charge execution fees if not already
             mocCore.unlockACInPending(params.sender, params.qACmax);
         }
     }

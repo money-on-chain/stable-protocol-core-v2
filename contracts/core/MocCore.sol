@@ -294,7 +294,7 @@ abstract contract MocCore is MocCommons {
     /**
      * @notice redeem Collateral Asset in exchange for Collateral Token
      * @param params_ redeemTCto function params
-     * TODO: operator
+     * @param operator_ address that will provide the TC liquidity to redeem
      * @dev
      *      qTC_ amount of Collateral Token to redeem
      *      qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
@@ -308,7 +308,7 @@ abstract contract MocCore is MocCommons {
 
     function _redeemTCto(
         RedeemTCParams memory params_,
-        address operator
+        address operator_
     )
         internal
         notLiquidated
@@ -338,7 +338,7 @@ abstract contract MocCore is MocCommons {
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTCRedeemed(params_, qACtoRedeem, feeCalcs);
         // use msg.sender, as the token "source" is always the actual tx sender
-        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
+        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator_);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
