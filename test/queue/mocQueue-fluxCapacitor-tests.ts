@@ -29,14 +29,16 @@ describe("Feature: MocQueue flux capacitor", function () {
       await mocContracts.maxAbsoluteOpProvider.poke(pEth(10000));
       await mocContracts.maxOpDiffProvider.poke(pEth(5000));
     });
-    describe("WHEN both Alice and Bob register a 4 valid operations", function () {
+    describe("WHEN both Alice and Bob register 4 valid operations", function () {
       let execTx: ContractTransaction;
       beforeEach(async function () {
         operId = await mocQueue.operIdCount();
-        await mocFunctions.mintTP({ from: alice, qTP: 2350000, execute: false });
-        await mocFunctions.mintTC({ from: bob, qTC: 10, execute: false });
-        await mocFunctions.mintTP({ from: alice, qTP: 235000, execute: false });
-        await mocFunctions.mintTC({ from: bob, qTC: 10, execute: false });
+        await Promise.all([
+          mocFunctions.mintTP({ from: alice, qTP: 2350000, execute: false }),
+          mocFunctions.mintTC({ from: bob, qTC: 10, execute: false }),
+          mocFunctions.mintTP({ from: alice, qTP: 235000, execute: false }),
+          mocFunctions.mintTC({ from: bob, qTC: 10, execute: false }),
+        ]);
       });
       describe("AND queue is executed", function () {
         beforeEach(async function () {
@@ -55,14 +57,20 @@ describe("Feature: MocQueue flux capacitor", function () {
             await expect(execTx).not.to.emit(mocQueue, "OperationExecuted");
           });
         });
-        describe("AND queue is executed after 1000 blocks", function () {
+        describe("AND a new operation is enqueued", function () {
           beforeEach(async function () {
-            await mine(1000);
-            execTx = await mocFunctions.executeQueue();
+            await mocFunctions.redeemTP({ from: alice, qTP: 235000, execute: false });
           });
-          it("THEN the 2 remaining operations are executed", async function () {
-            await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(2));
-            await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(3));
+          describe("AND queue is executed after 1000 blocks", function () {
+            beforeEach(async function () {
+              await mine(1000);
+              execTx = await mocFunctions.executeQueue();
+            });
+            it("THEN the 3 remaining operations are executed", async function () {
+              await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(2));
+              await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(3));
+              await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(4));
+            });
           });
         });
       });

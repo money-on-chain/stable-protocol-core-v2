@@ -3,9 +3,11 @@ import memoizee from "memoizee";
 import { ERC777Mock, ERC777Mock__factory, MocCARC20, MocCARC20__factory } from "../../../typechain";
 import { mocInitialize } from "../../collateralBag/initializers";
 import {
+  CONSTANTS,
   deployAndAddPeggedTokens,
   deployAsset,
   deployCollateralToken,
+  deployDataProvider,
   deployPriceProvider,
   ensureERC1820,
   pEth,
@@ -54,6 +56,8 @@ export const fixtureDeployedMocRC777 = memoizee(
 
       const feeTokenAddress = (await deployAsset()).address;
       const feeTokenPriceProviderAddress = (await deployPriceProvider(pEth(1))).address;
+      const maxAbsoluteOpProviderAddress = (await deployDataProvider(CONSTANTS.MAX_UINT256)).address;
+      const maxOpDiffProviderAddress = (await deployDataProvider(CONSTANTS.MAX_UINT256)).address;
 
       await mocInitialize(
         mocImpl,
@@ -61,7 +65,13 @@ export const fixtureDeployedMocRC777 = memoizee(
         collateralToken.address,
         mocCoreExpansion.address,
         mocVendors.address,
-      )({ mocGovernorAddress: governorAddress, feeTokenAddress, feeTokenPriceProviderAddress });
+      )({
+        mocGovernorAddress: governorAddress,
+        feeTokenAddress,
+        feeTokenPriceProviderAddress,
+        maxAbsoluteOpProviderAddress,
+        maxOpDiffProviderAddress,
+      });
 
       await collateralToken.transferAllRoles(mocImpl.address);
 

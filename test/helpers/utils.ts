@@ -30,14 +30,6 @@ export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUS
 export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
 export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
-export const CONSTANTS = {
-  ZERO_ADDRESS: ethers.constants.AddressZero,
-  MAX_UINT256: ethers.constants.MaxUint256,
-  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
-  PRECISION: BigNumber.from((1e18).toString()),
-  ONE: BigNumber.from((1e18).toString()),
-};
-
 export enum OperType {
   none, // avoid using zero as Type
   mintTC,
@@ -289,8 +281,6 @@ export const ERRORS = {
   EXEC_FEE_PAYMENT_FAILED: "ExecutionFeePaymentFailed",
   NOT_ALLOW_ON_EMPTY_QUEUE: "NotAllowOnNoneEmptyQueue",
   WRONG_EXEC_FEES: "WrongExecutionFee",
-  MAX_ABSOLUTE_REACHED: "MaxAbsoluteOperationReached",
-  MAX_DIFFERENTIAL_REACHED: "MaxOperationDifferenceReached",
   MAX_FLUX_CAPACITOR_REACHED: "MaxFluxCapacitorOperationReached",
   INVALID_FLUX_CAPACITOR_OPERATION: "InvalidFluxCapacitorOperation",
   MISSING_PROVIDER_DATA: "MissingProviderData",
@@ -310,6 +300,14 @@ export const ERROR_SELECTOR = {
   QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
   INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
+};
+
+export const CONSTANTS = {
+  ZERO_ADDRESS: ethers.constants.AddressZero,
+  MAX_UINT256: ethers.constants.MaxUint256,
+  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
+  PRECISION: BigNumber.from((1e18).toString()),
+  ONE: BigNumber.from((1e18).toString()),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {

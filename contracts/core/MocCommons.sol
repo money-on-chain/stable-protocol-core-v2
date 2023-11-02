@@ -325,7 +325,6 @@ abstract contract MocCommons is MocEma {
      */
     function _updateAccumulators(uint256 qAC_, bool redeemFlag_) internal {
         (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings();
-        if (qAC_ > maxAbsoluteOperation) revert InvalidFluxCapacitorOperation();
         (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(0);
         unchecked {
             newAbsoluteAccumulator += qAC_;
@@ -334,8 +333,10 @@ abstract contract MocCommons is MocEma {
             newDifferentialAccumulator += qACInt;
             // cannot underflow, always newDifferentialAccumulator <= newAbsoluteAccumulator
             uint256 operationalDifference = newAbsoluteAccumulator - SignedMath.abs(newDifferentialAccumulator);
-            if (newAbsoluteAccumulator > maxAbsoluteOperation)
+            if (newAbsoluteAccumulator > maxAbsoluteOperation) {
+                if (qAC_ > maxAbsoluteOperation) revert InvalidFluxCapacitorOperation();
                 revert MaxFluxCapacitorOperationReached(maxAbsoluteOperation, newAbsoluteAccumulator);
+            }
             if (operationalDifference > maxOperationalDifference)
                 revert MaxFluxCapacitorOperationReached(maxOperationalDifference, operationalDifference);
             // update storage

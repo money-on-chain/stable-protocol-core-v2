@@ -164,6 +164,24 @@ describe("Feature: Verify all MocCore config settings are protected by governanc
         expect(await mocProxy.mocVendors()).to.be.equal(mockAddress);
       });
     });
+    describe(`WHEN setMaxAbsoluteOpProviderAddress is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setMaxAbsoluteOpProviderAddress(mockAddress);
+        expect(await mocProxy.maxAbsoluteOpProvider()).to.be.equal(mockAddress);
+      });
+    });
+    describe(`WHEN setMaxOpDiffProviderAddress is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setMaxOpDiffProviderAddress(mockAddress);
+        expect(await mocProxy.maxOpDiffProvider()).to.be.equal(mockAddress);
+      });
+    });
+    describe(`WHEN setDecayBlockSpan is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setDecayBlockSpan(53);
+        expect(await mocProxy.decayBlockSpan()).to.be.equal(53);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -309,6 +327,21 @@ describe("Feature: Verify all MocCore config settings are protected by governanc
     describe("WHEN setMocCoreExpansion is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setMocCoreExpansion(mockAddress));
+      });
+    });
+    describe("WHEN setMaxAbsoluteOpProviderAddress is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMaxAbsoluteOpProviderAddress(mockAddress));
+      });
+    });
+    describe("WHEN setMaxOpDiffProviderAddress is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMaxOpDiffProviderAddress(mockAddress));
+      });
+    });
+    describe("WHEN setDecayBlockSpan is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setDecayBlockSpan(42));
       });
     });
   });
