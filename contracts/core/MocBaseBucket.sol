@@ -87,6 +87,16 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 tcInterestRate;
         // amount of blocks to wait for next TC interest payment
         uint256 tcInterestPaymentBlockSpan;
+        // max absolute operation provider address:
+        //  absolute maximum transaction allowed for a certain number of blocks
+        //  if absoluteAccumulator is above the value provided the operation will be rejected
+        address maxAbsoluteOpProviderAddress;
+        // max operation difference provider address:
+        //  differential maximum transaction allowed for a certain number of blocks
+        //  if operationalDifference is above the value provided the operation will be rejected
+        address maxOpDiffProviderAddress;
+        // number of blocks that have to elapse for the linear decay factor to be 0
+        uint256 decayBlockSpan;
     }
 
     // ------- Storage -------
@@ -185,20 +195,22 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
 
     // ------- Storage Flux Capacitor -------
 
-    // absolute maximum transaction allowed for a certain number of blocks
-    // if absoluteAccumulator is above this value the operation will be rejected
-    mapping(address => IDataProvider) public maxAbsoluteOpProvider;
-    // differential maximum transaction allowed for a certain number of blocks
-    // if operationalDifference is above this value the operation will be rejected
-    mapping(address => IDataProvider) public maxOpDiffProvider;
+    // max absolute operation provider:
+    //  absolute maximum transaction allowed for a certain number of blocks
+    //  if absoluteAccumulator is above the value provided the operation will be rejected
+    IDataProvider public maxAbsoluteOpProvider;
+    // max operation difference provider:
+    //  differential maximum transaction allowed for a certain number of blocks
+    //  if operationalDifference is above the value provided the operation will be rejected
+    IDataProvider public maxOpDiffProvider;
     // number of blocks that have to elapse for the linear decay factor to be 0
-    mapping(address => uint256) public decayBlockSpan;
+    uint256 public decayBlockSpan;
     // accumulator increased by minting and redeeming TP operations
-    mapping(address => uint256) public absoluteAccumulator;
+    uint256 public absoluteAccumulator;
     // accumulator increased by minting and decreased by redeeming TP operations
-    mapping(address => int256) public differentialAccumulator;
+    int256 public differentialAccumulator;
     // last block number where an operation was submitted
-    mapping(address => uint256) public lastOperationBlockNumber;
+    uint256 public lastOperationBlockNumber;
 
     // ------- Storage TC Holders Interest Payment -------
 
@@ -247,6 +259,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      *        tcInterestCollectorAddress TC interest collector address
      *        tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
      *        tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
+     *        maxAbsoluteOpProviderAddress max absolute operation provider address
+     *        maxOpDiffProviderAddress max operation difference provider address
+     *        decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      */
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
@@ -284,6 +299,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         tcInterestCollectorAddress = initializeBaseBucketParams_.tcInterestCollectorAddress;
         tcInterestRate = initializeBaseBucketParams_.tcInterestRate;
         tcInterestPaymentBlockSpan = initializeBaseBucketParams_.tcInterestPaymentBlockSpan;
+        maxAbsoluteOpProvider = IDataProvider(initializeBaseBucketParams_.maxAbsoluteOpProviderAddress);
+        maxOpDiffProvider = IDataProvider(initializeBaseBucketParams_.maxOpDiffProviderAddress);
+        decayBlockSpan = initializeBaseBucketParams_.decayBlockSpan;
+        lastOperationBlockNumber = block.number;
         unchecked {
             bns = block.number + initializeBaseBucketParams_.bes;
             nextTCInterestPayment = block.number + initializeBaseBucketParams_.tcInterestPaymentBlockSpan;
@@ -961,6 +980,33 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      **/
     function setBes(uint256 bes_) external onlyAuthorizedChanger {
         bes = bes_;
+    }
+
+    /**
+     * @dev sets max absolute operation provider address
+     * @param maxAbsoluteOpProviderAddress_ max absolute operation provider address
+     */
+    function setMaxAbsoluteOpProviderAddress(address maxAbsoluteOpProviderAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        maxAbsoluteOpProvider = IDataProvider(maxAbsoluteOpProviderAddress_);
+    }
+
+    /**
+     * @dev sets max operation difference provider address
+     * @param maxOpDiffProviderAddress_ max operation difference provider address
+     */
+    function setMaxOpDiffProviderAddress(address maxOpDiffProviderAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        maxOpDiffProvider = IDataProvider(maxOpDiffProviderAddress_);
+    }
+
+    /**
+     * @dev sets flux capacitor decay block span
+     * @param decayBlockSpan_ flux capacitor decay block span
+     */
+    function setDecayBlockSpan(uint256 decayBlockSpan_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        decayBlockSpan = decayBlockSpan_;
     }
 
     /**

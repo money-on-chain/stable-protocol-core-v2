@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { deployUUPSArtifact, getGovernorAddresses, getNetworkDeployParams } from "../../scripts/utils";
+import { CONSTANTS } from "../../test/helpers/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;
@@ -26,6 +27,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
     tcInterestCollectorAddress,
+    maxAbsoluteOpProviderAddress,
+    maxOpDiffProviderAddress,
   } = mocAddresses;
 
   // for tests we deploy a FeeToken mock and its price provider
@@ -35,6 +38,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
     const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
     feeTokenPriceProviderAddress = (await priceProviderMockFactory.deploy(ethers.utils.parseEther("1"))).address;
+
+    const DataProviderMockFactory = await ethers.getContractFactory("DataProviderMock");
+    maxAbsoluteOpProviderAddress = (await DataProviderMockFactory.deploy(CONSTANTS.MAX_UINT256)).address;
+    maxOpDiffProviderAddress = (await DataProviderMockFactory.deploy(CONSTANTS.MAX_UINT256)).address;
   }
 
   const governorAddress = await getGovernorAddresses(hre);
@@ -69,6 +76,9 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             tcInterestCollectorAddress,
             tcInterestRate: coreParams.tcInterestRate,
             tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+            maxAbsoluteOpProviderAddress,
+            maxOpDiffProviderAddress,
+            decayBlockSpan: coreParams.decayBlockSpan,
           },
           governorAddress,
           pauserAddress,

@@ -18,6 +18,7 @@ import {
   MocVendors__factory,
   PriceProviderMock__factory,
   DataProviderMock,
+  DataProviderMock__factory,
 } from "../../typechain";
 import { deployAndAddAssets, deployAndAddPeggedTokens, ensureERC1820, pEth } from "../helpers/utils";
 
@@ -34,8 +35,8 @@ export type MoCContracts = {
   mocVendors: MocVendors;
   feeToken: ERC20Mock;
   feeTokenPriceProvider: PriceProviderMock;
-  maxAbsoluteOpProviders: DataProviderMock[];
-  maxOpDiffProviders: DataProviderMock[];
+  maxAbsoluteOpProvider: DataProviderMock;
+  maxOpDiffProvider: DataProviderMock;
 };
 
 export const fixtureDeployedMocCABag = memoizee(
@@ -73,8 +74,7 @@ export const fixtureDeployedMocCABag = memoizee(
       if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 
-      const { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders } =
-        await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
+      const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
       const { assets, assetPriceProviders } = await deployAndAddAssets(mocWrapper, amountAssets);
 
@@ -84,6 +84,9 @@ export const fixtureDeployedMocCABag = memoizee(
 
       const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
       const feeTokenPriceProvider = PriceProviderMock__factory.connect(await mocImpl.feeTokenPriceProvider(), signer);
+
+      const maxAbsoluteOpProvider = DataProviderMock__factory.connect(await mocImpl.maxAbsoluteOpProvider(), signer);
+      const maxOpDiffProvider = DataProviderMock__factory.connect(await mocImpl.maxOpDiffProvider(), signer);
 
       return {
         mocImpl,
@@ -98,8 +101,8 @@ export const fixtureDeployedMocCABag = memoizee(
         mocVendors,
         feeToken,
         feeTokenPriceProvider,
-        maxAbsoluteOpProviders,
-        maxOpDiffProviders,
+        maxAbsoluteOpProvider,
+        maxOpDiffProvider,
       };
     });
   },

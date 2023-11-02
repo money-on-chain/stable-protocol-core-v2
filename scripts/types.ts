@@ -45,6 +45,8 @@ export type DeployParameters = {
     tcInterestRate: BigNumber;
     // amount of blocks to wait for next TC interest payment
     tcInterestPaymentBlockSpan: number;
+    // number of blocks that have to elapse for the linear decay factor to be 0
+    decayBlockSpan: number;
   };
   settlementParams: {
     // number of blocks between settlements
@@ -106,6 +108,10 @@ export type DeployParameters = {
     tcInterestCollectorAddress: Address;
     // Whitelisted addresses that are authorized to execute deferred Operations
     authorizedExecutors: Address[];
+    // max absolute operation provider address
+    maxAbsoluteOpProviderAddress: Address;
+    // max operation difference provider address
+    maxOpDiffProviderAddress: Address;
   };
   queueParams: {
     // min amount of blocks the Operation should wait in the Queue before execution

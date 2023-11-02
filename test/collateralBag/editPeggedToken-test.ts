@@ -19,9 +19,6 @@ describe("Feature: MocCABag edit Pegged Token", function () {
       tpRedeemFee = tpParamsDefault.redeemFee,
       tpEma = tpParamsDefault.initialEma,
       tpEmaSf = tpParamsDefault.smoothingFactor,
-      maxAbsoluteOpProviderAddress = priceProviders[0].address, // TODO: dummy address
-      maxOpDiffProviderAddress = priceProviders[0].address, // TODO: dummy address
-      decayBlockSpan = tpParamsDefault.decayBlockSpan,
     }: {
       tpTokenAddress?: Address;
       priceProviderAddress?: Address;
@@ -30,9 +27,6 @@ describe("Feature: MocCABag edit Pegged Token", function () {
       tpRedeemFee?: BigNumberish;
       tpEma?: BigNumberish;
       tpEmaSf?: BigNumberish;
-      maxAbsoluteOpProviderAddress?: Address;
-      maxOpDiffProviderAddress?: Address;
-      decayBlockSpan?: BigNumberish;
     } = {}) => {
       return mocCARC20.editPeggedToken({
         tpTokenAddress,
@@ -42,9 +36,6 @@ describe("Feature: MocCABag edit Pegged Token", function () {
         tpRedeemFee,
         tpEma,
         tpEmaSf,
-        maxAbsoluteOpProviderAddress,
-        maxOpDiffProviderAddress,
-        decayBlockSpan,
       });
     };
 
@@ -83,9 +74,6 @@ describe("Feature: MocCABag edit Pegged Token", function () {
           tpRedeemFee: tpParamsDefault.redeemFee.add(5),
           tpEma: tpParamsDefault.initialEma.add(6), // -----> Note: Emma cannot be edited, intentionally added
           tpEmaSf: tpParamsDefault.smoothingFactor.add(7),
-          maxAbsoluteOpProviderAddress: priceProviders[1].address, // TODO: dummy address
-          maxOpDiffProviderAddress: priceProviders[1].address, // TODO: dummy address
-          decayBlockSpan: tpParamsDefault.decayBlockSpan + 8,
         };
         tx = await mocEditPeggedToken(mocImpl)(editParams);
       });
@@ -98,9 +86,6 @@ describe("Feature: MocCABag edit Pegged Token", function () {
           editParams.tpRedeemFee,
           editParams.tpEma, // Note: ema should not be edited, although the event has the value it vas passed on
           editParams.tpEmaSf,
-          priceProviders[1].address, // TODO: dummy address
-          priceProviders[1].address, // TODO: dummy address
-          editParams.decayBlockSpan,
         ]);
       });
       it("THEN ema value itself has not change, only SF", async () => {

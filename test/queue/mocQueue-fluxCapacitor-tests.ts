@@ -16,7 +16,6 @@ describe("Feature: MocQueue flux capacitor", function () {
     let executor: Address;
     let alice: Address;
     let bob: Address;
-    const TP_0 = 0;
     beforeEach(async function () {
       ({ deployer: executor, alice, bob } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
@@ -27,8 +26,8 @@ describe("Feature: MocQueue flux capacitor", function () {
       // add collateral
       await mocFunctions.mintTC({ from: alice, qTC: 100000000 });
 
-      await mocContracts.maxAbsoluteOpProviders[TP_0].poke(pEth(10000));
-      await mocContracts.maxOpDiffProviders[TP_0].poke(pEth(5000));
+      await mocContracts.maxAbsoluteOpProvider.poke(pEth(10000));
+      await mocContracts.maxOpDiffProvider.poke(pEth(5000));
     });
     describe("WHEN both Alice and Bob register a 4 valid operations", function () {
       let execTx: ContractTransaction;

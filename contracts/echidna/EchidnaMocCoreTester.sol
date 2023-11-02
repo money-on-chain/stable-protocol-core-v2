@@ -96,7 +96,10 @@ contract EchidnaMocCoreTester {
                 bes: 30 days,
                 tcInterestCollectorAddress: mocFeeFlow,
                 tcInterestRate: (1 * PRECISION) / 10, // 0.1%
-                tcInterestPaymentBlockSpan: 7 days
+                tcInterestPaymentBlockSpan: 7 days,
+                maxAbsoluteOpProviderAddress: address(0),
+                maxOpDiffProviderAddress: address(0),
+                decayBlockSpan: 720
             });
         MocCore.InitializeCoreParams memory initializeCoreParams = MocCore.InitializeCoreParams({
             initializeBaseBucketParams: initializeBaseBucketParams,
@@ -123,10 +126,7 @@ contract EchidnaMocCoreTester {
             tpMintFee: (5 * PRECISION) / 100, // 5%
             tpRedeemFee: (5 * PRECISION) / 100, // 5%
             tpEma: 212 * PRECISION,
-            tpEmaSf: (5 * PRECISION) / 100, // 0.05
-            maxAbsoluteOpProviderAddress: address(0),
-            maxOpDiffProviderAddress: address(0),
-            decayBlockSpan: 720
+            tpEmaSf: (5 * PRECISION) / 100 // 0.05
         });
         addPeggedToken(peggedTokenParams, 235 ether);
 

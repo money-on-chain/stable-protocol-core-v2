@@ -65,14 +65,6 @@ contract MocCoreExpansion is MocCommons {
         tpiou.push();
         // reverts if price provider is invalid
         pACtpLstop.push(_getPACtp(newTPindex));
-        maxAbsoluteOpProvider[peggedTokenParams_.tpTokenAddress] = IDataProvider(
-            peggedTokenParams_.maxAbsoluteOpProviderAddress
-        );
-        maxOpDiffProvider[peggedTokenParams_.tpTokenAddress] = IDataProvider(
-            peggedTokenParams_.maxOpDiffProviderAddress
-        );
-        decayBlockSpan[peggedTokenParams_.tpTokenAddress] = peggedTokenParams_.decayBlockSpan;
-        lastOperationBlockNumber[peggedTokenParams_.tpTokenAddress] = block.number;
         // emit the event
         emit PeggedTokenChange(newTPindex, peggedTokenParams_);
     }
@@ -220,9 +212,6 @@ contract MocCoreExpansion is MocCommons {
             swapTPforTPFee
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
-        // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnRedeemTP(params_.tpFrom, qACtotalToRedeem);
-        _updateAccumulatorsOnMintTP(params_.tpTo, qACtotalToRedeem);
         _depositAndMintTP(iTo, qTPtoMint, 0, params_.recipient);
         _withdrawAndBurnTP(iFrom, params_.qTP, 0, operator);
     }
@@ -281,7 +270,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnRedeemTP(params_.tp, qACtotalToRedeem);
+        _updateAccumulatorsOnRedeemTP(qACtotalToRedeem);
         _withdrawAndBurnTP(i, params_.qTP, 0, operator);
         _depositAndMintTC(qTCtoMint, 0, params_.recipient);
     }
@@ -346,7 +335,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnMintTP(params_.tp, qACtotalToRedeem);
+        _updateAccumulatorsOnMintTP(qACtotalToRedeem);
         _withdrawAndBurnTC(params_.qTC, 0, operator);
         _depositAndMintTP(i, qTPtoMint, 0, params_.recipient);
     }

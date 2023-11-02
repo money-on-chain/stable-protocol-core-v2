@@ -42,6 +42,9 @@ export function mocInitialize(
     tcInterestCollectorAddress = mocAddresses.tcInterestCollectorAddress,
     tcInterestRate = coreParams.tcInterestRate,
     tcInterestPaymentBlockSpan = coreParams.tcInterestPaymentBlockSpan,
+    maxAbsoluteOpProviderAddress = mocAddresses.maxAbsoluteOpProviderAddress,
+    maxOpDiffProviderAddress = mocAddresses.maxOpDiffProviderAddress,
+    decayBlockSpan = coreParams.decayBlockSpan,
   }: {
     mocGovernorAddress?: Address;
     mocPauserAddress?: Address;
@@ -71,6 +74,9 @@ export function mocInitialize(
     tcInterestCollectorAddress?: Address;
     tcInterestRate?: BigNumberish;
     tcInterestPaymentBlockSpan?: BigNumberish;
+    maxAbsoluteOpProviderAddress?: Address;
+    maxOpDiffProviderAddress?: Address;
+    decayBlockSpan?: BigNumberish;
   } = {}) => {
     return mocCARC20.initialize({
       initializeCoreParams: {
@@ -97,6 +103,9 @@ export function mocInitialize(
           tcInterestCollectorAddress,
           tcInterestRate,
           tcInterestPaymentBlockSpan,
+          maxAbsoluteOpProviderAddress,
+          maxOpDiffProviderAddress,
+          decayBlockSpan,
         },
         governorAddress: mocGovernorAddress,
         pauserAddress: mocPauserAddress,

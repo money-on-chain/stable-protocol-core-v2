@@ -74,6 +74,9 @@ abstract contract MocCore is MocCommons {
      *        tcInterestCollectorAddress TC interest collector address
      *        tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
      *        tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
+     *        maxAbsoluteOpProviderAddress max absolute operation provider address
+     *        maxOpDiffProviderAddress max operation difference provider address
+     *        decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      *        emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *        mocVendors address for MocVendors contract.
      */
@@ -400,7 +403,7 @@ abstract contract MocCore is MocCommons {
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTPMinted(params_, qACtotalNeeded, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnMintTP(params_.tp, qACNeededtoMint);
+        _updateAccumulatorsOnMintTP(qACNeededtoMint);
         // update bucket and mint
         _depositAndMintTP(i, params_.qTP, qACNeededtoMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -454,7 +457,7 @@ abstract contract MocCore is MocCommons {
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTPRedeemed(params_, qACtoRedeem, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnRedeemTP(params_.tp, qACtoRedeem);
+        _updateAccumulatorsOnRedeemTP(qACtoRedeem);
         _withdrawAndBurnTP(i, params_.qTP, qACtotalToRedeem, operator);
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
@@ -525,7 +528,7 @@ abstract contract MocCore is MocCommons {
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         onTCandTPMinted(params_, qTCtoMint, qACtotalNeeded, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnMintTP(params_.tp, qACtoMintTP);
+        _updateAccumulatorsOnMintTP(qACtoMintTP);
         _depositAndMintTC(qTCtoMint, qACNeededtoMint, params_.recipient);
         _depositAndMintTP(i, params_.qTP, 0, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
@@ -609,7 +612,7 @@ abstract contract MocCore is MocCommons {
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
-        _updateAccumulatorsOnRedeemTP(params_.tp, qACtoRedeemTP);
+        _updateAccumulatorsOnRedeemTP(qACtoRedeemTP);
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
         _withdrawAndBurnTP(i, qTPtoRedeem, 0, operator);
 

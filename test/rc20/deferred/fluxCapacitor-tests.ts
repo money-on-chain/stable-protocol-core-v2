@@ -45,8 +45,8 @@ describe("Feature: MocCARC20Deferred Flux capacitor", function () {
       // initialize alice with some TP0
       await mocFunctions.mintTP({ from: alice, qTP: 23500000 });
 
-      await mocContracts.maxAbsoluteOpProviders[TP_0].poke(pEth(10000));
-      await mocContracts.maxOpDiffProviders[TP_0].poke(pEth(5000));
+      await mocContracts.maxAbsoluteOpProvider.poke(pEth(10000));
+      await mocContracts.maxOpDiffProvider.poke(pEth(5000));
     });
     describe("WHEN an user registers a mint TP operation, exceeding the max flux capacitor parameter", function () {
       beforeEach(async function () {

@@ -35,6 +35,9 @@ contract MocCACoinbase is MocCoreShared {
      *      tcInterestCollectorAddress TC interest collector address
      *      tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
      *      tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
+     *      maxAbsoluteOpProviderAddress max absolute operation provider address
+     *      maxOpDiffProviderAddress max operation difference provider address
+     *      decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *      mocVendors address for MocVendors contract
      */

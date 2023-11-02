@@ -24,14 +24,6 @@ struct PeggedTokenParams {
     uint256 tpEma;
     // Pegged Token smoothing factor [PREC]
     uint256 tpEmaSf;
-    // absolute maximum transaction allowed for a certain number of blocks
-    // if absoluteAccumulator is above this value the operation will be rejected
-    address maxAbsoluteOpProviderAddress;
-    // differential maximum transaction allowed for a certain number of blocks
-    // if operationalDifference is above this value the operation will be rejected
-    address maxOpDiffProviderAddress;
-    // number of blocks that have to elapse for the linear decay factor to be 0
-    uint256 decayBlockSpan;
 }
 
 //    +-----------------+
@@ -281,20 +273,19 @@ abstract contract MocCommons is MocEma {
 
     /**
      * @notice ask to oracles for flux capacitor settings
-     * @param tp_ Pegged Token address
      * @return absolute maximum transaction allowed for a certain number of blocks
      * @return differential maximum transaction allowed for a certain number of blocks
      */
-    function _peekFluxCapacitorSettings(address tp_) internal view returns (uint256, uint256) {
+    function _peekFluxCapacitorSettings() internal view returns (uint256, uint256) {
         bytes32 maxAbsoluteOp;
         bytes32 maxOpDiff;
         bool has;
         // get max absolute operation
-        IDataProvider dataProvider = maxAbsoluteOpProvider[tp_];
+        IDataProvider dataProvider = maxAbsoluteOpProvider;
         (maxAbsoluteOp, has) = dataProvider.peek();
         if (!has) revert MissingProviderData(address(dataProvider));
         // get max operational difference
-        dataProvider = maxOpDiffProvider[tp_];
+        dataProvider = maxOpDiffProvider;
         (maxOpDiff, has) = dataProvider.peek();
         if (!has) revert MissingProviderData(address(dataProvider));
         return (uint256(maxAbsoluteOp), uint256(maxOpDiff));
@@ -302,26 +293,24 @@ abstract contract MocCommons is MocEma {
 
     /**
      * @notice returns lineal decay factor
-     * @param tp_ Pegged Token address
      * @param blocksAmount_ amount of blocks to ask for the decay
      * @return newAbsoluteAccumulator absolute accumulator updated by lineal decay factor [N]
      * @return newDifferentialAccumulator differential accumulator updated by lineal decay factor [N]
      */
     function _calcAccWithDecayFactor(
-        address tp_,
         uint256 blocksAmount_
     ) internal view returns (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) {
         unchecked {
             // [N] = [N] - [N]
-            uint256 blocksElapsed = block.number + blocksAmount_ - lastOperationBlockNumber[tp_];
+            uint256 blocksElapsed = block.number + blocksAmount_ - lastOperationBlockNumber;
             // [PREC] = [N] * [PREC] / [N]
-            uint256 blocksRatio = (blocksElapsed * PRECISION) / decayBlockSpan[tp_];
+            uint256 blocksRatio = (blocksElapsed * PRECISION) / decayBlockSpan;
             if (blocksRatio >= ONE) return (0, 0);
             uint256 decayFactor = ONE - blocksRatio;
             // [N] = [N] * [PREC] / [PREC]
-            newAbsoluteAccumulator = (absoluteAccumulator[tp_] * decayFactor) / PRECISION;
+            newAbsoluteAccumulator = (absoluteAccumulator * decayFactor) / PRECISION;
             // [N] = [N] * [PREC] / [PREC]
-            newDifferentialAccumulator = (differentialAccumulator[tp_] * int256(decayFactor)) / int256(PRECISION);
+            newDifferentialAccumulator = (differentialAccumulator * int256(decayFactor)) / int256(PRECISION);
             return (newAbsoluteAccumulator, newDifferentialAccumulator);
         }
     }
@@ -331,14 +320,13 @@ abstract contract MocCommons is MocEma {
      *  reverts if not allowed
      * @dev the only difference between a redeem and a mint operation is that in the first one,
      * the qAC is subtracted on newDifferentialAccumulator instead of added
-     * @param tp_ Pegged Token address
      * @param qAC_ amount of Collateral Asset used to mint
      * @param redeemFlag_ true if it is a redeem TP operation
      */
-    function _updateAccumulators(address tp_, uint256 qAC_, bool redeemFlag_) internal {
-        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings(tp_);
+    function _updateAccumulators(uint256 qAC_, bool redeemFlag_) internal {
+        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings();
         if (qAC_ > maxAbsoluteOperation) revert InvalidFluxCapacitorOperation();
-        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(tp_, 0);
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(0);
         unchecked {
             newAbsoluteAccumulator += qAC_;
             int256 qACInt = int256(qAC_);
@@ -351,49 +339,45 @@ abstract contract MocCommons is MocEma {
             if (operationalDifference > maxOperationalDifference)
                 revert MaxFluxCapacitorOperationReached(maxOperationalDifference, operationalDifference);
             // update storage
-            absoluteAccumulator[tp_] = newAbsoluteAccumulator;
-            differentialAccumulator[tp_] = newDifferentialAccumulator;
-            lastOperationBlockNumber[tp_] = block.number;
+            absoluteAccumulator = newAbsoluteAccumulator;
+            differentialAccumulator = newDifferentialAccumulator;
+            lastOperationBlockNumber = block.number;
         }
     }
 
     /**
      * @notice update accumulators during a mint TP operation
      *  reverts if not allowed
-     * @param tp_ Pegged Token address
      * @param qAC_ amount of Collateral Asset used to mint
      */
-    function _updateAccumulatorsOnMintTP(address tp_, uint256 qAC_) internal {
-        _updateAccumulators(tp_, qAC_, false);
+    function _updateAccumulatorsOnMintTP(uint256 qAC_) internal {
+        _updateAccumulators(qAC_, false);
     }
 
     /**
      * @notice update accumulators during a redeem operation
      *  reverts if not allowed
-     * @param tp_ Pegged Token address
      * @param qAC_ reserve amount used for redeem
      */
-    function _updateAccumulatorsOnRedeemTP(address tp_, uint256 qAC_) internal {
-        _updateAccumulators(tp_, qAC_, true);
+    function _updateAccumulatorsOnRedeemTP(uint256 qAC_) internal {
+        _updateAccumulators(qAC_, true);
     }
 
     /**
      * @notice internal common function used to calc max AC allowed to mint or redeem TP
      *  due to accumulators
      * // TODO: move this function to a MocView contract
-     * @param tp_ Pegged Token address
      * @param newAbsoluteAccumulator_ absolute accumulator updated by lineal decay factor [N]
      * @param a_ on mint = AA - DA ; on redeem = AA + DA
      * @param b_ on mint = AA + DA ; on redeem = AA - DA
      * @return maxQAC minimum regarding maxAbsoluteOperation and maxOperationalDifference
      */
     function _calcMaxQACToOperateTP(
-        address tp_,
         uint256 newAbsoluteAccumulator_,
         uint256 a_,
         uint256 b_
     ) internal view returns (uint256 maxQAC) {
-        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings(tp_);
+        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings();
         if (newAbsoluteAccumulator_ >= maxAbsoluteOperation) return 0;
         uint256 absoluteAccAllowed = maxAbsoluteOperation - newAbsoluteAccumulator_;
 
@@ -406,11 +390,10 @@ abstract contract MocCommons is MocEma {
     /**
      * @notice gets the max amount of AC allowed to operate to mint TP with, restricted by accumulators
      * // TODO: move this function to a MocView contract
-     * @param tp_ Pegged Token address
      * @return maxQAC minimum regarding maxAbsoluteOperation and maxOperationalDifference
      */
-    function maxQACToMintTP(address tp_) external view returns (uint256 maxQAC) {
-        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(tp_, 1);
+    function maxQACToMintTP() external view returns (uint256 maxQAC) {
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(1);
         // X = mint amount
         // (AA + X) - |DA + X| <= MODA && X >= 0
         // 1) if DA + X >= 0 ---> AA + X - DA - X <= MODA ---> AA - DA <= MODA
@@ -419,17 +402,16 @@ abstract contract MocCommons is MocEma {
         // AA >= |DA|
         uint256 a = uint256(int256(newAbsoluteAccumulator) - newDifferentialAccumulator);
         uint256 b = uint256(int256(newAbsoluteAccumulator) + newDifferentialAccumulator);
-        return _calcMaxQACToOperateTP(tp_, newAbsoluteAccumulator, a, b);
+        return _calcMaxQACToOperateTP(newAbsoluteAccumulator, a, b);
     }
 
     /**
      * @notice gets the max amount of AC allowed to operate to redeem TP with, restricted by accumulators
      * // TODO: move this function to a MocView contract
-     * @param tp_ Pegged Token address
      * @return maxQAC minimum regarding maxAbsoluteOperation and maxOperationalDifference
      */
-    function maxQACToRedeemTP(address tp_) external view returns (uint256 maxQAC) {
-        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(tp_, 1);
+    function maxQACToRedeemTP() external view returns (uint256 maxQAC) {
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(1);
         // X = redeem amount
         // (AA + X) - |DA - X| <= MODA && X >= 0
         // 1) if DA - X < 0 ---> AA + X + DA - X <= MODA ---> AA + DA <= MODA
@@ -438,7 +420,7 @@ abstract contract MocCommons is MocEma {
         // AA >= |DA|
         uint256 a = uint256(int256(newAbsoluteAccumulator) + newDifferentialAccumulator);
         uint256 b = uint256(int256(newAbsoluteAccumulator) - newDifferentialAccumulator);
-        return _calcMaxQACToOperateTP(tp_, newAbsoluteAccumulator, a, b);
+        return _calcMaxQACToOperateTP(newAbsoluteAccumulator, a, b);
     }
 
     /**

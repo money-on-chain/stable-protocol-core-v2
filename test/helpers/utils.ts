@@ -98,9 +98,6 @@ export const tpParamsDefault = {
   redeemFee: PCT_BASE.mul(5).div(100), // 5%
   initialEma: PCT_BASE, // 1
   smoothingFactor: PCT_BASE.mul(47619048).div(10000000000), // 0,047619048
-  maxAbsoluteOp: CONSTANTS.MAX_UINT256,
-  maxOpDiff: CONSTANTS.MAX_UINT256,
-  decayBlockSpan: 2880,
 };
 
 export const tpParams = [
@@ -145,9 +142,6 @@ const getTPparams = ({
   redeemFee = tpParamsDefault.redeemFee,
   initialEma = tpParamsDefault.initialEma,
   smoothingFactor = tpParamsDefault.smoothingFactor,
-  maxAbsoluteOp = tpParamsDefault.maxAbsoluteOp,
-  maxOpDiff = tpParamsDefault.maxOpDiff,
-  decayBlockSpan = tpParamsDefault.decayBlockSpan,
 }) => {
   return {
     price,
@@ -156,9 +150,6 @@ const getTPparams = ({
     redeemFee,
     initialEma,
     smoothingFactor,
-    maxAbsoluteOp,
-    maxOpDiff,
-    decayBlockSpan,
   };
 };
 
@@ -169,20 +160,14 @@ export async function deployAndAddPeggedTokens(
 ): Promise<{
   mocPeggedTokens: MocRC20[];
   priceProviders: PriceProviderMock[];
-  maxAbsoluteOpProviders: DataProviderMock[];
-  maxOpDiffProviders: DataProviderMock[];
 }> {
   const mocPeggedTokens: Array<MocRC20> = [];
   const priceProviders: Array<PriceProviderMock> = [];
-  const maxAbsoluteOpProviders: Array<DataProviderMock> = [];
-  const maxOpDiffProviders: Array<DataProviderMock> = [];
   const governorAddress = await mocImpl.governor();
   for (let i = 0; i < amountPegTokens; i++) {
     const peggedToken = await deployPeggedToken({ adminAddress: mocImpl.address, governorAddress });
     const params = tpParams ? getTPparams(tpParams[i]) : getTPparams({});
     const priceProvider = await deployPriceProvider(params.price);
-    const maxAbsoluteOpProvider = await deployDataProvider(params.maxAbsoluteOp);
-    const maxOpDiffProvider = await deployDataProvider(params.maxOpDiff);
     await mocImpl.addPeggedToken({
       tpTokenAddress: peggedToken.address,
       priceProviderAddress: priceProvider.address,
@@ -191,16 +176,11 @@ export async function deployAndAddPeggedTokens(
       tpRedeemFee: params.redeemFee,
       tpEma: params.initialEma,
       tpEmaSf: params.smoothingFactor,
-      maxAbsoluteOpProviderAddress: maxAbsoluteOpProvider.address,
-      maxOpDiffProviderAddress: maxOpDiffProvider.address,
-      decayBlockSpan: params.decayBlockSpan,
     });
     mocPeggedTokens.push(peggedToken);
     priceProviders.push(priceProvider);
-    maxAbsoluteOpProviders.push(maxAbsoluteOpProvider);
-    maxOpDiffProviders.push(maxOpDiffProvider);
   }
-  return { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders };
+  return { mocPeggedTokens, priceProviders };
 }
 
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {

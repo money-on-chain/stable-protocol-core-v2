@@ -12,6 +12,7 @@ import {
   PriceProviderMock,
   PriceProviderMock__factory,
   DataProviderMock,
+  DataProviderMock__factory,
 } from "../../typechain";
 import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
 
@@ -27,8 +28,8 @@ export const fixtureDeployedMocRC20 = memoizee(
     collateralAsset: ERC20Mock;
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
-    maxAbsoluteOpProviders: DataProviderMock[];
-    maxOpDiffProviders: DataProviderMock[];
+    maxAbsoluteOpProvider: DataProviderMock;
+    maxOpDiffProvider: DataProviderMock;
   }>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
@@ -49,11 +50,12 @@ export const fixtureDeployedMocRC20 = memoizee(
       // initialize vendor with 10% markup
       await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
 
-      const { mocPeggedTokens, priceProviders, maxAbsoluteOpProviders, maxOpDiffProviders } =
-        await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
+      const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 
       const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
       const feeTokenPriceProvider = PriceProviderMock__factory.connect(await mocImpl.feeTokenPriceProvider(), signer);
+      const maxAbsoluteOpProvider = DataProviderMock__factory.connect(await mocImpl.maxAbsoluteOpProvider(), signer);
+      const maxOpDiffProvider = DataProviderMock__factory.connect(await mocImpl.maxOpDiffProvider(), signer);
 
       return {
         mocImpl,
@@ -64,8 +66,8 @@ export const fixtureDeployedMocRC20 = memoizee(
         mocVendors,
         feeToken,
         feeTokenPriceProvider,
-        maxAbsoluteOpProviders,
-        maxOpDiffProviders,
+        maxAbsoluteOpProvider,
+        maxOpDiffProvider,
       };
     });
   },

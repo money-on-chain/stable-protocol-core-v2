@@ -2,6 +2,7 @@ import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
 import { Address } from "hardhat-deploy/types";
+import { CONSTANTS } from "../test/helpers/utils";
 
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,
@@ -245,6 +246,8 @@ export const deployCARC20 = async (
     mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress,
     tcInterestCollectorAddress,
+    maxAbsoluteOpProviderAddress,
+    maxOpDiffProviderAddress,
   } = mocAddresses;
 
   // for tests and testnet we deploy a Governor Mock
@@ -265,6 +268,10 @@ export const deployCARC20 = async (
 
     const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
     feeTokenPriceProviderAddress = (await priceProviderMockFactory.deploy(ethers.utils.parseEther("1"))).address;
+
+    const DataProviderMockFactory = await ethers.getContractFactory("DataProviderMock");
+    maxAbsoluteOpProviderAddress = (await DataProviderMockFactory.deploy(CONSTANTS.MAX_UINT256)).address;
+    maxOpDiffProviderAddress = (await DataProviderMockFactory.deploy(CONSTANTS.MAX_UINT256)).address;
   }
   const mocCARC20 = await deployUUPSArtifact({
     hre,
@@ -296,6 +303,9 @@ export const deployCARC20 = async (
             tcInterestCollectorAddress,
             tcInterestRate: coreParams.tcInterestRate,
             tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+            maxAbsoluteOpProviderAddress,
+            maxOpDiffProviderAddress,
+            decayBlockSpan: coreParams.decayBlockSpan,
           },
           governorAddress,
           pauserAddress,

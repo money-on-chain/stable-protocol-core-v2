@@ -108,6 +108,7 @@ const config: HardhatUserConfig = {
           appreciationFactor: PCT_BASE.mul(50).div(100), // 50%
           tcInterestRate: PCT_BASE.mul(5).div(100000), // 0.005% : weekly 0.0025 / 365 * 7
           tcInterestPaymentBlockSpan: WEEK_BLOCK_SPAN,
+          decayBlockSpan: DAY_BLOCK_SPAN,
         },
         settlementParams: {
           bes: MONTH_BLOCK_SPAN,
@@ -137,6 +138,8 @@ const config: HardhatUserConfig = {
           vendorsGuardianAddress: "0x26a00AF444928D689DDeC7b4D17c0E4a8C9d407E",
           tcInterestCollectorAddress: "0x27a00Af444928D689DDec7B4D17c0E4a8c9d407F",
           authorizedExecutors: [],
+          maxAbsoluteOpProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
+          maxOpDiffProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
         },
         queueParams: {
           minOperWaitingBlk: 1,
