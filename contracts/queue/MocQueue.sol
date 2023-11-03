@@ -6,6 +6,8 @@ import { MocCore, MocCommons } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+/* solhint-disable-next-line max-line-length */
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
@@ -14,7 +16,7 @@ bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
 /**
  * @title MocQueue: Allows queue Operation deferral execution processing
  */
-contract MocQueue is MocQueueExecFees {
+contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // ------- Events -------
     event OperationError(uint256 operId_, bytes4 errorCode_, string msg_);
     event UnhandledError(uint256 operId_, bytes reason_);
@@ -205,6 +207,7 @@ contract MocQueue is MocQueueExecFees {
         __AccessControl_init();
         __MocUpgradable_init(governor_, pauser_);
         __MocQueueExecFees_init(mocQueueExecFeesParams_);
+        __ReentrancyGuard_init();
         // TODO:
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         minOperWaitingBlk = minOperWaitingBlk_;
@@ -811,7 +814,7 @@ contract MocQueue is MocQueueExecFees {
      * @dev does not revert on Operation failure, throws Process and Error
      * events according to the Oper type and result
      */
-    function execute(address executionFeeRecipient) external notPaused onlyRole(EXECUTOR_ROLE) {
+    function execute(address executionFeeRecipient) external notPaused nonReentrant onlyRole(EXECUTOR_ROLE) {
         uint256 operId = firstOperId;
         uint256 lastOperId;
         unchecked {
