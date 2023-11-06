@@ -33,7 +33,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     tcInterestCollectorAddress,
   } = mocAddresses;
 
-  const governorAddress = getGovernorAddresses(hre);
+  const governorAddress = await getGovernorAddresses(hre);
   // for tests we deploy a FeeToken mock and its price provider
   if (hre.network.tags.local) {
     const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
@@ -87,7 +87,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
-    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCACoinbase, tpParams);
+    const mocCore = await ethers.getContractAt("MocCACoinbase", mocCACoinbase.address, signer);
+    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCore, tpParams);
   }
   return hre.network.live; // prevents re execution on live networks
 };

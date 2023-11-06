@@ -36,7 +36,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   } = mocAddresses;
 
   // for tests and testnet we deploy a Governor Mock
-  const governorAddress = getGovernorAddresses(hre);
+  const governorAddress = await getGovernorAddresses(hre);
 
   // for tests we deploy a Collateral Asset mock, a FeeToken mock and its price provider
   if (hre.network.tags.local) {
@@ -103,7 +103,8 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   console.log("initialization completed!");
   // for testnet we add some Pegged Token and then transfer governance to the real governor
   if (hre.network.tags.testnet) {
-    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
+    const mocCore = await ethers.getContractAt("MocCARC20", mocCARC20.address, signer);
+    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCore, tpParams);
   }
   return hre.network.live; // prevents re execution on live networks
 };
