@@ -11,6 +11,8 @@ import { GovernorMock } from "../mocks/upgradeability/GovernorMock.sol";
 import { ERC20Mock } from "../mocks/ERC20Mock.sol";
 import { PriceProviderMock } from "../mocks/PriceProviderMock.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
+import { DataProviderMock } from "../mocks/DataProviderMock.sol";
+import { IDataProvider } from "../interfaces/IDataProvider.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -27,6 +29,7 @@ contract EchidnaMocCoreTester {
     GovernorMock internal governor;
     ERC20Mock internal feeToken;
     IPriceProvider internal feeTokenPriceProvider;
+    IDataProvider internal fluxCapacitorProvider;
     MocTC internal tcToken;
     ERC20Mock internal acToken;
     MocVendors internal mocVendors;
@@ -61,6 +64,7 @@ contract EchidnaMocCoreTester {
         acToken = new ERC20Mock();
         feeToken = new ERC20Mock();
         feeTokenPriceProvider = new PriceProviderMock(1 ether);
+        fluxCapacitorProvider = new DataProviderMock(UINT256_MAX);
         tcToken = MocTC(_deployProxy(address(new MocTC())));
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
         mocCoreExpansion = address(new MocCoreExpansion());
@@ -97,8 +101,8 @@ contract EchidnaMocCoreTester {
                 tcInterestCollectorAddress: mocFeeFlow,
                 tcInterestRate: (1 * PRECISION) / 10, // 0.1%
                 tcInterestPaymentBlockSpan: 7 days,
-                maxAbsoluteOpProviderAddress: address(0),
-                maxOpDiffProviderAddress: address(0),
+                maxAbsoluteOpProviderAddress: address(fluxCapacitorProvider),
+                maxOpDiffProviderAddress: address(fluxCapacitorProvider),
                 decayBlockSpan: 720
             });
         MocCore.InitializeCoreParams memory initializeCoreParams = MocCore.InitializeCoreParams({
@@ -512,4 +516,6 @@ contract EchidnaMocCoreTester {
         }
         return nAccbIsOk && nTCcbIsOk && nTPIsOk;
     }
+
+    // TODO: add flux capacitor invariant
 }

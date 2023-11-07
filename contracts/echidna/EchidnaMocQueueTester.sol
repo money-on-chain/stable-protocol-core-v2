@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import { MocCAWrapper, MocCARC20 } from "../collateral/collateralBag/MocCAWrapper.sol";
+import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
 import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
+import { MocQueue } from "../queue/MocQueue.sol";
+import { MocQueueExecFees } from "../queue/MocQueueExecFees.sol";
 import { MocTC } from "../tokens/MocTC.sol";
 import { MocRC20 } from "../tokens/MocRC20.sol";
 import { MocVendors } from "../vendors/MocVendors.sol";
@@ -13,57 +15,51 @@ import { PriceProviderMock } from "../mocks/PriceProviderMock.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 import { DataProviderMock } from "../mocks/DataProviderMock.sol";
 import { IDataProvider } from "../interfaces/IDataProvider.sol";
-import { PriceProviderShifter } from "../utils/PriceProviderShifter.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-/**
- * @title EchidnaMocWrapperTester
- * @notice This test purpose is to check that operating with assets with different decimals than 18 doesn't affect
- * the wrapped token price
- */
-contract EchidnaMocWrapperTester {
+bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+uint256 constant EXEC_FEE = 100 wei;
+
+contract EchidnaMocQueueTester {
     uint256 internal constant PRECISION = 10 ** 18;
     uint256 internal constant UINT256_MAX = ~uint256(0);
 
-    uint256 internal constant MAX_PEGGED_TOKENS = 5;
-    uint256 internal constant MAX_ASSETS = 5;
+    uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
 
-    MocCARC20 internal mocCARC20;
+    MocCARC20Deferred internal mocCARC20;
+    MocQueue internal mocQueue;
     GovernorMock internal governor;
     ERC20Mock internal feeToken;
-    MocTC internal tcToken;
     IPriceProvider internal feeTokenPriceProvider;
     IDataProvider internal fluxCapacitorProvider;
+    MocTC internal tcToken;
     ERC20Mock internal acToken;
     MocVendors internal mocVendors;
     address internal mocCoreExpansion;
     address internal mocFeeFlow;
     address internal mocAppreciationBeneficiary;
-
-    uint256 internal totalPeggedTokensAdded;
-
-    MocCAWrapper internal mocWrapper;
-
-    ERC20Mock[] internal assetsAdded;
+    address internal executionFeeRecipient;
 
     constructor() payable {
         mocFeeFlow = address(1);
         mocAppreciationBeneficiary = address(2);
+        executionFeeRecipient = address(3);
+
         governor = new GovernorMock();
         acToken = new ERC20Mock();
         feeToken = new ERC20Mock();
         feeTokenPriceProvider = new PriceProviderMock(1 ether);
         fluxCapacitorProvider = new DataProviderMock(UINT256_MAX);
         tcToken = MocTC(_deployProxy(address(new MocTC())));
-        mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
-        mocWrapper = MocCAWrapper(_deployProxy(address(new MocCAWrapper())));
+        mocCARC20 = MocCARC20Deferred(_deployProxy(address(new MocCARC20Deferred())));
         mocCoreExpansion = address(new MocCoreExpansion());
         mocVendors = MocVendors(_deployProxy(address(new MocVendors())));
+        mocQueue = MocQueue(_deployProxy(address(new MocQueue())));
 
         // initialize Vendors
         mocVendors.initialize(/*vendorGuardian */ msg.sender, address(governor), /*pauserAddress*/ msg.sender);
 
-        // initialize Collateral Token, with this as admin to later on transferAll roles
+        // initialize Collateral Token
         tcToken.initialize("TCToken", "TC", address(this), governor);
 
         // initialize mocCore
@@ -103,14 +99,34 @@ contract EchidnaMocWrapperTester {
             emaCalculationBlockSpan: 1 days,
             mocVendors: address(mocVendors)
         });
-        MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
+        MocCARC20Deferred.InitializeParams memory initializeParams = MocCARC20Deferred.InitializeParams({
             initializeCoreParams: initializeCoreParams,
-            acTokenAddress: address(acToken)
+            acTokenAddress: address(acToken),
+            mocQueue: address(mocQueue)
         });
         mocCARC20.initialize(initializeParams);
-        mocWrapper.initialize(address(governor), msg.sender, address(mocCARC20), address(acToken));
 
-        // transfer roles
+        // initialize mocQueue
+        mocQueue.initialize(
+            address(governor), // governor
+            msg.sender, // pauser
+            10, // minOperWaitingBlk
+            MocQueueExecFees.InitializeMocQueueExecFeesParams({
+                tcMintExecFee: EXEC_FEE,
+                tcRedeemExecFee: EXEC_FEE,
+                tpMintExecFee: EXEC_FEE,
+                tpRedeemExecFee: EXEC_FEE,
+                swapTPforTPExecFee: EXEC_FEE,
+                swapTPforTCExecFee: EXEC_FEE,
+                swapTCforTPExecFee: EXEC_FEE,
+                redeemTCandTPExecFee: EXEC_FEE,
+                mintTCandTPExecFee: EXEC_FEE
+            })
+        );
+        mocQueue.registerBucket(mocCARC20);
+        mocQueue.grantRole(EXECUTOR_ROLE, address(this));
+
+        // transfer roles to mocCARC20
         tcToken.transferAllRoles(address(mocCARC20));
 
         // add a Pegged Token
@@ -121,70 +137,87 @@ contract EchidnaMocWrapperTester {
             tpMintFee: (5 * PRECISION) / 100, // 5%
             tpRedeemFee: (5 * PRECISION) / 100, // 5%
             tpEma: 212 * PRECISION,
-            tpEmaSf: (5 * PRECISION) / 100 // 0.05,
+            tpEmaSf: (5 * PRECISION) / 100 // 0.05
         });
-        addPeggedToken(peggedTokenParams, 235 ether);
-        // start with 0 total supply
-        acToken.burn(acToken.balanceOf(address(this)));
+        _addPeggedToken(peggedTokenParams, 235 ether);
 
-        addAsset(18);
-        addAsset(6);
+        // mint all Collateral Asset to echidna
+        acToken.mint(address(this), UINT256_MAX - acToken.totalSupply());
+
+        // mint TC tokens to echidna
+        acToken.approve(address(mocCARC20), 30000 ether);
+        mocCARC20.mintTC{ value: EXEC_FEE }(3000 ether, 30000 ether);
+
+        // mint TP 0 tokens to echidna
+        acToken.approve(address(mocCARC20), 1000 ether);
+        address tp0 = address(mocCARC20.tpTokens(0));
+        mocCARC20.mintTP{ value: EXEC_FEE }(tp0, 23500 ether, 1000 ether);
     }
 
-    function addPeggedToken(PeggedTokenParams memory peggedTokenParams_, uint96 price_) public {
-        require(totalPeggedTokensAdded < MAX_PEGGED_TOKENS, "max TP already added");
+    function _addPeggedToken(PeggedTokenParams memory peggedTokenParams_, uint96 price_) internal {
         MocRC20 tpToken = MocRC20(_deployProxy(address(new MocRC20())));
         // initialize Pegged Token
         tpToken.initialize("TPToken", "TP", address(mocCARC20), governor);
         peggedTokenParams_.tpTokenAddress = address(tpToken);
+        peggedTokenParams_.tpMintFee = peggedTokenParams_.tpMintFee % PRECISION;
+        peggedTokenParams_.tpRedeemFee = peggedTokenParams_.tpRedeemFee % PRECISION;
         // price not 0
         price_++;
         peggedTokenParams_.priceProviderAddress = address(new PriceProviderMock(price_));
         mocCARC20.addPeggedToken(peggedTokenParams_);
-        totalPeggedTokensAdded++;
     }
 
-    function pokePrice(uint256 i_, uint96 price_) public {
+    function pokePrice(uint96 price_) public {
         // price not 0
         price_++;
-        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(i_ % totalPeggedTokensAdded);
+        (, IPriceProvider priceProvider) = mocCARC20.pegContainer(0);
         PriceProviderMock(address(priceProvider)).poke(price_);
     }
 
-    function addAsset(uint8 decimals_) public {
-        require(assetsAdded.length < MAX_ASSETS, "max assets already added");
-        ERC20Mock asset = new ERC20Mock();
-        // max decimals considered is 24
-        uint8 decimals = decimals_ % 24;
-        asset.setDecimals(decimals);
-
-        mocWrapper.addOrEditAsset(
-            asset,
-            new PriceProviderShifter(new PriceProviderMock(1 ether), int8(18 - decimals)),
-            decimals
-        );
-        assetsAdded.push(asset);
+    function mintTC(uint256 qTC_, uint256 qACmax_) public virtual {
+        mocCARC20.mintTC{ value: EXEC_FEE }(qTC_, qACmax_);
     }
 
-    function mintTC(uint8 assetIndex_, uint256 qTC_) public {
-        ERC20Mock asset = assetsAdded[assetIndex_ % assetsAdded.length];
-        asset.mint(address(this), qTC_ * 2);
-        asset.approve(address(mocWrapper), qTC_ * 2);
-        mocWrapper.mintTC(address(asset), qTC_, qTC_ * 2);
+    function redeemTC(uint256 qTC_) public virtual {
+        mocCARC20.redeemTC{ value: EXEC_FEE }(qTC_, 0);
     }
 
-    function redeemTC(uint8 assetIndex_, uint256 qTC_) public {
-        ERC20Mock asset = assetsAdded[assetIndex_ % assetsAdded.length];
-        mocCARC20.tcToken().approve(address(mocWrapper), qTC_);
-        mocWrapper.redeemTC(address(asset), qTC_, 0);
+    function mintTP(uint256 qTP_, uint256 qACmax_) public {
+        address tpi = address(mocCARC20.tpTokens(0));
+        mocCARC20.mintTP{ value: EXEC_FEE }(tpi, qTP_, qACmax_);
+    }
+
+    function redeemTP(uint256 qTP_) public {
+        address tpi = address(mocCARC20.tpTokens(0));
+        mocCARC20.redeemTP{ value: EXEC_FEE }(tpi, qTP_, 0);
+    }
+
+    function execute() public {
+        require(!mocQueue.isEmpty());
+
+        uint256 executionFeeRecipientBalanceBefore = executionFeeRecipient.balance;
+        uint256 tcBalanceBefore = tcToken.balanceOf(address(this));
+        uint256 tpBalanceBefore = mocCARC20.tpTokens(0).balanceOf(address(this));
+        uint256 operIdBefore = mocQueue.firstOperId();
+
+        mocQueue.execute(executionFeeRecipient);
+
+        uint256 executionFeeRecipientBalanceAfter = executionFeeRecipient.balance;
+        uint256 tcBalanceAfter = tcToken.balanceOf(address(this));
+        uint256 tpBalanceAfter = mocCARC20.tpTokens(0).balanceOf(address(this));
+        uint256 operIdAfter = mocQueue.firstOperId();
+
+        // some operation has to succeed
+        require(tcBalanceBefore != tcBalanceAfter || tpBalanceBefore != tpBalanceAfter);
+
+        uint256 operAmount = operIdAfter - operIdBefore;
+        assert(operAmount <= mocQueue.MAX_OPER_PER_BATCH());
+        assert(executionFeeRecipientBalanceAfter - executionFeeRecipientBalanceBefore == EXEC_FEE * operAmount);
+        assert(mocCARC20.getCglb() >= mocCARC20.calcCtargemaCA());
     }
 
     function _deployProxy(address implementation) internal returns (address) {
         return address(new ERC1967Proxy(implementation, ""));
-    }
-
-    function echidna_wrappedTokenPrice_always_ONE() public view returns (bool) {
-        return mocWrapper.getTokenPrice() == PRECISION;
     }
 
     // TODO: add flux capacitor invariant
