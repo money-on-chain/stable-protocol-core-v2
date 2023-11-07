@@ -171,6 +171,7 @@ contract MocCoreExpansion is MocCommons {
         MintTCandTPParams memory params_
     )
         external
+        payable
         notLiquidated
         notPaused
         returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
@@ -233,6 +234,7 @@ contract MocCoreExpansion is MocCommons {
         address operator
     )
         external
+        payable
         notLiquidated
         notPaused
         returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)

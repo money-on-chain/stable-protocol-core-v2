@@ -7,7 +7,6 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { IDispatcher } from "../../interfaces/IDispatcher.sol";
 
 /**
  * @title MocCARC20Deferred: Moc Collateral Asset RC20 with deferred operations
@@ -19,7 +18,6 @@ contract MocCARC20Deferred is MocCore {
         InitializeCoreParams initializeCoreParams;
         // Collateral Asset Token contract address
         address acTokenAddress;
-        // TODO: address dispatcherAddress;
         address mocQueue;
     }
 
@@ -31,8 +29,6 @@ contract MocCARC20Deferred is MocCore {
     // amount of AC locked on pending operations
     uint256 public qACLockedInPending;
 
-    // Dispatcher
-    IDispatcher public dispatcher;
     // Queue
     MocQueue public mocQueue;
 
@@ -78,8 +74,6 @@ contract MocCARC20Deferred is MocCore {
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
         acToken = IERC20(initializeParams_.acTokenAddress);
-        // TODO: initialize with a real dispatcher
-        dispatcher = IDispatcher(address(0));
         __MocCore_init(initializeParams_.initializeCoreParams);
         mocQueue = MocQueue(initializeParams_.mocQueue);
     }
@@ -162,61 +156,6 @@ contract MocCARC20Deferred is MocCore {
     function onTPSwappedForTP(SwapTPforTPParams memory p_, uint256 qTP_, FeeCalcs memory fc_) internal override {}
 
     /* solhint-enable no-empty-blocks */
-
-    /**
-     * @notice get combined global coverage
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     * @return cglob [PREC]
-     */
-    function _getCglb(uint256 lckAC_, uint256 nACgain_) internal view override returns (uint256 cglob) {
-        cglob = super._getCglb(lckAC_, nACgain_);
-        //TODO: remove address != 0 check once we have real dispatcher implementation
-        if (dispatcher != IDispatcher(address(0))) cglob = dispatcher.getCombinedCglb(cglob);
-        return cglob;
-    }
-
-    /**
-     * @notice get real amount of Collateral Token available to redeem
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     * @return tcAvailableToRedeem [N]
-     */
-    function _getTCAvailableToRedeem(
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view override returns (uint256 tcAvailableToRedeem) {
-        tcAvailableToRedeem = super._getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
-        //TODO: remove address != 0 check once we have real dispatcher implementation
-        if (dispatcher != IDispatcher(address(0)))
-            tcAvailableToRedeem = dispatcher.getRealTCAvailableToRedeem(tcAvailableToRedeem);
-        return tcAvailableToRedeem;
-    }
-
-    /**
-     * @notice get real amount of Pegged Token available to mint
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset
-     * @param ctargemaTP_ target coverage adjusted by the moving average of the value of a Pegged Token
-     * @param pACtp_ Collateral Asset price in amount of Pegged Token [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     * @return tpAvailableToMint [N]
-     */
-    function _getTPAvailableToMint(
-        uint256 ctargemaCA_,
-        uint256 ctargemaTP_,
-        uint256 pACtp_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view override returns (uint256 tpAvailableToMint) {
-        tpAvailableToMint = super._getTPAvailableToMint(ctargemaCA_, ctargemaTP_, pACtp_, lckAC_, nACgain_);
-        //TODO: remove address != 0 check once we have real dispatcher implementation
-        if (dispatcher != IDispatcher(address(0)))
-            tpAvailableToMint = dispatcher.getRealTPAvailableToMint(tpAvailableToMint);
-        return tpAvailableToMint;
-    }
 
     /**
      * @notice while registering a pending Operation, we need to lock user's funds until it's executed
