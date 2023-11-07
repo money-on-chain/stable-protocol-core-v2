@@ -72,6 +72,25 @@ abstract contract MocCommons is MocEma {
 
     // ------- Internal Structs -------
 
+    struct MintTCandTPParams {
+        address tp;
+        uint256 qTP;
+        uint256 qACmax;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
+    struct RedeemTCandTPParams {
+        address tp;
+        uint256 qTC;
+        uint256 qTP;
+        uint256 qACmin;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
     struct SwapTPforTPParams {
         address tpFrom;
         address tpTo;
@@ -134,6 +153,8 @@ abstract contract MocCommons is MocEma {
     error MissingProviderData(address dataProviderAddress_);
     error MaxFluxCapacitorOperationReached(uint256 max_, uint256 new_);
     error InvalidFluxCapacitorOperation();
+    error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
+    error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
 
     // ------- Events -------
 

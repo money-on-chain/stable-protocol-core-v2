@@ -518,7 +518,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             bytes4 errorSelector = bytes4(returnData);
             if (errorSelector == MocCommons.InsufficientTCtoRedeem.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient tc to redeem");
-            } else if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
+            } else if (errorSelector == MocCommons.QacBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qAC below minimum required");
             } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
                 emit OperationError(operId_, errorSelector, "Low coverage");
@@ -588,7 +588,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
                 // after blocks pass and the flux capacitor is free again
                 emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
                 return false;
-            } else if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
+            } else if (errorSelector == MocCommons.QacBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qAC below minimum required");
             } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
                 emit OperationError(operId_, errorSelector, "Low coverage");
@@ -666,9 +666,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
                 // after blocks pass and the flux capacitor is free again
                 emit OperationError(operId_, errorSelector, "Max flux capacitor operation reached");
                 return false;
-            } else if (errorSelector == MocCore.InsufficientQtpSent.selector) {
+            } else if (errorSelector == MocCommons.InsufficientQtpSent.selector) {
                 emit OperationError(operId_, errorSelector, "Insufficient tp sent");
-            } else if (errorSelector == MocCore.QacBelowMinimumRequired.selector) {
+            } else if (errorSelector == MocCommons.QacBelowMinimumRequired.selector) {
                 emit OperationError(operId_, errorSelector, "qAC below minimum required");
             } else if (errorSelector == MocBaseBucket.LowCoverage.selector) {
                 emit OperationError(operId_, errorSelector, "Low coverage");
