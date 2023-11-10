@@ -28,7 +28,7 @@ const gasEstimationBehavior = function () {
     Object.assign(gasSummaries, { [op]: gasData(gasUsed) });
   };
 
-  describe("Feature: gas estimation", function () {
+  describe("Feature: queuing gas estimation", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
@@ -44,16 +44,17 @@ const gasEstimationBehavior = function () {
       });
       describe("WHEN executes Moc operations", function () {
         it("THEN block gas left is over 50% of block gas limit in each one", async function () {
+          const common = { from: deployer, qTC: 1, qTP: 100, execute: false };
           const ops = {
-            mintTC: () => mocFunctions.mintTC({ from: deployer, qTC: 100 }),
-            redeemTC: () => mocFunctions.redeemTC({ from: deployer, qTC: 100 }),
-            mintTP: () => mocFunctions.mintTP({ from: deployer, qTP: 100 }),
-            redeemTP: () => mocFunctions.redeemTP({ from: deployer, qTP: 100 }),
-            swapTPforTP: () => mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: deployer, qTP: 100 }),
-            swapTPforTC: () => mocFunctions.swapTPforTC({ from: deployer, qTP: 100 }),
-            swapTCforTP: () => mocFunctions.swapTCforTP({ from: deployer, qTC: 100 }),
-            redeemTCandTP: () => mocFunctions.redeemTCandTP({ from: deployer, qTC: 1, qTP: 100 }),
-            mintTCandTP: () => mocFunctions.mintTCandTP({ from: deployer, qTP: 100 }),
+            mintTC: () => mocFunctions.mintTC({ ...common }),
+            redeemTC: () => mocFunctions.redeemTC({ ...common }),
+            mintTP: () => mocFunctions.mintTP({ ...common }),
+            redeemTP: () => mocFunctions.redeemTP({ ...common }),
+            swapTPforTP: () => mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, ...common }),
+            swapTPforTC: () => mocFunctions.swapTPforTC({ ...common }),
+            swapTCforTP: () => mocFunctions.swapTCforTP({ ...common }),
+            redeemTCandTP: () => mocFunctions.redeemTCandTP({ ...common }),
+            mintTCandTP: () => mocFunctions.mintTCandTP({ ...common }),
             execSettlement: async () => {
               await mineUpTo(await mocContracts.mocImpl.bns());
               return mocContracts.mocImpl.execSettlement();

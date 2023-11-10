@@ -1,5 +1,5 @@
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
-import { gasEstimationBehavior } from "../behaviors/gas-estimation.behavior";
+import { gasEstimationBehavior } from "../behaviors/gas-estimation-queue.behavior";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
 // Gets excluded from coverage by regEx "gas estimation"
