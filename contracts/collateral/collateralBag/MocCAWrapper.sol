@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { MocCARC20, IERC20, SafeERC20 } from "../rc20/MocCARC20.sol";
 import { IMocRC20, IERC20Upgradeable } from "../../interfaces/IMocRC20.sol";

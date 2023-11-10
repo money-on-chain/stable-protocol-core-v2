@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 /* solhint-disable-next-line max-line-length */
 import { UUPSUpgradeable, UpgraderUUPSChangerTemplate } from "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";

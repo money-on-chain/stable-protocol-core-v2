@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { MocQueueExecFees } from "./MocQueueExecFees.sol";
 import { MocCore, MocCommons } from "../core/MocCore.sol";

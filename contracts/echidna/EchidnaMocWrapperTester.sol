@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { MocCAWrapper, MocCARC20 } from "../collateral/collateralBag/MocCAWrapper.sol";
 import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";

@@ -98,7 +98,7 @@ Or if you want more flexibility, first execute the command
 and once inside the docker container run
 
 ```sh
-solc-select 0.8.18
+solc-select 0.8.20
 cd project
 ```
 
