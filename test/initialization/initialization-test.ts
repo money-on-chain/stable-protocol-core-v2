@@ -1,46 +1,34 @@
 import { expect } from "chai";
-import hre, { deployments, ethers } from "hardhat";
-import { getNetworkDeployParams } from "../../scripts/utils";
-import {
-  MocCARC20,
-  MocCoreExpansion,
-  MocCARC20__factory,
-  MocCAWrapper,
-  MocCAWrapper__factory,
-  MocRC20,
-  MocVendors,
-} from "../../typechain";
+import { deployments, ethers } from "hardhat";
+import { MocCARC20, MocCoreExpansion, MocCARC20__factory, MocRC20, MocVendors, ERC20Mock } from "../../typechain";
 import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
-import { fixtureDeployedMocCABag } from "./fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 import { mocInitialize } from "./initializers";
 
-describe("Feature: MocCABag initialization", function () {
+describe("Feature: MocCARC20 initialization", function () {
   let mocProxy: MocCARC20;
-  let mocWrapper: MocCAWrapper;
-  let wcaToken: MocRC20;
+  let collateralAsset: ERC20Mock;
   let mocCollateralToken: MocRC20;
   let mocInit: any;
   let mocCoreExpansion: MocCoreExpansion;
   let mocVendors: MocVendors;
-  const { governorAddress, pauserAddress } = getNetworkDeployParams(hre).mocAddresses;
   before(async () => {
     ({
       mocImpl: mocProxy,
       mocCoreExpansion,
-      mocWrapper,
       mocCollateralToken,
-      wcaToken,
+      collateralAsset,
       mocVendors,
-    } = await fixtureDeployedMocCABag(0)());
+    } = await fixtureDeployedMocRC20(0)());
     mocInit = mocInitialize(
       mocProxy,
-      wcaToken.address,
+      collateralAsset.address,
       mocCollateralToken.address,
       mocCoreExpansion.address,
       mocVendors.address,
     );
   });
-  describe("GIVEN a MocCABag implementation deployed", () => {
+  describe("GIVEN a MocCARC20 implementation deployed", () => {
     describe("WHEN initialize mocProxy again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
         await expect(mocInit()).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
@@ -50,13 +38,13 @@ describe("Feature: MocCABag initialization", function () {
       let mocImplementation: MocCARC20;
       it("THEN tx fails because contract is already initialized", async () => {
         mocImplementation = MocCARC20__factory.connect(
-          (await deployments.get("MocCABagProxy")).implementation!,
+          (await deployments.get("MocCARC20Proxy")).implementation!,
           ethers.provider.getSigner(),
         );
         await expect(
           mocInitialize(
             mocImplementation,
-            wcaToken.address,
+            collateralAsset.address,
             mocCollateralToken.address,
             mocCoreExpansion.address,
             mocVendors.address,
@@ -64,28 +52,9 @@ describe("Feature: MocCABag initialization", function () {
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
-    describe("WHEN initialize mocWrapper again", async () => {
-      it("THEN tx fails because contract is already initialized", async () => {
-        await expect(
-          mocWrapper.initialize(governorAddress, pauserAddress, mocProxy.address, wcaToken.address),
-        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
-      });
-    });
-    describe("WHEN initialize the mocWrapper implementation", async () => {
-      let mocWrapperImplementation: MocCAWrapper;
-      it("THEN tx fails because contract is already initialized", async () => {
-        mocWrapperImplementation = MocCAWrapper__factory.connect(
-          (await deployments.get("MocCAWrapperProxy")).implementation!,
-          ethers.provider.getSigner(),
-        );
-        await expect(
-          mocWrapperImplementation.initialize(governorAddress, pauserAddress, mocProxy.address, wcaToken.address),
-        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
-      });
-    });
   });
 
-  describe("GIVEN a new MocCABag instance", () => {
+  describe("GIVEN a new MocCARC20 instance", () => {
     let newMocInit: any;
     before(async () => {
       const mocCARC20Factory = await ethers.getContractFactory("MocCARC20");
@@ -102,7 +71,7 @@ describe("Feature: MocCABag initialization", function () {
       });
       newMocInit = mocInitialize(
         newMocImpl,
-        wcaToken.address,
+        collateralAsset.address,
         newMocTC.address,
         mocCoreExpansion.address,
         mocVendors.address,

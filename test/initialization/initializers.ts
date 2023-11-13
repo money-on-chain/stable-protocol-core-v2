@@ -8,7 +8,7 @@ const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDepl
 
 export function mocInitialize(
   mocCARC20: MocCARC20,
-  wcaToken: Address,
+  acToken: Address,
   mocTC: Address,
   mocCoreExpansion: Address,
   mocVendors: Address,
@@ -18,7 +18,7 @@ export function mocInitialize(
     mocPauserAddress = mocAddresses.pauserAddress,
     feeTokenAddress = mocAddresses.feeTokenAddress,
     feeTokenPriceProviderAddress = mocAddresses.feeTokenPriceProviderAddress,
-    wcaTokenAddress = wcaToken,
+    acTokenAddress = acToken,
     mocTCAddress = mocTC,
     mocCoreExpansionAddress = mocCoreExpansion,
     feeFlowAddress = mocAddresses.mocFeeFlowAddress,
@@ -50,7 +50,7 @@ export function mocInitialize(
     mocPauserAddress?: Address;
     feeTokenAddress?: Address;
     feeTokenPriceProviderAddress?: Address;
-    wcaTokenAddress?: Address;
+    acTokenAddress?: Address;
     mocTCAddress?: Address;
     mocCoreExpansionAddress?: Address;
     feeFlowAddress?: Address;
@@ -113,7 +113,7 @@ export function mocInitialize(
         emaCalculationBlockSpan,
         mocVendors: mocVendorsAddress,
       },
-      acTokenAddress: wcaTokenAddress,
+      acTokenAddress,
     });
   };
 }

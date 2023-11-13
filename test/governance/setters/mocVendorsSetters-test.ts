@@ -13,7 +13,7 @@ const fixtureDeploy = memoizee(
       await deployments.fixture();
       const signer = ethers.provider.getSigner();
 
-      const deployedMocVendors = await deployments.getOrNull("MocVendorsCABagProxy");
+      const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
       if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 

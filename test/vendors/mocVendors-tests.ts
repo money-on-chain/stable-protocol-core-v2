@@ -5,17 +5,17 @@ import { expect } from "chai";
 import { pEth, tpParams } from "../helpers/utils";
 import { MocVendors } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
-import { fixtureDeployedMocCABag } from "./fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
 let mocVendors: MocVendors;
 let vendor: Address;
 let vendorsGuardian: Address;
 let tx: ContractTransaction;
 
-describe("Feature: MocCABag vendors", function () {
-  describe("GIVEN a MocCABag implementation deployed", function () {
+describe("Feature: MocCARC20 vendors", function () {
+  describe("GIVEN a MocCARC20 implementation deployed", function () {
     beforeEach(async function () {
-      const fixtureDeploy = fixtureDeployedMocCABag(tpParams.length, tpParams);
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams);
       ({ mocVendors } = await fixtureDeploy());
       ({ otherUser: vendorsGuardian, vendor } = await getNamedAccounts());
 

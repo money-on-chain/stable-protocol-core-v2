@@ -3,9 +3,9 @@ import { BigNumberish, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { ERRORS, deployPriceProvider, pEth, tpParamsDefault } from "../helpers/utils";
 import { MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
-import { fixtureDeployedMocCABag } from "./fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
-describe("Feature: MocCABag edit Pegged Token", function () {
+describe("Feature: MocCARC20 edit Pegged Token", function () {
   let mocImpl: MocCARC20;
   let mocPeggedTokens: MocRC20[];
   let priceProviders: PriceProviderMock[];
@@ -39,9 +39,9 @@ describe("Feature: MocCABag edit Pegged Token", function () {
       });
     };
 
-  describe("GIVEN a MocCABag implementation with two PeggedToken", () => {
+  describe("GIVEN a MocCARC20 implementation with two PeggedToken", () => {
     beforeEach(async () => {
-      ({ mocImpl, mocPeggedTokens, priceProviders } = await fixtureDeployedMocCABag(2)());
+      ({ mocImpl, mocPeggedTokens, priceProviders } = await fixtureDeployedMocRC20(2)());
     });
     describe("WHEN a Pegged Token price provided edited using a deprecated provider", () => {
       let deprecatedPriceProvider: PriceProviderMock;

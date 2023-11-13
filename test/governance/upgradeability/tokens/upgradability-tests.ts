@@ -32,7 +32,7 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
 
     wrongChangeContract = await changerFactory.deploy(
       (
-        await deployments.get("CollateralTokenCABagProxy")
+        await deployments.get("CollateralTokenCARC20Proxy")
       ).implementation!,
       mocTCMockImpl.address,
     );

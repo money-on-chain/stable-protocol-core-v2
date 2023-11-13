@@ -6,7 +6,6 @@ import { Address } from "hardhat-deploy/types";
 import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
 import {
   ERC20Mock,
-  MocCAWrapper,
   MocCore,
   MocRC20,
   MocRC20__factory,
@@ -201,43 +200,11 @@ export async function deployAsset(): Promise<ERC20Mock> {
   return asset;
 }
 
-export async function deployAndAddAssets(
-  mocWrapper: MocCAWrapper,
-  amountAsset: number,
-): Promise<{ assets: ERC20Mock[]; assetPriceProviders: PriceProviderMock[] }> {
-  const assets: Array<ERC20Mock> = [];
-  const assetPriceProviders: Array<PriceProviderMock> = [];
-  for (let i = 0; i < amountAsset; i++) {
-    const asset = await deployAsset();
-    const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
-    assets.push(asset);
-    assetPriceProviders.push(priceProvider);
-  }
-  return { assets, assetPriceProviders };
-}
-
 export async function deployAssetERC777(): Promise<ERC777Mock> {
   const factory = await ethers.getContractFactory("ERC777Mock");
   const { deployer } = await getNamedAccounts();
   const asset = await factory.deploy([deployer]);
   return asset;
-}
-
-export async function deployAndAddAssetsERC777(
-  mocWrapper: MocCAWrapper,
-  amountAsset: number,
-): Promise<{ assets: ERC777Mock[]; assetPriceProviders: PriceProviderMock[] }> {
-  const assets: Array<ERC777Mock> = [];
-  const assetPriceProviders: Array<PriceProviderMock> = [];
-  for (let i = 0; i < amountAsset; i++) {
-    const asset = await deployAssetERC777();
-    const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
-    assets.push(asset);
-    assetPriceProviders.push(priceProvider);
-  }
-  return { assets, assetPriceProviders };
 }
 
 export type Balance = BigNumber;

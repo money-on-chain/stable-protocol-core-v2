@@ -1,7 +1,7 @@
 import { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
 import { ERC777Mock, ERC777Mock__factory, MocCARC20, MocCARC20__factory } from "../../../typechain";
-import { mocInitialize } from "../../collateralBag/initializers";
+import { mocInitialize } from "../../initialization/initializers";
 import {
   CONSTANTS,
   deployAndAddPeggedTokens,

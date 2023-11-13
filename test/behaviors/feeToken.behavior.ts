@@ -3,11 +3,10 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, expectEventFor, pEth } from "../helpers/utils";
-import { ERC20Mock, MocCACoinbase, MocCARC20, MocCAWrapper, PriceProviderMock } from "../../typechain";
+import { ERC20Mock, MocCACoinbase, MocCARC20, PriceProviderMock } from "../../typechain";
 
 const feeTokenBehavior = function () {
   let mocImpl: MocCACoinbase | MocCARC20;
-  let mocWrapper: MocCAWrapper;
   let feeToken: ERC20Mock;
   let feeTokenPriceProvider: PriceProviderMock;
   let mocContracts: any;
@@ -25,8 +24,8 @@ const feeTokenBehavior = function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;
       ({ alice, vendor } = await getNamedAccounts());
-      ({ feeToken, feeTokenPriceProvider, mocImpl, mocWrapper } = mocContracts);
-      operator = mocWrapper?.address || alice;
+      ({ feeToken, feeTokenPriceProvider, mocImpl } = mocContracts);
+      operator = alice;
       // give some TC to alice
       await mocFunctions.mintTC({ from: alice, qTC: 1000 });
       expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
@@ -41,7 +40,7 @@ const feeTokenBehavior = function () {
           tx = await mocFunctions.mintTC({ from: alice, qTC: 100 });
         });
         it("THEN a AC is used as fee payment method", async function () {
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: alice
           // qTC: 100 TC
           // qAC: 100 AC + 5% for Moc Fee Flow
@@ -55,7 +54,7 @@ const feeTokenBehavior = function () {
       describe("AND alice approves 25 Fee Token to Moc Core", function () {
         beforeEach(async function () {
           // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocWrapper?.address || mocImpl.address;
+          const spender = mocImpl.address;
           await feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(25));
         });
         describe("WHEN alice mints 10000 TC and doesn't have enough Fee Token allowance", function () {
@@ -64,7 +63,7 @@ const feeTokenBehavior = function () {
             tx = await mocFunctions.mintTC({ from: alice, qTC: 10000 });
           });
           it("THEN a AC is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTC: 10000 TC
             // qAC: 10000 AC + 5% for Moc Fee Flow
@@ -79,12 +78,12 @@ const feeTokenBehavior = function () {
         describe("WHEN alice mints 10000 TC and doesn't have enough Fee Token balance", function () {
           beforeEach(async function () {
             // for collateral bag implementation approve must be set to Moc Wrapper contract
-            const spender = mocWrapper?.address || mocImpl.address;
+            const spender = mocImpl.address;
             await feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(10000));
             tx = await mocFunctions.mintTC({ from: alice, qTC: 10000 });
           });
           it("THEN a AC is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTC: 10000 TC
             // qAC: 10000 AC + 5% for Moc Fee Flow
@@ -105,7 +104,7 @@ const feeTokenBehavior = function () {
               tx = await mocFunctions.mintTC({ from: alice, qTC: 100 });
             });
             it("THEN a AC is used as fee payment method", async function () {
-              // sender: alice || mocWrapper
+              // sender: alice
               // receiver: alice
               // qTC: 100 TC
               // qAC: 100 AC + 5% for Moc Fee Flow
@@ -123,7 +122,7 @@ const feeTokenBehavior = function () {
             tx = await mocFunctions.mintTC({ from: alice, qTC: 100 });
           });
           it("THEN Fee Token is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTC: 100 TC
             // qAC: 100 AC
@@ -140,7 +139,7 @@ const feeTokenBehavior = function () {
             tx = await mocFunctions.redeemTC({ from: alice, qTC: 100 });
           });
           it("THEN Fee Token is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTC: 100 TC
             // qAC: 100 AC
@@ -171,7 +170,7 @@ const feeTokenBehavior = function () {
             assertPrec(10, diff);
           });
           it("THEN a TCMinted event is emitted", async function () {
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTC: 100 TC
             // qAC: 100 AC
@@ -202,8 +201,8 @@ const feeTokenBehavior = function () {
             assertPrec(10, diff);
           });
           it("THEN a TCRedeemed event is emitted", async function () {
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qAC: 100 AC
             // qACfee: 0
@@ -224,7 +223,7 @@ const feeTokenBehavior = function () {
               tx = await mocFunctions.mintTC({ from: alice, qTC: 100 });
             });
             it("THEN 25 Fee Token are spent instead of 2.5", async function () {
-              // sender: alice || mocWrapper
+              // sender: alice
               // receiver: alice
               // qTC: 100 TC
               // qAC: 100 AC
@@ -241,8 +240,8 @@ const feeTokenBehavior = function () {
               tx = await mocFunctions.redeemTC({ from: alice, qTC: 100 });
             });
             it("THEN 25 Fee Token are spent instead of 2.5", async function () {
-              // sender: alice || mocWrapper
-              // receiver: alice || mocWrapper
+              // sender: alice
+              // receiver: alice
               // qTC: 100 TC
               // qAC: 100 AC
               // qACfee: 0 AC
@@ -264,7 +263,7 @@ const feeTokenBehavior = function () {
               tx = await mocFunctions.mintTC({ from: alice, qTC: 100 });
             });
             it("THEN 0.25 Fee Token are spent instead of 2.5", async function () {
-              // sender: alice || mocWrapper
+              // sender: alice
               // receiver: alice
               // qTC: 100 TC
               // qAC: 100 AC
@@ -281,8 +280,8 @@ const feeTokenBehavior = function () {
               tx = await mocFunctions.redeemTC({ from: alice, qTC: 100 });
             });
             it("THEN 0.25 Fee Token are spent instead of 2.5", async function () {
-              // sender: alice || mocWrapper
-              // receiver: alice || mocWrapper
+              // sender: alice
+              // receiver: alice
               // qTC: 100 TC
               // qAC: 100 AC
               // qACfee: 0 AC

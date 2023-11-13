@@ -8,7 +8,6 @@ pragma solidity 0.8.20;
 import { UUPSUpgradeable, UpgraderUUPSChangerTemplate } from "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
 import { MocCACoinbase } from "../../collateral/coinbase/MocCACoinbase.sol";
 import { MocCARC20 } from "../../collateral/rc20/MocCARC20.sol";
-import { MocCAWrapper } from "../../collateral/collateralBag/MocCAWrapper.sol";
 
 /**
  * @title UpgradableMock
@@ -41,16 +40,6 @@ contract MocCoinbaseMock is MocCACoinbase, UpgradableMock {
 contract MocCARC20Mock is MocCARC20, UpgradableMock {
     function getCustomMockValue() external view override returns (uint256) {
         return newVariable + (protThrld / PRECISION);
-    }
-}
-
-/**
- * @title MocCARC20Mock
- * @dev Only for upgradeability testing purposes. Extends MocCARC20Mock adding a new variable.
- */
-contract MocCAWrapperMock is MocCAWrapper, UpgradableMock {
-    function getCustomMockValue() external view override returns (uint256) {
-        return newVariable + (mocCore.protThrld() / PRECISION);
     }
 }
 

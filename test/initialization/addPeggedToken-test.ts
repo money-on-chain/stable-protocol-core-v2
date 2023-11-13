@@ -3,9 +3,9 @@ import { BigNumberish, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { ERRORS, deployPeggedToken, deployPriceProvider, pEth, tpParamsDefault } from "../helpers/utils";
 import { MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
-import { fixtureDeployedMocCABag } from "./fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
-describe("Feature: MocCABag add Pegged Token", function () {
+describe("Feature: MocCARC20 add Pegged Token", function () {
   let mocImpl: MocCARC20;
   let mocPeggedToken: MocRC20;
   let priceProvider: PriceProviderMock;
@@ -39,9 +39,9 @@ describe("Feature: MocCABag add Pegged Token", function () {
       });
     };
 
-  describe("GIVEN a MocCABag implementation deployed", () => {
+  describe("GIVEN a MocCARC20 implementation deployed", () => {
     beforeEach(async () => {
-      ({ mocImpl } = await fixtureDeployedMocCABag(0)());
+      ({ mocImpl } = await fixtureDeployedMocRC20(0)());
       const governorAddress = await mocImpl.governor();
       mocPeggedToken = await deployPeggedToken({ adminAddress: mocImpl.address, governorAddress });
       priceProvider = await deployPriceProvider(pEth(1));

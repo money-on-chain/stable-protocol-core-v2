@@ -13,6 +13,8 @@ import {
   PriceProviderMock__factory,
   DataProviderMock,
   DataProviderMock__factory,
+  MocCoreExpansion,
+  MocCoreExpansion__factory,
 } from "../../typechain";
 import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
 
@@ -26,6 +28,8 @@ export const fixtureDeployedMocRC20 = memoizee(
     mocPeggedTokens: MocRC20[];
     priceProviders: PriceProviderMock[];
     collateralAsset: ERC20Mock;
+    mocCoreExpansion: MocCoreExpansion;
+    mocVendors: MocVendors;
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
     maxAbsoluteOpProvider: DataProviderMock;
@@ -38,6 +42,13 @@ export const fixtureDeployedMocRC20 = memoizee(
       const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
       if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
       const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
+
+      const deployedMocExpansionContract = await deployments.getOrNull("MocCARC20Expansion");
+      if (!deployedMocExpansionContract) throw new Error("No MocCARC20Expansion deployed.");
+      const mocCoreExpansion: MocCoreExpansion = MocCoreExpansion__factory.connect(
+        deployedMocExpansionContract.address,
+        signer,
+      );
 
       const mocVendors: MocVendors = MocVendors__factory.connect(await mocImpl.mocVendors(), signer);
       const mocCollateralToken: MocRC20 = MocRC20__factory.connect(await mocImpl.tcToken(), signer);
@@ -63,6 +74,7 @@ export const fixtureDeployedMocRC20 = memoizee(
         mocPeggedTokens,
         priceProviders,
         collateralAsset,
+        mocCoreExpansion,
         mocVendors,
         feeToken,
         feeTokenPriceProvider,

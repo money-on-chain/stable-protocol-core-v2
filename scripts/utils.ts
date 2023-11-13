@@ -1,7 +1,6 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
-import { Address } from "hardhat-deploy/types";
 import { CONSTANTS } from "../test/helpers/utils";
 
 export const waitForTxConfirmation = async (
@@ -171,50 +170,6 @@ export const addPeggedTokensAndChangeGovernor = async (
     }),
   );
   console.log(`mocCore governor is now: ${governorAddress}`);
-};
-
-export const addAssetsAndChangeGovernor = async (
-  hre: HardhatRuntimeEnvironment,
-  governorAddress: string,
-  mocWrapperAddress: Address,
-  assetParams: any,
-) => {
-  const signer = ethers.provider.getSigner();
-  const mocWrapper = await ethers.getContractAt("MocCAWrapper", mocWrapperAddress, signer);
-  const gasLimit = getNetworkDeployParams(hre).gasLimit;
-  if (assetParams) {
-    for (let i = 0; i < assetParams.assetParams.length; i++) {
-      console.log(`Adding ${assetParams.assetParams[i].assetAddress} as Asset ${i}...`);
-      let priceProvider = assetParams.assetParams[i].priceProvider;
-      if (assetParams.assetParams[i].decimals < 18) {
-        console.log("Deploying price provider shifter");
-        const shifterFactory = await ethers.getContractFactory("PriceProviderShifter");
-        const shiftedPriceProvider = await shifterFactory.deploy(
-          assetParams.assetParams[i].priceProvider,
-          18 - assetParams.assetParams[i].decimals,
-        );
-        priceProvider = shiftedPriceProvider.address;
-        console.log(`price provider shifter deployed at: ${priceProvider}`);
-      }
-      await waitForTxConfirmation(
-        mocWrapper.addOrEditAsset(
-          assetParams.assetParams[i].assetAddress,
-          priceProvider,
-          assetParams.assetParams[i].decimals,
-          {
-            gasLimit,
-          },
-        ),
-      );
-    }
-  }
-  console.log("Renouncing temp governance...");
-  await waitForTxConfirmation(
-    mocWrapper.changeGovernor(governorAddress, {
-      gasLimit,
-    }),
-  );
-  console.log(`MocCAWrapper governor is now: ${governorAddress}`);
 };
 
 export const deployCARC20 = async (
