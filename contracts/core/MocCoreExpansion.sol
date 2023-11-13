@@ -172,8 +172,6 @@ contract MocCoreExpansion is MocCommons {
     )
         external
         payable
-        notLiquidated
-        notPaused
         returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         uint256 qACNeededtoMint;
@@ -235,8 +233,6 @@ contract MocCoreExpansion is MocCommons {
     )
         external
         payable
-        notLiquidated
-        notPaused
         returns (uint256 qACtoRedeem, uint256 qTPtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _updateEmasAndCalcCtargemaCA();
