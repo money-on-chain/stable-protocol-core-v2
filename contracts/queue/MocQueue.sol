@@ -2,9 +2,10 @@
 pragma solidity 0.8.20;
 
 import { MocQueueExecFees } from "./MocQueueExecFees.sol";
-import { MocCore, MocCommons } from "../core/MocCore.sol";
+import { MocCore } from "../core/MocCore.sol";
+import { MocCommons } from "../core/MocCommons.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
-import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
+import { MocDeferred } from "../core/MocDeferred.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 /* solhint-disable-next-line max-line-length */
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -159,8 +160,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // ------- Storage -------
 
     // mocCore bucket that would be able to queue
-    MocCARC20Deferred public mocCore;
-
+    MocDeferred public mocCore;
     // Amount of Operations created
     uint256 public operIdCount;
     // first operation to be executed

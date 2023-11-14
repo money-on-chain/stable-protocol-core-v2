@@ -116,118 +116,6 @@ abstract contract MocCore is MocCommons {
      */
     function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal virtual returns (uint256 change);
 
-    /**
-     * @notice hook after the TC is minted, with operation information result
-     * @param params_ mintTCto function params
-     * @param qACtotalNeeded_ amount of AC used to mint qTC
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTCMinted(
-        MintTCParams memory params_,
-        uint256 qACtotalNeeded_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice hook after the TC is redeemed, with operation information result
-     * @param params_ mintTCto function params
-     * @param qACRedeemed_ amount of AC redeemed
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTCRedeemed(
-        RedeemTCParams memory params_,
-        uint256 qACRedeemed_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice hook after the TP is minted, with operation information result
-     * @param params_ mintTP functions params
-     * @param qACtotalNeeded_ amount of AC needed to mint qTP
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTPMinted(
-        MintTPParams memory params_,
-        uint256 qACtotalNeeded_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice Hook after the TP is redeemed, with operation information result
-     * @param params_ redeemTPto function params
-     * @param qACRedeem_ amount of AC redeemed
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTPRedeemed(
-        RedeemTPParams memory params_,
-        uint256 qACRedeem_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice Hook after the TC and TP are minted, with operation information result
-     * @param params_ mintTCandTPto function params
-     * @param qTCMinted_ amount of qTC minted for the given qTP
-     * @param qACtotalNeeded_ total amount of AC needed to mint qTC and qTP
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTCandTPMinted(
-        MintTCandTPParams memory params_,
-        uint256 qTCMinted_,
-        uint256 qACtotalNeeded_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice Hook after the TC and TP are redeemed, with operation information result
-     * @param params_ redeemTCandTPto function params
-     * @param qTPRedeemed_ total amount of TP redeemed
-     * @param qACRedeemed_ total amount of AC redeemed
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTCandTPRedeemed(
-        RedeemTCandTPParams memory params_,
-        uint256 qTPRedeemed_,
-        uint256 qACRedeemed_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice Hook after the TC is swapped for TP, with operation information result
-     * @param params_ swapTCforTP function params
-     * @param qTPMinted_ total amount of TP minted
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTCSwappedForTP(
-        SwapTCforTPParams memory params_,
-        uint256 qTPMinted_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice Hook after the TP is swapped for TC, with operation information result
-     * @param params_ swapTPforTC function params
-     * @param qTCMinted_ total amount of TC minted
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTPSwappedForTC(
-        SwapTPforTCParams memory params_,
-        uint256 qTCMinted_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
-    /**
-     * @notice Hook after the TP is swapped for another TP, with operation information result
-     * @param params_ swapTPforTP function params
-     * @param qTPMinted_ total amount of TP minted
-     * @param feeCalcs_ platform fee detail breakdown
-     */
-    function onTPSwappedForTP(
-        SwapTPforTPParams memory params_,
-        uint256 qTPMinted_,
-        FeeCalcs memory feeCalcs_
-    ) internal virtual;
-
     // ------- Internal Functions -------
 
     struct MintTCParams {
@@ -277,7 +165,6 @@ abstract contract MocCore is MocCommons {
         // if is 0 reverts because it is trying to redeem an amount below precision
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        onTCMinted(params_, qACtotalNeeded, feeCalcs);
         _depositAndMintTC(params_.qTC, qACNeededToMint, params_.recipient);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers any AC change to the sender and distributes fees
@@ -337,7 +224,6 @@ abstract contract MocCore is MocCommons {
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
-        onTCRedeemed(params_, qACtoRedeem, feeCalcs);
         // use msg.sender, as the token "source" is always the actual tx sender
         _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator_);
         // transfers qAC to the recipient and distributes fees
@@ -399,7 +285,6 @@ abstract contract MocCore is MocCommons {
         // if is 0 reverts because it is trying to mint an amount below precision
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
-        onTPMinted(params_, qACtotalNeeded, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
         _updateAccumulatorsOnMintTP(qACNeededtoMint);
         // update bucket and mint
@@ -453,7 +338,6 @@ abstract contract MocCore is MocCommons {
         // slither-disable-next-line incorrect-equality
         if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
-        onTPRedeemed(params_, qACtoRedeem, feeCalcs);
         // update flux capacitor and reverts if not allowed by accumulators
         _updateAccumulatorsOnRedeemTP(qACtoRedeem);
         _withdrawAndBurnTP(i, params_.qTP, qACtotalToRedeem, operator);
@@ -493,7 +377,6 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        onTCandTPMinted(params_, qTCtoMint, qACtotalNeeded, feeCalcs);
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
         // transfers qAC to the sender and distributes fees
         _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
@@ -533,8 +416,6 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        onTCandTPRedeemed(params_, qTPtoRedeem, qACtoRedeem, feeCalcs);
-
         // transfers qAC to the recipient and distributes fees
         _distOpResults(params_.sender, params_.recipient, qACtoRedeem, params_.vendor, feeCalcs);
     }
@@ -572,7 +453,6 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        onTPSwappedForTP(params_, qTPMinted, feeCalcs);
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
@@ -609,7 +489,6 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        onTPSwappedForTC(params_, qTCMinted, feeCalcs);
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
@@ -646,8 +525,6 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        onTCSwappedForTP(params_, qTPtoMint, feeCalcs);
-
         // AC is only used to pay fees and markup
         uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
         // transfer any qAC change to the sender and distribute fees
