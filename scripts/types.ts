@@ -103,6 +103,8 @@ export type DeployParameters = {
   queueParams: {
     // min amount of blocks the Operation should wait in the Queue before execution
     minOperWaitingBlk: number;
+    // max amount of Operations that can be executed on a single batch
+    maxOperPerBatch: number;
     execFeeParams: {
       tpMintExecFee: BigNumber;
       tpRedeemExecFee: BigNumber;

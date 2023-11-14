@@ -196,12 +196,17 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // min amount of blocks the Operation should wait in the Queue before execution
     uint256 public minOperWaitingBlk;
 
+    // max amount of Operations that can be executed on a single batch,
+    // gas restricted batch size to guarantee no gas limit failure
+    uint256 public maxOperPerBatch;
+
     // ------- Initializer -------
 
     function initialize(
         address governor_,
         address pauser_,
         uint256 minOperWaitingBlk_,
+        uint256 maxOperPerBatch_,
         InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_
     ) external initializer {
         __AccessControl_init();
@@ -211,6 +216,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
         // TODO:
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         minOperWaitingBlk = minOperWaitingBlk_;
+        maxOperPerBatch = maxOperPerBatch_;
     }
 
     // ------- Internal Functions -------
@@ -851,10 +857,6 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
     // ------- External Functions -------
 
-    // TODO: define this number and move to constant section
-    // Gas restricted batch size to guarantee no gas limit failure
-    uint256 public constant MAX_OPER_PER_BATCH = 10;
-
     /**
      * @notice registered executors can process Operations in the queue
      * @dev does not revert on Operation failure, throws Process and Error
@@ -864,7 +866,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
         uint256 operId = firstOperId;
         uint256 lastOperId;
         unchecked {
-            lastOperId = Math.min(operIdCount, operId + MAX_OPER_PER_BATCH);
+            lastOperId = Math.min(operIdCount, operId + maxOperPerBatch);
         }
         uint256 limitBlk = block.number - minOperWaitingBlk;
         uint256 totalExecutionFee;
@@ -1040,8 +1042,16 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
      * queue before it can be executed
      */
     function setMinOperWaitingBlk(uint256 minOperWaitingBlk_) external onlyAuthorizedChanger {
-        // slither-disable-next-line missing-zero-check
         minOperWaitingBlk = minOperWaitingBlk_;
+    }
+
+    /**
+     * @dev sets Moc Queue maximum amount of operations per execution batch
+     * @param maxOperPerBatch_ maximum amount of operations allowed on a batch to avoid going over
+     * the block gas limit
+     */
+    function setMaxOperPerBatch(uint256 maxOperPerBatch_) external onlyAuthorizedChanger {
+        maxOperPerBatch = maxOperPerBatch_;
     }
 
     /**

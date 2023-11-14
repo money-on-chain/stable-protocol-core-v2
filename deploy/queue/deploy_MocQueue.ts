@@ -19,7 +19,13 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     hre,
     artifactBaseName: "MocQueue",
     contract: "MocQueue",
-    initializeArgs: [governorAddress, pauserAddress, queueParams.minOperWaitingBlk, queueParams.execFeeParams],
+    initializeArgs: [
+      governorAddress,
+      pauserAddress,
+      queueParams.minOperWaitingBlk,
+      queueParams.maxOperPerBatch,
+      queueParams.execFeeParams,
+    ],
   });
 
   const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);

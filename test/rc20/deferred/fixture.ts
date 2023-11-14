@@ -56,8 +56,9 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
         const mocQueueMock = await mocQueueMockFactory.deploy();
 
         mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
-        const { minOperWaitingBlk, execFeeParams } = getNetworkDeployParams(hre).queueParams;
-        await mocQueue.initialize(await mocImpl.governor(), await mocImpl.pauser(), minOperWaitingBlk, execFeeParams);
+        const { minOperWaitingBlk, maxOperPerBatch, execFeeParams } = getNetworkDeployParams(hre).queueParams;
+        const [governor, pauser] = await Promise.all([mocImpl.governor(), mocImpl.pauser()]);
+        await mocQueue.initialize(governor, pauser, minOperWaitingBlk, maxOperPerBatch, execFeeParams);
         await Promise.all([
           mocImpl.setMocQueue(mocQueue.address),
           mocQueue.registerBucket(mocImpl.address),

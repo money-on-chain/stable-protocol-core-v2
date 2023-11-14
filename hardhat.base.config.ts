@@ -143,6 +143,7 @@ const config: HardhatUserConfig = {
         },
         queueParams: {
           minOperWaitingBlk: 1,
+          maxOperPerBatch: 10,
           execFeeParams: {
             tcMintExecFee: BigNumber.from("1000000"),
             tcRedeemExecFee: BigNumber.from("1000001"),
