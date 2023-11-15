@@ -16,16 +16,16 @@ import {
   tpParams,
   getNetworkDeployParams,
 } from "../../helpers/utils";
-import { MocCARC20Deferred, MocQueue } from "../../../typechain";
+import { MocCARC20, MocQueue } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
-describe("Feature: MocCARC20Deferred mint TC", function () {
+describe("Feature: MocCARC20 mint TC", function () {
   let mocFunctions: any;
   let deployer: Address;
   const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
 
-  describe("GIVEN a MocCARC20Deferred implementation deployed with mocQueueMock", function () {
+  describe("GIVEN a MocCARC20 implementation deployed with mocQueueMock", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, true);
@@ -46,8 +46,8 @@ describe("Feature: MocCARC20Deferred mint TC", function () {
       });
     });
   });
-  describe("GIVEN a MocCARC20Deferred implementation deployed behind MocQueue", function () {
-    let mocImpl: MocCARC20Deferred;
+  describe("GIVEN a MocCARC20 implementation deployed behind MocQueue", function () {
+    let mocImpl: MocCARC20;
     let mocQueue: MocQueue;
     let operId: OperId;
     let alice: Address;

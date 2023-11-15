@@ -13,7 +13,7 @@ const fixtureDeploy = memoizee(
       await deployments.fixture();
       const signer = ethers.provider.getSigner();
 
-      const deployedMocQueue = await deployments.getOrNull("MocQueueProxy");
+      const deployedMocQueue = await deployments.getOrNull("MocQueueCARC20Proxy");
       if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
       const mocQueue: MocQueue = MocQueue__factory.connect(deployedMocQueue.address, signer);
 

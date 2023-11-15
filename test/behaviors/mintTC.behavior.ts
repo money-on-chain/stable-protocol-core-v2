@@ -4,12 +4,12 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, pEth, expectEventFor, getNetworkDeployParams } from "../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocCARC20Deferred } from "../../typechain";
+import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const mintTCBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
-  let mocImpl: MocCACoinbase | MocCARC20 | MocCARC20Deferred;
+  let mocImpl: MocCACoinbase | MocCARC20;
   let deployer: Address;
   let alice: Address;
   let bob: Address;

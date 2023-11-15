@@ -90,6 +90,13 @@ contract MocCARC20 is MocCoreShared {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACToLock_);
     }
 
+    /**
+     * @inheritdoc MocDeferred
+     */
+    function _getExecFeeSent() internal override returns (uint256 execFeeSent) {
+        return msg.value;
+    }
+
     // ------- External Functions -------
 
     /**
@@ -100,7 +107,7 @@ contract MocCARC20 is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTC(uint256 qTC_, uint256 qACmax_) external payable returns (uint256 operId) {
-        return _mintTCtoViaVendor(qTC_, qACmax_, msg.sender, address(0), msg.value);
+        return _mintTCtoViaVendor(qTC_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -113,7 +120,7 @@ contract MocCARC20 is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCViaVendor(uint256 qTC_, uint256 qACmax_, address vendor_) external payable returns (uint256 operId) {
-        return _mintTCtoViaVendor(qTC_, qACmax_, msg.sender, vendor_, msg.value);
+        return _mintTCtoViaVendor(qTC_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -125,7 +132,7 @@ contract MocCARC20 is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCto(uint256 qTC_, uint256 qACmax_, address recipient_) external payable returns (uint256 operId) {
-        return _mintTCtoViaVendor(qTC_, qACmax_, recipient_, address(0), msg.value);
+        return _mintTCtoViaVendor(qTC_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -144,7 +151,7 @@ contract MocCARC20 is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _mintTCtoViaVendor(qTC_, qACmax_, recipient_, vendor_, msg.value);
+        return _mintTCtoViaVendor(qTC_, qACmax_, recipient_, vendor_);
     }
 
     /**
@@ -156,7 +163,7 @@ contract MocCARC20 is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTP(address tp_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
-        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, address(0), msg.value);
+        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -175,7 +182,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, vendor_, msg.value);
+        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -193,7 +200,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, address(0), msg.value);
+        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -214,7 +221,7 @@ contract MocCARC20 is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, vendor_, msg.value);
+        return _mintTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, vendor_);
     }
 
     /**
@@ -230,7 +237,7 @@ contract MocCARC20 is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTP(address tp_, uint256 qTP_, uint256 qACmax_) external payable returns (uint256 operId) {
-        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, address(0), msg.value);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -253,7 +260,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, vendor_, msg.value);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -275,7 +282,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, address(0), msg.value);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -300,7 +307,7 @@ contract MocCARC20 is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, vendor_, msg.value);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, qACmax_, recipient_, vendor_);
     }
 
     /**
@@ -319,7 +326,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTPmin_,
         uint256 qACmax_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, msg.sender, address(0), msg.value);
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -341,7 +348,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, msg.sender, vendor_, msg.value);
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -362,7 +369,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, recipient_, address(0), msg.value);
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -386,7 +393,7 @@ contract MocCARC20 is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, recipient_, vendor_, msg.value);
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, qACmax_, recipient_, vendor_);
     }
 
     /**
@@ -403,7 +410,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTCmin_,
         uint256 qACmax_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, msg.sender, address(0), msg.value);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -423,7 +430,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, msg.sender, vendor_, msg.value);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -442,7 +449,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, recipient_, address(0), msg.value);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -464,7 +471,7 @@ contract MocCARC20 is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, recipient_, vendor_, msg.value);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, qACmax_, recipient_, vendor_);
     }
 
     /**
@@ -481,7 +488,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qTPmin_,
         uint256 qACmax_
     ) external payable returns (uint256 operId) {
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, msg.sender, address(0), msg.value);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, msg.sender, address(0));
     }
 
     /**
@@ -501,7 +508,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, msg.sender, vendor_, msg.value);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, msg.sender, vendor_);
     }
 
     /**
@@ -520,7 +527,7 @@ contract MocCARC20 is MocCoreShared {
         uint256 qACmax_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, recipient_, address(0), msg.value);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, recipient_, address(0));
     }
 
     /**
@@ -542,7 +549,7 @@ contract MocCARC20 is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, recipient_, vendor_, msg.value);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, qACmax_, recipient_, vendor_);
     }
 
     /**

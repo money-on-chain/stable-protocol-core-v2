@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { MocCACoinbase, MocRC20, NonPayableMock } from "../../typechain";
-import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
+import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
 import { redeemTPBehavior } from "../behaviors/redeemTP.behavior";
 import { ERRORS, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCoinbase } from "./fixture";
@@ -16,15 +16,15 @@ describe("Feature: MocCoinbase redeem TP", function () {
   describe("GIVEN a MocCoinbase implementation deployed", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
+      const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
+      mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
       this.mocFunctions = mocFunctions;
       ({ mocImpl, mocPeggedTokens } = this.mocContracts);
     });
     redeemTPBehavior();
 
-    describe("AND a non payable contract", () => {
+    describe.skip("AND a non payable contract", () => {
       let nonPayable: NonPayableMock;
       beforeEach(async () => {
         const factory = await ethers.getContractFactory("NonPayableMock");

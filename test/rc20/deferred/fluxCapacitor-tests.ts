@@ -5,12 +5,12 @@ import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { fluxCapacitorBehavior } from "../../behaviors/fluxCapacitor.behavior";
 import { Balance, ERROR_SELECTOR, pEth, tpParams } from "../../helpers/utils";
-import { MocCARC20Deferred, MocQueue } from "../../../typechain";
+import { MocCARC20, MocQueue } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
-describe("Feature: MocCARC20Deferred Flux capacitor", function () {
-  describe("GIVEN a MocCARC20Deferred implementation deployed with mocQueueMock", function () {
+describe("Feature: MocCARC20 Flux capacitor", function () {
+  describe("GIVEN a MocCARC20 implementation deployed with mocQueueMock", function () {
     let mocQueue: MocQueue;
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, true);
@@ -23,8 +23,8 @@ describe("Feature: MocCARC20Deferred Flux capacitor", function () {
     fluxCapacitorBehavior();
   });
 
-  describe("GIVEN a MocCARC20Deferred implementation deployed behind MocQueue", function () {
-    let mocImpl: MocCARC20Deferred;
+  describe("GIVEN a MocCARC20 implementation deployed behind MocQueue", function () {
+    let mocImpl: MocCARC20;
     let mocFunctions: any;
     let mocQueue: MocQueue;
     let operId: BigNumber;

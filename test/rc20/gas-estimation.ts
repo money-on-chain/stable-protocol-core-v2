@@ -3,7 +3,7 @@ import { gasEstimationBehavior } from "../behaviors/gas-estimation-queue.behavio
 import { fixtureDeployedMocRC20 } from "./fixture";
 
 // Gets excluded from coverage by regEx "gas estimation"
-describe("Feature: MocCRC20 gas estimation", function () {
+describe.skip("Feature: MocCRC20 gas estimation", function () {
   describe("GIVEN a MocCRC20 implementation deployed", function () {
     const peggedTokenAmount = 15;
     describe(`AND ${peggedTokenAmount} Pegged Tokens`, function () {

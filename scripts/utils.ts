@@ -87,6 +87,39 @@ export const deployCollateralToken = (artifactBaseName: string) => async (hre: H
   return hre.network.live; // prevents re execution on live networks
 };
 
+export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  const governorAddress = getGovernorAddresses(hre);
+  const { deployer } = await hre.getNamedAccounts();
+  const signer = ethers.provider.getSigner();
+
+  const mocQueue = await deployUUPSArtifact({
+    hre,
+    artifactBaseName,
+    contract: "MocQueue",
+    initializeArgs: [
+      governorAddress,
+      mocAddresses.pauserAddress,
+      queueParams.minOperWaitingBlk,
+      queueParams.execFeeParams,
+    ],
+  });
+
+  const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);
+
+  for (let authorizedExecutor in mocAddresses.authorizedExecutors) {
+    console.log(`Whitelisting queue executor: ${authorizedExecutor}`);
+    await mocQueueProxy.grantRole(EXECUTOR_ROLE, authorizedExecutor);
+  }
+
+  if (hre.network.tags.local) {
+    console.log(`Also whitelisting executor deployer: ${deployer}`);
+    await mocQueueProxy.grantRole(EXECUTOR_ROLE, deployer);
+  }
+
+  return hre.network.live; // prevents re execution on live networks
+};
+
 export const getGovernorAddresses = async (hre: HardhatRuntimeEnvironment) => {
   let {
     mocAddresses: { governorAddress },
@@ -209,6 +242,10 @@ export const deployCARC20 = async (
   const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
   if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
 
+  const deployedMocQueue = await deployments.getOrNull("MocQueueCARC20Proxy");
+  if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
+  const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
+
   let {
     collateralAssetAddress,
     pauserAddress,
@@ -250,45 +287,52 @@ export const deployCARC20 = async (
     contract: mocCARC20Variant,
     initializeArgs: [
       {
-        initializeCoreParams: {
-          initializeBaseBucketParams: {
-            feeTokenAddress,
-            feeTokenPriceProviderAddress,
-            tcTokenAddress: CollateralToken.address,
-            mocFeeFlowAddress,
-            mocAppreciationBeneficiaryAddress,
-            protThrld: coreParams.protThrld,
-            liqThrld: coreParams.liqThrld,
-            feeRetainer: feeParams.feeRetainer,
-            tcMintFee: feeParams.mintFee,
-            tcRedeemFee: feeParams.redeemFee,
-            swapTPforTPFee: feeParams.swapTPforTPFee,
-            swapTPforTCFee: feeParams.swapTPforTCFee,
-            swapTCforTPFee: feeParams.swapTCforTPFee,
-            redeemTCandTPFee: feeParams.redeemTCandTPFee,
-            mintTCandTPFee: feeParams.mintTCandTPFee,
-            feeTokenPct: feeParams.feeTokenPct,
-            successFee: coreParams.successFee,
-            appreciationFactor: coreParams.appreciationFactor,
-            bes: settlementParams.bes,
-            tcInterestCollectorAddress,
-            tcInterestRate: coreParams.tcInterestRate,
-            tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
-            maxAbsoluteOpProviderAddress,
-            maxOpDiffProviderAddress,
-            decayBlockSpan: coreParams.decayBlockSpan,
+        initializeDeferredParams: {
+          initializeCoreParams: {
+            initializeBaseBucketParams: {
+              feeTokenAddress,
+              feeTokenPriceProviderAddress,
+              tcTokenAddress: CollateralToken.address,
+              mocFeeFlowAddress,
+              mocAppreciationBeneficiaryAddress,
+              protThrld: coreParams.protThrld,
+              liqThrld: coreParams.liqThrld,
+              feeRetainer: feeParams.feeRetainer,
+              tcMintFee: feeParams.mintFee,
+              tcRedeemFee: feeParams.redeemFee,
+              swapTPforTPFee: feeParams.swapTPforTPFee,
+              swapTPforTCFee: feeParams.swapTPforTCFee,
+              swapTCforTPFee: feeParams.swapTCforTPFee,
+              redeemTCandTPFee: feeParams.redeemTCandTPFee,
+              mintTCandTPFee: feeParams.mintTCandTPFee,
+              feeTokenPct: feeParams.feeTokenPct,
+              successFee: coreParams.successFee,
+              appreciationFactor: coreParams.appreciationFactor,
+              bes: settlementParams.bes,
+              tcInterestCollectorAddress,
+              tcInterestRate: coreParams.tcInterestRate,
+              tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+              maxAbsoluteOpProviderAddress,
+              maxOpDiffProviderAddress,
+              decayBlockSpan: coreParams.decayBlockSpan,
+            },
+            governorAddress,
+            pauserAddress,
+            mocCoreExpansion: deployedMocExpansionContract.address,
+            emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+            mocVendors: deployedMocVendors.address,
           },
-          governorAddress,
-          pauserAddress,
-          mocCoreExpansion: deployedMocExpansionContract.address,
-          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-          mocVendors: deployedMocVendors.address,
+          mocQueueAddress: deployedMocQueue.address,
         },
         acTokenAddress: collateralAssetAddress,
         ...extraInitParams,
       },
     ],
   });
+
+  // TODO: Deployer has admin privileges as this stage
+  console.log(`Registering mocRC20 bucket as enqueuer: ${mocCARC20.address}`);
+  await waitForTxConfirmation(mocQueue.registerBucket(mocCARC20.address));
 
   console.log("Delegating CT roles to Moc");
   // Assign TC Roles, and renounce deployer ADMIN

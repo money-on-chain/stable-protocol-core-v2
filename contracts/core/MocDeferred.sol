@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { MocCore } from "./MocCore.sol";
 import { MocQueue } from "../queue/MocQueue.sol";
@@ -77,6 +77,13 @@ abstract contract MocDeferred is MocCore {
     }
 
     /**
+     * @notice get the amount of coinbase sent to be used as execution fee
+     * @dev this function must be overridden by the AC implementation
+     * @return execFeeSent amount of coinbase sent
+     */
+    function _getExecFeeSent() internal virtual returns (uint256 execFeeSent) {}
+
+    /**
      * @notice while registering a pending Operation, we need to lock user's funds until it's executed
      * @param qACToLock_ AC amount to be locked
      */
@@ -108,15 +115,13 @@ abstract contract MocDeferred is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token
      * @param vendor_ address who receives a markup
-     * @param execFee_ absolute coinbase execution fee applied
      * @return operId Identifier to track the Operation lifecycle
      */
     function _mintTCtoViaVendor(
         uint256 qTC_,
         uint256 qACmax_,
         address recipient_,
-        address vendor_,
-        uint256 execFee_
+        address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
@@ -125,7 +130,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTC{ value: execFee_ }(params);
+        operId = mocQueue.queueMintTC{ value: _getExecFeeSent() }(params);
         _lockACInPending(qACmax_);
     }
 
@@ -151,7 +156,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTC{ value: msg.value }(params);
+        operId = mocQueue.queueRedeemTC{ value: _getExecFeeSent() }(params);
         _lockTCInPending(qTC_);
     }
 
@@ -164,7 +169,6 @@ abstract contract MocDeferred is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Pegged Token
      * @param vendor_ address who receives a markup
-     * @param execFee_ absolute coinbase execution fee applied
      * @return operId Identifier to track the Operation lifecycle
      */
     function _mintTPtoViaVendor(
@@ -172,8 +176,7 @@ abstract contract MocDeferred is MocCore {
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_,
-        address vendor_,
-        uint256 execFee_
+        address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
         MintTPParams memory params = MintTPParams({
             tp: tp_,
@@ -183,7 +186,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTP{ value: execFee_ }(params);
+        operId = mocQueue.queueMintTP{ value: _getExecFeeSent() }(params);
         _lockACInPending(qACmax_);
     }
 
@@ -212,7 +215,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTP{ value: msg.value }(params);
+        operId = mocQueue.queueRedeemTP{ value: _getExecFeeSent() }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
 
@@ -229,7 +232,6 @@ abstract contract MocDeferred is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @param vendor_ address who receives a markup
-     * @param execFee_ absolute coinbase execution fee applied
      * @return operId Identifier to track the Operation lifecycle
      */
     function _mintTCandTPtoViaVendor(
@@ -237,8 +239,7 @@ abstract contract MocDeferred is MocCore {
         uint256 qTP_,
         uint256 qACmax_,
         address recipient_,
-        address vendor_,
-        uint256 execFee_
+        address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
         MintTCandTPParams memory params = MintTCandTPParams({
             tp: tp_,
@@ -248,7 +249,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTCandTP{ value: execFee_ }(params);
+        operId = mocQueue.queueMintTCandTP{ value: _getExecFeeSent() }(params);
         _lockACInPending(qACmax_);
     }
 
@@ -284,7 +285,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTCandTP{ value: msg.value }(params);
+        operId = mocQueue.queueRedeemTCandTP{ value: _getExecFeeSent() }(params);
         _lockTCInPending(qTC_);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
@@ -299,7 +300,6 @@ abstract contract MocDeferred is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @param recipient_ address who receives the target Pegged Token
      * @param vendor_ address who receives a markup
-     * @param execFee_ absolute coinbase execution fee applied
      * @return operId Identifier to track the Operation lifecycle
      */
     function _swapTPforTPtoViaVendor(
@@ -309,8 +309,7 @@ abstract contract MocDeferred is MocCore {
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_,
-        address vendor_,
-        uint256 execFee_
+        address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
         SwapTPforTPParams memory params = SwapTPforTPParams({
             tpFrom: tpFrom_,
@@ -322,7 +321,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTP{ value: execFee_ }(params);
+        operId = mocQueue.queueSwapTPforTP{ value: _getExecFeeSent() }(params);
         _lockTPInPending(IERC20Upgradeable(tpFrom_), qTP_);
         _lockACInPending(qACmax_);
     }
@@ -336,7 +335,6 @@ abstract contract MocDeferred is MocCore {
      * @param qACmax_ maximum amount of Collateral Asset that can be spent in fees
      * @param recipient_ address who receives the Collateral Token
      * @param vendor_ address who receives a markup
-     * @param execFee_ absolute coinbase execution fee applied
      * @return operId Identifier to track the Operation lifecycle
      */
     function _swapTPforTCtoViaVendor(
@@ -345,8 +343,7 @@ abstract contract MocDeferred is MocCore {
         uint256 qTCmin_,
         uint256 qACmax_,
         address recipient_,
-        address vendor_,
-        uint256 execFee_
+        address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
         SwapTPforTCParams memory params = SwapTPforTCParams({
             tp: tp_,
@@ -357,7 +354,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTC{ value: execFee_ }(params);
+        operId = mocQueue.queueSwapTPforTC{ value: _getExecFeeSent() }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
         _lockACInPending(qACmax_);
     }
@@ -371,7 +368,6 @@ abstract contract MocDeferred is MocCore {
      * @param qACmax_ Maximum amount of Collateral Asset that can be spent in fees
      * @param recipient_ Address who receives the Pegged Token
      * @param vendor_ Address who receives a markup
-     * @param execFee_ absolute coinbase execution fee applied
      * @return operId Identifier to track the Operation lifecycle
      */
     function _swapTCforTPtoViaVendor(
@@ -380,8 +376,7 @@ abstract contract MocDeferred is MocCore {
         uint256 qTPmin_,
         uint256 qACmax_,
         address recipient_,
-        address vendor_,
-        uint256 execFee_
+        address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
         SwapTCforTPParams memory params = SwapTCforTPParams({
             tp: tp_,
@@ -392,7 +387,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTCforTP{ value: execFee_ }(params);
+        operId = mocQueue.queueSwapTCforTP{ value: _getExecFeeSent() }(params);
         _lockTCInPending(qTC_);
         _lockACInPending(qACmax_);
     }

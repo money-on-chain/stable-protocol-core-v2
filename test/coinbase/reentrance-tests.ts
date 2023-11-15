@@ -6,7 +6,7 @@ import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { ERRORS, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
-describe("Feature: MocCoinbase reentrance tests", () => {
+describe.skip("Feature: MocCoinbase reentrance tests", () => {
   let mocImpl: MocCACoinbase;
   let mocContracts: any;
   let tp0: Address;

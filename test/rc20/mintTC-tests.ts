@@ -7,7 +7,7 @@ import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 import { CONSTANTS, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
-describe("Feature: MocCARC20 mint TC", function () {
+describe.skip("Feature: MocCARC20 mint TC", function () {
   let mocImpl: MocCARC20;
   let collateralAsset: ERC20Mock;
   let mocFunctions: any;

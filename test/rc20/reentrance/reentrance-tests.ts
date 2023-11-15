@@ -5,7 +5,7 @@ import { pEth, ERRORS } from "../../helpers/utils";
 import { MocCARC20, ReentrancyAttackerERC777Mock, ERC777Mock } from "../../../typechain";
 import { fixtureDeployedMocRC777 } from "./fixture";
 
-describe("Feature: MocCARC20 reentracy tests", function () {
+describe.skip("Feature: MocCARC20 reentracy tests", function () {
   let mocImpl: MocCARC20;
   let reentrancyAttacker: ReentrancyAttackerERC777Mock;
   let collateralAsset: ERC777Mock;

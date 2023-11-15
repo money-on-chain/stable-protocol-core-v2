@@ -25,6 +25,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const deployedMocVendors = await deployments.getOrNull("MocVendorsCACoinbaseProxy");
   if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
 
+  const deployedMocQueue = await deployments.getOrNull("MocQueueCoinbaseProxy");
+  if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
+  const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
+
   let {
     pauserAddress,
     feeTokenAddress,
@@ -55,41 +59,48 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     contract: "MocCACoinbase",
     initializeArgs: [
       {
-        initializeBaseBucketParams: {
-          feeTokenAddress,
-          feeTokenPriceProviderAddress,
-          tcTokenAddress: CollateralToken.address,
-          mocFeeFlowAddress,
-          mocAppreciationBeneficiaryAddress,
-          protThrld: coreParams.protThrld,
-          liqThrld: coreParams.liqThrld,
-          feeRetainer: feeParams.feeRetainer,
-          tcMintFee: feeParams.mintFee,
-          tcRedeemFee: feeParams.redeemFee,
-          swapTPforTPFee: feeParams.swapTPforTPFee,
-          swapTPforTCFee: feeParams.swapTPforTCFee,
-          swapTCforTPFee: feeParams.swapTCforTPFee,
-          redeemTCandTPFee: feeParams.redeemTCandTPFee,
-          mintTCandTPFee: feeParams.mintTCandTPFee,
-          feeTokenPct: feeParams.feeTokenPct,
-          successFee: coreParams.successFee,
-          appreciationFactor: coreParams.appreciationFactor,
-          bes: settlementParams.bes,
-          tcInterestCollectorAddress,
-          tcInterestRate: coreParams.tcInterestRate,
-          tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
-          maxAbsoluteOpProviderAddress,
-          maxOpDiffProviderAddress,
-          decayBlockSpan: coreParams.decayBlockSpan,
+        initializeCoreParams: {
+          initializeBaseBucketParams: {
+            feeTokenAddress,
+            feeTokenPriceProviderAddress,
+            tcTokenAddress: CollateralToken.address,
+            mocFeeFlowAddress,
+            mocAppreciationBeneficiaryAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            feeRetainer: feeParams.feeRetainer,
+            tcMintFee: feeParams.mintFee,
+            tcRedeemFee: feeParams.redeemFee,
+            swapTPforTPFee: feeParams.swapTPforTPFee,
+            swapTPforTCFee: feeParams.swapTPforTCFee,
+            swapTCforTPFee: feeParams.swapTCforTPFee,
+            redeemTCandTPFee: feeParams.redeemTCandTPFee,
+            mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
+            bes: settlementParams.bes,
+            tcInterestCollectorAddress,
+            tcInterestRate: coreParams.tcInterestRate,
+            tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+            maxAbsoluteOpProviderAddress,
+            maxOpDiffProviderAddress,
+            decayBlockSpan: coreParams.decayBlockSpan,
+          },
+          governorAddress,
+          pauserAddress,
+          mocCoreExpansion: deployedMocExpansionContract.address,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: deployedMocVendors.address,
         },
-        governorAddress,
-        pauserAddress,
-        mocCoreExpansion: deployedMocExpansionContract.address,
-        emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-        mocVendors: deployedMocVendors.address,
+        mocQueueAddress: deployedMocQueue.address,
       },
     ],
   });
+
+  // TODO: Deployer has admin privileges as this stage
+  console.log(`Registering mocRC20 bucket as enqueuer: ${mocCACoinbase.address}`);
+  await waitForTxConfirmation(mocQueue.registerBucket(mocCACoinbase.address));
 
   console.log("Delegating CT roles to Moc");
   // Assign TC Roles, and renounce deployer ADMIN
@@ -106,4 +117,9 @@ export default deployFunc;
 
 deployFunc.id = "deployed_MocCACoinbase"; // id required to prevent re-execution
 deployFunc.tags = ["MocCACoinbase"];
-deployFunc.dependencies = ["CollateralTokenCoinbase", "MocVendorsCACoinbase", "MocCACoinbaseExpansion"];
+deployFunc.dependencies = [
+  "CollateralTokenCoinbase",
+  "MocVendorsCACoinbase",
+  "MocCACoinbaseExpansion",
+  "MocQueueCoinbase",
+];

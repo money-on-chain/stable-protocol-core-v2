@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { MocCARC20Deferred } from "../collateral/rc20/MocCARC20Deferred.sol";
+import { MocCARC20, MocDeferred } from "../collateral/rc20/MocCARC20.sol";
 import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocQueue } from "../queue/MocQueue.sol";
@@ -26,7 +26,7 @@ contract EchidnaMocQueueTester {
 
     uint256 internal constant MAX_PRICE = (10 ** 10) * PRECISION;
 
-    MocCARC20Deferred internal mocCARC20;
+    MocCARC20 internal mocCARC20;
     MocQueue internal mocQueue;
     GovernorMock internal governor;
     ERC20Mock internal feeToken;
@@ -51,7 +51,7 @@ contract EchidnaMocQueueTester {
         feeTokenPriceProvider = new PriceProviderMock(1 ether);
         fluxCapacitorProvider = new DataProviderMock(UINT256_MAX);
         tcToken = MocTC(_deployProxy(address(new MocTC())));
-        mocCARC20 = MocCARC20Deferred(_deployProxy(address(new MocCARC20Deferred())));
+        mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
         mocCoreExpansion = address(new MocCoreExpansion());
         mocVendors = MocVendors(_deployProxy(address(new MocVendors())));
         mocQueue = MocQueue(_deployProxy(address(new MocQueue())));
@@ -99,10 +99,13 @@ contract EchidnaMocQueueTester {
             emaCalculationBlockSpan: 1 days,
             mocVendors: address(mocVendors)
         });
-        MocCARC20Deferred.InitializeParams memory initializeParams = MocCARC20Deferred.InitializeParams({
+        MocDeferred.InitializeDeferredParams memory initializeDeferredParams = MocDeferred.InitializeDeferredParams({
             initializeCoreParams: initializeCoreParams,
-            acTokenAddress: address(acToken),
-            mocQueue: address(mocQueue)
+            mocQueueAddress: address(mocQueue)
+        });
+        MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
+            initializeDeferredParams: initializeDeferredParams,
+            acTokenAddress: address(acToken)
         });
         mocCARC20.initialize(initializeParams);
 

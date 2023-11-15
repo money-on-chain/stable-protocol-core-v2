@@ -15,18 +15,18 @@ import {
   tpParams,
   getNetworkDeployParams,
 } from "../helpers/utils";
-import { MocCARC20Deferred, MocQueue, NonPayableMock } from "../../typechain";
+import { MocCARC20, MocQueue, NonPayableMock } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
 
-describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
+describe("Feature: MocQueue with a MocCARC20 bucket", function () {
   const vendor = CONSTANTS.ZERO_ADDRESS;
   const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
   let mocFunctions: any;
   let deployer: Address;
   let executor: Address;
 
-  describe("GIVEN a MocQueue MocCARC20Deferred implementation deployed", function () {
-    let mocImpl: MocCARC20Deferred;
+  describe("GIVEN a MocQueue MocCARC20 implementation deployed", function () {
+    let mocImpl: MocCARC20;
     let mocQueue: MocQueue;
     let tp: Address;
     let operId: OperId;

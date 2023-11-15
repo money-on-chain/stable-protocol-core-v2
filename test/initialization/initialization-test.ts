@@ -1,6 +1,14 @@
 import { expect } from "chai";
 import { deployments, ethers } from "hardhat";
-import { MocCARC20, MocCoreExpansion, MocCARC20__factory, MocRC20, MocVendors, ERC20Mock } from "../../typechain";
+import {
+  MocCARC20,
+  MocCoreExpansion,
+  MocCARC20__factory,
+  MocRC20,
+  MocVendors,
+  ERC20Mock,
+  MocQueue,
+} from "../../typechain";
 import { CONSTANTS, ERRORS, deployAndInitTC } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 import { mocInitialize } from "./initializers";
@@ -12,6 +20,7 @@ describe("Feature: MocCARC20 initialization", function () {
   let mocInit: any;
   let mocCoreExpansion: MocCoreExpansion;
   let mocVendors: MocVendors;
+  let mocQueue: MocQueue;
   before(async () => {
     ({
       mocImpl: mocProxy,
@@ -19,6 +28,7 @@ describe("Feature: MocCARC20 initialization", function () {
       mocCollateralToken,
       collateralAsset,
       mocVendors,
+      mocQueue,
     } = await fixtureDeployedMocRC20(0)());
     mocInit = mocInitialize(
       mocProxy,
@@ -26,6 +36,7 @@ describe("Feature: MocCARC20 initialization", function () {
       mocCollateralToken.address,
       mocCoreExpansion.address,
       mocVendors.address,
+      mocQueue.address,
     );
   });
   describe("GIVEN a MocCARC20 implementation deployed", () => {
@@ -48,6 +59,7 @@ describe("Feature: MocCARC20 initialization", function () {
             mocCollateralToken.address,
             mocCoreExpansion.address,
             mocVendors.address,
+            mocQueue.address,
           )(),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
@@ -75,6 +87,7 @@ describe("Feature: MocCARC20 initialization", function () {
         newMocTC.address,
         mocCoreExpansion.address,
         mocVendors.address,
+        mocQueue.address,
       );
     });
     describe("WHEN it is initialized with invalid protThrld value", () => {

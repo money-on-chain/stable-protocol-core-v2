@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { MocCore } from "../../core/MocCore.sol";
+import { MocDeferred } from "../../core/MocDeferred.sol";
 import { MocCoreShared } from "../../core/MocCoreShared.sol";
 
 /**
@@ -69,6 +70,14 @@ contract MocCACoinbase is MocCoreShared {
         return account.balance;
     }
 
+    /**
+     * @inheritdoc MocDeferred
+     */
+    function _getExecFeeSent() internal pure override returns (uint256 execFeeSent) {
+        // TODO: execution fee are in 0
+        return 0;
+    }
+
     // ------- External Functions -------
 
     /**
@@ -78,8 +87,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTC(uint256 qTC_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tcMintExecFee();
-        return _mintTCtoViaVendor(qTC_, msg.value - execFee, msg.sender, address(0), execFee);
+        return _mintTCtoViaVendor(qTC_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -91,8 +99,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCViaVendor(uint256 qTC_, address vendor_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tcMintExecFee();
-        return _mintTCtoViaVendor(qTC_, msg.value - execFee, msg.sender, vendor_, execFee);
+        return _mintTCtoViaVendor(qTC_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -103,8 +110,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCto(uint256 qTC_, address recipient_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tcMintExecFee();
-        return _mintTCtoViaVendor(qTC_, msg.value - execFee, recipient_, address(0), execFee);
+        return _mintTCtoViaVendor(qTC_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -121,8 +127,7 @@ contract MocCACoinbase is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tcMintExecFee();
-        return _mintTCtoViaVendor(qTC_, msg.value - execFee, recipient_, vendor_, execFee);
+        return _mintTCtoViaVendor(qTC_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -133,8 +138,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTP(address tp_, uint256 qTP_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tpMintExecFee();
-        return _mintTPtoViaVendor(tp_, qTP_, msg.value - execFee, msg.sender, address(0), execFee);
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -147,8 +151,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTPViaVendor(address tp_, uint256 qTP_, address vendor_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tpMintExecFee();
-        return _mintTPtoViaVendor(tp_, qTP_, msg.value - execFee, msg.sender, vendor_, execFee);
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -160,8 +163,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTPto(address tp_, uint256 qTP_, address recipient_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tpMintExecFee();
-        return _mintTPtoViaVendor(tp_, qTP_, msg.value - execFee, recipient_, address(0), execFee);
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -180,8 +182,7 @@ contract MocCACoinbase is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.tpMintExecFee();
-        return _mintTPtoViaVendor(tp_, qTP_, msg.value - execFee, recipient_, vendor_, execFee);
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -195,8 +196,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTP(address tp_, uint256 qTP_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.mintTCandTPExecFee();
-        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value - execFee, msg.sender, address(0), execFee);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -216,8 +216,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTP_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.mintTCandTPExecFee();
-        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value - execFee, msg.sender, vendor_, execFee);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -232,8 +231,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTPto(address tp_, uint256 qTP_, address recipient_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.mintTCandTPExecFee();
-        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value - execFee, recipient_, address(0), execFee);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -255,8 +253,7 @@ contract MocCACoinbase is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.mintTCandTPExecFee();
-        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value - execFee, recipient_, vendor_, execFee);
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -273,18 +270,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTP_,
         uint256 qTPmin_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTPExecFee();
-        return
-            _swapTPforTPtoViaVendor(
-                tpFrom_,
-                tpTo_,
-                qTP_,
-                qTPmin_,
-                msg.value - execFee,
-                msg.sender,
-                address(0),
-                execFee
-            );
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -304,9 +290,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTPmin_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTPExecFee();
-        return
-            _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value - execFee, msg.sender, vendor_, execFee);
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -325,18 +309,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTPmin_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTPExecFee();
-        return
-            _swapTPforTPtoViaVendor(
-                tpFrom_,
-                tpTo_,
-                qTP_,
-                qTPmin_,
-                msg.value - execFee,
-                recipient_,
-                address(0),
-                execFee
-            );
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -358,9 +331,7 @@ contract MocCACoinbase is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTPExecFee();
-        return
-            _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value - execFee, recipient_, vendor_, execFee);
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -371,8 +342,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTC(address tp_, uint256 qTP_, uint256 qTCmin_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTCExecFee();
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value - execFee, msg.sender, address(0), execFee);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -390,8 +360,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTCmin_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTCExecFee();
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value - execFee, msg.sender, vendor_, execFee);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -408,8 +377,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTCmin_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTCExecFee();
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value - execFee, recipient_, address(0), execFee);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -429,8 +397,7 @@ contract MocCACoinbase is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTPforTCExecFee();
-        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value - execFee, recipient_, vendor_, execFee);
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -441,8 +408,7 @@ contract MocCACoinbase is MocCoreShared {
      * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTP(address tp_, uint256 qTC_, uint256 qTPmin_) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTCforTPExecFee();
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value - execFee, msg.sender, address(0), execFee);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -460,8 +426,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTPmin_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTCforTPExecFee();
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value - execFee, msg.sender, vendor_, execFee);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -478,8 +443,7 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTPmin_,
         address recipient_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTCforTPExecFee();
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value - execFee, recipient_, address(0), execFee);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -499,8 +463,7 @@ contract MocCACoinbase is MocCoreShared {
         address recipient_,
         address vendor_
     ) external payable returns (uint256 operId) {
-        uint256 execFee = mocQueue.swapTCforTPExecFee();
-        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value - execFee, recipient_, vendor_, execFee);
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, recipient_, vendor_);
     }
 
     /**

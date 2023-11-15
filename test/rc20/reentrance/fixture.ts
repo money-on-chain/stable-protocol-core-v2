@@ -27,16 +27,19 @@ export const fixtureDeployedMocRC777 = memoizee(
       // for parallel test we need to deploy ERC1820 again because it could be deployed by hardhat-erc1820 in another Mocha worker
       await ensureERC1820();
 
-      const [mocCoreFactory, mocExpansionFactory, mocVendorsFactory, erc1967ProxyProxyFactory] = await Promise.all([
-        ethers.getContractFactory("MocCARC20"),
-        ethers.getContractFactory("MocCoreExpansion"),
-        ethers.getContractFactory("MocVendors"),
-        ethers.getContractFactory("ERC1967Proxy"),
-      ]);
+      const [mocCoreFactory, mocExpansionFactory, mocVendorsFactory, mocQueueFactory, erc1967ProxyProxyFactory] =
+        await Promise.all([
+          ethers.getContractFactory("MocCARC20"),
+          ethers.getContractFactory("MocCoreExpansion"),
+          ethers.getContractFactory("MocVendors"),
+          ethers.getContractFactory("MocQueue"),
+          ethers.getContractFactory("ERC1967Proxy"),
+        ]);
 
       const mocCARC20 = await mocCoreFactory.deploy();
       const mocCoreExpansion = await mocExpansionFactory.deploy();
       const mocVendors = await mocVendorsFactory.deploy();
+      const mocQueue = await mocQueueFactory.deploy();
       const deployMocProxy = await erc1967ProxyProxyFactory.deploy(mocCARC20.address, "0x");
       const mocImpl = MocCARC20__factory.connect(deployMocProxy.address, ethers.provider.getSigner());
 
@@ -65,6 +68,7 @@ export const fixtureDeployedMocRC777 = memoizee(
         collateralToken.address,
         mocCoreExpansion.address,
         mocVendors.address,
+        mocQueue.address,
       )({
         mocGovernorAddress: governorAddress,
         feeTokenAddress,

@@ -12,6 +12,7 @@ export function mocInitialize(
   mocTC: Address,
   mocCoreExpansion: Address,
   mocVendors: Address,
+  mocQueue: Address,
 ) {
   return ({
     mocGovernorAddress = mocAddresses.governorAddress,
@@ -24,6 +25,7 @@ export function mocInitialize(
     feeFlowAddress = mocAddresses.mocFeeFlowAddress,
     mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress,
     mocVendorsAddress = mocVendors,
+    mocQueueAddress = mocQueue,
     protThrld = coreParams.protThrld,
     liqThrld = coreParams.liqThrld,
     feeRetainer = feeParams.feeRetainer,
@@ -56,6 +58,7 @@ export function mocInitialize(
     feeFlowAddress?: Address;
     mocAppreciationBeneficiaryAddress?: Address;
     mocVendorsAddress?: Address;
+    mocQueueAddress?: Address;
     protThrld?: BigNumberish;
     liqThrld?: BigNumberish;
     feeRetainer?: BigNumberish;
@@ -79,39 +82,42 @@ export function mocInitialize(
     decayBlockSpan?: BigNumberish;
   } = {}) => {
     return mocCARC20.initialize({
-      initializeCoreParams: {
-        initializeBaseBucketParams: {
-          feeTokenAddress,
-          feeTokenPriceProviderAddress,
-          tcTokenAddress: mocTCAddress,
-          mocFeeFlowAddress: feeFlowAddress,
-          mocAppreciationBeneficiaryAddress,
-          protThrld,
-          liqThrld,
-          feeRetainer,
-          tcMintFee,
-          tcRedeemFee,
-          swapTPforTPFee,
-          swapTPforTCFee,
-          swapTCforTPFee,
-          redeemTCandTPFee,
-          mintTCandTPFee,
-          feeTokenPct,
-          successFee,
-          appreciationFactor,
-          bes,
-          tcInterestCollectorAddress,
-          tcInterestRate,
-          tcInterestPaymentBlockSpan,
-          maxAbsoluteOpProviderAddress,
-          maxOpDiffProviderAddress,
-          decayBlockSpan,
+      initializeDeferredParams: {
+        initializeCoreParams: {
+          initializeBaseBucketParams: {
+            feeTokenAddress,
+            feeTokenPriceProviderAddress,
+            tcTokenAddress: mocTCAddress,
+            mocFeeFlowAddress: feeFlowAddress,
+            mocAppreciationBeneficiaryAddress,
+            protThrld,
+            liqThrld,
+            feeRetainer,
+            tcMintFee,
+            tcRedeemFee,
+            swapTPforTPFee,
+            swapTPforTCFee,
+            swapTCforTPFee,
+            redeemTCandTPFee,
+            mintTCandTPFee,
+            feeTokenPct,
+            successFee,
+            appreciationFactor,
+            bes,
+            tcInterestCollectorAddress,
+            tcInterestRate,
+            tcInterestPaymentBlockSpan,
+            maxAbsoluteOpProviderAddress,
+            maxOpDiffProviderAddress,
+            decayBlockSpan,
+          },
+          governorAddress: mocGovernorAddress,
+          pauserAddress: mocPauserAddress,
+          mocCoreExpansion: mocCoreExpansionAddress,
+          emaCalculationBlockSpan,
+          mocVendors: mocVendorsAddress,
         },
-        governorAddress: mocGovernorAddress,
-        pauserAddress: mocPauserAddress,
-        mocCoreExpansion: mocCoreExpansionAddress,
-        emaCalculationBlockSpan,
-        mocVendors: mocVendorsAddress,
+        mocQueueAddress,
       },
       acTokenAddress,
     });

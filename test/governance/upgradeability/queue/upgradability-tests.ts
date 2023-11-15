@@ -17,7 +17,7 @@ describe("Feature: MocQueue Upgradeability UUPS", () => {
     await deployments.fixture();
 
     const signer = ethers.provider.getSigner();
-    const deployedMocQueue = await deployments.getOrNull("MocQueueProxy");
+    const deployedMocQueue = await deployments.getOrNull("MocQueueCARC20Proxy");
     if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
     mocQueue = MocQueue__factory.connect(deployedMocQueue.address, signer);
 
@@ -33,7 +33,7 @@ describe("Feature: MocQueue Upgradeability UUPS", () => {
 
     wrongChangeContract = await changerFactory.deploy(
       (
-        await deployments.get("MocQueueProxy")
+        await deployments.get("MocQueueCARC20Proxy")
       ).implementation!,
       mocQueueMockImpl.address,
     );

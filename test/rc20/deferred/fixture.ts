@@ -3,8 +3,8 @@ import memoizee from "memoizee";
 import {
   ERC20Mock,
   ERC20Mock__factory,
-  MocCARC20Deferred,
-  MocCARC20Deferred__factory,
+  MocCARC20,
+  MocCARC20__factory,
   MocQueue,
   MocQueue__factory,
   MocRC20,
@@ -24,7 +24,7 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
     tpParams?: any,
     useMockQueue?: boolean,
   ): (() => Promise<{
-    mocImpl: MocCARC20Deferred;
+    mocImpl: MocCARC20;
     mocCollateralToken: MocRC20;
     mocPeggedTokens: MocRC20[];
     priceProviders: PriceProviderMock[];
@@ -39,9 +39,9 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
       await deployments.fixture();
       const signer = ethers.provider.getSigner();
 
-      const deployedMocContract = await deployments.getOrNull("MocCARC20DeferredProxy");
-      if (!deployedMocContract) throw new Error("No MocCARC20DeferredProxy deployed.");
-      const mocImpl: MocCARC20Deferred = MocCARC20Deferred__factory.connect(deployedMocContract.address, signer);
+      const deployedMocContract = await deployments.getOrNull("MocCARC20Proxy");
+      if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
+      const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
       const mocVendors: MocVendors = MocVendors__factory.connect(await mocImpl.mocVendors(), signer);
       const mocCollateralToken: MocRC20 = MocRC20__factory.connect(await mocImpl.tcToken(), signer);
