@@ -1,6 +1,6 @@
 # MOC Smart Contract main Protocol
 
-This repository defines the smart contracts solution that build up the Money on Chain descentralized Protocol. For more information, please refer to the [documentation section](./docs/README.md).
+This repository defines the smart contracts solution that build up the Money on Chain decentralized Protocol. For more information, please refer to the [documentation section](./docs/README.md).
 
 ## Getting Started
 
@@ -104,7 +104,7 @@ cd project
 
 so that you can use the tools there installed.
 
-##### Local option
+##### Slither local option
 
 First, install slither:
 
@@ -150,7 +150,7 @@ or to execute in property mode run this command passing file and contract name a
 
 `npm run echidna-docker-property --file=echidna/EchidnaMocCoreTester.sol --contract=EchidnaMocCoreTester`
 
-##### Local option
+##### Echidna local option
 
 First, install echidna
 
@@ -198,8 +198,7 @@ Setting the a network tag as `testnet` using [tags](https://github.com/wighawag/
 
 1. Deploy and initialize the protocol using a governor mocked to bypass governance restrictions
 2. Initialize the protocol with a list of predefined Pegged Tokens by configuration
-3. Add Assets to mocWrapper (only for collateral bag implementation)
-4. Transfer governance to the real governor once initializations have finished
+3. Transfer governance to the real governor once initializations have finished
 
 ## Built With
 
