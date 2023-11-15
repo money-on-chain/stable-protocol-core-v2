@@ -82,7 +82,7 @@ const swapTPforTPBehavior = function () {
       });
       describe("WHEN alice tries to swap using a non-existent TP", function () {
         it("THEN tx reverts", async function () {
-          // generic revert because collateralbag implementation fail before accessing the tp array
+          // FIXME: generic revert because collateralbag implementation fail before accessing the tp array
           await expect(mocFunctions.swapTPforTP({ tpFrom: alice, iTo: TP_0, from: alice, qTP: 23500 })).to.be.reverted;
         });
       });
@@ -126,7 +126,7 @@ const swapTPforTPBehavior = function () {
       });
       describe("WHEN alice tries to swap 23501 TP 0", function () {
         it("THEN tx reverts because there is not enough TP available to redeem", async function () {
-          // generic revert because collateralbag implementation fails trying to transfer the TP and
+          // FIXME:  generic revert because collateralbag implementation fails trying to transfer the TP and
           // the others implementation fail burning
           await expect(mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23501 })).to.be.reverted;
         });
@@ -508,9 +508,7 @@ const swapTPforTPBehavior = function () {
         beforeEach(async function () {
           // mint FeeToken to alice
           await feeToken.mint(alice, pEth(50));
-          // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocContracts.mocWrapper?.address || mocImpl.address;
-          await feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+          await feeToken.connect(await ethers.getSigner(alice)).approve(mocImpl.address, pEth(50));
 
           // initialize previous balances
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);

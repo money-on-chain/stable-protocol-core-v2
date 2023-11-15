@@ -20,15 +20,6 @@ export type TPParams = {
   smoothingFactor: BigNumber;
 };
 
-export type AssetParams = {
-  // Asset contract address
-  assetAddress: Address;
-  // Asset Price Provider contract address
-  priceProvider: Address;
-  // Asset decimal places
-  decimals: number;
-};
-
 export type DeployParameters = {
   coreParams: {
     // protected coverage threshold [PREC]
@@ -82,10 +73,6 @@ export type DeployParameters = {
   // only for initialization in testnet
   tpParams?: {
     tpParams: TPParams[];
-  };
-  // only for initialization in testnet and for collateral bag implementation
-  assetParams?: {
-    assetParams: AssetParams[];
   };
   mocAddresses: {
     // collateral asset token address, only used for RC20 implementation

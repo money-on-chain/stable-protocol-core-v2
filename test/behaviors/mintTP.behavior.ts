@@ -820,9 +820,7 @@ const mintTPBehavior = function () {
         beforeEach(async function () {
           // mint FeeToken to alice
           await mocContracts.feeToken.mint(alice, pEth(50));
-          // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocContracts.mocWrapper?.address || mocImpl.address;
-          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(mocImpl.address, pEth(50));
 
           // initialize previous balances
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);

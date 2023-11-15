@@ -53,9 +53,7 @@ const feeTokenBehavior = function () {
       });
       describe("AND alice approves 25 Fee Token to Moc Core", function () {
         beforeEach(async function () {
-          // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocImpl.address;
-          await feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(25));
+          await feeToken.connect(await ethers.getSigner(alice)).approve(mocImpl.address, pEth(25));
         });
         describe("WHEN alice mints 10000 TC and doesn't have enough Fee Token allowance", function () {
           beforeEach(async function () {
@@ -77,9 +75,7 @@ const feeTokenBehavior = function () {
         });
         describe("WHEN alice mints 10000 TC and doesn't have enough Fee Token balance", function () {
           beforeEach(async function () {
-            // for collateral bag implementation approve must be set to Moc Wrapper contract
-            const spender = mocImpl.address;
-            await feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(10000));
+            await feeToken.connect(await ethers.getSigner(alice)).approve(mocImpl.address, pEth(10000));
             tx = await mocFunctions.mintTC({ from: alice, qTC: 10000 });
           });
           it("THEN a AC is used as fee payment method", async function () {

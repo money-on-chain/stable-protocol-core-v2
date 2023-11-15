@@ -275,7 +275,7 @@ const swapTCforTPBehavior = function () {
         });
         describe("WHEN alice tries to swap 3000.1 TC", function () {
           it("THEN tx reverts because alice doesn't have that much TC", async function () {
-            // generic revert because in collateral bag implementation fails before trying to transfer the tokens
+            // FIXME: generic revert because in collateral bag implementation fails before trying to transfer the tokens
             await expect(mocFunctions.swapTCforTP({ from: alice, qTC: "3000.000000000000000001" })).to.be.reverted;
           });
         });
@@ -422,9 +422,7 @@ const swapTCforTPBehavior = function () {
         beforeEach(async function () {
           // mint FeeToken to alice
           await feeToken.mint(alice, pEth(50));
-          // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocContracts.mocWrapper?.address || mocImpl.address;
-          await feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+          await feeToken.connect(await ethers.getSigner(alice)).approve(mocImpl.address, pEth(50));
 
           // initialize previous balances
           alicePrevACBalance = await mocFunctions.assetBalanceOf(alice);
