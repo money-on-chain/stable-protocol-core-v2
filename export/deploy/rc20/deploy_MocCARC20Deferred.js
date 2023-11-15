@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -36,18 +36,39 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
+    var deployments, signer, deployedMocQueue, mocCARC20, mocQueue;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, utils_1.deployUUPSArtifact)({ hre: hre, artifactBaseName: "MocCABag", contract: "MocCARC20" })];
+            case 0:
+                deployments = hre.deployments;
+                signer = hardhat_1.ethers.provider.getSigner();
+                return [4 /*yield*/, deployments.getOrNull("MocQueueProxy")];
             case 1:
+                deployedMocQueue = _a.sent();
+                if (!deployedMocQueue)
+                    throw new Error("No MocQueue deployed.");
+                return [4 /*yield*/, (0, utils_1.deployCARC20)(hre, "MocCARC20Deferred", "CollateralTokenCARC20Deferred", {
+                        mocQueue: deployedMocQueue.address,
+                    })];
+            case 2:
+                mocCARC20 = _a.sent();
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocQueue", deployedMocQueue.address, signer)];
+            case 3:
+                mocQueue = _a.sent();
+                // TODO: Deployer has admin privileges as this stage
+                console.log("Registering mocRC20 bucket as enqueuer: ".concat(mocCARC20.address));
+                return [4 /*yield*/, mocQueue.registerBucket(mocCARC20.address)];
+            case 4:
                 _a.sent();
                 return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };
 exports.default = deployFunc;
-deployFunc.id = "deployed_MocCABag"; // id required to prevent re-execution
-deployFunc.tags = ["MocCABag"];
-//# sourceMappingURL=deploy_MocCABag.js.map
+deployFunc.id = "deployed_MocCARC20Deferred"; // id required to prevent re-execution
+deployFunc.tags = ["MocCARC20Deferred"];
+deployFunc.dependencies = ["CollateralTokenCARC20Deferred", "MocVendorsCARC20", "MocCARC20Expansion", "MocQueue"];
+//# sourceMappingURL=deploy_MocCARC20Deferred.js.map

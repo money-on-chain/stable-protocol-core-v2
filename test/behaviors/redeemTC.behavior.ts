@@ -13,7 +13,6 @@ const redeemTCBehavior = function () {
   let mocImpl: MocCACoinbase | MocCARC20;
   let alice: Address;
   let bob: Address;
-  let operator: Address;
   let vendor: Address;
   let expectEvent: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
@@ -27,7 +26,6 @@ const redeemTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      operator = mocContracts.mocWrapper?.address || alice;
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCRedeemed");
     });
     describe("GIVEN alice has 300 TC", function () {
@@ -103,19 +101,19 @@ const redeemTCBehavior = function () {
           assertPrec(300 * 0.95, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: alice || mocWrapper
+          // sender: alice
+          // receiver: alice
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [operator, operator, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
+          const args = [alice, alice, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
           await expectEvent(tx, args);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
           // to: Zero Address
           // amount: 300 TC
           await expect(tx)
@@ -149,16 +147,15 @@ const redeemTCBehavior = function () {
           assertPrec(300 * 0.95, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: bob || mocWrapper
+          // sender: alice
+          // receiver: bob
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const receiver = mocContracts.mocWrapper?.address || bob;
-          const args = [operator, receiver, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
+          const args = [alice, bob, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
           await expectEvent(tx, args);
         });
       });
@@ -182,15 +179,15 @@ const redeemTCBehavior = function () {
           assertPrec(10, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: alice || mocWrapper
+          // sender: alice
+          // receiver: alice
           // qTC: 100 TC
           // qAC: 100 AC - 5% for Moc Fee Flow - 10% for vendor
           // qACfee: 5% qAC
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 10% qAC
-          const args = [operator, operator, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          const args = [alice, alice, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
           await expectEvent(tx, args);
         });
       });
@@ -200,16 +197,15 @@ const redeemTCBehavior = function () {
           tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 100, vendor });
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: bob || mocWrapper
+          // sender: alice
+          // receiver: bob
           // qTC: 100 TC
           // qAC: 100 AC - 5% for Moc Fee Flow - 10% for vendor
           // qACfee: 5% qAC
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 10% qAC
-          const receiver = mocContracts.mocWrapper?.address || bob;
-          const args = [operator, receiver, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          const args = [alice, bob, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
           await expectEvent(tx, args);
         });
       });
@@ -523,15 +519,15 @@ const redeemTCBehavior = function () {
             assertPrec(2.5, diff);
           });
           it("THEN Fee Token is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qAC: 100 AC
             // qACfee: 0 AC
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            const args = [operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            const args = [alice, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
             await expectEvent(tx, args);
           });
         });
@@ -561,16 +557,15 @@ const redeemTCBehavior = function () {
             assertPrec(2.5, diff);
           });
           it("THEN Fee Token is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
-            // receiver: bob || mocWrapper
+            // sender: alice
+            // receiver: bob
             // qTC: 100 TC
             // qAC: 100 AC
             // qACfee: 0 AC
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            const receiver = mocContracts.mocWrapper?.address || bob;
-            const args = [operator, receiver, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            const args = [alice, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
             await expectEvent(tx, args);
           });
         });

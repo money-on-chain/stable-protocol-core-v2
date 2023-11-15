@@ -14,7 +14,6 @@ const mintTPBehavior = function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
-  let operator: Address;
   let vendor: Address;
   let expectEvent: any;
   let tp0: Address;
@@ -34,7 +33,6 @@ const mintTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
-      operator = mocContracts.mocWrapper?.address || alice;
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPMinted");
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
@@ -141,7 +139,7 @@ const mintTPBehavior = function () {
         });
         it("THEN a TPMinted event is emitted", async function () {
           // tp: 0
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: alice
           // qTP: 23500 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
@@ -149,7 +147,7 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [tp0, operator, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+          const args = [tp0, alice, alice, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
           await expectEvent(tx, args);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
@@ -274,7 +272,7 @@ const mintTPBehavior = function () {
         });
         it("THEN a TPMinted event is emitted", async function () {
           // tp: 0
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: bob
           // qTP: 23500 TP
           // qAC: 100 AC + 5% for Moc Fee Flow
@@ -282,7 +280,7 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [tp0, operator, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+          const args = [tp0, alice, bob, pEth(23500), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
           await expectEvent(tx, args);
         });
       });
@@ -307,7 +305,7 @@ const mintTPBehavior = function () {
         });
         it("THEN a TPMinted event is emitted", async function () {
           // i : 0
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: alice
           // qTP: 23500
           // qAC: 100 AC + 5% for Moc Fee Flow + 10% for vendor
@@ -315,7 +313,7 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 0
-          const args = [tp0, operator, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor];
+          const args = [tp0, alice, alice, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor];
           await expectEvent(tx, args);
         });
       });
@@ -326,7 +324,7 @@ const mintTPBehavior = function () {
         });
         it("THEN a TPMinted event is emitted", async function () {
           // i : 0
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: bob
           // qTP: 2350 TP
           // qAC: 100 AC + 5% for Moc Fee Flow + 10% for vendor
@@ -334,7 +332,7 @@ const mintTPBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 0
-          const args = [tp0, operator, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor];
+          const args = [tp0, alice, bob, pEth(23500), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(10), 0, vendor];
           await expectEvent(tx, args);
         });
       });
@@ -441,7 +439,7 @@ const mintTPBehavior = function () {
             });
             it("THEN a TPMinted event is emitted", async function () {
               // tp: 0
-              // sender: deployer || mocWrapper
+              // sender: deployer
               // receiver: deployer
               // qTP: 3000 TP
               // qAC: 10 AC + 5% for Moc Fee Flow
@@ -449,8 +447,7 @@ const mintTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              const sender = mocContracts.mocWrapper?.address || deployer;
-              const args = [tp0, sender, deployer, pEth(3000), pEth(10 * 1.05), pEth(10 * 0.05), 0, 0, 0, noVendor];
+              const args = [tp0, deployer, deployer, pEth(3000), pEth(10 * 1.05), pEth(10 * 0.05), 0, 0, 0, noVendor];
               await expectEvent(tx, args);
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {
@@ -583,7 +580,7 @@ const mintTPBehavior = function () {
             });
             it("THEN a TPMinted event is emitted", async function () {
               // tp: 0
-              // sender: deployer || mocWrapper
+              // sender: deployer
               // receiver: deployer
               // qTP: 1000 TP
               // qAC: 10 AC + 5% for Moc Fee Flow
@@ -591,8 +588,7 @@ const mintTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              const sender = mocContracts.mocWrapper?.address || deployer;
-              const args = [tp0, sender, deployer, pEth(1000), pEth(10 * 1.05), pEth(10 * 0.05), 0, 0, 0, noVendor];
+              const args = [tp0, deployer, deployer, pEth(1000), pEth(10 * 1.05), pEth(10 * 0.05), 0, 0, 0, noVendor];
               await expectEvent(tx, args);
             });
             describe("AND Pegged Token has been devaluated to 1000", function () {
@@ -731,7 +727,7 @@ const mintTPBehavior = function () {
             });
             it("THEN a TPMinted event is emitted", async function () {
               // tp: 1
-              // sender: alice || mocWrapper
+              // sender: alice
               // receiver: alice
               // qTP: 525 TP
               // qAC: 100 AC + 0.1% for Moc Fee Flow
@@ -739,7 +735,7 @@ const mintTPBehavior = function () {
               // qFeeToken: 0
               // qACVendorMarkup: 0
               // qFeeTokenVendorMarkup: 0
-              const args = [tp1, operator, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0, noVendor];
+              const args = [tp1, alice, alice, pEth(525), pEth(100 * 1.001), pEth(100 * 0.001), 0, 0, 0, noVendor];
               await expectEvent(tx, args);
             });
           });
@@ -853,7 +849,7 @@ const mintTPBehavior = function () {
           });
           it("THEN Fee Token is used as fee payment method", async function () {
             // i: 0
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTP: 23500 TP
             // qAC: 100 AC
@@ -861,7 +857,7 @@ const mintTPBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            const args = [tp0, operator, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            const args = [tp0, alice, alice, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
             await expectEvent(tx, args);
           });
         });
@@ -890,7 +886,7 @@ const mintTPBehavior = function () {
           });
           it("THEN Fee Token is used as fee payment method", async function () {
             // i: 0
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: bob
             // qTP: 23500 TC
             // qAC: 100 AC
@@ -898,7 +894,7 @@ const mintTPBehavior = function () {
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            const args = [tp0, operator, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            const args = [tp0, alice, bob, pEth(23500), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
             await expectEvent(tx, args);
           });
         });

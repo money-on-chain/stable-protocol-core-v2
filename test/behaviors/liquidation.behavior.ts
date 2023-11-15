@@ -130,14 +130,12 @@ const shouldBehaveLikeLiquidable = function () {
           });
           it("THEN a liq redeem event is generated for Charlie", async function () {
             // i: 1
-            // sender: charlie || mocWrapper
-            // receiver: otherUser || mocWrapper
+            // sender: charlie
+            // receiver: otherUser
             // qTP: 10 TP
             // qAC: 0.43333... AC
-            const isWrapper = this.mocContracts.mocWrapper?.address;
-            await expect(tx)
-              .to.emit(mocImpl, "LiqTPRedeemed")
-              .withArgs(tp1, isWrapper || charlie, isWrapper || otherUser, pEth(10), "43333333333333333247");
+            const qAC = "43333333333333333247";
+            await expect(tx).to.emit(mocImpl, "LiqTPRedeemed").withArgs(tp1, charlie, otherUser, pEth(10), qAC);
           });
           it("THEN they receive the corresponding AC amount", async function () {
             // Alice, bob and Charlie contribution at 1:1

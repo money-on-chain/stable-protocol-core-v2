@@ -14,7 +14,6 @@ const redeemTCandTPBehavior = function () {
   let mocImpl: MocCACoinbase | MocCARC20;
   let alice: Address;
   let bob: Address;
-  let operator: Address;
   let vendor: Address;
   let expectEvent: any;
   let tps: Address[];
@@ -42,7 +41,6 @@ const redeemTCandTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      operator = mocContracts.mocWrapper?.address || alice;
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPRedeemed");
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
@@ -169,8 +167,8 @@ const redeemTCandTPBehavior = function () {
         });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
-          // sender: alice || mocWrapper
-          // receiver: alice || mocWrapper
+          // sender: alice
+          // receiver: alice
           // qTC: 100 TC
           // qTP: 783.33 TP
           // qAC: 103.33 AC - 8% for Moc Fee Flow
@@ -180,8 +178,8 @@ const redeemTCandTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
             tps[TP_0],
-            operator,
-            operator,
+            alice,
+            alice,
             pEth(100),
             pEth("783.333333333333333333"),
             pEth("95.066666666666666667"),
@@ -193,7 +191,7 @@ const redeemTCandTPBehavior = function () {
           ]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
           // to: Zero Address
           // amount: 100 TC
           await expect(tx)
@@ -201,7 +199,7 @@ const redeemTCandTPBehavior = function () {
             .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(100));
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
           // to: Zero Address
           // amount: 783.33 TP
           await expect(tx)
@@ -243,8 +241,8 @@ const redeemTCandTPBehavior = function () {
         });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
-          // sender: alice || mocWrapper
-          // receiver: bob || mocWrapper
+          // sender: alice
+          // receiver: bob
           // qTC: 100 TC
           // qTP: 783.33 TP
           // qAC: 103.33 AC - 8% for Moc Fee Flow
@@ -254,8 +252,8 @@ const redeemTCandTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
             tps[TP_0],
-            operator,
-            mocContracts.mocWrapper?.address || bob,
+            alice,
+            bob,
             pEth(100),
             pEth("783.333333333333333333"),
             pEth("95.066666666666666667"),
@@ -287,8 +285,8 @@ const redeemTCandTPBehavior = function () {
         });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
-          // sender: alice || mocWrapper
-          // receiver: alice || mocWrapper
+          // sender: alice
+          // receiver: alice
           // qTC: 100 TC
           // qTP: 783.33 TP
           // qAC: 103.33 AC - 8% for Moc Fee Flow - 10% for vendor
@@ -298,8 +296,8 @@ const redeemTCandTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
             tps[TP_0],
-            operator,
-            operator,
+            alice,
+            alice,
             pEth(100),
             pEth("783.333333333333333333"),
             pEth("84.733333333333333334"),
@@ -317,8 +315,8 @@ const redeemTCandTPBehavior = function () {
         });
         it("THEN a TCandTPRedeemed event is emitted", async function () {
           // i: 0
-          // sender: alice || mocWrapper
-          // receiver: bob || mocWrapper
+          // sender: alice
+          // receiver: bob
           // qTC: 100 TC
           // qTP: 783.33 TP
           // qAC: 103.33 AC - 8% for Moc Fee Flow - 10% for vendor
@@ -328,8 +326,8 @@ const redeemTCandTPBehavior = function () {
           // qFeeTokenVendorMarkup: 0
           await expectEvent(tx, [
             tps[TP_0],
-            operator,
-            mocContracts.mocWrapper?.address || bob,
+            alice,
+            bob,
             pEth(100),
             pEth("783.333333333333333333"),
             pEth("84.733333333333333334"),
@@ -373,8 +371,8 @@ const redeemTCandTPBehavior = function () {
           });
           it("THEN a TCandTPRedeemed event is emitted", async function () {
             // i: 0
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qTP: 783.33 TP
             // qAC: 103.33 AC - 8% for Moc Fee Flow
@@ -384,8 +382,8 @@ const redeemTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
               tps[TP_0],
-              operator,
-              operator,
+              alice,
+              alice,
               pEth(100),
               pEth("783.333333333333333333"),
               pEth("95.066666666666666667"),
@@ -431,8 +429,8 @@ const redeemTCandTPBehavior = function () {
           });
           it("THEN a TCandTPRedeemed event is emitted", async function () {
             // i: 0
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qTP: 1175 TP
             // qAC: 103.16 AC - 8% for Moc Fee Flow
@@ -442,8 +440,8 @@ const redeemTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
               tps[TP_0],
-              operator,
-              operator,
+              alice,
+              alice,
               pEth(100),
               pEth(1175),
               pEth("94.913333333333333272"),
@@ -510,8 +508,8 @@ const redeemTCandTPBehavior = function () {
           });
           it("THEN Fee Token is used as fee payment method", async function () {
             // i: 0
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qTP: 783.33 TP
             // qAC: 103.33 AC
@@ -521,8 +519,8 @@ const redeemTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
               tps[TP_0],
-              operator,
-              operator,
+              alice,
+              alice,
               pEth(100),
               pEth("783.333333333333333333"),
               pEth("103.333333333333333333"),
@@ -561,8 +559,8 @@ const redeemTCandTPBehavior = function () {
           });
           it("THEN Fee Token is used as fee payment method", async function () {
             // i: 0
-            // sender: alice || mocWrapper
-            // receiver: bob || mocWrapper
+            // sender: alice
+            // receiver: bob
             // qTC: 100 TC
             // qTP: 783.33 TP
             // qAC: 103.33 AC
@@ -572,8 +570,8 @@ const redeemTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
               tps[TP_0],
-              operator,
-              mocContracts.mocWrapper?.address || bob,
+              alice,
+              bob,
               pEth(100),
               pEth("783.333333333333333333"),
               pEth("103.333333333333333333"),
@@ -619,8 +617,8 @@ const redeemTCandTPBehavior = function () {
           });
           it("THEN a 98.73 TP 4 are redeemed", async function () {
             // i: 4
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qTP: 98.73 TP
             // qAC: 118.8 AC - 8% for Moc Fee Flow
@@ -630,8 +628,8 @@ const redeemTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
               tps[TP_4],
-              operator,
-              operator,
+              alice,
+              alice,
               pEth(100),
               pEth("98.735907870033506676"),
               pEth("109.302292426748728789"),
@@ -656,8 +654,8 @@ const redeemTCandTPBehavior = function () {
           });
           it("THEN a 1636.95 TP 1 are redeemed", async function () {
             // i: 1
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 1000 TC
             // qTP: 1636.93 TP
             // qAC: 1311.79 AC - 8% for Moc Fee Flow
@@ -667,8 +665,8 @@ const redeemTCandTPBehavior = function () {
             // qFeeTokenVendorMarkup: 0
             await expectEvent(tx, [
               tps[TP_1],
-              operator,
-              operator,
+              alice,
+              alice,
               pEth(1000),
               pEth("1636.937419950555505676"),
               pEth("1206.853795496097345756"),

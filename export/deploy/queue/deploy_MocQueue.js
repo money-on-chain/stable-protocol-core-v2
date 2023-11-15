@@ -36,31 +36,68 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var hardhat_1 = require("hardhat");
 var utils_1 = require("../../scripts/utils");
+var utils_2 = require("../../test/helpers/utils");
 var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var deployments, getNamedAccounts, deployer, deploy, gasLimit, deployImplResult;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var getNamedAccounts, deployer, _a, mocAddresses, queueParams, signer, pauserAddress, governorAddress, mocQueue, mocQueueProxy, _b, _c, _d, _i, authorizedExecutor;
+    return __generator(this, function (_e) {
+        switch (_e.label) {
             case 0:
-                deployments = hre.deployments, getNamedAccounts = hre.getNamedAccounts;
+                getNamedAccounts = hre.getNamedAccounts;
                 return [4 /*yield*/, getNamedAccounts()];
             case 1:
-                deployer = (_a.sent()).deployer;
-                deploy = deployments.deploy;
-                gasLimit = (0, utils_1.getNetworkDeployParams)(hre).gasLimit;
-                return [4 /*yield*/, deploy("MocCACoinbaseExpansion", {
-                        contract: "MocCoreExpansion",
-                        from: deployer,
-                        gasLimit: gasLimit,
+                deployer = (_e.sent()).deployer;
+                _a = (0, utils_1.getNetworkDeployParams)(hre), mocAddresses = _a.mocAddresses, queueParams = _a.queueParams;
+                signer = hardhat_1.ethers.provider.getSigner();
+                pauserAddress = mocAddresses.pauserAddress;
+                governorAddress = (0, utils_1.getGovernorAddresses)(hre);
+                return [4 /*yield*/, (0, utils_1.deployUUPSArtifact)({
+                        hre: hre,
+                        artifactBaseName: "MocQueue",
+                        contract: "MocQueue",
+                        initializeArgs: [governorAddress, pauserAddress, queueParams.minOperWaitingBlk, queueParams.execFeeParams],
                     })];
             case 2:
-                deployImplResult = _a.sent();
-                console.log("\"MocCACoinbaseExpansion, as MocCoreExpansion implementation deployed at ".concat(deployImplResult.address));
-                return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                mocQueue = _e.sent();
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocQueue", mocQueue.address, signer)];
+            case 3:
+                mocQueueProxy = _e.sent();
+                _b = mocAddresses.authorizedExecutors;
+                _c = [];
+                for (_d in _b)
+                    _c.push(_d);
+                _i = 0;
+                _e.label = 4;
+            case 4:
+                if (!(_i < _c.length)) return [3 /*break*/, 7];
+                _d = _c[_i];
+                if (!(_d in _b)) return [3 /*break*/, 6];
+                authorizedExecutor = _d;
+                console.log("Whitelisting queue executor: ".concat(authorizedExecutor));
+                return [4 /*yield*/, mocQueueProxy.grantRole(utils_2.EXECUTOR_ROLE, authorizedExecutor)];
+            case 5:
+                _e.sent();
+                _e.label = 6;
+            case 6:
+                _i++;
+                return [3 /*break*/, 4];
+            case 7:
+                if (!hre.network.tags.local) return [3 /*break*/, 9];
+                console.log("Also whitelisting executor deployer: ".concat(deployer));
+                return [4 /*yield*/, mocQueueProxy.grantRole(utils_2.EXECUTOR_ROLE, deployer)];
+            case 8:
+                _e.sent();
+                _e.label = 9;
+            case 9: 
+            // TODO: IMPORTANT: deployer needs to renounce to ADMIN_ROLE,
+            // but if we're gonna do bucket adding by governance, init fnc needs to change.
+            return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); };
 exports.default = deployFunc;
-deployFunc.id = "deployed_MocCACoinbaseExpansion"; // id required to prevent re-execution
-deployFunc.tags = ["MocCACoinbaseExpansion"];
-//# sourceMappingURL=deploy_MocCACoinbaseExpansion.js.map
+deployFunc.id = "deployed_MocQueue"; // id required to prevent re-execution
+deployFunc.tags = ["MocQueue"];
+deployFunc.dependencies = [];
+//# sourceMappingURL=deploy_MocQueue.js.map

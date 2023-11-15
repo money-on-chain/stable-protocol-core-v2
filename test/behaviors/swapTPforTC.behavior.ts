@@ -15,7 +15,6 @@ const swapTPforTCBehavior = function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
-  let operator: Address;
   let vendor: Address;
   let expectEvent: any;
   let tp0: Address[];
@@ -36,7 +35,6 @@ const swapTPforTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl, feeToken } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
-      operator = mocContracts.mocWrapper?.address || alice;
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTC");
@@ -124,7 +122,7 @@ const swapTPforTCBehavior = function () {
         it("THEN a TPSwappedForTC event is emitted", async function () {
           // iFrom: 0
           // iTo: 1
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: alice
           // qTP: 23500 TP
           // qTC: 100 TC
@@ -132,11 +130,11 @@ const swapTPforTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [tp0, operator, alice, pEth(23500), pEth(100), pEth(1), 0, 0, 0, noVendor]);
+          await expectEvent(tx, [tp0, alice, alice, pEth(23500), pEth(100), pEth(1), 0, 0, 0, noVendor]);
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : operator;
-          // from: alice || mocWrapper
+          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: alice
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
@@ -192,7 +190,7 @@ const swapTPforTCBehavior = function () {
         it("THEN a TPSwappedForTC event is emitted", async function () {
           // iFrom: 0
           // iTo: 1
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: bob
           // qTP: 2350 TP
           // qTC: 10 TC
@@ -200,7 +198,7 @@ const swapTPforTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup : 0
-          await expectEvent(tx, [tp0, operator, bob, pEth(2350), pEth(10), pEth(10 * 0.01), 0, 0, 0, noVendor]);
+          await expectEvent(tx, [tp0, alice, bob, pEth(2350), pEth(10), pEth(10 * 0.01), 0, 0, 0, noVendor]);
         });
       });
       describe("WHEN alice tries to swap 23500 TP 0 for 100 TC via vendor without sending the AC for the markup", function () {
@@ -233,7 +231,7 @@ const swapTPforTCBehavior = function () {
         it("THEN a TPSwappedForTC event is emitted", async function () {
           // iFrom: 0
           // iTo: 1
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: alice
           // qTP: 23500 TP
           // qTC: 100 TC
@@ -241,7 +239,7 @@ const swapTPforTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [tp0, operator, alice, pEth(23500), pEth(100), pEth(1), 0, pEth(10), 0, vendor]);
+          await expectEvent(tx, [tp0, alice, alice, pEth(23500), pEth(100), pEth(1), 0, pEth(10), 0, vendor]);
         });
       });
       describe("WHEN alice swaps 23500 TP 0 for 100 TC to bob via vendor", function () {
@@ -252,7 +250,7 @@ const swapTPforTCBehavior = function () {
         it("THEN a TPSwappedForTC event is emitted", async function () {
           // iFrom: 0
           // iTo: 1
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: bob
           // qTP: 23500 TP
           // qTC: 100 TC
@@ -260,7 +258,7 @@ const swapTPforTCBehavior = function () {
           // qFeeToken: 0
           // qACVendorMarkup: 10% AC
           // qFeeTokenVendorMarkup: 0
-          await expectEvent(tx, [tp0, operator, bob, pEth(23500), pEth(100), pEth(1), 0, pEth(10), 0, vendor]);
+          await expectEvent(tx, [tp0, alice, bob, pEth(23500), pEth(100), pEth(1), 0, pEth(10), 0, vendor]);
         });
       });
       describe("AND TP 0 has been revaluated to 15.1", function () {
@@ -303,7 +301,7 @@ const swapTPforTCBehavior = function () {
           it("THEN a TPSwappedForTC event is emitted", async function () {
             // iFrom: 0
             // iTo: 1
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTP: 4700 TP
             // qTC: 9.933 TC
@@ -312,7 +310,7 @@ const swapTPforTCBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             const qTC = pEth("9.933774834437086092");
-            await expectEvent(tx, [tp0, operator, alice, pEth(4700), qTC, pEth(10 * 0.01), 0, 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, alice, alice, pEth(4700), qTC, pEth(10 * 0.01), 0, 0, 0, noVendor]);
           });
         });
       });
@@ -336,7 +334,7 @@ const swapTPforTCBehavior = function () {
           it("THEN a TPSwappedForTC event is emitted", async function () {
             // iFrom: 0
             // iTo: 1
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTP: 1000 TP
             // qTC: 10.471 TC
@@ -345,7 +343,7 @@ const swapTPforTCBehavior = function () {
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
             const qTC = pEth("10.471204188481675392");
-            await expectEvent(tx, [tp0, operator, alice, pEth(1000), qTC, pEth(10 * 0.01), 0, 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, alice, alice, pEth(1000), qTC, pEth(10 * 0.01), 0, 0, 0, noVendor]);
           });
         });
       });
@@ -404,7 +402,7 @@ const swapTPforTCBehavior = function () {
           });
           it("THEN Fee Token is used as fee payment method", async function () {
             // i: 0
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: alice
             // qTP: 23500 TP
             // qTC: 100 TC
@@ -412,7 +410,7 @@ const swapTPforTCBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [tp0, operator, alice, pEth(23500), pEth(100), 0, pEth(0.5), 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, alice, alice, pEth(23500), pEth(100), 0, pEth(0.5), 0, 0, noVendor]);
           });
         });
         describe("WHEN alice swaps 23500 TP 0 for 100 TC", function () {
@@ -440,7 +438,7 @@ const swapTPforTCBehavior = function () {
           });
           it("THEN Fee Token is used as fee payment method", async function () {
             // i: 0
-            // sender: alice || mocWrapper
+            // sender: alice
             // receiver: bob
             // qTP: 23500 TP
             // qTC: 100 TC
@@ -448,7 +446,7 @@ const swapTPforTCBehavior = function () {
             // qFeeToken: 100 (1% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expectEvent(tx, [tp0, operator, bob, pEth(23500), pEth(100), 0, pEth(0.5), 0, 0, noVendor]);
+            await expectEvent(tx, [tp0, alice, bob, pEth(23500), pEth(100), 0, pEth(0.5), 0, 0, noVendor]);
           });
         });
       });

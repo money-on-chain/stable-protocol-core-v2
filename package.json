@@ -96,7 +96,7 @@
     "report:gas": "REPORT_GAS=true hardhat test",
     "storage-layout": "npx ts-node ./scripts/storage-layout.ts",
     "storage-layout-compare:MocCoreExpansion": "hardhat storage-layout-compare --a contracts/core/MocCore.sol:MocCore --b contracts/core/MocCoreExpansion.sol:MocCoreExpansion",
-    "export": "hardhat export-artifacts export/artifacts && tsc && npm run copy-dist",
+    "export": "rm -rf export/ && hardhat export-artifacts export/artifacts && rm -rf dist/ && tsc && npm run copy-dist",
     "copy-dist": "copyfiles -u 1 dist/deploy/**/*.js export && copyfiles -u 1 dist/scripts/**/* export",
     "mythril:MocCACoinbase": "myth analyze ./contracts/collateral/coinbase/MocCACoinbase.sol --solc-json mythril.config.json --execution-timeout 3600",
     "mythril:MocCAWrapper": "myth analyze ./contracts/collateral/collateralBag/MocCAWrapper.sol --solc-json mythril.config.json --execution-timeout 3600",

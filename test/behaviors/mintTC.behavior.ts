@@ -14,7 +14,6 @@ const mintTCBehavior = function () {
   let deployer: Address;
   let alice: Address;
   let bob: Address;
-  let operator: Address;
   let vendor: Address;
   let expectTCMinted: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
@@ -27,7 +26,6 @@ const mintTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
-      operator = mocContracts.mocWrapper?.address || alice;
       expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
     });
     describe("WHEN alice tries to mint 0 TC", function () {
@@ -75,7 +73,7 @@ const mintTCBehavior = function () {
         assertPrec(100 * 1.05, diff);
       });
       it("THEN a TCMinted event is emitted", async function () {
-        // sender: alice || mocWrapper
+        // sender: alice
         // receiver: alice
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow
@@ -83,7 +81,7 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
-        const args = [operator, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+        const args = [alice, alice, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
         await expectTCMinted(tx, args);
       });
       it("THEN a Collateral Token Transfer event is emitted", async function () {
@@ -148,7 +146,7 @@ const mintTCBehavior = function () {
         assertPrec(10, diff);
       });
       it("THEN a TCMinted event is emitted", async function () {
-        // sender: alice || mocWrapper
+        // sender: alice
         // receiver: alice
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow + 10% for vendor
@@ -156,7 +154,7 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 10% qAC
         // qFeeTokenVendorMarkup: 0
-        const args = [operator, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
+        const args = [alice, alice, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
         await expectTCMinted(tx, args);
       });
     });
@@ -166,7 +164,7 @@ const mintTCBehavior = function () {
         tx = await mocFunctions.mintTC({ from: alice, to: bob, qTC: 100, vendor });
       });
       it("THEN a TCMinted event is emitted", async function () {
-        // sender: alice || mocWrapper
+        // sender: alice
         // receiver: bob
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow + 10% for vendor
@@ -174,7 +172,7 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 10% qAC
         // qFeeTokenVendorMarkup: 0
-        const args = [operator, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
+        const args = [alice, bob, pEth(100), pEth(100 * 1.15), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor];
         await expectTCMinted(tx, args);
       });
     });
@@ -201,7 +199,7 @@ const mintTCBehavior = function () {
         assertPrec(100 * 1.05, diff);
       });
       it("THEN a TCMinted event is emitted", async function () {
-        // sender: alice || mocWrapper
+        // sender: alice
         // receiver: bob
         // qTC: 100 TC
         // qAC: 100 AC + 5% for Moc Fee Flow
@@ -209,7 +207,7 @@ const mintTCBehavior = function () {
         // qFeeToken: 0
         // qACVendorMarkup: 0
         // qFeeTokenVendorMarkup: 0
-        const args = [operator, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
+        const args = [alice, bob, pEth(100), pEth(100 * 1.05), pEth(100 * 0.05), 0, 0, 0, noVendor];
         await expectTCMinted(tx, args);
       });
     });
@@ -384,7 +382,7 @@ const mintTCBehavior = function () {
           assertPrec(2.5, diff);
         });
         it("THEN Fee Token is used as fee payment method", async function () {
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: alice
           // qTC: 100 TC
           // qAC: 100 AC
@@ -392,7 +390,7 @@ const mintTCBehavior = function () {
           // qFeeToken: 100 (5% * 50%)
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [operator, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+          const args = [alice, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
           await expectTCMinted(tx, args);
         });
       });
@@ -420,7 +418,7 @@ const mintTCBehavior = function () {
           assertPrec(2.5, diff);
         });
         it("THEN Fee Token is used as fee payment method", async function () {
-          // sender: alice || mocWrapper
+          // sender: alice
           // receiver: bob
           // qTC: 100 TC
           // qAC: 100 AC
@@ -428,7 +426,7 @@ const mintTCBehavior = function () {
           // qFeeToken: 100 (5% * 50%)
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          const args = [operator, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+          const args = [alice, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
           await expectTCMinted(tx, args);
         });
       });
