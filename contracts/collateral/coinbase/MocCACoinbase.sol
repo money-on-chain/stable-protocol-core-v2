@@ -42,6 +42,7 @@ contract MocCACoinbase is MocCoreShared {
      *      decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *      mocVendors address for MocVendors contract
+     *      mocQueueAddress address for MocQueue contract
      */
     function initialize(InitializeDeferredParams calldata initializeDeferredParams_) external initializer {
         __MocDeferred_init(initializeDeferredParams_);

@@ -8,23 +8,29 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 
 /**
  * @title MocDeferred
- * @notice // TODO:
+ * @notice Add deferred functions to queue protocol operations
  */
 abstract contract MocDeferred is MocCore {
-    // Queue
-    MocQueue public mocQueue;
-    // amount of AC locked on pending operations
-    uint256 public qACLockedInPending;
+    // ------- Custom Errors -------
+    error OnlyQueue();
 
+    // ------- Structs -------
     struct InitializeDeferredParams {
         InitializeCoreParams initializeCoreParams;
         // mocQueue contract address
         address mocQueueAddress;
     }
 
+    // ------- Storage -------
+    // Queue
+    MocQueue public mocQueue;
+    // amount of AC locked on pending operations
+    // TODO: review if this tracking is necessary for coinbase
+    uint256 public qACLockedInPending;
+
+    // ------- Modifiers -------
     modifier onlyMocQueue() {
-        //TODO
-        require(msg.sender == address(mocQueue), "NOT queue");
+        if (msg.sender != address(mocQueue)) revert OnlyQueue();
         _;
     }
 
@@ -55,6 +61,7 @@ abstract contract MocDeferred is MocCore {
      *      decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *      mocVendors address for MocVendors contract
+     *      mocQueueAddress address for MocQueue contract
      */
     function __MocDeferred_init(InitializeDeferredParams calldata initializeParams_) internal onlyInitializing {
         __MocCore_init(initializeParams_.initializeCoreParams);

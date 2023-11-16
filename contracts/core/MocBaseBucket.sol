@@ -5,8 +5,6 @@ import { MocTC, IMocRC20 } from "../tokens/MocTC.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 import { IDataProvider } from "../interfaces/IDataProvider.sol";
 import { MocUpgradable } from "../governance/MocUpgradable.sol";
-/* solhint-disable-next-line max-line-length */
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -14,7 +12,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice MocBaseBucket holds Bucket Zero state, both for the Collateral Bag and PeggedTokens Items.
  * @dev Abstracts all rw operations on the main bucket and expose all calculations relative to its state.
  */
-abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
+abstract contract MocBaseBucket is MocUpgradable {
     // ------- Events -------
 
     event ContractLiquidated();

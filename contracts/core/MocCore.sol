@@ -544,7 +544,7 @@ abstract contract MocCore is MocCommons {
         address tp_,
         address sender_,
         address recipient_
-    ) internal notPaused nonReentrant returns (uint256 qACRedeemed) {
+    ) internal notPaused returns (uint256 qACRedeemed) {
         bytes memory payload = abi.encodeCall(
             MocCoreExpansion(mocCoreExpansion).liqRedeemTPTo,
             (tp_, sender_, recipient_, acBalanceOf(address(this)))
@@ -574,7 +574,7 @@ abstract contract MocCore is MocCommons {
         uint256 operatorsQAC_,
         address vendor_,
         FeeCalcs memory feeCalcs_
-    ) internal nonReentrant {
+    ) internal {
         if (feeCalcs_.qACFee > 0) {
             // [N] = [PREC] * [N] / [PREC]
             uint256 qACFeeRetained = _mulPrec(feeRetainer, feeCalcs_.qACFee);
@@ -634,7 +634,7 @@ abstract contract MocCore is MocCommons {
     /**
      * @notice distribute appreciation factor to beneficiary and success fee to Moc Fee Flow
      */
-    function _distributeSuccessFee() internal nonReentrant {
+    function _distributeSuccessFee() internal {
         uint256 mocGain = 0;
         uint256 pegAmount = pegContainer.length;
         uint256[] memory tpToMint = new uint256[](pegAmount);
@@ -686,7 +686,7 @@ abstract contract MocCore is MocCommons {
      *  -   The amount is not differential, it's a snapshot of the moment it's executed
      *  -   It does not check coverage
      */
-    function tcHoldersInterestPayment() external notPaused nonReentrant {
+    function tcHoldersInterestPayment() external notPaused {
         // check if it is in the corresponding block to execute the interest payment
         if (block.number < nextTCInterestPayment) revert MissingBlocksToTCInterestPayment();
         unchecked {
