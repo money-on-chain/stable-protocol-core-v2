@@ -6,7 +6,7 @@ import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
 import { pEth, tpParams } from "../helpers/utils";
 import { MocQueue } from "../../typechain";
-import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
 describe("Feature: MocQueue flux capacitor", function () {
   let mocFunctions: any;
@@ -18,7 +18,7 @@ describe("Feature: MocQueue flux capacitor", function () {
     let bob: Address;
     beforeEach(async function () {
       ({ deployer: executor, alice, bob } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
 
       ({ mocQueue } = mocContracts);

@@ -12,7 +12,7 @@ describe("Feature: MocCoinbase redeem TC", function () {
   let mocFunctions: any;
   let deployer: Address;
 
-  describe("GIVEN a MocCoinbase implementation deployed", function () {
+  describe("GIVEN a MocCoinbase implementation deployed with mocQueueMock", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
@@ -22,6 +22,7 @@ describe("Feature: MocCoinbase redeem TC", function () {
       ({ mocImpl } = this.mocContracts);
     });
     redeemTCBehavior();
+    // TODO:
     describe.skip("AND a non payable contract", () => {
       let nonPayable: NonPayableMock;
       beforeEach(async () => {

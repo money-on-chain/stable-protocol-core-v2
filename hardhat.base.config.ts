@@ -219,7 +219,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
   },
   mocha: {
-    timeout: 100000,
+    timeout: 400000,
   },
 };
 

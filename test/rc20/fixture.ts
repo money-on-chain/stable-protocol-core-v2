@@ -1,11 +1,12 @@
 import hre, { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
-import { getNetworkDeployParams } from "../../scripts/utils";
 import {
   ERC20Mock,
   ERC20Mock__factory,
   MocCARC20,
   MocCARC20__factory,
+  MocQueue,
+  MocQueue__factory,
   MocRC20,
   MocRC20__factory,
   MocVendors,
@@ -16,10 +17,9 @@ import {
   DataProviderMock__factory,
   MocCoreExpansion,
   MocCoreExpansion__factory,
-  MocQueue__factory,
-  MocQueue,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, EXECUTOR_ROLE, pEth } from "../helpers/utils";
+import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { getNetworkDeployParams } from "../../scripts/utils";
 
 export const fixtureDeployedMocRC20 = memoizee(
   (

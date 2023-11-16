@@ -1,16 +1,16 @@
-import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
+import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation-queue.behavior";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
 // Gets excluded from coverage by regEx "gas estimation"
-describe.skip("Feature: MocCoinbase gas estimation", function () {
-  describe("GIVEN a MocCoinbase implementation deployed", function () {
+describe("Feature: MocCoinbase gas estimation", function () {
+  describe("GIVEN a MocCoinbase implementation deployed with mocQueueMock", function () {
     const peggedTokenAmount = 15;
     describe(`AND ${peggedTokenAmount} Pegged Tokens`, function () {
       beforeEach(async function () {
-        const fixtureDeploy = fixtureDeployedMocCoinbase(peggedTokenAmount);
+        const fixtureDeploy = fixtureDeployedMocCoinbase(peggedTokenAmount, undefined, true);
         this.mocContracts = await fixtureDeploy();
-        this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
+        this.mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
       });
       gasEstimationBehavior();
     });

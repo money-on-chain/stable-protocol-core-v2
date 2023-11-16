@@ -4,7 +4,7 @@ import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
 import { ERRORS, OperId, tpParams } from "../helpers/utils";
 import { GovernorMock__factory, MocQueue } from "../../typechain";
-import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
 describe("Feature: MocQueue Pausing", function () {
   describe("GIVEN a MocQueue implementation with queued Operations", function () {
@@ -19,8 +19,8 @@ describe("Feature: MocQueue Pausing", function () {
       expect(result).to.be.revertedWithCustomError(mocQueue, ERRORS.NOT_WHEN_PAUSED);
 
     before(async function () {
-      ({ deployer: pauser, deployer: executor, alice } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
+      ({ deployer: pauser, alice } = await getNamedAccounts());
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
 

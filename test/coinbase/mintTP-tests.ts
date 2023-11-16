@@ -13,7 +13,7 @@ describe("Feature: MocCoinbase mint TP", function () {
   let mocFunctions: any;
   let deployer: Address;
 
-  describe("GIVEN a MocCoinbase implementation deployed", function () {
+  describe("GIVEN a MocCoinbase implementation deployed with mocQueueMock", function () {
     beforeEach(async function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
@@ -23,7 +23,7 @@ describe("Feature: MocCoinbase mint TP", function () {
       ({ mocImpl, mocPeggedTokens } = this.mocContracts);
     });
     mintTPBehavior();
-
+    // TODO:
     describe.skip("WHEN a non payable contract tries to mintTP with exceeded amount of coinbase", () => {
       let nonPayable: NonPayableMock;
       beforeEach(async () => {

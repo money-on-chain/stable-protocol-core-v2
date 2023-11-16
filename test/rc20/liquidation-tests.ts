@@ -1,13 +1,13 @@
-import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
+import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
 import { shouldBehaveLikeLiquidable } from "../behaviors/liquidation.behavior";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
-describe.skip("Feature: MocRC20 Liquidation", function () {
-  describe("GIVEN a MocRC20 implementation deployed with two Pegs", function () {
+describe("Feature: MocCARC20D Liquidation", function () {
+  describe("GIVEN a MocCARC20 implementation deployed with two Pegs", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(2);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
     });
     shouldBehaveLikeLiquidable();
   });

@@ -9,7 +9,7 @@ import { fixtureDeployedMocCoinbase } from "./fixture";
 describe("Feature: MocCoinbase mint TC", function () {
   let mocImpl: MocCACoinbase;
 
-  describe("GIVEN a MocCoinbase implementation deployed", function () {
+  describe("GIVEN a MocCoinbase implementation deployed with mocQueueMock", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
@@ -17,7 +17,7 @@ describe("Feature: MocCoinbase mint TC", function () {
       ({ mocImpl } = this.mocContracts);
     });
     mintTCBehavior();
-
+    // TODO:
     describe.skip("WHEN a non payable contract tries to mintTC with exceeded amount of coinbase", () => {
       let nonPayable: NonPayableMock;
       beforeEach(async () => {

@@ -16,7 +16,7 @@ import {
   getNetworkDeployParams,
 } from "../helpers/utils";
 import { MocCARC20, MocQueue, NonPayableMock } from "../../typechain";
-import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
 describe("Feature: MocQueue with a MocCARC20 bucket", function () {
   const vendor = CONSTANTS.ZERO_ADDRESS;
@@ -37,7 +37,7 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
     let commonParams: { sender: Address; recipient: Address; vendor: Address };
     beforeEach(async function () {
       ({ deployer, alice, bob } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
 
