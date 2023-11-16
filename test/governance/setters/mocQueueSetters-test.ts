@@ -1,23 +1,22 @@
 import { expect } from "chai";
-import { deployments, ethers } from "hardhat";
+import hre, { deployments, ethers } from "hardhat";
 import memoizee from "memoizee";
-import { GovernorMock, GovernorMock__factory, MocQueue, MocQueue__factory } from "../../../typechain";
+import { GovernorMock, GovernorMock__factory, MocQueue } from "../../../typechain";
 import { ERRORS } from "../../helpers/utils";
+import { deployMocQueue } from "../../../scripts/utils";
 
 const fixtureDeploy = memoizee(
   (): (() => Promise<{
     mocQueue: MocQueue;
+    governorMock: GovernorMock;
   }>) => {
-    return deployments.createFixture(async ({ ethers }) => {
+    return deployments.createFixture(async () => {
       await deployments.fixture();
-      const signer = ethers.provider.getSigner();
-
-      const deployedMocQueue = await deployments.getOrNull("MocQueueProxy");
-      if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
-      const mocQueue: MocQueue = MocQueue__factory.connect(deployedMocQueue.address, signer);
-
+      const mocQueue = await deployMocQueue(hre, "MocQueue");
+      const governorAddress = await mocQueue.governor();
       return {
         mocQueue,
+        governorMock: GovernorMock__factory.connect(governorAddress, ethers.provider.getSigner()),
       };
     });
   },
@@ -28,9 +27,7 @@ describe("Feature: Verify all MocQueue config settings are protected by governan
   let mocQueue: MocQueue;
 
   before(async () => {
-    ({ mocQueue } = await fixtureDeploy()());
-    const governorAddress = await mocQueue.governor();
-    governorMock = GovernorMock__factory.connect(governorAddress, ethers.provider.getSigner());
+    ({ mocQueue, governorMock } = await fixtureDeploy()());
   });
 
   describe("GIVEN the Governor has authorized the change", () => {
@@ -49,12 +46,25 @@ describe("Feature: Verify all MocQueue config settings are protected by governan
         expect(await mocQueue.maxOperPerBatch()).to.be.equal(20);
       });
     });
+    describe(`WHEN register bucket is invoked`, () => {
+      before(async () => {
+        await mocQueue.registerBucket(governorMock.address);
+      });
+      it("THEN the new value is assigned", async function () {
+        expect(await mocQueue.mocCore()).to.be.equal(governorMock.address);
+      });
+      describe(`AND register bucket is invoked again`, () => {
+        it("THEN it fails with bucket already registered error", async function () {
+          const tx = mocQueue.registerBucket(governorMock.address);
+          await expect(tx).to.be.revertedWithCustomError(mocQueue, ERRORS.BUCKET_ALREADY_REGISTERED);
+        });
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
     before(async () => {
       await governorMock.setIsAuthorized(false);
-
       expectRevertNotAuthorized = it => expect(it).to.be.revertedWithCustomError(mocQueue, ERRORS.NOT_AUTH_CHANGER);
     });
     describe("WHEN minOperWaitingBlk is invoked", () => {
@@ -65,6 +75,11 @@ describe("Feature: Verify all MocQueue config settings are protected by governan
     describe("WHEN setMaxOperPerBatch is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocQueue.setMaxOperPerBatch(42));
+      });
+    });
+    describe("WHEN registerBucket is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocQueue.registerBucket(governorMock.address));
       });
     });
   });

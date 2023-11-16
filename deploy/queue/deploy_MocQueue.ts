@@ -30,18 +30,10 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);
 
-  for (let authorizedExecutor in mocAddresses.authorizedExecutors) {
-    console.log(`Whitelisting queue executor: ${authorizedExecutor}`);
-    await mocQueueProxy.grantRole(EXECUTOR_ROLE, authorizedExecutor);
-  }
-
-  if (hre.network.tags.local) {
-    console.log(`Also whitelisting executor deployer: ${deployer}`);
+  if (hre.network.tags.local || hre.network.tags.testnet) {
+    console.log(`[ONLY TESTING] Whitelisting deployer: ${deployer} as executor`);
     await mocQueueProxy.grantRole(EXECUTOR_ROLE, deployer);
   }
-
-  // TODO: IMPORTANT: deployer needs to renounce to ADMIN_ROLE,
-  // but if we're gonna do bucket adding by governance, init fnc needs to change.
 
   return hre.network.live; // prevents re execution on live networks
 };

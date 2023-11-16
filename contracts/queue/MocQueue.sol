@@ -17,6 +17,11 @@ bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
  * @title MocQueue: Allows queue Operation deferral execution processing
  */
 contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
+    // ------- Custom Errors -------
+
+    // Wrong amount of coinbase set as execution fee
+    error BucketAlreadyRegistered();
+
     // ------- Events -------
     event OperationError(uint256 operId_, bytes4 errorCode_, string msg_);
     event UnhandledError(uint256 operId_, bytes reason_);
@@ -153,13 +158,8 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
     // ------- Storage -------
 
+    // mocCore bucket that would be able to queue
     MocCARC20Deferred public mocCore;
-
-    // TODO
-    function registerBucket(MocCARC20Deferred bucket) public {
-        mocCore = bucket;
-        grantRole(ENQUEUER_ROLE, address(bucket));
-    }
 
     // Amount of Operations created
     uint256 public operIdCount;
@@ -213,8 +213,6 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
         __MocUpgradable_init(governor_, pauser_);
         __MocQueueExecFees_init(mocQueueExecFeesParams_);
         __ReentrancyGuard_init();
-        // TODO:
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         minOperWaitingBlk = minOperWaitingBlk_;
         maxOperPerBatch = maxOperPerBatch_;
     }
@@ -1038,7 +1036,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // ------- Only Authorized Changer Functions -------
 
     /**
-     * @dev sets Moc Queue minimum operation waiting blocks
+     * @notice sets Moc Queue minimum operation waiting blocks
      * @param minOperWaitingBlk_ minimum amount of blocks an operation needs to remain in the
      * queue before it can be executed
      */
@@ -1047,12 +1045,26 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     }
 
     /**
-     * @dev sets Moc Queue maximum amount of operations per execution batch
+     * @notice sets Moc Queue maximum amount of operations per execution batch
      * @param maxOperPerBatch_ maximum amount of operations allowed on a batch to avoid going over
      * the block gas limit
      */
     function setMaxOperPerBatch(uint128 maxOperPerBatch_) external onlyAuthorizedChanger {
         maxOperPerBatch = maxOperPerBatch_;
+    }
+
+    /**
+     * @notice registers the mocCore bucket that would operate over this queue
+     * @dev in order to operate, the queue needs to be whitelisted as EXECUTOR on the bucket as well
+     * @param bucket_ address of the mocCore implementation to interact with
+     *
+     * May emit a {RoleGranted} event for ENQUEUER role
+     */
+    function registerBucket(MocCARC20Deferred bucket_) external onlyAuthorizedChanger {
+        if (address(mocCore) != address(0)) revert BucketAlreadyRegistered();
+        mocCore = bucket_;
+        // internal, not role restricted granting, as it's protected by governance
+        _grantRole(ENQUEUER_ROLE, address(bucket_));
     }
 
     /**

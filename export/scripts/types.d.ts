@@ -52,7 +52,6 @@ export type DeployParameters = {
         mocAppreciationBeneficiaryAddress: Address;
         vendorsGuardianAddress: Address;
         tcInterestCollectorAddress: Address;
-        authorizedExecutors: Address[];
         maxAbsoluteOpProviderAddress: Address;
         maxOpDiffProviderAddress: Address;
     };

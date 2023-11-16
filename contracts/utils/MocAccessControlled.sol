@@ -51,7 +51,7 @@ abstract contract MocAccessControlled is MocUpgradable, AccessControlUpgradeable
     // ------- Internal Functions -------
 
     function verifyRoleManagementPrivilege(bytes32 role) private view {
-        if (!governor.isAuthorizedChanger(msg.sender) || !hasRole(getRoleAdmin(role), msg.sender))
+        if (!governor.isAuthorizedChanger(msg.sender) && !hasRole(getRoleAdmin(role), msg.sender))
             revert NotAuthorizedChanger();
     }
 

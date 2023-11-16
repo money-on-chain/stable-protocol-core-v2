@@ -251,6 +251,7 @@ export const ERRORS = {
   MAX_FLUX_CAPACITOR_REACHED: "MaxFluxCapacitorOperationReached",
   INVALID_FLUX_CAPACITOR_OPERATION: "InvalidFluxCapacitorOperation",
   MISSING_PROVIDER_DATA: "MissingProviderData",
+  BUCKET_ALREADY_REGISTERED: "BucketAlreadyRegistered",
 };
 
 const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);
