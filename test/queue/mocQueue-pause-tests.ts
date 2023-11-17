@@ -19,7 +19,7 @@ describe("Feature: MocQueue Pausing", function () {
       expect(result).to.be.revertedWithCustomError(mocQueue, ERRORS.NOT_WHEN_PAUSED);
 
     before(async function () {
-      ({ deployer: pauser, alice } = await getNamedAccounts());
+      ({ deployer: pauser, deployer: executor, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);

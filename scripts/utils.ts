@@ -2,6 +2,7 @@ import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
+import { MocQueue, MocQueue__factory } from "../typechain";
 
 export const CONSTANTS = {
   ZERO_ADDRESS: ethers.constants.AddressZero,
@@ -88,11 +89,11 @@ export const deployCollateralToken = (artifactBaseName: string) => async (hre: H
 };
 
 export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
+  const { getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
   const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
   const governorAddress = getGovernorAddresses(hre);
-  const { deployer } = await hre.getNamedAccounts();
   const signer = ethers.provider.getSigner();
-
   const mocQueue = await deployUUPSArtifact({
     hre,
     artifactBaseName,
@@ -101,19 +102,14 @@ export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRunt
       governorAddress,
       mocAddresses.pauserAddress,
       queueParams.minOperWaitingBlk,
+      queueParams.maxOperPerBatch,
       queueParams.execFeeParams,
     ],
   });
 
   const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);
-
-  for (let authorizedExecutor in mocAddresses.authorizedExecutors) {
-    console.log(`Whitelisting queue executor: ${authorizedExecutor}`);
-    await mocQueueProxy.grantRole(EXECUTOR_ROLE, authorizedExecutor);
-  }
-
-  if (hre.network.tags.local) {
-    console.log(`Also whitelisting executor deployer: ${deployer}`);
+  if (hre.network.tags.local || hre.network.tags.testnet) {
+    console.log(`[ONLY TESTING] Whitelisting deployer: ${deployer} as executor`);
     await mocQueueProxy.grantRole(EXECUTOR_ROLE, deployer);
   }
 

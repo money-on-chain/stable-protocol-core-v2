@@ -1069,7 +1069,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
      *
      * May emit a {RoleGranted} event for ENQUEUER role
      */
-    function registerBucket(MocCARC20Deferred bucket_) external onlyAuthorizedChanger {
+    function registerBucket(MocDeferred bucket_) external onlyAuthorizedChanger {
         if (address(mocCore) != address(0)) revert BucketAlreadyRegistered();
         mocCore = bucket_;
         // internal, not role restricted granting, as it's protected by governance
