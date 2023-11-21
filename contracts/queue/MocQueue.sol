@@ -194,19 +194,19 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     mapping(uint256 => OperInfo) public opersInfo;
 
     // min amount of blocks the Operation should wait in the Queue before execution
-    uint256 public minOperWaitingBlk;
+    uint128 public minOperWaitingBlk;
 
     // max amount of Operations that can be executed on a single batch,
     // gas restricted batch size to guarantee no gas limit failure
-    uint256 public maxOperPerBatch;
+    uint128 public maxOperPerBatch;
 
     // ------- Initializer -------
 
     function initialize(
         address governor_,
         address pauser_,
-        uint256 minOperWaitingBlk_,
-        uint256 maxOperPerBatch_,
+        uint128 minOperWaitingBlk_,
+        uint128 maxOperPerBatch_,
         InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_
     ) external initializer {
         __AccessControl_init();
@@ -865,11 +865,12 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function execute(address executionFeeRecipient) external notPaused nonReentrant onlyRole(EXECUTOR_ROLE) {
         uint256 operId = firstOperId;
         uint256 lastOperId;
+        uint256 limitBlk;
+        uint256 totalExecutionFee;
         unchecked {
             lastOperId = Math.min(operIdCount, operId + maxOperPerBatch);
+            limitBlk = block.number - minOperWaitingBlk;
         }
-        uint256 limitBlk = block.number - minOperWaitingBlk;
-        uint256 totalExecutionFee;
         // loop through all pending Operations
         while (operId < lastOperId) {
             (bool executed, uint256 executionFee) = execute(operId, limitBlk);
@@ -1041,7 +1042,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
      * @param minOperWaitingBlk_ minimum amount of blocks an operation needs to remain in the
      * queue before it can be executed
      */
-    function setMinOperWaitingBlk(uint256 minOperWaitingBlk_) external onlyAuthorizedChanger {
+    function setMinOperWaitingBlk(uint128 minOperWaitingBlk_) external onlyAuthorizedChanger {
         minOperWaitingBlk = minOperWaitingBlk_;
     }
 
@@ -1050,7 +1051,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
      * @param maxOperPerBatch_ maximum amount of operations allowed on a batch to avoid going over
      * the block gas limit
      */
-    function setMaxOperPerBatch(uint256 maxOperPerBatch_) external onlyAuthorizedChanger {
+    function setMaxOperPerBatch(uint128 maxOperPerBatch_) external onlyAuthorizedChanger {
         maxOperPerBatch = maxOperPerBatch_;
     }
 
