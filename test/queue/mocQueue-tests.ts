@@ -52,8 +52,14 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           `AccessControl: account ${deployer.toLowerCase()} is missing role ${ENQUEUER_ROLE}`,
         );
     });
-    describe("WHEN executing an empty queue", function () {
-      it("THEN it has no effect", async function () {
+    describe("WHEN the queue is empty", function () {
+      it("THEN isEmpty returns true", async function () {
+        expect(await mocQueue.isEmpty()).to.be.true;
+      });
+      it("THEN readyToExecute return false", async function () {
+        expect(await mocQueue.readyToExecute()).to.be.false;
+      });
+      it("THEN executing it has no effect", async function () {
         await mocFunctions.executeQueue();
       });
     });
@@ -114,6 +120,9 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
         queueTxAlice = await mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 100, execute: false });
         queueTxBob = await mocFunctions.mintTC({ from: bob, qTC: 10, qACmax: 100, execute: false });
       });
+      it("THEN readyToExecute return true", async function () {
+        expect(await mocQueue.readyToExecute()).to.be.true;
+      });
       it("THEN two operation queued event are emitted", async function () {
         await expect(queueTxAlice)
           .to.emit(mocQueue, "OperationQueued")
@@ -166,6 +175,9 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           await expect(mocQueueBalance).to.be.equal(0);
           const executorBalanceAfter = await ethersGetBalance(deployer);
           await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
+        });
+        it("THEN readyToExecute return false", async function () {
+          expect(await mocQueue.readyToExecute()).to.be.false;
         });
         describe(`WHEN updateExecutionFees is invoked now that the queue is empty`, () => {
           it(`THEN exec fee gets updated`, async function () {
