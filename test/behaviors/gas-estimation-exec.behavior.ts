@@ -32,7 +32,7 @@ const gasEstimationExecBehavior = function (tpAmount: number, iterations: number
     gasSummaries[op] = gasData(gasSummaries[op], gasUsedPerOper);
   };
 
-  describe("Feature: queue executing gas estimation", function () {
+  describe("Feature: queue executing gas estimation per Operation Type", function () {
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFncs = this.mocFunctions;
@@ -49,29 +49,45 @@ const gasEstimationExecBehavior = function (tpAmount: number, iterations: number
         const i = index % tpAmount;
         const iTo = (index + 1) % tpAmount;
         const result = { i, iFrom: i, iTo, from: alice, qTC: 1, qTP: 100, execute: false };
-        // Randomly sends funds to other user or himself (undefined)
-        result.to = [undefined, alice, bob, charlie][(Math.random() * 4).toFixed(0)];
-        // Use Vendors 80 % of the time
-        result.vendor = Math.random() > 0.2 ? vendor : undefined;
+        // Ensure at least on time we get the max and min cases
+        if (index == 0) {
+          result.to = undefined;
+          result.vendor = undefined;
+        } else if (index == 1) {
+          result.to = bob;
+          result.vendor = vendor;
+        } else {
+          // Randomly sends funds to other user or himself (undefined)
+          result.to = [undefined, alice, bob, charlie][(Math.random() * 4).toFixed(0)];
+          // Use Vendors 80 % of the time
+          result.vendor = Math.random() > 0.2 ? vendor : undefined;
+        }
         return result;
       };
 
-      const operWrap = f => async args => {
-        // Use fee Token 50% of the time
+      const operWrap = (index, f) => async args => {
+        let feeTokenProbability = Math.random();
+        // Ensure at least on time we get the min (index = 0) and max (index = 1) cases
+        if (index == 0) {
+          feeTokenProbability = 0;
+        } else if (index == 1) {
+          feeTokenProbability = 1;
+        }
+        // Use fee Token ~50% of the time
         await mocContracts.feeToken
           .connect(await ethers.getSigner(alice))
-          .approve(mocContracts.mocImpl.address, pEth(Math.random() > 0.5 ? 100 : 0));
+          .approve(mocContracts.mocImpl.address, pEth(feeTokenProbability > 0.5 ? 100 : 0));
         return f(args);
       };
       const ops = {
-        mintTC: (i: number) => operWrap(mocFncs.mintTC)({ ...getParams(i) }),
-        redeemTC: (i: number) => operWrap(mocFncs.redeemTC)(getParams(i)),
-        mintTP: (i: number) => operWrap(mocFncs.mintTP)(getParams(i)),
-        redeemTP: (i: number) => operWrap(mocFncs.redeemTP)(getParams(i)),
-        swapTPforTC: (i: number) => operWrap(mocFncs.swapTPforTC)(getParams(i)),
-        swapTCforTP: (i: number) => operWrap(mocFncs.swapTCforTP)(getParams(i)),
-        redeemTCandTP: (i: number) => operWrap(mocFncs.redeemTCandTP)(getParams(i)),
-        mintTCandTP: (i: number) => operWrap(mocFncs.mintTCandTP)(getParams(i)),
+        mintTC: (i: number) => operWrap(i, mocFncs.mintTC)({ ...getParams(i) }),
+        redeemTC: (i: number) => operWrap(i, mocFncs.redeemTC)(getParams(i)),
+        mintTP: (i: number) => operWrap(i, mocFncs.mintTP)(getParams(i)),
+        redeemTP: (i: number) => operWrap(i, mocFncs.redeemTP)(getParams(i)),
+        swapTPforTC: (i: number) => operWrap(i, mocFncs.swapTPforTC)(getParams(i)),
+        swapTCforTP: (i: number) => operWrap(i, mocFncs.swapTCforTP)(getParams(i)),
+        redeemTCandTP: (i: number) => operWrap(i, mocFncs.redeemTCandTP)(getParams(i)),
+        mintTCandTP: (i: number) => operWrap(i, mocFncs.mintTCandTP)(getParams(i)),
       };
       if (tpAmount > 1) {
         ops.swapTPforTP = (i: number) => mocFncs.swapTPforTP(getParams(i));
@@ -96,9 +112,10 @@ const gasEstimationExecBehavior = function (tpAmount: number, iterations: number
       }
       for (let op of Object.keys(ops)) {
         gasSummaries[op].avg = (gasSummaries[op].avg / gasSummaries[op].count).toFixed(0);
+        gasSummaries[op].min = gasSummaries[op].min.toFixed(0);
+        gasSummaries[op].max = gasSummaries[op].max.toFixed(0);
         gasSummaries[op]["~fee USD"] = ((gasSummaries[op].avg * gasPrice * 30000) / 1e18).toFixed(2);
       }
-      console.log("SUCCEEDED Operations Stats:");
       console.table(gasSummaries);
     }).timeout(10e6);
   });

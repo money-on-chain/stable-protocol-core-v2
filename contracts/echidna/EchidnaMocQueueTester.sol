@@ -111,6 +111,7 @@ contract EchidnaMocQueueTester {
             address(governor), // governor
             msg.sender, // pauser
             10, // minOperWaitingBlk
+            10, // maxOperPerBatch
             MocQueueExecFees.InitializeMocQueueExecFeesParams({
                 tcMintExecFee: EXEC_FEE,
                 tcRedeemExecFee: EXEC_FEE,
@@ -211,7 +212,7 @@ contract EchidnaMocQueueTester {
         require(tcBalanceBefore != tcBalanceAfter || tpBalanceBefore != tpBalanceAfter);
 
         uint256 operAmount = operIdAfter - operIdBefore;
-        assert(operAmount <= mocQueue.MAX_OPER_PER_BATCH());
+        assert(operAmount <= mocQueue.maxOperPerBatch());
         assert(executionFeeRecipientBalanceAfter - executionFeeRecipientBalanceBefore == EXEC_FEE * operAmount);
         assert(mocCARC20.getCglb() >= mocCARC20.calcCtargemaCA());
     }

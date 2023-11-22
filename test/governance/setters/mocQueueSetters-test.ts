@@ -43,6 +43,12 @@ describe("Feature: Verify all MocQueue config settings are protected by governan
         expect(await mocQueue.minOperWaitingBlk()).to.be.equal(100);
       });
     });
+    describe(`WHEN setMaxOperPerBatch is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocQueue.setMaxOperPerBatch(20);
+        expect(await mocQueue.maxOperPerBatch()).to.be.equal(20);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -54,6 +60,11 @@ describe("Feature: Verify all MocQueue config settings are protected by governan
     describe("WHEN minOperWaitingBlk is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocQueue.setMinOperWaitingBlk(42));
+      });
+    });
+    describe("WHEN setMaxOperPerBatch is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocQueue.setMaxOperPerBatch(42));
       });
     });
   });
