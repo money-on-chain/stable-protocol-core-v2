@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { getNamedAccounts, ethers } from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
-import { ERRORS, tpParams } from "../helpers/utils";
+import { ERRORS, OperId, tpParams } from "../helpers/utils";
 import { GovernorMock__factory, MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
 
@@ -10,14 +10,16 @@ describe("Feature: MocQueue Pausing", function () {
   describe("GIVEN a MocQueue implementation with queued Operations", function () {
     let mocFunctions: any;
     let pauser: Address;
+    let executor: Address;
     let mocQueue: MocQueue;
     let alice: Address;
+    let operId: OperId;
 
     const expectPauseRevert = async (result: any) =>
       expect(result).to.be.revertedWithCustomError(mocQueue, ERRORS.NOT_WHEN_PAUSED);
 
     before(async function () {
-      ({ deployer: pauser, alice } = await getNamedAccounts());
+      ({ deployer: pauser, deployer: executor, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
       mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
@@ -28,6 +30,8 @@ describe("Feature: MocQueue Pausing", function () {
       await governorMock.setIsAuthorized(true);
       await mocQueue.setPauser(pauser);
       await mocQueue.makeStoppable();
+      operId = await mocQueue.operIdCount();
+      await mocFunctions.mintTC({ from: alice, qTC: 10, execute: false });
     });
     describe("WHEN queue is paused", function () {
       before(async function () {
@@ -71,9 +75,12 @@ describe("Feature: MocQueue Pausing", function () {
           const queueTxAlice = await mocFunctions.mintTC({ from: alice, qTC: 10, execute: false });
           await expect(queueTxAlice).to.emit(mocQueue, "OperationQueued");
         });
-        it("THEN queue can be executed again", async function () {
-          const execTx = await mocFunctions.executeQueue();
-          await expect(execTx).to.emit(mocQueue, "OperationExecuted");
+        describe("AND queue is executed", function () {
+          it("THEN both existent and new queued Operations are processed", async function () {
+            const execTx = await mocFunctions.executeQueue();
+            await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId);
+            await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(1));
+          });
         });
       });
     });
