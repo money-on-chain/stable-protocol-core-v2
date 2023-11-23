@@ -93,8 +93,6 @@ export type DeployParameters = {
     vendorsGuardianAddress: Address;
     // TC interest collector address
     tcInterestCollectorAddress: Address;
-    // Whitelisted addresses that are authorized to execute deferred Operations
-    authorizedExecutors: Address[];
     // max absolute operation provider address
     maxAbsoluteOpProviderAddress: Address;
     // max operation difference provider address

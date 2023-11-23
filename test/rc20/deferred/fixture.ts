@@ -17,7 +17,7 @@ import {
   DataProviderMock__factory,
 } from "../../../typechain";
 import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth } from "../../helpers/utils";
-import { getNetworkDeployParams } from "../../../scripts/utils";
+import { deployMocQueue } from "../../../scripts/utils";
 
 export const fixtureDeployedMocRC20Deferred = memoizee(
   (
@@ -52,13 +52,7 @@ export const fixtureDeployedMocRC20Deferred = memoizee(
       const { deployer, alice, bob, charlie, vendor } = await getNamedAccounts();
 
       if (useMockQueue) {
-        const mocQueueMockFactory = await ethers.getContractFactory("MocQueueMock");
-        const mocQueueMock = await mocQueueMockFactory.deploy();
-
-        mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
-        const { minOperWaitingBlk, maxOperPerBatch, execFeeParams } = getNetworkDeployParams(hre).queueParams;
-        const [governor, pauser] = await Promise.all([mocImpl.governor(), mocImpl.pauser()]);
-        await mocQueue.initialize(governor, pauser, minOperWaitingBlk, maxOperPerBatch, execFeeParams);
+        mocQueue = await deployMocQueue(hre, "MocQueueMock");
         await Promise.all([
           mocImpl.setMocQueue(mocQueue.address),
           mocQueue.registerBucket(mocImpl.address),
