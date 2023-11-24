@@ -45,13 +45,17 @@ describe("Feature: Moc Queue Role Access restrictions", () => {
         it("THEN he has the ADMIN role", async () => {
           expect(await mocQueue.hasRole(DEFAULT_ADMIN_ROLE, otherUser)).to.be.true;
         });
-        describe("WHEN he adds more roles without governance", async () => {
-          before(async () => {
+        describe("WHEN he is not longer authorized by governance", async () => {
+          beforeEach(async () => {
             await governorMock.setIsAuthorized(false);
-          });
-          it("THEN he can as he is now Admin", async () => {
             await mocQueue.connect(signer).grantRole(MINTER_ROLE, otherUser);
+          });
+          it("THEN he can still grant Roles, as he is now Admin", async () => {
             expect(await mocQueue.hasRole(MINTER_ROLE, otherUser)).to.be.true;
+          });
+          it("THEN he can revoke granted Roles, as he is now Admin", async () => {
+            await mocQueue.connect(signer).revokeRole(MINTER_ROLE, otherUser);
+            expect(await mocQueue.hasRole(MINTER_ROLE, otherUser)).to.be.false;
           });
         });
       });
