@@ -1033,6 +1033,15 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
         return firstOperId == operIdCount;
     }
 
+    /**
+     * @notice true if the queue has at least one Operation ready to be executed
+     */
+    function readyToExecute() public view returns (bool) {
+        if (isEmpty()) return false;
+        OperInfo memory operInfo = opersInfo[firstOperId];
+        return (operInfo.queuedBlk <= block.number - minOperWaitingBlk);
+    }
+
     // ------- Only Authorized Changer Functions -------
 
     /**
