@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import { MocCore } from "../../core/MocCore.sol";
 import { MocDeferred } from "../../core/MocDeferred.sol";
+import { MocQueueExecFees } from "../../queue/MocQueueExecFees.sol";
+
 import { MocCoreShared } from "../../core/MocCoreShared.sol";
 
 /**
@@ -10,6 +12,18 @@ import { MocCoreShared } from "../../core/MocCoreShared.sol";
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
 contract MocCACoinbase is MocCoreShared {
+    // ------- Structs -------
+    struct InitializeParams {
+        InitializeDeferredParams initializeDeferredParams;
+        // max amount of gas forwarded on AC transfer
+        uint256 transferMaxGas;
+    }
+
+    // ------- Storage -------
+    // max amount of gas forwarded on AC transfer to avoid
+    // using all the gas on the fallback function
+    uint256 private transferMaxGas;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -18,7 +32,7 @@ contract MocCACoinbase is MocCoreShared {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param initializeDeferredParams_ contract initializer params
+     * @param initializeParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
      *      pauserAddress The address that is authorized to pause this contract
      *      tcTokenAddress Collateral Token contract address
@@ -43,9 +57,11 @@ contract MocCACoinbase is MocCoreShared {
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *      mocVendors address for MocVendors contract
      *      mocQueueAddress address for MocQueue contract
+     *      transferMaxGas max amount of gas forwarded on AC transfer
      */
-    function initialize(InitializeDeferredParams calldata initializeDeferredParams_) external initializer {
-        __MocDeferred_init(initializeDeferredParams_);
+    function initialize(InitializeParams calldata initializeParams_) external initializer {
+        __MocDeferred_init(initializeParams_.initializeDeferredParams);
+        transferMaxGas = initializeParams_.transferMaxGas;
     }
 
     // ------- Internal Functions -------
@@ -56,10 +72,10 @@ contract MocCACoinbase is MocCoreShared {
     function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
             if (to_ == address(0)) revert InvalidAddress();
+            // this transfer is gas capped to avoid spent more than the fixed precalculated execution fees
+            // by using the fallback function if `to_` is a contract
             // solhint-disable-next-line avoid-low-level-calls
-            // TODO: when queued CA coinbase is allowed, this transfer should be gas capped
-            // TODO: queue should also handle this fail when returning funds (unlocking)
-            (bool success, ) = to_.call{ value: amount_ }("");
+            (bool success, ) = to_.call{ value: amount_, gas: transferMaxGas }("");
             if (!success) revert TransferFailed();
         }
     }
@@ -74,9 +90,12 @@ contract MocCACoinbase is MocCoreShared {
     /**
      * @inheritdoc MocDeferred
      */
-    function _getExecFeeSent() internal pure override returns (uint256 execFeeSent) {
-        // TODO: execution fee are in 0
-        return 0;
+    function _getExecFeeSent(
+        uint256 qACmax_,
+        MocQueueExecFees.OperType operType_
+    ) internal view override returns (uint256 qACmaxSent, uint256 execFeeSent) {
+        uint256 execFee = mocQueue.getAndVerifyExecFee(operType_, qACmax_);
+        return (qACmax_ - execFee, execFee);
     }
 
     // ------- External Functions -------
@@ -472,6 +491,14 @@ contract MocCACoinbase is MocCoreShared {
      */
     receive() external payable {
         _depositAC(msg.value);
+    }
+
+    /**
+     * @notice sets max amount of gas forwarded on AC transfer
+     * @param transferMaxGas_ new max amount of gas forwarded on AC transfer
+     */
+    function setTransferMAxGas(uint256 transferMaxGas_) external onlyAuthorizedChanger {
+        transferMaxGas = transferMaxGas_;
     }
 
     /**

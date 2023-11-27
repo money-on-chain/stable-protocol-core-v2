@@ -176,20 +176,6 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     mapping(uint256 => MocCore.SwapTPforTCParams) public operationsSwapTPforTC;
     mapping(uint256 => MocCore.SwapTPforTPParams) public operationsSwapTPforTP;
 
-    // Set of Deferrable Operation Types
-    enum OperType {
-        none, // avoid using zero as Type
-        mintTC,
-        redeemTC,
-        mintTP,
-        redeemTP,
-        mintTCandTP,
-        redeemTCandTP,
-        swapTCforTP,
-        swapTPforTC,
-        swapTPforTP
-    }
-
     // OperId => Operation Type | block.number
     mapping(uint256 => OperInfo) public opersInfo;
 
@@ -498,7 +484,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            mocCore.unlockACInPending(params.sender, params.qACmax);
+            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
+                emit UnhandledError(operId_, unlockReturnData);
+            }
         }
         // Independently from the result, we delete the operation params
         delete operationsMintTC[operId_];
@@ -565,7 +553,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            mocCore.unlockACInPending(params.sender, params.qACmax);
+            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
+                emit UnhandledError(operId_, unlockReturnData);
+            }
         }
         // Independently from the result, we delete the operation params
         delete operationsMintTP[operId_];
@@ -638,7 +628,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            mocCore.unlockACInPending(params.sender, params.qACmax);
+            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
+                emit UnhandledError(operId_, unlockReturnData);
+            }
         }
         // Independently from the result, we delete the operation params
         delete operationsMintTCandTP[operId_];
@@ -722,7 +714,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
             // On a failed Operation, we unlock user funds
             mocCore.unlockTCInPending(params.sender, params.qTC);
-            mocCore.unlockACInPending(params.sender, params.qACmax);
+            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
+                emit UnhandledError(operId_, unlockReturnData);
+            }
         }
         // Independently from the result, we delete the operation params
         delete operationsSwapTCforTP[operId_];
@@ -764,7 +758,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
             // On a failed Operation, we unlock user funds
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
-            mocCore.unlockACInPending(params.sender, params.qACmax);
+            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
+                emit UnhandledError(operId_, unlockReturnData);
+            }
         }
         // Independently from the result, we delete the operation params
         delete operationsSwapTPforTC[operId_];
@@ -803,7 +799,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
             // On a failed Operation, we unlock user funds
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tpFrom), params.qTP);
-            mocCore.unlockACInPending(params.sender, params.qACmax);
+            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
+                emit UnhandledError(operId_, unlockReturnData);
+            }
         }
         return true;
     }
@@ -823,31 +821,31 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             executionFee = 0;
         } else if (operInfo.operType == OperType.mintTC) {
             executed = _executeMintTC(operId_);
-            executionFee = tcMintExecFee;
+            executionFee = execFee[OperType.mintTC];
         } else if (operInfo.operType == OperType.redeemTC) {
             executed = _executeRedeemTC(operId_);
-            executionFee = tcRedeemExecFee;
+            executionFee = execFee[OperType.redeemTC];
         } else if (operInfo.operType == OperType.mintTP) {
             executed = _executeMintTP(operId_);
-            executionFee = tpMintExecFee;
+            executionFee = execFee[OperType.mintTP];
         } else if (operInfo.operType == OperType.redeemTP) {
             executed = _executeRedeemTP(operId_);
-            executionFee = tpRedeemExecFee;
+            executionFee = execFee[OperType.redeemTP];
         } else if (operInfo.operType == OperType.mintTCandTP) {
             executed = _executeMintTCandTP(operId_);
-            executionFee = mintTCandTPExecFee;
+            executionFee = execFee[OperType.mintTCandTP];
         } else if (operInfo.operType == OperType.redeemTCandTP) {
             executed = _executeRedeemTCandTP(operId_);
-            executionFee = redeemTCandTPExecFee;
+            executionFee = execFee[OperType.redeemTCandTP];
         } else if (operInfo.operType == OperType.swapTCforTP) {
             executed = _executeSwapTCforTP(operId_);
-            executionFee = swapTCforTPExecFee;
+            executionFee = execFee[OperType.swapTCforTP];
         } else if (operInfo.operType == OperType.swapTPforTC) {
             executed = _executeSwapTPforTC(operId_);
-            executionFee = swapTPforTCExecFee;
+            executionFee = execFee[OperType.swapTPforTC];
         } else if (operInfo.operType == OperType.swapTPforTP) {
             executed = _executeSwapTPforTP(operId_);
-            executionFee = swapTPforTPExecFee;
+            executionFee = execFee[OperType.swapTPforTP];
         }
         if (executed) delete opersInfo[operId_];
         return (executed, executionFee);
@@ -898,7 +896,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueMintTC(
         MocCore.MintTCParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(tcMintExecFee);
+        verifyExecFee(execFee[OperType.mintTC]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.mintTC, uint248(block.number));
         operationsMintTC[operId] = params;
@@ -913,7 +911,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueRedeemTC(
         MocCore.RedeemTCParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(tcRedeemExecFee);
+        verifyExecFee(execFee[OperType.redeemTC]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.redeemTC, uint248(block.number));
         operationsRedeemTC[operId] = params;
@@ -928,7 +926,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueMintTP(
         MocCore.MintTPParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(tpMintExecFee);
+        verifyExecFee(execFee[OperType.mintTP]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.mintTP, uint248(block.number));
         operationsMintTP[operId] = params;
@@ -943,7 +941,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueRedeemTP(
         MocCore.RedeemTPParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(tpRedeemExecFee);
+        verifyExecFee(execFee[OperType.redeemTP]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.redeemTP, uint248(block.number));
         operationsRedeemTP[operId] = params;
@@ -958,7 +956,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueMintTCandTP(
         MocCore.MintTCandTPParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(mintTCandTPExecFee);
+        verifyExecFee(execFee[OperType.mintTCandTP]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.mintTCandTP, uint248(block.number));
         operationsMintTCandTP[operId] = params;
@@ -973,7 +971,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueRedeemTCandTP(
         MocCore.RedeemTCandTPParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(redeemTCandTPExecFee);
+        verifyExecFee(execFee[OperType.redeemTCandTP]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.redeemTCandTP, uint248(block.number));
         operationsRedeemTCandTP[operId] = params;
@@ -988,7 +986,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueSwapTCforTP(
         MocCore.SwapTCforTPParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(swapTCforTPExecFee);
+        verifyExecFee(execFee[OperType.swapTCforTP]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.swapTCforTP, uint248(block.number));
         operationsSwapTCforTP[operId] = params;
@@ -1003,7 +1001,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueSwapTPforTC(
         MocCore.SwapTPforTCParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(swapTPforTCExecFee);
+        verifyExecFee(execFee[OperType.swapTPforTC]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.swapTPforTC, uint248(block.number));
         operationsSwapTPforTC[operId] = params;
@@ -1018,7 +1016,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     function queueSwapTPforTP(
         MocCore.SwapTPforTPParams calldata params
     ) external payable notPaused onlyRole(ENQUEUER_ROLE) returns (uint256 operId) {
-        verifyExecFee(swapTPforTPExecFee);
+        verifyExecFee(execFee[OperType.swapTPforTP]);
         operId = operIdCount;
         opersInfo[operId] = OperInfo(OperType.swapTPforTP, uint248(block.number));
         operationsSwapTPforTP[operId] = params;

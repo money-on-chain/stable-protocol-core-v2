@@ -86,6 +86,6 @@ contract MocQueueMock is MocQueue, UpgradableMock {
     }
 
     function getCustomMockValue() external view override returns (uint256) {
-        return newVariable + tcMintExecFee;
+        return newVariable + execFee[OperType.mintTC];
     }
 }

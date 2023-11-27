@@ -38,6 +38,8 @@ export type DeployParameters = {
     tcInterestPaymentBlockSpan: number;
     // number of blocks that have to elapse for the linear decay factor to be 0
     decayBlockSpan: number;
+    // max amount of gas forwarded on AC transfer(only for coinbase flavor)
+    transferMaxGas?: number;
   };
   settlementParams: {
     // number of blocks between settlements

@@ -7,6 +7,20 @@ import { MocAccessControlled } from "../utils/MocAccessControlled.sol";
  * @title MocQueue Execution Fee: Handles Queuing execution fees
  */
 abstract contract MocQueueExecFees is MocAccessControlled {
+    // Set of Deferrable Operation Types
+    enum OperType {
+        none, // avoid using zero as Type
+        mintTC,
+        redeemTC,
+        mintTP,
+        redeemTP,
+        mintTCandTP,
+        redeemTCandTP,
+        swapTCforTP,
+        swapTPforTC,
+        swapTPforTP
+    }
+
     // ------- Custom Errors -------
 
     // Wrong amount of coinbase set as execution fee
@@ -39,24 +53,27 @@ abstract contract MocQueueExecFees is MocAccessControlled {
         uint256 mintTCandTPExecFee;
     }
 
-    // absolute coinbase execution fee applied on Collateral Tokens mint
-    uint256 public tcMintExecFee;
-    // absolute coinbase execution fee applied on Collateral Tokens redeem
-    uint256 public tcRedeemExecFee;
-    // absolute coinbase execution fee applied on Pegged Tokens mint
-    uint256 public tpMintExecFee;
-    // absolute coinbase execution fee applied on Pegged Tokens redeem
-    uint256 public tpRedeemExecFee;
-    // absolute coinbase execution fee applied on swap a Pegged Token for another Pegged Token
-    uint256 public swapTPforTPExecFee;
-    // absolute coinbase execution fee applied on swap a Pegged Token for Collateral Token
-    uint256 public swapTPforTCExecFee;
-    // absolute coinbase execution fee applied on swap Collateral Token for a Pegged Token
-    uint256 public swapTCforTPExecFee;
-    // absolute coinbase execution fee applied on redeem Collateral Token and Pegged Token in one operations
-    uint256 public redeemTCandTPExecFee;
-    // absolute coinbase execution fee applied on mint Collateral Token and Pegged Token in one operation
-    uint256 public mintTCandTPExecFee;
+    // OperType => Execution fee
+    mapping(OperType => uint256) public execFee;
+
+    // // absolute coinbase execution fee applied on Collateral Tokens mint
+    // uint256 public tcMintExecFee;
+    // // absolute coinbase execution fee applied on Collateral Tokens redeem
+    // uint256 public tcRedeemExecFee;
+    // // absolute coinbase execution fee applied on Pegged Tokens mint
+    // uint256 public tpMintExecFee;
+    // // absolute coinbase execution fee applied on Pegged Tokens redeem
+    // uint256 public tpRedeemExecFee;
+    // // absolute coinbase execution fee applied on swap a Pegged Token for another Pegged Token
+    // uint256 public swapTPforTPExecFee;
+    // // absolute coinbase execution fee applied on swap a Pegged Token for Collateral Token
+    // uint256 public swapTPforTCExecFee;
+    // // absolute coinbase execution fee applied on swap Collateral Token for a Pegged Token
+    // uint256 public swapTCforTPExecFee;
+    // // absolute coinbase execution fee applied on redeem Collateral Token and Pegged Token in one operations
+    // uint256 public redeemTCandTPExecFee;
+    // // absolute coinbase execution fee applied on mint Collateral Token and Pegged Token in one operation
+    // uint256 public mintTCandTPExecFee;
 
     // ------- Initializer -------
 
@@ -87,15 +104,15 @@ abstract contract MocQueueExecFees is MocAccessControlled {
      * @notice sets Execution Fees absolute values for each operation type
      */
     function _setExecutionFees(InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_) internal {
-        tcMintExecFee = mocQueueExecFeesParams_.tcMintExecFee;
-        tcRedeemExecFee = mocQueueExecFeesParams_.tcRedeemExecFee;
-        tpMintExecFee = mocQueueExecFeesParams_.tpMintExecFee;
-        tpRedeemExecFee = mocQueueExecFeesParams_.tpRedeemExecFee;
-        swapTPforTPExecFee = mocQueueExecFeesParams_.swapTPforTPExecFee;
-        swapTPforTCExecFee = mocQueueExecFeesParams_.swapTPforTCExecFee;
-        swapTCforTPExecFee = mocQueueExecFeesParams_.swapTCforTPExecFee;
-        redeemTCandTPExecFee = mocQueueExecFeesParams_.redeemTCandTPExecFee;
-        mintTCandTPExecFee = mocQueueExecFeesParams_.mintTCandTPExecFee;
+        execFee[OperType.mintTC] = mocQueueExecFeesParams_.tcMintExecFee;
+        execFee[OperType.redeemTC] = mocQueueExecFeesParams_.tcRedeemExecFee;
+        execFee[OperType.mintTP] = mocQueueExecFeesParams_.tpMintExecFee;
+        execFee[OperType.redeemTP] = mocQueueExecFeesParams_.tpRedeemExecFee;
+        execFee[OperType.swapTPforTP] = mocQueueExecFeesParams_.swapTPforTPExecFee;
+        execFee[OperType.swapTPforTC] = mocQueueExecFeesParams_.swapTPforTCExecFee;
+        execFee[OperType.swapTCforTP] = mocQueueExecFeesParams_.swapTCforTPExecFee;
+        execFee[OperType.redeemTCandTP] = mocQueueExecFeesParams_.redeemTCandTPExecFee;
+        execFee[OperType.mintTCandTP] = mocQueueExecFeesParams_.mintTCandTPExecFee;
     }
 
     /**
@@ -106,6 +123,11 @@ abstract contract MocQueueExecFees is MocAccessControlled {
     }
 
     // ------- External Functions -------
+
+    function getAndVerifyExecFee(OperType operType_, uint256 value_) external view returns (uint256 currentExecFee) {
+        currentExecFee = execFee[operType_];
+        if (currentExecFee > value_) revert WrongExecutionFee(currentExecFee);
+    }
 
     // ------- Only Authorized Changer Functions -------
 

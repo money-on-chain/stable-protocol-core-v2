@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { MocCore } from "./MocCore.sol";
 import { MocQueue } from "../queue/MocQueue.sol";
+import { MocQueueExecFees } from "../queue/MocQueueExecFees.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -86,9 +87,13 @@ abstract contract MocDeferred is MocCore {
     /**
      * @notice get the amount of coinbase sent to be used as execution fee
      * @dev this function must be overridden by the AC implementation
+     * @return qACmaxSent amount of coinbase sent
      * @return execFeeSent amount of coinbase sent
      */
-    function _getExecFeeSent() internal virtual returns (uint256 execFeeSent) {}
+    function _getExecFeeSent(
+        uint256 qACmax_,
+        MocQueueExecFees.OperType operType_
+    ) internal virtual returns (uint256 qACmaxSent, uint256 execFeeSent) {}
 
     /**
      * @notice while registering a pending Operation, we need to lock user's funds until it's executed
@@ -130,15 +135,16 @@ abstract contract MocDeferred is MocCore {
         address recipient_,
         address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
+        (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.mintTC);
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
-            qACmax: qACmax_,
+            qACmax: qACmax,
             sender: msg.sender,
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTC{ value: _getExecFeeSent() }(params);
-        _lockACInPending(qACmax_);
+        operId = mocQueue.queueMintTC{ value: execFee }(params);
+        _lockACInPending(qACmax);
     }
 
     /**
@@ -163,7 +169,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTC{ value: _getExecFeeSent() }(params);
+        operId = mocQueue.queueRedeemTC{ value: msg.value }(params);
         _lockTCInPending(qTC_);
     }
 
@@ -185,16 +191,17 @@ abstract contract MocDeferred is MocCore {
         address recipient_,
         address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
+        (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.mintTP);
         MintTPParams memory params = MintTPParams({
             tp: tp_,
             qTP: qTP_,
-            qACmax: qACmax_,
+            qACmax: qACmax,
             sender: msg.sender,
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTP{ value: _getExecFeeSent() }(params);
-        _lockACInPending(qACmax_);
+        operId = mocQueue.queueMintTP{ value: execFee }(params);
+        _lockACInPending(qACmax);
     }
 
     /**
@@ -222,7 +229,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTP{ value: _getExecFeeSent() }(params);
+        operId = mocQueue.queueRedeemTP{ value: msg.value }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
 
@@ -248,16 +255,17 @@ abstract contract MocDeferred is MocCore {
         address recipient_,
         address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
+        (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.mintTCandTP);
         MintTCandTPParams memory params = MintTCandTPParams({
             tp: tp_,
             qTP: qTP_,
-            qACmax: qACmax_,
+            qACmax: qACmax,
             sender: msg.sender,
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTCandTP{ value: _getExecFeeSent() }(params);
-        _lockACInPending(qACmax_);
+        operId = mocQueue.queueMintTCandTP{ value: execFee }(params);
+        _lockACInPending(qACmax);
     }
 
     /**
@@ -292,7 +300,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTCandTP{ value: _getExecFeeSent() }(params);
+        operId = mocQueue.queueRedeemTCandTP{ value: msg.value }(params);
         _lockTCInPending(qTC_);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
@@ -318,19 +326,20 @@ abstract contract MocDeferred is MocCore {
         address recipient_,
         address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
+        (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.swapTPforTP);
         SwapTPforTPParams memory params = SwapTPforTPParams({
             tpFrom: tpFrom_,
             tpTo: tpTo_,
             qTP: qTP_,
             qTPmin: qTPmin_,
-            qACmax: qACmax_,
+            qACmax: qACmax,
             sender: msg.sender,
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTP{ value: _getExecFeeSent() }(params);
+        operId = mocQueue.queueSwapTPforTP{ value: execFee }(params);
         _lockTPInPending(IERC20Upgradeable(tpFrom_), qTP_);
-        _lockACInPending(qACmax_);
+        _lockACInPending(qACmax);
     }
 
     /**
@@ -352,18 +361,19 @@ abstract contract MocDeferred is MocCore {
         address recipient_,
         address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
+        (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.swapTPforTC);
         SwapTPforTCParams memory params = SwapTPforTCParams({
             tp: tp_,
             qTP: qTP_,
             qTCmin: qTCmin_,
-            qACmax: qACmax_,
+            qACmax: qACmax,
             sender: msg.sender,
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTC{ value: _getExecFeeSent() }(params);
+        operId = mocQueue.queueSwapTPforTC{ value: execFee }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
-        _lockACInPending(qACmax_);
+        _lockACInPending(qACmax);
     }
 
     /**
@@ -385,18 +395,19 @@ abstract contract MocDeferred is MocCore {
         address recipient_,
         address vendor_
     ) internal notLiquidated notPaused returns (uint256 operId) {
+        (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.swapTCforTP);
         SwapTCforTPParams memory params = SwapTCforTPParams({
             tp: tp_,
             qTC: qTC_,
             qTPmin: qTPmin_,
-            qACmax: qACmax_,
+            qACmax: qACmax,
             sender: msg.sender,
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTCforTP{ value: _getExecFeeSent() }(params);
+        operId = mocQueue.queueSwapTCforTP{ value: execFee }(params);
         _lockTCInPending(qTC_);
-        _lockACInPending(qACmax_);
+        _lockACInPending(qACmax);
     }
 
     // ------- External Only Queue Functions -------

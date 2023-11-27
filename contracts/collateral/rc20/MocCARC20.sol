@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { MocCore } from "../../core/MocCore.sol";
 import { MocDeferred } from "../../core/MocDeferred.sol";
 import { MocCoreShared } from "../../core/MocCoreShared.sol";
+import { MocQueueExecFees } from "../../queue/MocQueueExecFees.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -94,8 +95,11 @@ contract MocCARC20 is MocCoreShared {
     /**
      * @inheritdoc MocDeferred
      */
-    function _getExecFeeSent() internal override returns (uint256 execFeeSent) {
-        return msg.value;
+    function _getExecFeeSent(
+        uint256 qACmax_,
+        MocQueueExecFees.OperType /*operType_*/
+    ) internal override returns (uint256 qACmaxSent, uint256 execFeeSent) {
+        return (qACmax_, msg.value);
     }
 
     // ------- External Functions -------

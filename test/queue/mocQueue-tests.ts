@@ -183,7 +183,7 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
           it(`THEN exec fee gets updated`, async function () {
             const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: 42 });
             await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
-            const actualTcMintExecFee = await mocQueue.tcMintExecFee();
+            const actualTcMintExecFee = await mocQueue.execFee(OperType.mintTC);
             await expect(42, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
           });
         });
