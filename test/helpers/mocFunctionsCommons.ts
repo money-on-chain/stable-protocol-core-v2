@@ -19,6 +19,34 @@ const redeemTC =
     }
   };
 
+const redeemTP =
+  (mocImpl, mocPeggedTokens) =>
+  async ({
+    i = 0,
+    tp,
+    from,
+    to,
+    qTP,
+    qACmin = 0,
+    vendor = undefined,
+    netParams = { gasPrice: 0 },
+    applyPrecision = true,
+  }) => {
+    const signer = await ethers.getSigner(from);
+    if (applyPrecision) {
+      qTP = pEth(qTP);
+      qACmin = pEth(qACmin);
+    }
+    tp = tp || mocPeggedTokens[i].address;
+    if (to) {
+      if (!vendor) return mocImpl.connect(signer).redeemTPto(tp, qTP, qACmin, to, netParams);
+      return mocImpl.connect(signer).redeemTPtoViaVendor(tp, qTP, qACmin, to, vendor, netParams);
+    } else {
+      if (!vendor) return mocImpl.connect(signer).redeemTP(tp, qTP, qACmin, netParams);
+      return mocImpl.connect(signer).redeemTPViaVendor(tp, qTP, qACmin, vendor, netParams);
+    }
+  };
+
 const redeemTCandTP =
   (mocImpl, mocPeggedTokens) =>
   async ({
@@ -92,6 +120,7 @@ const coinbaseTransfer = async ({ from, to, amount, applyPrecision = true }) => 
 /// Functions shared across different CA implementations
 export const mocFunctionsCommons = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => ({
   redeemTC: redeemTC(mocImpl),
+  redeemTP: redeemTP(mocImpl, mocPeggedTokens),
   redeemTCandTP: redeemTCandTP(mocImpl, mocPeggedTokens),
   liqRedeemTP: liqRedeemTP(mocImpl, mocPeggedTokens),
   tcBalanceOf: tBalanceOf(mocCollateralToken),

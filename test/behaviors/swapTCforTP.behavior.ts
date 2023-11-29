@@ -16,11 +16,14 @@ const swapTCforTPBehavior = function () {
   let bob: Address;
   let vendor: Address;
   let expectEvent: any;
+  let assertACResult: any;
   let tp0: Address;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
 
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
+  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
+  const execFee = queueParams.execFeeParams;
 
   let tx: ContractTransaction;
   let alicePrevTCBalance: Balance;
@@ -35,6 +38,7 @@ const swapTCforTPBehavior = function () {
       ({ mocImpl, feeToken } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCSwappedForTP");
+      assertACResult = mocFunctions.assertACResult(execFee.swapTCforTPExecFee);
       tp0 = mocContracts.mocPeggedTokens[0].address;
     });
 
@@ -131,7 +135,7 @@ const swapTCforTPBehavior = function () {
         it("THEN alice balance decrease 1% for Moc Fee Flow of 100 AC", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(1, diff);
+          assertACResult(1, diff);
         });
         it("THEN a TCSwappedForTP event is emitted", async function () {
           // i: 0
@@ -193,7 +197,7 @@ const swapTCforTPBehavior = function () {
         it("THEN alice balance decrease 1% for Moc Fee Flow of 100 AC", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(1, diff);
+          assertACResult(1, diff);
         });
         it("THEN a TCSwappedForTP event is emitted", async function () {
           // i: 0
@@ -228,7 +232,7 @@ const swapTCforTPBehavior = function () {
         it("THEN alice AC balance decrease 11 Asset (1% qACFee + 10% qACVendorMarkup of 100 qAC)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(11, diff);
+          assertACResult(11, diff);
         });
         it("THEN vendor AC balance increase 10 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -434,7 +438,7 @@ const swapTCforTPBehavior = function () {
           it("THEN alice AC balance doesn't change", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec(0, diff);
+            assertACResult(0, diff);
           });
           it("THEN alice Fee Token balance decrease 0.5 (100 * 1% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await feeToken.balanceOf(alice);
@@ -470,7 +474,7 @@ const swapTCforTPBehavior = function () {
           it("THEN alice AC balance doesn't change", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec(0, diff);
+            assertACResult(0, diff);
           });
           it("THEN alice Fee Token balance decrease 0.5 (100 * 1% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await feeToken.balanceOf(alice);

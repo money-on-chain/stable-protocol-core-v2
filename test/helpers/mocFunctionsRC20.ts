@@ -2,6 +2,7 @@
 import { ethers } from "hardhat";
 import { pEth } from "./utils";
 import { mocFunctionsCommons, tBalanceOf } from "./mocFunctionsCommons";
+import { assertPrec } from "./assertHelper";
 
 const mintTC =
   (mocImpl, collateralAsset) =>
@@ -47,24 +48,6 @@ const mintTP =
     } else {
       if (!vendor) return mocImpl.connect(signer).mintTP(tp, qTP, qACmax, netParams);
       return mocImpl.connect(signer).mintTPViaVendor(tp, qTP, qACmax, vendor, netParams);
-    }
-  };
-
-const redeemTP =
-  (mocImpl, mocPeggedTokens) =>
-  async ({ i = 0, tp, from, to, qTP, qACmin = 0, vendor = undefined, netParams = {}, applyPrecision = true }) => {
-    const signer = await ethers.getSigner(from);
-    if (applyPrecision) {
-      qTP = pEth(qTP);
-      qACmin = pEth(qACmin);
-    }
-    tp = tp || mocPeggedTokens[i].address;
-    if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTPto(tp, qTP, qACmin, to, netParams);
-      return mocImpl.connect(signer).redeemTPtoViaVendor(tp, qTP, qACmin, to, vendor, netParams);
-    } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTP(tp, qTP, qACmin, netParams);
-      return mocImpl.connect(signer).redeemTPViaVendor(tp, qTP, qACmin, vendor, netParams);
     }
   };
 
@@ -204,13 +187,13 @@ export const mocFunctionsRC20 = async ({
   return {
     mintTC: mintTC(mocImpl, collateralAsset),
     mintTP: mintTP(mocImpl, collateralAsset, mocPeggedTokens),
-    redeemTP: redeemTP(mocImpl, mocPeggedTokens),
     mintTCandTP: mintTCandTP(mocImpl, collateralAsset, mocPeggedTokens),
     swapTPforTP: swapTPforTP(mocImpl, collateralAsset, mocPeggedTokens),
     swapTPforTC: swapTPforTC(mocImpl, collateralAsset, mocPeggedTokens),
     swapTCforTP: swapTCforTP(mocImpl, collateralAsset, mocPeggedTokens),
     assetBalanceOf: tBalanceOf(collateralAsset),
     acBalanceOf: tBalanceOf(collateralAsset),
+    assertACResult: () => assertPrec,
     acTransfer: commonFncs.tTransfer(collateralAsset),
     ...commonFncs,
   };

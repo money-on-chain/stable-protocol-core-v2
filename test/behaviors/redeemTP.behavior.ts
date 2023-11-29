@@ -14,11 +14,14 @@ const redeemTPBehavior = function () {
   let bob: Address;
   let vendor: Address;
   let expectEvent: any;
+  let assertACResult: any;
   let tp0: Address;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_2 = 2;
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
+  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
+  const execFee = queueParams.execFeeParams;
 
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {
@@ -27,6 +30,7 @@ const redeemTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPRedeemed");
+      assertACResult = mocFunctions.assertACResult(-execFee.tpRedeemExecFee);
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
 
@@ -137,7 +141,7 @@ const redeemTPBehavior = function () {
         it("THEN alice balance increase 100 Asset - 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(95, diff);
+          assertACResult(95, diff);
         });
         it("THEN a TPRedeemed event is emitted", async function () {
           // i: 0
@@ -227,7 +231,7 @@ const redeemTPBehavior = function () {
         it("THEN alice AC balance increase 85 Asset (100 qAC - 5% qACFee - 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(85, diff);
+          assertACResult(85, diff);
         });
         it("THEN vendor AC balance increase 10 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -475,7 +479,7 @@ const redeemTPBehavior = function () {
           it("THEN alice AC balance increase 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(100, diff);
+            assertACResult(100, diff);
           });
           it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);

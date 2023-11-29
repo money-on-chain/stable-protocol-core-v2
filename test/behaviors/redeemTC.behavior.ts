@@ -14,10 +14,13 @@ const redeemTCBehavior = function () {
   let bob: Address;
   let vendor: Address;
   let expectEvent: any;
+  let assertACResult: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
+  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
+  const execFee = queueParams.execFeeParams;
 
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {
@@ -26,6 +29,7 @@ const redeemTCBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCRedeemed");
+      assertACResult = mocFunctions.assertACResult(-execFee.tcRedeemExecFee);
     });
     describe("GIVEN alice has 300 TC", function () {
       beforeEach(async function () {
@@ -97,7 +101,7 @@ const redeemTCBehavior = function () {
         it("THEN alice balance increase 300 Asset - 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(300 * 0.95, diff);
+          assertACResult(300 * 0.95, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
           // sender: alice
@@ -170,7 +174,7 @@ const redeemTCBehavior = function () {
         it("THEN alice AC balance increase 85 Asset (100 qAC - 5% qACFee - 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(85, diff);
+          assertACResult(85, diff);
         });
         it("THEN vendor AC balance increase 10 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -292,7 +296,7 @@ const redeemTCBehavior = function () {
           it("THEN alice balance increase 254.58 Asset - 5% for Moc Fee Flow", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec("241.856630824372759863", diff);
+            assertACResult("241.856630824372759863", diff);
           });
           describe("AND bob mints 10 TC and 10 TP1, making TC available to redeem go to 3.968", function () {
             beforeEach(async function () {
@@ -330,7 +334,7 @@ const redeemTCBehavior = function () {
               it("THEN alice balance increase 3.968 Asset - 5% for Moc Fee Flow", async function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
-                assertPrec("3.769841269841269848", diff);
+                assertACResult("3.769841269841269848", diff);
               });
             });
           });
@@ -361,7 +365,7 @@ const redeemTCBehavior = function () {
             it("THEN alice receives 90.72 assets instead of 95", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = aliceActualACBalance.sub(alicePrevACBalance);
-              assertPrec("90.725", diff);
+              assertACResult("90.725", diff);
             });
           });
         });
@@ -410,7 +414,7 @@ const redeemTCBehavior = function () {
             it("THEN alice receives 95.67 assets instead of 95", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = aliceActualACBalance.sub(alicePrevACBalance);
-              assertPrec("95.671333333333333270", diff);
+              assertACResult("95.671333333333333270", diff);
             });
           });
           describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
@@ -458,7 +462,7 @@ const redeemTCBehavior = function () {
               it("THEN alice receives 90.725 assets instead of 95", async function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
-                assertPrec("90.725", diff);
+                assertACResult("90.725", diff);
               });
             });
           });
@@ -501,7 +505,7 @@ const redeemTCBehavior = function () {
           it("THEN alice AC balance increase 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(100, diff);
+            assertACResult(100, diff);
           });
           it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);

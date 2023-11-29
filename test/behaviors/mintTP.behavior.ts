@@ -15,13 +15,16 @@ const mintTPBehavior = function () {
   let bob: Address;
   let vendor: Address;
   let expectEvent: any;
+  let assertACResult: any;
   let tp0: Address;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
 
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
+  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
+  const execFee = queueParams.execFeeParams;
 
   // Available to mint formulas introduce rounding errors, so we tolerate some margin for it
   const availableToMintTolerance = 20000;
@@ -33,6 +36,7 @@ const mintTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPMinted");
+      assertACResult = mocFunctions.assertACResult(execFee.tpMintExecFee);
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
     describe("WHEN alice trie to mint 0 TP", function () {
@@ -134,7 +138,7 @@ const mintTPBehavior = function () {
         it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(100 * 1.05, diff);
+          assertACResult(100 * 1.05, diff);
         });
         it("THEN a TPMinted event is emitted", async function () {
           // tp: 0
@@ -228,7 +232,7 @@ const mintTPBehavior = function () {
           it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec(100 * 1.05, diff);
+            assertACResult(100 * 1.05, diff);
           });
         });
       });
@@ -267,7 +271,7 @@ const mintTPBehavior = function () {
         it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(100 * 1.05, diff);
+          assertACResult(100 * 1.05, diff);
         });
         it("THEN a TPMinted event is emitted", async function () {
           // tp: 0
@@ -295,7 +299,7 @@ const mintTPBehavior = function () {
         it("THEN alice AC balance decrease 115 Asset (100 qAC + 5% qACFee + 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(115, diff);
+          assertACResult(115, diff);
         });
         it("THEN vendor AC balance increase 10 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -722,7 +726,7 @@ const mintTPBehavior = function () {
             it("THEN alice balance decrease 100 Asset + 0.1% for Moc Fee Flow", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = alicePrevACBalance.sub(aliceActualACBalance);
-              assertPrec(100 * 1.001, diff);
+              assertACResult(100 * 1.001, diff);
             });
             it("THEN a TPMinted event is emitted", async function () {
               // tp: 1
@@ -830,7 +834,7 @@ const mintTPBehavior = function () {
           it("THEN alice AC balance decrease 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec(100, diff);
+            assertACResult(100, diff);
           });
           it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
@@ -867,7 +871,7 @@ const mintTPBehavior = function () {
           it("THEN alice AC balance decrease 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec(100, diff);
+            assertACResult(100, diff);
           });
           it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);

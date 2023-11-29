@@ -84,19 +84,6 @@ export const fixtureDeployedMocCoinbase = memoizee(
       } else {
         mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
       }
-      // TODO: use real exec fee settings
-      const execFeeParams = {
-        tcMintExecFee: 0,
-        tcRedeemExecFee: 0,
-        tpMintExecFee: 0,
-        tpRedeemExecFee: 0,
-        mintTCandTPExecFee: 0,
-        redeemTCandTPExecFee: 0,
-        swapTPforTPExecFee: 0,
-        swapTPforTCExecFee: 0,
-        swapTCforTPExecFee: 0,
-      };
-      await mocQueue.updateExecutionFees(execFeeParams);
 
       await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
 

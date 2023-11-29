@@ -1,6 +1,7 @@
 // @ts-nocheck
-import { ethers, getNamedAccounts } from "hardhat";
+import hre, { ethers, getNamedAccounts } from "hardhat";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
+import { getNetworkDeployParams } from "../../scripts/utils";
 import { mocFunctionsCoinbase } from "./mocFunctionsCoinbase";
 import { pEth } from "./utils";
 
@@ -40,7 +41,9 @@ const allowTCnTPWrap = (mocImpl, mocCollateralToken, mocPeggedTokens, f) => asyn
   return f(args);
 };
 
-const execWrap = (mocQueue, f) => async args => {
+const execWrap = (mocQueue, execFee, f) => async args => {
+  // if not value provided, send enough coinbase to pay execution fee
+  if (args.netParams === undefined) args.netParams = { value: execFee };
   if (args.execute === false) {
     return f(args);
   }
@@ -66,17 +69,22 @@ export const mocFunctionsCoinbaseDeferred = async ({
   });
   const mocTC = mocCollateralToken;
   const mocTPs = mocPeggedTokens;
+  const { execFeeParams: execFee } = getNetworkDeployParams(hre).queueParams;
   return {
     ...coinbaseFncs,
-    mintTC: execWrap(mocQueue, coinbaseFncs.mintTC),
-    redeemTC: execWrap(mocQueue, allowTCWrap(mocImpl, mocTC, coinbaseFncs.redeemTC)),
-    mintTP: execWrap(mocQueue, coinbaseFncs.mintTP),
-    redeemTP: execWrap(mocQueue, allowTPWrap(mocImpl, mocTPs, coinbaseFncs.redeemTP)),
-    mintTCandTP: execWrap(mocQueue, coinbaseFncs.mintTCandTP),
-    redeemTCandTP: execWrap(mocQueue, allowTCnTPWrap(mocImpl, mocTC, mocTPs, coinbaseFncs.redeemTCandTP)),
-    swapTPforTP: execWrap(mocQueue, allowTPWrap(mocImpl, mocTPs, coinbaseFncs.swapTPforTP)),
-    swapTPforTC: execWrap(mocQueue, allowTPWrap(mocImpl, mocTPs, coinbaseFncs.swapTPforTC)),
-    swapTCforTP: execWrap(mocQueue, allowTCWrap(mocImpl, mocTC, coinbaseFncs.swapTCforTP)),
+    mintTC: execWrap(mocQueue, execFee.tcMintExecFee, coinbaseFncs.mintTC),
+    redeemTC: execWrap(mocQueue, execFee.tcRedeemExecFee, allowTCWrap(mocImpl, mocTC, coinbaseFncs.redeemTC)),
+    mintTP: execWrap(mocQueue, execFee.tpMintExecFee, coinbaseFncs.mintTP),
+    redeemTP: execWrap(mocQueue, execFee.tpRedeemExecFee, allowTPWrap(mocImpl, mocTPs, coinbaseFncs.redeemTP)),
+    mintTCandTP: execWrap(mocQueue, execFee.mintTCandTPExecFee, coinbaseFncs.mintTCandTP),
+    redeemTCandTP: execWrap(
+      mocQueue,
+      execFee.redeemTCandTPExecFee,
+      allowTCnTPWrap(mocImpl, mocTC, mocTPs, coinbaseFncs.redeemTCandTP),
+    ),
+    swapTPforTP: execWrap(mocQueue, execFee.swapTPforTPExecFee, allowTPWrap(mocImpl, mocTPs, coinbaseFncs.swapTPforTP)),
+    swapTPforTC: execWrap(mocQueue, execFee.swapTPforTCExecFee, allowTPWrap(mocImpl, mocTPs, coinbaseFncs.swapTPforTC)),
+    swapTCforTP: execWrap(mocQueue, execFee.swapTCforTPExecFee, allowTCWrap(mocImpl, mocTC, coinbaseFncs.swapTCforTP)),
     getEventArgs: getEventArgs,
     executeQueue: executeQueue(mocQueue),
     getEventSource: () => mocQueue,

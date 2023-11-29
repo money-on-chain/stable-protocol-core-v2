@@ -2,7 +2,7 @@ import { expect } from "chai";
 import hre, { deployments, ethers } from "hardhat";
 import memoizee from "memoizee";
 import { GovernorMock, GovernorMock__factory, MocQueue, MocQueue__factory } from "../../../typechain";
-import { ERRORS, getNetworkDeployParams } from "../../helpers/utils";
+import { ERRORS, OperType, getNetworkDeployParams } from "../../helpers/utils";
 import { DeployParameters } from "../../../scripts/types";
 
 const fixtureDeploy = memoizee(
@@ -27,17 +27,17 @@ const fixtureDeploy = memoizee(
 describe("Feature: MocQueue execution fees update", () => {
   let governorMock: GovernorMock;
   let mocQueue: MocQueue;
-  const execFeeKeys = [
-    "tcMintExecFee",
-    "tcRedeemExecFee",
-    "tpMintExecFee",
-    "tpRedeemExecFee",
-    "swapTPforTPExecFee",
-    "swapTPforTCExecFee",
-    "swapTCforTPExecFee",
-    "redeemTCandTPExecFee",
-    "mintTCandTPExecFee",
-  ];
+  const execFeeKeys: { [key: string]: OperType } = {
+    tcMintExecFee: OperType.mintTC,
+    tcRedeemExecFee: OperType.redeemTC,
+    tpMintExecFee: OperType.mintTP,
+    tpRedeemExecFee: OperType.redeemTP,
+    mintTCandTPExecFee: OperType.mintTCandTP,
+    redeemTCandTPExecFee: OperType.redeemTCandTP,
+    swapTCforTPExecFee: OperType.swapTCforTP,
+    swapTPforTCExecFee: OperType.swapTPforTC,
+    swapTPforTPExecFee: OperType.swapTPforTP,
+  };
 
   before(async () => {
     ({ mocQueue } = await fixtureDeploy()());
@@ -51,17 +51,20 @@ describe("Feature: MocQueue execution fees update", () => {
     before(async () => {
       await governorMock.setIsAuthorized(true);
       ({ execFeeParams } = getNetworkDeployParams(hre).queueParams);
-      expectExecutionFee = (expectedFees: any) => {
-        return Promise.all(
-          execFeeKeys.map((key: string) =>
-            // @ts-ignore
-            mocQueue[key]().then((value: number) => expect(expectedFees[key], key).to.be.equal(value)),
-          ),
-        );
+      expectExecutionFee = async (expectedFees: any) => {
+        let promises: any[] = [];
+        Object.keys(execFeeKeys).forEach(execFeeKey => {
+          promises.push(
+            mocQueue
+              .execFee(execFeeKeys[execFeeKey])
+              .then((fee: any) => expect(expectedFees[execFeeKey]).to.be.equal(fee)),
+          );
+        });
+        return Promise.all(promises);
       };
     });
     describe("AND mocQueue is empty", () => {
-      execFeeKeys.forEach(execFeeKey => {
+      Object.keys(execFeeKeys).forEach(execFeeKey => {
         describe(`WHEN updateExecutionFees is invoked to update ${execFeeKey}`, () => {
           it(`THEN only ${execFeeKey} is updated`, async function () {
             const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { [execFeeKey]: 42 });

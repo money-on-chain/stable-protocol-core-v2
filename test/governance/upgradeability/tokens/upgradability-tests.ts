@@ -39,7 +39,8 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
     );
 
     // mint 10 TC
-    await mocImpl.mintTC(10, { value: 100 });
+    const execFee = await mocQueue.execFee(1); // mintTC execution fee
+    await mocImpl.mintTC(10, { value: execFee.add(100) });
     await mocQueue.execute(deployer);
   });
 
