@@ -17,12 +17,15 @@ contract MocCACoinbase is MocCoreShared {
         InitializeDeferredParams initializeDeferredParams;
         // max amount of gas forwarded on AC transfer
         uint256 transferMaxGas;
+        address coinbaseFailedTransferFallback;
     }
 
     // ------- Storage -------
     // max amount of gas forwarded on AC transfer to avoid
     // using all the gas on the fallback function
-    uint256 private transferMaxGas;
+    uint256 public transferMaxGas;
+    // when the coinbase unlock fails funds are sent to this address to don't revert the queue execution
+    address public coinbaseFailedTransferFallback;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -58,10 +61,12 @@ contract MocCACoinbase is MocCoreShared {
      *      mocVendors address for MocVendors contract
      *      mocQueueAddress address for MocQueue contract
      *      transferMaxGas max amount of gas forwarded on AC transfer
+     *      coinbaseFailedTransferFallback address who receives the funds when the coinbase unlock fails
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
         __MocDeferred_init(initializeParams_.initializeDeferredParams);
         transferMaxGas = initializeParams_.transferMaxGas;
+        coinbaseFailedTransferFallback = initializeParams_.coinbaseFailedTransferFallback;
     }
 
     // ------- Internal Functions -------
@@ -78,6 +83,21 @@ contract MocCACoinbase is MocCoreShared {
             (bool success, ) = to_.call{ value: amount_, gas: transferMaxGas }("");
             if (!success) revert TransferFailed();
         }
+    }
+
+    /**
+     * @inheritdoc MocDeferred
+     */
+    function unlockACInPending(address owner_, uint256 qACToUnlock_) external override onlyMocQueue {
+        unchecked {
+            qACLockedInPending -= qACToUnlock_;
+        }
+        // this transfer is gas capped to avoid spent more than the fixed precalculated execution fees
+        // by using the fallback function if `to_` is a contract
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, ) = owner_.call{ value: qACToUnlock_, gas: transferMaxGas }("");
+        // if cannot receive the AC, it is transferred to another address to don't revert the queue execution
+        if (!success) acTransfer(coinbaseFailedTransferFallback, qACToUnlock_);
     }
 
     /**

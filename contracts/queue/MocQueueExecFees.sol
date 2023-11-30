@@ -56,25 +56,6 @@ abstract contract MocQueueExecFees is MocAccessControlled {
     // OperType => Execution fee
     mapping(OperType => uint256) public execFee;
 
-    // // absolute coinbase execution fee applied on Collateral Tokens mint
-    // uint256 public tcMintExecFee;
-    // // absolute coinbase execution fee applied on Collateral Tokens redeem
-    // uint256 public tcRedeemExecFee;
-    // // absolute coinbase execution fee applied on Pegged Tokens mint
-    // uint256 public tpMintExecFee;
-    // // absolute coinbase execution fee applied on Pegged Tokens redeem
-    // uint256 public tpRedeemExecFee;
-    // // absolute coinbase execution fee applied on swap a Pegged Token for another Pegged Token
-    // uint256 public swapTPforTPExecFee;
-    // // absolute coinbase execution fee applied on swap a Pegged Token for Collateral Token
-    // uint256 public swapTPforTCExecFee;
-    // // absolute coinbase execution fee applied on swap Collateral Token for a Pegged Token
-    // uint256 public swapTCforTPExecFee;
-    // // absolute coinbase execution fee applied on redeem Collateral Token and Pegged Token in one operations
-    // uint256 public redeemTCandTPExecFee;
-    // // absolute coinbase execution fee applied on mint Collateral Token and Pegged Token in one operation
-    // uint256 public mintTCandTPExecFee;
-
     // ------- Initializer -------
 
     function __MocQueueExecFees_init(

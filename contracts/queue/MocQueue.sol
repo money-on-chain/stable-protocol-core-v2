@@ -484,9 +484,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
-                emit UnhandledError(operId_, unlockReturnData);
-            }
+            mocCore.unlockACInPending(params.sender, params.qACmax);
         }
         // Independently from the result, we delete the operation params
         delete operationsMintTC[operId_];
@@ -553,9 +551,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
-                emit UnhandledError(operId_, unlockReturnData);
-            }
+            mocCore.unlockACInPending(params.sender, params.qACmax);
         }
         // Independently from the result, we delete the operation params
         delete operationsMintTP[operId_];
@@ -628,9 +624,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             } else emit UnhandledError(operId_, returnData);
 
             // On a failed Operation, we unlock user funds
-            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
-                emit UnhandledError(operId_, unlockReturnData);
-            }
+            mocCore.unlockACInPending(params.sender, params.qACmax);
         }
         // Independently from the result, we delete the operation params
         delete operationsMintTCandTP[operId_];
@@ -714,9 +708,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
             // On a failed Operation, we unlock user funds
             mocCore.unlockTCInPending(params.sender, params.qTC);
-            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
-                emit UnhandledError(operId_, unlockReturnData);
-            }
+            mocCore.unlockACInPending(params.sender, params.qACmax);
         }
         // Independently from the result, we delete the operation params
         delete operationsSwapTCforTP[operId_];
@@ -758,9 +750,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
             // On a failed Operation, we unlock user funds
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
-            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
-                emit UnhandledError(operId_, unlockReturnData);
-            }
+            mocCore.unlockACInPending(params.sender, params.qACmax);
         }
         // Independently from the result, we delete the operation params
         delete operationsSwapTPforTC[operId_];
@@ -799,9 +789,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
             // On a failed Operation, we unlock user funds
             mocCore.unlockTPInPending(params.sender, IERC20Upgradeable(params.tpFrom), params.qTP);
-            try mocCore.unlockACInPending(params.sender, params.qACmax) {} catch (bytes memory unlockReturnData) {
-                emit UnhandledError(operId_, unlockReturnData);
-            }
+            mocCore.unlockACInPending(params.sender, params.qACmax);
         }
         return true;
     }

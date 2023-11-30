@@ -38,6 +38,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     tcInterestCollectorAddress,
     maxAbsoluteOpProviderAddress,
     maxOpDiffProviderAddress,
+    coinbaseFailedTransferFallback,
   } = mocAddresses;
 
   const governorAddress = await getGovernorAddresses(hre);
@@ -97,6 +98,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
           mocQueueAddress: deployedMocQueue.address,
         },
         transferMaxGas: coreParams.transferMaxGas,
+        coinbaseFailedTransferFallback,
       },
     ],
   });

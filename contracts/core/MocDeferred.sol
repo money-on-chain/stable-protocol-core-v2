@@ -531,15 +531,11 @@ abstract contract MocDeferred is MocCore {
 
     /**
      * @notice while executing a pending Operation, if it fails we need to unlock user's funds
+     * @dev this function must be overridden by the AC implementation
      * @param owner_ funds owner, address to be returned to
      * @param qACToUnlock_ AC amount to be unlocked
      */
-    function unlockACInPending(address owner_, uint256 qACToUnlock_) external onlyMocQueue {
-        unchecked {
-            qACLockedInPending -= qACToUnlock_;
-        }
-        acTransfer(owner_, qACToUnlock_);
-    }
+    function unlockACInPending(address owner_, uint256 qACToUnlock_) external virtual;
 
     /**
      * @notice while executing a pending Operation, if it fails we need to unlock user's tokens

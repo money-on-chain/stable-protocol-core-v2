@@ -78,6 +78,16 @@ contract MocCARC20 is MocCoreShared {
     }
 
     /**
+     * @inheritdoc MocDeferred
+     */
+    function unlockACInPending(address owner_, uint256 qACToUnlock_) external override onlyMocQueue {
+        unchecked {
+            qACLockedInPending -= qACToUnlock_;
+        }
+        acTransfer(owner_, qACToUnlock_);
+    }
+
+    /**
      * @inheritdoc MocCore
      */
     function acBalanceOf(address account) internal view override returns (uint256 balance) {

@@ -99,6 +99,8 @@ export type DeployParameters = {
     maxAbsoluteOpProviderAddress: Address;
     // max operation difference provider address
     maxOpDiffProviderAddress: Address;
+    // address who receives the funds when the coinbase unlock fails(only for coinbase flavor)
+    coinbaseFailedTransferFallback?: Address;
   };
   queueParams: {
     // min amount of blocks the Operation should wait in the Queue before execution
