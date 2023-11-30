@@ -285,6 +285,7 @@ export const ERROR_SELECTOR = {
   QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
   INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
+  TRANSFER_FAILED: getSelectorFor(ERRORS.TRANSFER_FAIL + "()"),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {
