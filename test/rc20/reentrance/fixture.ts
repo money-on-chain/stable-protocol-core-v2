@@ -6,7 +6,7 @@ import {
   CONSTANTS,
   deployAndAddPeggedTokens,
   deployAsset,
-  deployCollateralToken,
+  deployAndInitTC,
   deployDataProvider,
   deployPriceProvider,
   ensureERC1820,
@@ -43,7 +43,7 @@ export const fixtureDeployedMocRC777 = memoizee(
       const governorMockFactory = await ethers.getContractFactory("GovernorMock");
       const governorAddress = (await governorMockFactory.deploy()).address;
 
-      const collateralToken = await deployCollateralToken({
+      const collateralToken = await deployAndInitTC({
         adminAddress: deployer,
         governorAddress: governorAddress,
       });

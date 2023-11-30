@@ -2,13 +2,13 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
 import {
+  CONSTANTS,
   addPeggedTokensAndChangeGovernor,
   deployUUPSArtifact,
   getGovernorAddresses,
   getNetworkDeployParams,
   waitForTxConfirmation,
 } from "../../scripts/utils";
-import { CONSTANTS } from "../../test/helpers/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments } = hre;

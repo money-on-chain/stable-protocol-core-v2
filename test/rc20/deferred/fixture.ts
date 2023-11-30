@@ -16,8 +16,7 @@ import {
   DataProviderMock,
   DataProviderMock__factory,
 } from "../../../typechain";
-import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth } from "../../helpers/utils";
-import { deployMocQueue } from "../../../scripts/utils";
+import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth, deployMocQueue } from "../../helpers/utils";
 
 export const fixtureDeployedMocRC20Deferred = memoizee(
   (

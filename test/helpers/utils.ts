@@ -18,16 +18,10 @@ import {
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
+export * from "../../scripts/utils";
 
 export const GAS_LIMIT_PATCH = 30000000;
 const PCT_BASE = BigNumber.from((1e18).toString());
-
-export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
-export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
-export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
-export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
-export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
-export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
 export enum OperType {
   none, // avoid using zero as Type
@@ -66,7 +60,7 @@ export async function deployPeggedToken({
   return mocRC20Proxy;
 }
 
-export async function deployCollateralToken({
+export async function deployAndInitTC({
   adminAddress,
   governorAddress,
 }: {
@@ -268,14 +262,6 @@ export const ERROR_SELECTOR = {
   QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
   INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
-};
-
-export const CONSTANTS = {
-  ZERO_ADDRESS: ethers.constants.AddressZero,
-  MAX_UINT256: ethers.constants.MaxUint256,
-  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
-  PRECISION: BigNumber.from((1e18).toString()),
-  ONE: BigNumber.from((1e18).toString()),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {

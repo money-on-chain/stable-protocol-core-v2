@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Address } from "hardhat-deploy/types";
 import { MocTC } from "../../typechain";
-import { BURNER_ROLE, DEFAULT_ADMIN_ROLE, MINTER_ROLE, PAUSER_ROLE, deployCollateralToken } from "../helpers/utils";
+import { BURNER_ROLE, DEFAULT_ADMIN_ROLE, MINTER_ROLE, PAUSER_ROLE, deployAndInitTC } from "../helpers/utils";
 
 describe("Feature: Moc Tokens Role Access restrictions", () => {
   let token: MocTC;
@@ -13,7 +13,7 @@ describe("Feature: Moc Tokens Role Access restrictions", () => {
     before(async () => {
       ({ alice, deployer, otherUser: roleAdmin } = await getNamedAccounts());
       const fakeGovernor = deployer; // Governor is not relevant for this tests
-      token = (await deployCollateralToken({ adminAddress: roleAdmin, governorAddress: fakeGovernor })).connect(
+      token = (await deployAndInitTC({ adminAddress: roleAdmin, governorAddress: fakeGovernor })).connect(
         await ethers.getSigner(roleAdmin),
       );
       aliceSigner = await ethers.getSigner(alice);

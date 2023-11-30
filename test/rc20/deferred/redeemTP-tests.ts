@@ -5,9 +5,17 @@ import { ContractTransaction } from "ethers";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { redeemTPBehavior } from "../../behaviors/redeemTP.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
+import {
+  Balance,
+  ERROR_SELECTOR,
+  OperId,
+  OperType,
+  ethersGetBalance,
+  pEth,
+  tpParams,
+  getNetworkDeployParams,
+} from "../../helpers/utils";
 import { assertPrec } from "../../helpers/assertHelper";
-import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred redeem TP", function () {

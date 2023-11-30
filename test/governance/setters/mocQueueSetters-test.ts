@@ -2,8 +2,7 @@ import { expect } from "chai";
 import hre, { deployments, ethers } from "hardhat";
 import memoizee from "memoizee";
 import { GovernorMock, GovernorMock__factory, MocQueue } from "../../../typechain";
-import { ERRORS } from "../../helpers/utils";
-import { deployMocQueue } from "../../../scripts/utils";
+import { ERRORS, deployMocQueue } from "../../helpers/utils";
 
 const fixtureDeploy = memoizee(
   (): (() => Promise<{

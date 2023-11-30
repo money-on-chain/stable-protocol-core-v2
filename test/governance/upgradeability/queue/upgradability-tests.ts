@@ -2,8 +2,7 @@ import { expect } from "chai";
 import hre, { deployments, ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 import { MocQueue, MocQueueMock, MocQueueMock__factory, MocQueue__factory } from "../../../../typechain";
-import { deployAeropagusGovernor, ERRORS } from "../../../helpers/utils";
-import { getNetworkDeployParams } from "../../../../scripts/utils";
+import { deployAeropagusGovernor, ERRORS, getNetworkDeployParams } from "../../../helpers/utils";
 
 describe("Feature: MocQueue Upgradeability UUPS", () => {
   let mocQueue: MocQueue;
