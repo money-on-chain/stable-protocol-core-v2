@@ -13,10 +13,10 @@ import {
   OperType,
   ethersGetBalance,
   tpParams,
+  getNetworkDeployParams,
 } from "../helpers/utils";
 import { MocCARC20Deferred, MocQueue, NonPayableMock } from "../../typechain";
 import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
-import { getNetworkDeployParams } from "../../scripts/utils";
 
 describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
   const vendor = CONSTANTS.ZERO_ADDRESS;

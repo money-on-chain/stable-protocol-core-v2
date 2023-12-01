@@ -3,14 +3,7 @@ import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Address } from "hardhat-deploy/types";
 import { MocTC } from "../../typechain";
-import {
-  BURNER_ROLE,
-  DEFAULT_ADMIN_ROLE,
-  MINTER_ROLE,
-  PAUSER_ROLE,
-  deployCollateralToken,
-  ERRORS,
-} from "../helpers/utils";
+import { BURNER_ROLE, DEFAULT_ADMIN_ROLE, MINTER_ROLE, PAUSER_ROLE, deployAndInitTC, ERRORS } from "../helpers/utils";
 
 describe("Feature: Moc Tokens roles can be transferred by transferAllRoles", () => {
   let token: MocTC;
@@ -20,7 +13,7 @@ describe("Feature: Moc Tokens roles can be transferred by transferAllRoles", () 
     before(async () => {
       ({ alice, deployer, otherUser: roleAdmin } = await getNamedAccounts());
       const fakeGovernor = deployer; // Governor is not relevant for this tests
-      token = await deployCollateralToken({ adminAddress: deployer, governorAddress: fakeGovernor });
+      token = await deployAndInitTC({ adminAddress: deployer, governorAddress: fakeGovernor });
       await Promise.all([BURNER_ROLE, MINTER_ROLE, PAUSER_ROLE].map(role => token.grantRole(role, alice)));
       aliceSigner = await ethers.getSigner(alice);
       // verify she can mint/burn

@@ -4,10 +4,18 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20Deferred } from "../../helpers/mocFunctionsRC20Deferred";
 import { mintTPBehavior } from "../../behaviors/mintTP.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, ethersGetBalance, pEth, tpParams } from "../../helpers/utils";
+import {
+  Balance,
+  ERROR_SELECTOR,
+  OperId,
+  OperType,
+  ethersGetBalance,
+  pEth,
+  tpParams,
+  getNetworkDeployParams,
+} from "../../helpers/utils";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
-import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred mint TP", function () {

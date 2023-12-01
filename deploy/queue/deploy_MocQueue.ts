@@ -1,8 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { getNetworkDeployParams, getGovernorAddresses, deployUUPSArtifact } from "../../scripts/utils";
-import { EXECUTOR_ROLE } from "../../test/helpers/utils";
+import { getNetworkDeployParams, getGovernorAddresses, deployUUPSArtifact, EXECUTOR_ROLE } from "../../scripts/utils";
 
 const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts } = hre;

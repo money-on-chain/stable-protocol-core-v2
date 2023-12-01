@@ -4,9 +4,8 @@ import { expect } from "chai";
 import { BigNumber, ContractTransaction } from "ethers";
 import { MocCACoinbase, MocRC20, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
-import { mineNBlocks, pEth } from "../helpers/utils";
+import { mineNBlocks, pEth, getNetworkDeployParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
-import { getNetworkDeployParams } from "../../scripts/utils";
 import { fixtureDeployedMocCoinbase } from "./../coinbase/fixture";
 
 const { coreParams } = getNetworkDeployParams(hre);

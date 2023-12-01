@@ -14,10 +14,10 @@ import {
   ethersGetBalance,
   pEth,
   tpParams,
+  getNetworkDeployParams,
 } from "../../helpers/utils";
 import { MocCARC20Deferred, MocQueue } from "../../../typechain";
 import { assertPrec } from "../../helpers/assertHelper";
-import { getNetworkDeployParams } from "../../../scripts/utils";
 import { fixtureDeployedMocRC20Deferred } from "./fixture";
 
 describe("Feature: MocCARC20Deferred mint TC", function () {

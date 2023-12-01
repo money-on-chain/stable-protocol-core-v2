@@ -1,8 +1,22 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
-import { CONSTANTS } from "../test/helpers/utils";
-import { MocQueue, MocQueue__factory } from "../typechain";
+import { BigNumber } from "@ethersproject/bignumber";
+
+export const CONSTANTS = {
+  ZERO_ADDRESS: ethers.constants.AddressZero,
+  MAX_UINT256: ethers.constants.MaxUint256,
+  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
+  PRECISION: BigNumber.from((1e18).toString()),
+  ONE: BigNumber.from((1e18).toString()),
+};
+
+export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
+export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
+export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
+export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
+export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,
@@ -287,22 +301,4 @@ export const deployCARC20 = async (
   }
 
   return mocCARC20;
-};
-
-export const deployMocQueue = async (
-  hre: HardhatRuntimeEnvironment,
-  contractName: "MocQueueMock" | "MocQueue",
-): Promise<MocQueue> => {
-  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
-  const mocQueueMock = await mocQueueMockFactory.deploy();
-  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
-  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
-  await mocQueue.initialize(
-    await getGovernorAddresses(hre),
-    mocAddresses.pauserAddress,
-    queueParams.minOperWaitingBlk,
-    queueParams.maxOperPerBatch,
-    queueParams.execFeeParams,
-  );
-  return mocQueue;
 };

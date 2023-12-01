@@ -2,8 +2,7 @@ import hre, { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { GovernorMock, MocQueue } from "../../typechain";
-import { DEFAULT_ADMIN_ROLE, ERRORS, MINTER_ROLE } from "../helpers/utils";
-import { getNetworkDeployParams } from "../../scripts/utils";
+import { DEFAULT_ADMIN_ROLE, ERRORS, MINTER_ROLE, getNetworkDeployParams } from "../helpers/utils";
 
 describe("Feature: Moc Queue Role Access restrictions", () => {
   let mocQueue: MocQueue;

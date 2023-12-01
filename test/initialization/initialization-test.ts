@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { deployments, ethers } from "hardhat";
 import { MocCARC20, MocCoreExpansion, MocCARC20__factory, MocRC20, MocVendors, ERC20Mock } from "../../typechain";
-import { CONSTANTS, ERRORS, deployCollateralToken } from "../helpers/utils";
+import { CONSTANTS, ERRORS, deployAndInitTC } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 import { mocInitialize } from "./initializers";
 
@@ -65,7 +65,7 @@ describe("Feature: MocCARC20 initialization", function () {
 
       const newMocImpl = MocCARC20__factory.connect(proxy.address, ethers.provider.getSigner());
 
-      const newMocTC = await deployCollateralToken({
+      const newMocTC = await deployAndInitTC({
         adminAddress: proxy.address,
         governorAddress: await newMocImpl.governor(),
       });

@@ -3,8 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, expectEventFor, mineUpTo, pEth } from "../helpers/utils";
-import { getNetworkDeployParams } from "../../scripts/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, mineUpTo, pEth, getNetworkDeployParams } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const redeemTCBehavior = function () {

@@ -5,8 +5,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { beforeEach } from "mocha";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, pEth, mineUpTo } from "../helpers/utils";
-import { getNetworkDeployParams } from "../../scripts/utils";
+import { Balance, pEth, mineUpTo, getNetworkDeployParams } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const successFeeBehavior = function () {

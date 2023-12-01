@@ -1,9 +1,8 @@
 // @ts-nocheck
 import hre, { ethers, getNamedAccounts } from "hardhat";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
-import { getNetworkDeployParams } from "../../scripts/utils";
 import { mocFunctionsRC20 } from "./mocFunctionsRC20";
-import { pEth } from "./utils";
+import { pEth, getNetworkDeployParams } from "./utils";
 
 const executeQueue =
   mocQueue =>
