@@ -1,5 +1,4 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -15,13 +14,10 @@ import {
   MocTC__factory,
   PriceProviderMock,
   DataProviderMock,
-  MocQueue__factory,
-  MocQueue,
 } from "../../typechain";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
-import { getNetworkDeployParams, getGovernorAddresses } from "./utils";
 
 export * from "../../scripts/utils";
 
@@ -172,24 +168,6 @@ export async function deployAndAddPeggedTokens(
   }
   return { mocPeggedTokens, priceProviders };
 }
-
-export const deployMocQueue = async (
-  hre: HardhatRuntimeEnvironment,
-  contractName: "MocQueueMock" | "MocQueue",
-): Promise<MocQueue> => {
-  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
-  const mocQueueMock = await mocQueueMockFactory.deploy();
-  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
-  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
-  await mocQueue.initialize(
-    await getGovernorAddresses(hre),
-    mocAddresses.pauserAddress,
-    queueParams.minOperWaitingBlk,
-    queueParams.maxOperPerBatch,
-    queueParams.execFeeParams,
-  );
-  return mocQueue;
-};
 
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
   const factory = await ethers.getContractFactory("PriceProviderMock");

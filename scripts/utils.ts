@@ -359,3 +359,4 @@ export const deployMocQueue = async (
     queueParams.execFeeParams,
   );
   return mocQueue;
+};
