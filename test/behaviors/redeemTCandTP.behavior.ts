@@ -21,10 +21,12 @@ const redeemTCandTPBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { redeemTCandTPExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   let coverageBefore: BigNumber;
   let tcPriceBefore: BigNumber;
@@ -44,7 +46,7 @@ const redeemTCandTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPRedeemed");
-      assertACResult = mocFunctions.assertACResult(-execFee.redeemTCandTPExecFee);
+      assertACResult = mocFunctions.assertACResult(-redeemTCandTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
 

@@ -27,7 +27,6 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const deployedMocQueue = await deployments.getOrNull("MocQueueCoinbaseProxy");
   if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
-  const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
 
   let {
     pauserAddress,
@@ -60,52 +59,46 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     contract: "MocCACoinbase",
     initializeArgs: [
       {
-        initializeDeferredParams: {
-          initializeCoreParams: {
-            initializeBaseBucketParams: {
-              feeTokenAddress,
-              feeTokenPriceProviderAddress,
-              tcTokenAddress: CollateralToken.address,
-              mocFeeFlowAddress,
-              mocAppreciationBeneficiaryAddress,
-              protThrld: coreParams.protThrld,
-              liqThrld: coreParams.liqThrld,
-              feeRetainer: feeParams.feeRetainer,
-              tcMintFee: feeParams.mintFee,
-              tcRedeemFee: feeParams.redeemFee,
-              swapTPforTPFee: feeParams.swapTPforTPFee,
-              swapTPforTCFee: feeParams.swapTPforTCFee,
-              swapTCforTPFee: feeParams.swapTCforTPFee,
-              redeemTCandTPFee: feeParams.redeemTCandTPFee,
-              mintTCandTPFee: feeParams.mintTCandTPFee,
-              feeTokenPct: feeParams.feeTokenPct,
-              successFee: coreParams.successFee,
-              appreciationFactor: coreParams.appreciationFactor,
-              bes: settlementParams.bes,
-              tcInterestCollectorAddress,
-              tcInterestRate: coreParams.tcInterestRate,
-              tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
-              maxAbsoluteOpProviderAddress,
-              maxOpDiffProviderAddress,
-              decayBlockSpan: coreParams.decayBlockSpan,
-            },
-            governorAddress,
-            pauserAddress,
-            mocCoreExpansion: deployedMocExpansionContract.address,
-            emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
-            mocVendors: deployedMocVendors.address,
+        initializeCoreParams: {
+          initializeBaseBucketParams: {
+            mocQueueAddress: deployedMocQueue.address,
+            feeTokenAddress,
+            feeTokenPriceProviderAddress,
+            tcTokenAddress: CollateralToken.address,
+            mocFeeFlowAddress,
+            mocAppreciationBeneficiaryAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            feeRetainer: feeParams.feeRetainer,
+            tcMintFee: feeParams.mintFee,
+            tcRedeemFee: feeParams.redeemFee,
+            swapTPforTPFee: feeParams.swapTPforTPFee,
+            swapTPforTCFee: feeParams.swapTPforTCFee,
+            swapTCforTPFee: feeParams.swapTCforTPFee,
+            redeemTCandTPFee: feeParams.redeemTCandTPFee,
+            mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
+            bes: settlementParams.bes,
+            tcInterestCollectorAddress,
+            tcInterestRate: coreParams.tcInterestRate,
+            tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+            maxAbsoluteOpProviderAddress,
+            maxOpDiffProviderAddress,
+            decayBlockSpan: coreParams.decayBlockSpan,
           },
-          mocQueueAddress: deployedMocQueue.address,
+          governorAddress,
+          pauserAddress,
+          mocCoreExpansion: deployedMocExpansionContract.address,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: deployedMocVendors.address,
         },
         transferMaxGas: coreParams.transferMaxGas,
         coinbaseFailedTransferFallback,
       },
     ],
   });
-
-  // TODO: Deployer has admin privileges as this stage
-  console.log(`Registering mocRC20 bucket as enqueuer: ${mocCACoinbase.address}`);
-  await waitForTxConfirmation(mocQueue.registerBucket(mocCACoinbase.address));
 
   console.log("Delegating CT roles to Moc");
   // Assign TC Roles, and renounce deployer ADMIN
@@ -116,6 +109,14 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const mocCore = await ethers.getContractAt("MocCACoinbase", mocCACoinbase.address, signer);
     await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCore, tpParams);
   }
+
+  if (hre.network.tags.local) {
+    // On local environment, Governor is mocked, and we can register the bucket without changer
+    const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
+    console.log(`Registering mocCoinbase bucket as enqueuer: ${mocCACoinbase.address}`);
+    await mocQueue.registerBucket(mocCACoinbase.address);
+  }
+
   return hre.network.live; // prevents re execution on live networks
 };
 export default deployFunc;

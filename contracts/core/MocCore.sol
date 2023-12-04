@@ -107,15 +107,6 @@ abstract contract MocCore is MocCommons {
      */
     function acBalanceOf(address account) internal view virtual returns (uint256 balance);
 
-    /**
-     * @notice hook before any AC reception involving operation
-     * @dev this function must be overridden by the AC implementation
-     * @param qACMax_ max amount of AC available
-     * @param qACNeeded_ amount of AC needed
-     * @return change amount needed to be return to the sender after the operation is complete
-     */
-    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal virtual returns (uint256 change);
-
     // ------- Internal Functions -------
 
     struct MintTCParams {
@@ -166,9 +157,10 @@ abstract contract MocCore is MocCommons {
         // slither-disable-next-line incorrect-equality
         if (qACtotalNeeded == 0) revert QacNeededMustBeGreaterThanZero();
         _depositAndMintTC(params_.qTC, qACNeededToMint, params_.recipient);
-        uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= params_.qACmax;
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+        _distOpResults(params_.sender, params_.sender, params_.qACmax - qACtotalNeeded, params_.vendor, feeCalcs);
     }
 
     struct RedeemTCParams {
@@ -289,9 +281,10 @@ abstract contract MocCore is MocCommons {
         _updateAccumulatorsOnMintTP(qACNeededtoMint);
         // update bucket and mint
         _depositAndMintTP(i, params_.qTP, qACNeededtoMint, params_.recipient);
-        uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= params_.qACmax;
         // transfers any AC change to the sender and distributes fees
-        _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+        _distOpResults(params_.sender, params_.sender, params_.qACmax - qACtotalNeeded, params_.vendor, feeCalcs);
     }
 
     /**
@@ -377,9 +370,10 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        uint256 acChange = _onACNeededOperation(params_.qACmax, qACtotalNeeded);
-        // transfers qAC to the sender and distributes fees
-        _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= params_.qACmax;
+        // transfers any AC change to the sender and distributes fees
+        _distOpResults(params_.sender, params_.sender, params_.qACmax - qACtotalNeeded, params_.vendor, feeCalcs);
     }
 
     /**
@@ -453,10 +447,10 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        // AC is only used to pay fees and markup
-        uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= params_.qACmax;
+        // transfers any AC change to the sender and distributes fees
+        _distOpResults(params_.sender, params_.sender, params_.qACmax - qACSurcharges, params_.vendor, feeCalcs);
     }
 
     /**
@@ -489,10 +483,10 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        // AC is only used to pay fees and markup
-        uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= params_.qACmax;
+        // transfers any AC change to the sender and distributes fees
+        _distOpResults(params_.sender, params_.sender, params_.qACmax - qACSurcharges, params_.vendor, feeCalcs);
     }
 
     /**
@@ -525,10 +519,10 @@ abstract contract MocCore is MocCommons {
             Address.functionDelegateCall(mocCoreExpansion, payload),
             (uint256, uint256, uint256, FeeCalcs)
         );
-        // AC is only used to pay fees and markup
-        uint256 acChange = _onACNeededOperation(params_.qACmax, qACSurcharges);
-        // transfer any qAC change to the sender and distribute fees
-        _distOpResults(params_.sender, params_.sender, acChange, params_.vendor, feeCalcs);
+        // All locked AC is either unlock or returned, no longer on pending Operation
+        qACLockedInPending -= params_.qACmax;
+        // transfers any AC change to the sender and distributes fees
+        _distOpResults(params_.sender, params_.sender, params_.qACmax - qACSurcharges, params_.vendor, feeCalcs);
     }
 
     /**

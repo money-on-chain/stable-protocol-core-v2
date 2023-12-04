@@ -8,80 +8,17 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /**
- * @title MocDeferred
- * @notice Add deferred functions to queue protocol operations
+ * @title MocOperations
+ * @notice All the Moc Protocol operations are grouped in this contract
  */
-abstract contract MocDeferred is MocCore {
+abstract contract MocOperations is MocCore {
     // ------- Custom Errors -------
     error OnlyQueue();
 
-    // ------- Structs -------
-    struct InitializeDeferredParams {
-        InitializeCoreParams initializeCoreParams;
-        // mocQueue contract address
-        address mocQueueAddress;
-    }
-
-    // ------- Storage -------
-    // Queue
-    MocQueue public mocQueue;
-    // amount of AC locked on pending operations
-    // TODO: review if this tracking is necessary for coinbase
-    uint256 public qACLockedInPending;
-
     // ------- Modifiers -------
     modifier onlyMocQueue() {
-        if (msg.sender != address(mocQueue)) revert OnlyQueue();
+        if (msg.sender != mocQueue) revert OnlyQueue();
         _;
-    }
-
-    // ------- Initializer -------
-    /**
-     * @notice contract initializer
-     * @param initializeParams_ contract initializer params
-     * @dev governorAddress The address that will define when a change contract is authorized
-     *      pauserAddress The address that is authorized to pause this contract
-     *      tcTokenAddress Collateral Token contract address
-     *      mocFeeFlowAddress Moc Fee Flow contract address
-     *      mocAppreciationBeneficiaryAddress Moc appreciation beneficiary address
-     *      protThrld protected state threshold [PREC]
-     *      liqThrld liquidation coverage threshold [PREC]
-     *      feeRetainer pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
-     *      tcMintFee additional fee pct applied on mint Collateral Tokens operations [PREC]
-     *      tcRedeemFee additional fee pct applied on redeem Collateral Tokens operations [PREC]
-     *      successFee pct of the gain because Pegged Tokens devaluation that is transferred
-     *        in Collateral Asset to Moc Fee Flow during the settlement [PREC]
-     *      appreciationFactor pct of the gain because Pegged Tokens devaluation that is returned
-     *        in Pegged Tokens to appreciation beneficiary during the settlement [PREC]
-     *      bes number of blocks between settlements
-     *      tcInterestCollectorAddress TC interest collector address
-     *      tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
-     *      tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
-     *      maxAbsoluteOpProviderAddress max absolute operation provider address
-     *      maxOpDiffProviderAddress max operation difference provider address
-     *      decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
-     *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
-     *      mocVendors address for MocVendors contract
-     *      mocQueueAddress address for MocQueue contract
-     */
-    function __MocDeferred_init(InitializeDeferredParams calldata initializeParams_) internal onlyInitializing {
-        __MocCore_init(initializeParams_.initializeCoreParams);
-        mocQueue = MocQueue(initializeParams_.mocQueueAddress);
-    }
-
-    /**
-     * @notice hook before any AC reception involving operation
-     * Funds have already been transferred to the contract, so we need to return the unused
-     * @param qACMax_ max amount of AC available
-     * @param qACNeeded_ amount of AC needed
-     * @return change amount needed to be return to the sender after the operation is complete
-     */
-    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal override returns (uint256 change) {
-        // As we locked qACMax, we need to return the extra amount
-        // TODO: review this
-        change = qACMax_ - qACNeeded_;
-        // All locked AC is either unlock or returned, no longer on pending Operation
-        qACLockedInPending -= qACMax_;
     }
 
     /**
@@ -143,7 +80,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTC{ value: execFee }(params);
+        operId = MocQueue(mocQueue).queueMintTC{ value: execFee }(params);
         _lockACInPending(qACmax);
     }
 
@@ -169,7 +106,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTC{ value: msg.value }(params);
+        operId = MocQueue(mocQueue).queueRedeemTC{ value: msg.value }(params);
         _lockTCInPending(qTC_);
     }
 
@@ -200,7 +137,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTP{ value: execFee }(params);
+        operId = MocQueue(mocQueue).queueMintTP{ value: execFee }(params);
         _lockACInPending(qACmax);
     }
 
@@ -229,7 +166,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTP{ value: msg.value }(params);
+        operId = MocQueue(mocQueue).queueRedeemTP{ value: msg.value }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
 
@@ -264,7 +201,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueMintTCandTP{ value: execFee }(params);
+        operId = MocQueue(mocQueue).queueMintTCandTP{ value: execFee }(params);
         _lockACInPending(qACmax);
     }
 
@@ -300,7 +237,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueRedeemTCandTP{ value: msg.value }(params);
+        operId = MocQueue(mocQueue).queueRedeemTCandTP{ value: msg.value }(params);
         _lockTCInPending(qTC_);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
     }
@@ -337,7 +274,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTP{ value: execFee }(params);
+        operId = MocQueue(mocQueue).queueSwapTPforTP{ value: execFee }(params);
         _lockTPInPending(IERC20Upgradeable(tpFrom_), qTP_);
         _lockACInPending(qACmax);
     }
@@ -371,7 +308,7 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTPforTC{ value: execFee }(params);
+        operId = MocQueue(mocQueue).queueSwapTPforTC{ value: execFee }(params);
         _lockTPInPending(IERC20Upgradeable(tp_), qTP_);
         _lockACInPending(qACmax);
     }
@@ -405,9 +342,226 @@ abstract contract MocDeferred is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        operId = mocQueue.queueSwapTCforTP{ value: execFee }(params);
+        operId = MocQueue(mocQueue).queueSwapTCforTP{ value: execFee }(params);
         _lockTCInPending(qTC_);
         _lockACInPending(qACmax);
+    }
+
+    // ------- External functions -------
+
+    /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTC(uint256 qTC_, uint256 qACmin_) external payable returns (uint256 operId) {
+        return _redeemTCtoViaVendor(qTC_, qACmin_, msg.sender, address(0));
+    }
+
+    /**
+     * @notice caller sends Collateral Token and receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCViaVendor(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return _redeemTCtoViaVendor(qTC_, qACmin_, msg.sender, vendor_);
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCto(uint256 qTC_, uint256 qACmin_, address recipient_) external payable returns (uint256 operId) {
+        return _redeemTCtoViaVendor(qTC_, qACmin_, recipient_, address(0));
+    }
+
+    /**
+     * @notice caller sends Collateral Token and recipient receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param qTC_ amount of Collateral Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCtoViaVendor(
+        uint256 qTC_,
+        uint256 qACmin_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return _redeemTCtoViaVendor(qTC_, qACmin_, recipient_, vendor_);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and receives Collateral Asset
+     * @param tp_ Pegged Token address to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTP(address tp_, uint256 qTP_, uint256 qACmin_) external payable returns (uint256 operId) {
+        return _redeemTPtoViaVendor(tp_, qTP_, qACmin_, msg.sender, address(0));
+    }
+
+    /**
+     * @notice caller sends Pegged Token and receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param tp_ Pegged Token address to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that sender expects to receive
+     * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTPViaVendor(
+        address tp_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return _redeemTPtoViaVendor(tp_, qTP_, qACmin_, msg.sender, vendor_);
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Collateral Asset
+     * @param tp_ Pegged Token address to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTPto(
+        address tp_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external payable returns (uint256 operId) {
+        return _redeemTPtoViaVendor(tp_, qTP_, qACmin_, recipient_, address(0));
+    }
+
+    /**
+     * @notice caller sends Pegged Token and recipient receives Collateral Asset
+     *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
+     * @param tp_ Pegged Token address to redeem
+     * @param qTP_ amount of Pegged Token to redeem
+     * @param qACmin_ minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ address who receives the Collateral Asset
+     * @param vendor_ address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTPtoViaVendor(
+        address tp_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return _redeemTPtoViaVendor(tp_, qTP_, qACmin_, recipient_, vendor_);
+    }
+
+    /**
+     * @notice Caller sends Collateral Token and Pegged Token and receives Collateral Asset.
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param tp_ Pegged Token address
+     * @param qTC_ Maximum amount of Collateral Token to redeem
+     * @param qTP_ Maximum amount of Pegged Token to redeem
+     * @param qACmin_ Minimum amount of Collateral Asset that the sender expects to receive
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCandTP(
+        address tp_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_
+    ) external payable returns (uint256 operId) {
+        return _redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, msg.sender, address(0));
+    }
+
+    /**
+     * @notice Caller sends Collateral Token and Pegged Token and receives Collateral Asset.
+     *  `vendor_` receives a markup in Fee Token if possible or in Collateral Asset if not
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param tp_ Pegged Token address
+     * @param qTC_ Maximum amount of Collateral Token to redeem
+     * @param qTP_ Maximum amount of Pegged Token to redeem
+     * @param qACmin_ Minimum amount of Collateral Asset that the sender expects to receive
+     * @param vendor_ Address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCandTPViaVendor(
+        address tp_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return _redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, msg.sender, vendor_);
+    }
+
+    /**
+     * @notice Caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset.
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param tp_ Pegged Token address
+     * @param qTC_ Maximum amount of Collateral Token to redeem
+     * @param qTP_ Maximum amount of Pegged Token to redeem
+     * @param qACmin_ Minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ Address who receives the Collateral Asset
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCandTPto(
+        address tp_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_
+    ) external payable returns (uint256 operId) {
+        return _redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, recipient_, address(0));
+    }
+
+    /**
+     * @notice Caller sends Collateral Token and Pegged Token and recipient receives Collateral Asset.
+     *  `vendor_` receives a markup in Fee Token if possible or in Collateral Asset if not
+     *  This operation is done without checking coverage
+     *  Collateral Token and Pegged Token are redeemed in equivalent proportions so that their price
+     *  and global coverage are not modified.
+     *  Reverts if qTP sent are insufficient.
+     * @param tp_ Pegged Token address
+     * @param qTC_ Maximum amount of Collateral Token to redeem
+     * @param qTP_ Maximum amount of Pegged Token to redeem
+     * @param qACmin_ Minimum amount of Collateral Asset that `recipient_` expects to receive
+     * @param recipient_ Address who receives the Collateral Asset
+     * @param vendor_ Address who receives a markup
+     * @return operId Identifier to track the Operation lifecycle
+     */
+    function redeemTCandTPtoViaVendor(
+        address tp_,
+        uint256 qTC_,
+        uint256 qTP_,
+        uint256 qACmin_,
+        address recipient_,
+        address vendor_
+    ) external payable returns (uint256 operId) {
+        return _redeemTCandTPtoViaVendor(tp_, qTC_, qTP_, qACmin_, recipient_, vendor_);
     }
 
     // ------- External Only Queue Functions -------
@@ -564,6 +718,6 @@ abstract contract MocDeferred is MocCore {
      */
     function setMocQueue(address mocQueueAddress_) external onlyAuthorizedChanger {
         // slither-disable-next-line missing-zero-check
-        mocQueue = MocQueue(mocQueueAddress_);
+        mocQueue = mocQueueAddress_;
     }
 }

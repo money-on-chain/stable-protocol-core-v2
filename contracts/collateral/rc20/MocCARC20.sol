@@ -2,8 +2,7 @@
 pragma solidity 0.8.20;
 
 import { MocCore } from "../../core/MocCore.sol";
-import { MocDeferred } from "../../core/MocDeferred.sol";
-import { MocCoreShared } from "../../core/MocCoreShared.sol";
+import { MocOperations } from "../../core/MocOperations.sol";
 import { MocQueueExecFees } from "../../queue/MocQueueExecFees.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,10 +11,10 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @title MocCARC20: Moc Collateral Asset RC20
  * @notice Moc protocol implementation using a RC20 as Collateral Asset.
  */
-contract MocCARC20 is MocCoreShared {
+contract MocCARC20 is MocOperations {
     // ------- Structs -------
     struct InitializeParams {
-        InitializeDeferredParams initializeDeferredParams;
+        InitializeCoreParams initializeCoreParams;
         // Collateral Asset Token contract address
         address acTokenAddress;
     }
@@ -60,8 +59,8 @@ contract MocCARC20 is MocCoreShared {
      *      mocQueueAddress address for MocQueue contract
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
+        __MocCore_init(initializeParams_.initializeCoreParams);
         acToken = IERC20(initializeParams_.acTokenAddress);
-        __MocDeferred_init(initializeParams_.initializeDeferredParams);
     }
 
     // ------- Internal Functions -------
@@ -78,7 +77,7 @@ contract MocCARC20 is MocCoreShared {
     }
 
     /**
-     * @inheritdoc MocDeferred
+     * @inheritdoc MocOperations
      */
     function unlockACInPending(address owner_, uint256 qACToUnlock_) external override onlyMocQueue {
         unchecked {
@@ -95,7 +94,7 @@ contract MocCARC20 is MocCoreShared {
     }
 
     /**
-     * @inheritdoc MocDeferred
+     * @inheritdoc MocOperations
      */
     function _lockACInPending(uint256 qACToLock_) internal override {
         super._lockACInPending(qACToLock_);
@@ -103,7 +102,7 @@ contract MocCARC20 is MocCoreShared {
     }
 
     /**
-     * @inheritdoc MocDeferred
+     * @inheritdoc MocOperations
      */
     function _getExecFeeSent(
         uint256 qACmax_,

@@ -105,6 +105,14 @@ abstract contract MocQueueExecFees is MocAccessControlled {
 
     // ------- External Functions -------
 
+    /**
+     * @notice get execution fee for the operation requested
+     *  reverts if value sent is not enough to pay the execution fee
+     * @dev only used for coinbase flavor
+     * @param operType_ operation type registered
+     * @param value_ value sent to pay execution fee
+     * @return currentExecFee execution fee required for the operation
+     */
     function getAndVerifyExecFee(OperType operType_, uint256 value_) external view returns (uint256 currentExecFee) {
         currentExecFee = execFee[operType_];
         if (currentExecFee > value_) revert WrongExecutionFee(currentExecFee);

@@ -22,10 +22,12 @@ const mintTCandTPBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { mintTCandTPExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: joint Mint TC and TP operation", function () {
     beforeEach(async function () {
@@ -34,7 +36,7 @@ const mintTCandTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPMinted");
-      assertACResult = mocFunctions.assertACResult(execFee.mintTCandTPExecFee);
+      assertACResult = mocFunctions.assertACResult(mintTCandTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
     describe("GIVEN the protocol is empty", function () {

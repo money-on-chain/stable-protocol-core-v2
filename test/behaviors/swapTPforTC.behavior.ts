@@ -20,10 +20,12 @@ const swapTPforTCBehavior = function () {
   let tp0: Address[];
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
-
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { swapTPforTCExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   let tx: ContractTransaction;
   let alicePrevTP0Balance: Balance;
@@ -40,7 +42,7 @@ const swapTPforTCBehavior = function () {
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTC");
-      assertACResult = mocFunctions.assertACResult(execFee.swapTPforTCExecFee);
+      assertACResult = mocFunctions.assertACResult(swapTPforTCExecFee);
       tp0 = mocContracts.mocPeggedTokens[0].address;
     });
     describe("GIVEN alice has 23500 TP 0", function () {

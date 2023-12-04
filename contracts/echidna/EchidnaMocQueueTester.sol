@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { MocCARC20, MocDeferred } from "../collateral/rc20/MocCARC20.sol";
+import { MocCARC20 } from "../collateral/rc20/MocCARC20.sol";
 import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
 import { MocQueue } from "../queue/MocQueue.sol";
@@ -65,6 +65,7 @@ contract EchidnaMocQueueTester {
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
+                mocQueueAddress: address(mocQueue),
                 feeTokenAddress: address(feeToken),
                 feeTokenPriceProviderAddress: address(feeTokenPriceProvider),
                 tcTokenAddress: address(tcToken),
@@ -99,12 +100,8 @@ contract EchidnaMocQueueTester {
             emaCalculationBlockSpan: 1 days,
             mocVendors: address(mocVendors)
         });
-        MocDeferred.InitializeDeferredParams memory initializeDeferredParams = MocDeferred.InitializeDeferredParams({
-            initializeCoreParams: initializeCoreParams,
-            mocQueueAddress: address(mocQueue)
-        });
         MocCARC20.InitializeParams memory initializeParams = MocCARC20.InitializeParams({
-            initializeDeferredParams: initializeDeferredParams,
+            initializeCoreParams: initializeCoreParams,
             acTokenAddress: address(acToken)
         });
         mocCARC20.initialize(initializeParams);

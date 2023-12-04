@@ -18,9 +18,12 @@ const mintTCBehavior = function () {
   let assertACResult: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tcMintExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: mint Collateral Token", function () {
     beforeEach(async function () {
@@ -29,7 +32,7 @@ const mintTCBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
-      assertACResult = mocFunctions.assertACResult(execFee.tcMintExecFee);
+      assertACResult = mocFunctions.assertACResult(tcMintExecFee);
     });
     describe("WHEN alice tries to mint 0 TC", function () {
       it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
@@ -71,7 +74,7 @@ const mintTCBehavior = function () {
         assertPrec(100 * 0.05, await mocFunctions.acBalanceOf(mocFeeFlowAddress));
       });
       it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
-        let aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
+        const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
         assertACResult(100 * 1.05, diff);
       });

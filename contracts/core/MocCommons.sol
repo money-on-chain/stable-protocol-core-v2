@@ -53,14 +53,7 @@ struct PeggedTokenParams {
 //            |
 //            |
 //    +-----------------+
-//    |  MocDeferred    |
-//    +-----------------+
-//            ^
-//            | is
-//            |
-//            |
-//    +-----------------+
-//    |  MocCoreShared  |
+//    |  MocOperations  |
 //    +-----------------+
 //            ^
 //            | is

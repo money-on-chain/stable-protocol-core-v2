@@ -18,9 +18,12 @@ const redeemTCBehavior = function () {
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tcRedeemExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {
@@ -29,7 +32,7 @@ const redeemTCBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCRedeemed");
-      assertACResult = mocFunctions.assertACResult(-execFee.tcRedeemExecFee);
+      assertACResult = mocFunctions.assertACResult(-tcRedeemExecFee);
     });
     describe("GIVEN alice has 300 TC", function () {
       beforeEach(async function () {

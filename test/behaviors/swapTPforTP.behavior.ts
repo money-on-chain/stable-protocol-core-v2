@@ -22,10 +22,12 @@ const swapTPforTPBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { swapTPforTPExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   let coverageBefore: BigNumber;
   let tx: ContractTransaction;
@@ -43,7 +45,7 @@ const swapTPforTPBehavior = function () {
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTP");
-      assertACResult = mocFunctions.assertACResult(execFee.swapTPforTPExecFee);
+      assertACResult = mocFunctions.assertACResult(swapTPforTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
     describe("GIVEN alice has 23500 TP 0", function () {

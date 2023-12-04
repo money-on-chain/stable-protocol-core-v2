@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-// TODO: create a mock MocCore without queue
-
 import { MocCoreMock } from "../mocks/MocCoreMock.sol";
 import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";
 import { MocCommons } from "../core/MocCommons.sol";
@@ -73,6 +71,7 @@ contract EchidnaMocCoreTester {
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
+                mocQueueAddress: address(0),
                 feeTokenAddress: address(feeToken),
                 feeTokenPriceProviderAddress: address(feeTokenPriceProvider),
                 tcTokenAddress: address(tcToken),

@@ -38,6 +38,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     struct InitializeBaseBucketParams {
+        // MocQueue contract address
+        address mocQueueAddress;
         // Fee Token contract address
         address feeTokenAddress;
         // Fee Token price provider address
@@ -183,6 +185,13 @@ abstract contract MocBaseBucket is MocUpgradable {
     // next settlement block
     uint256 public bns;
 
+    // ------- Storage Queue -------
+
+    // amount of AC locked on MocQueue for pending operations
+    uint256 public qACLockedInPending;
+    // address for MocQueue contract
+    address public mocQueue; // cannot used MocQueue, import failed due circular reference
+
     // ------- Storage Success Fee Tracking -------
 
     // profit and loss in collateral asset for each Pegged Token because its devaluation [N]
@@ -232,7 +241,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     /**
      * @notice contract initializer
      * @param initializeBaseBucketParams_ contract initializer params
-     * @dev   feeTokenAddress Fee Token contract address
+     * @dev   mocQueueAddress address for MocQueue contract
+     *        feeTokenAddress Fee Token contract address
      *        feeTokenPriceProviderAddress Fee Token price provider contract address
      *        tcTokenAddress Collateral Token contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
@@ -275,6 +285,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.feeTokenPct);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
+        mocQueue = initializeBaseBucketParams_.mocQueueAddress;
         feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
         feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);

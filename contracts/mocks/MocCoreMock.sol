@@ -81,18 +81,6 @@ contract MocCoreMock is MocCore {
     }
 
     /**
-     * @notice hook before any AC reception involving operation
-     * Funds have already been transferred to the contract, so we need to return the unused
-     * @param qACNeeded_ amount of AC needed
-     * @return change amount needed to be return to the sender after the operation is complete
-     */
-    function _onACNeededOperation(uint256 /*qACMax_*/, uint256 qACNeeded_) internal override returns (uint256 change) {
-        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACNeeded_);
-        // As we are transferring the exact needed amount, change is zero
-        change = 0;
-    }
-
-    /**
      * @notice caller sends Collateral Asset and recipient receives Collateral Token
      *  `vendor_` receives a markup in Fee Token if possible or in qAC if not
      *   Requires prior sender approval of Collateral Asset to this contract
@@ -107,6 +95,7 @@ contract MocCoreMock is MocCore {
         address recipient_,
         address vendor_
     ) internal returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -158,6 +147,7 @@ contract MocCoreMock is MocCore {
         address recipient_,
         address vendor_
     ) internal returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         MintTPParams memory params = MintTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -220,6 +210,7 @@ contract MocCoreMock is MocCore {
         internal
         returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         MintTCandTPParams memory params = MintTCandTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -291,6 +282,7 @@ contract MocCoreMock is MocCore {
         internal
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         SwapTPforTPParams memory params = SwapTPforTPParams({
             tpFrom: tpFrom_,
             tpTo: tpTo_,
@@ -325,6 +317,7 @@ contract MocCoreMock is MocCore {
         internal
         returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         SwapTPforTCParams memory params = SwapTPforTCParams({
             tp: tp_,
             qTP: qTP_,
@@ -358,6 +351,7 @@ contract MocCoreMock is MocCore {
         internal
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
+        SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
         SwapTCforTPParams memory params = SwapTCforTPParams({
             tp: tp_,
             qTC: qTC_,

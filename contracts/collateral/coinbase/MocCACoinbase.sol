@@ -2,21 +2,21 @@
 pragma solidity 0.8.20;
 
 import { MocCore } from "../../core/MocCore.sol";
-import { MocDeferred } from "../../core/MocDeferred.sol";
+import { MocQueue } from "../../queue/MocQueue.sol";
+import { MocOperations } from "../../core/MocOperations.sol";
 import { MocQueueExecFees } from "../../queue/MocQueueExecFees.sol";
-
-import { MocCoreShared } from "../../core/MocCoreShared.sol";
 
 /**
  * @title MocCACoinbase: Moc Collateral Asset Coinbase
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
-contract MocCACoinbase is MocCoreShared {
+contract MocCACoinbase is MocOperations {
     // ------- Structs -------
     struct InitializeParams {
-        InitializeDeferredParams initializeDeferredParams;
+        InitializeCoreParams initializeCoreParams;
         // max amount of gas forwarded on AC transfer
         uint256 transferMaxGas;
+        // when the coinbase unlock fails funds are sent to this address to don't revert the queue execution
         address coinbaseFailedTransferFallback;
     }
 
@@ -64,7 +64,7 @@ contract MocCACoinbase is MocCoreShared {
      *      coinbaseFailedTransferFallback address who receives the funds when the coinbase unlock fails
      */
     function initialize(InitializeParams calldata initializeParams_) external initializer {
-        __MocDeferred_init(initializeParams_.initializeDeferredParams);
+        __MocCore_init(initializeParams_.initializeCoreParams);
         transferMaxGas = initializeParams_.transferMaxGas;
         coinbaseFailedTransferFallback = initializeParams_.coinbaseFailedTransferFallback;
     }
@@ -86,7 +86,7 @@ contract MocCACoinbase is MocCoreShared {
     }
 
     /**
-     * @inheritdoc MocDeferred
+     * @inheritdoc MocOperations
      */
     function unlockACInPending(address owner_, uint256 qACToUnlock_) external override onlyMocQueue {
         unchecked {
@@ -108,13 +108,13 @@ contract MocCACoinbase is MocCoreShared {
     }
 
     /**
-     * @inheritdoc MocDeferred
+     * @inheritdoc MocOperations
      */
     function _getExecFeeSent(
         uint256 qACmax_,
         MocQueueExecFees.OperType operType_
     ) internal view override returns (uint256 qACmaxSent, uint256 execFeeSent) {
-        uint256 execFee = mocQueue.getAndVerifyExecFee(operType_, qACmax_);
+        uint256 execFee = MocQueue(mocQueue).getAndVerifyExecFee(operType_, qACmax_);
         return (qACmax_ - execFee, execFee);
     }
 

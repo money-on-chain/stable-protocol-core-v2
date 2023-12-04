@@ -1,6 +1,6 @@
 import hre, { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
-import { getNetworkDeployParams } from "../../scripts/utils";
+import { deployMocQueue } from "../../scripts/utils";
 import {
   ERC20Mock,
   ERC20Mock__factory,
@@ -64,18 +64,7 @@ export const fixtureDeployedMocCoinbase = memoizee(
 
       let mocQueue: MocQueue;
       if (useMockQueue) {
-        const mocQueueMockFactory = await ethers.getContractFactory("MocQueueMock");
-        const mocQueueMock = await mocQueueMockFactory.deploy();
-
-        mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
-        const { minOperWaitingBlk, maxOperPerBatch, execFeeParams } = getNetworkDeployParams(hre).queueParams;
-        await mocQueue.initialize(
-          await mocImpl.governor(),
-          await mocImpl.pauser(),
-          minOperWaitingBlk,
-          maxOperPerBatch,
-          execFeeParams,
-        );
+        mocQueue = await deployMocQueue(hre, "MocQueueMock");
         await Promise.all([
           mocImpl.setMocQueue(mocQueue.address),
           mocQueue.registerBucket(mocImpl.address),

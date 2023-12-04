@@ -19,9 +19,12 @@ const redeemTPBehavior = function () {
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_2 = 2;
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tpRedeemExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {
@@ -30,7 +33,7 @@ const redeemTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPRedeemed");
-      assertACResult = mocFunctions.assertACResult(-execFee.tpRedeemExecFee);
+      assertACResult = mocFunctions.assertACResult(-tpRedeemExecFee);
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
 

@@ -22,9 +22,12 @@ const mintTPBehavior = function () {
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tpMintExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   // Available to mint formulas introduce rounding errors, so we tolerate some margin for it
   const availableToMintTolerance = 20000;
@@ -36,7 +39,7 @@ const mintTPBehavior = function () {
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TPMinted");
-      assertACResult = mocFunctions.assertACResult(execFee.tpMintExecFee);
+      assertACResult = mocFunctions.assertACResult(tpMintExecFee);
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
     describe("WHEN alice trie to mint 0 TP", function () {

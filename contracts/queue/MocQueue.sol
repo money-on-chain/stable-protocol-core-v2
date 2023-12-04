@@ -5,7 +5,7 @@ import { MocQueueExecFees } from "./MocQueueExecFees.sol";
 import { MocCore } from "../core/MocCore.sol";
 import { MocCommons } from "../core/MocCommons.sol";
 import { MocBaseBucket } from "../core/MocBaseBucket.sol";
-import { MocDeferred } from "../core/MocDeferred.sol";
+import { MocOperations } from "../core/MocOperations.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 /* solhint-disable-next-line max-line-length */
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -160,7 +160,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // ------- Storage -------
 
     // mocCore bucket that would be able to queue
-    MocDeferred public mocCore;
+    MocOperations public mocCore;
     // Amount of Operations created
     uint256 public operIdCount;
     // first operation to be executed
@@ -1055,7 +1055,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
      *
      * May emit a {RoleGranted} event for ENQUEUER role
      */
-    function registerBucket(MocDeferred bucket_) external onlyAuthorizedChanger {
+    function registerBucket(MocOperations bucket_) external onlyAuthorizedChanger {
         if (address(mocCore) != address(0)) revert BucketAlreadyRegistered();
         mocCore = bucket_;
         // internal, not role restricted granting, as it's protected by governance

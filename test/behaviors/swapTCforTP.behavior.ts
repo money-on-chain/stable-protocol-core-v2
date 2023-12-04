@@ -20,10 +20,12 @@ const swapTCforTPBehavior = function () {
   let tp0: Address;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
-
-  const { mocAddresses, queueParams } = getNetworkDeployParams(hre);
-  const mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress;
-  const execFee = queueParams.execFeeParams;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { swapTCforTPExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   let tx: ContractTransaction;
   let alicePrevTCBalance: Balance;
@@ -38,7 +40,7 @@ const swapTCforTPBehavior = function () {
       ({ mocImpl, feeToken } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       expectEvent = expectEventFor(mocImpl, mocFunctions, "TCSwappedForTP");
-      assertACResult = mocFunctions.assertACResult(execFee.swapTCforTPExecFee);
+      assertACResult = mocFunctions.assertACResult(swapTCforTPExecFee);
       tp0 = mocContracts.mocPeggedTokens[0].address;
     });
 

@@ -52,15 +52,13 @@ describe("Feature: MocQueue execution fees update", () => {
       await governorMock.setIsAuthorized(true);
       ({ execFeeParams } = getNetworkDeployParams(hre).queueParams);
       expectExecutionFee = async (expectedFees: any) => {
-        let promises: any[] = [];
-        Object.keys(execFeeKeys).forEach(execFeeKey => {
-          promises.push(
+        return Promise.all(
+          Object.keys(execFeeKeys).map(execFeeKey =>
             mocQueue
               .execFee(execFeeKeys[execFeeKey])
               .then((fee: any) => expect(expectedFees[execFeeKey]).to.be.equal(fee)),
-          );
-        });
-        return Promise.all(promises);
+          ),
+        );
       };
     });
     describe("AND mocQueue is empty", () => {
