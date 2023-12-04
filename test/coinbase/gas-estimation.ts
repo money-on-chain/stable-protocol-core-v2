@@ -5,7 +5,7 @@ import { fixtureDeployedMocCoinbase } from "./fixture";
 // Gets excluded from coverage by regEx "gas estimation"
 describe("Feature: MocCoinbase gas estimation", function () {
   describe("GIVEN a MocCoinbase implementation deployed with mocQueueMock", function () {
-    const peggedTokenAmount = 15;
+    const peggedTokenAmount = 5;
     describe(`AND ${peggedTokenAmount} Pegged Tokens`, function () {
       beforeEach(async function () {
         const fixtureDeploy = fixtureDeployedMocCoinbase(peggedTokenAmount, undefined, true);

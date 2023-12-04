@@ -50,7 +50,7 @@ describe("Feature: Verify all MocQueue config settings are protected by governan
         await mocQueue.registerBucket(governorMock.address);
       });
       it("THEN the new value is assigned", async function () {
-        expect(await mocQueue.mocCore()).to.be.equal(governorMock.address);
+        expect(await mocQueue.mocOperations()).to.be.equal(governorMock.address);
       });
       describe(`AND register bucket is invoked again`, () => {
         it("THEN it fails with bucket already registered error", async function () {

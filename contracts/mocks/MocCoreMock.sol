@@ -96,6 +96,7 @@ contract MocCoreMock is MocCore {
         address vendor_
     ) internal returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        qACLockedInPending += qACmax_;
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
             qACmax: qACmax_,
@@ -148,6 +149,7 @@ contract MocCoreMock is MocCore {
         address vendor_
     ) internal returns (uint256 qACtotalNeeded, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        qACLockedInPending += qACmax_;
         MintTPParams memory params = MintTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -211,6 +213,7 @@ contract MocCoreMock is MocCore {
         returns (uint256 qACtotalNeeded, uint256 qTCtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        qACLockedInPending += qACmax_;
         MintTCandTPParams memory params = MintTCandTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -283,6 +286,7 @@ contract MocCoreMock is MocCore {
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        qACLockedInPending += qACmax_;
         SwapTPforTPParams memory params = SwapTPforTPParams({
             tpFrom: tpFrom_,
             tpTo: tpTo_,
@@ -318,6 +322,7 @@ contract MocCoreMock is MocCore {
         returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        qACLockedInPending += qACmax_;
         SwapTPforTCParams memory params = SwapTPforTCParams({
             tp: tp_,
             qTP: qTP_,
@@ -352,6 +357,7 @@ contract MocCoreMock is MocCore {
         returns (uint256 qACSurcharges, uint256 qTPtoMint, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
         SafeERC20.safeTransferFrom(acToken, msg.sender, address(this), qACmax_);
+        qACLockedInPending += qACmax_;
         SwapTCforTPParams memory params = SwapTCforTPParams({
             tp: tp_,
             qTC: qTC_,

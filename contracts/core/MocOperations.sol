@@ -709,15 +709,4 @@ abstract contract MocOperations is MocCore {
     function unlockTPInPending(address owner_, IERC20Upgradeable tpToken_, uint256 qTPToUnlock_) external onlyMocQueue {
         SafeERC20Upgradeable.safeTransfer(tpToken_, owner_, qTPToUnlock_);
     }
-
-    // ------- Only Authorized Changer Functions -------
-
-    /**
-     * @dev sets Moc Queue contract address
-     * @param mocQueueAddress_ moc queue new contract address
-     */
-    function setMocQueue(address mocQueueAddress_) external onlyAuthorizedChanger {
-        // slither-disable-next-line missing-zero-check
-        mocQueue = mocQueueAddress_;
-    }
 }
