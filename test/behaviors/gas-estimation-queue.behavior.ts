@@ -70,7 +70,7 @@ const gasEstimationBehavior = function () {
         }).timeout(10e6);
       });
     });
-  }).timeout(10e6);
+  });
 };
 
 export { gasEstimationBehavior };
