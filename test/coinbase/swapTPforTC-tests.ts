@@ -4,6 +4,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { swapTPforTCBehavior } from "../behaviors/swapTPforTC.behavior";
+import { swapTPforTCQueueBehavior } from "../behaviors/queue/swapTPforTCQueue.behavior";
 import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
 import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
@@ -19,34 +20,37 @@ describe("Feature: MocCoinbase swap TP for TC", function () {
     swapTPforTCBehavior();
   });
 
-  describe("GIVEN a MocCoinbase implementation deployed behind MocQueue", () => {
+  describe("GIVEN a MocCoinbase implementation deployed behind MocQueue", function () {
     let mocImpl: MocCACoinbase;
     let tp: MocRC20;
     let mocQueue: MocQueue;
     let mocFunctions: any;
     let deployer: Address;
     let feeRecipient: Address;
-    before(async () => {
+    beforeEach(async function () {
       ({ deployer, otherUser: feeRecipient } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, false);
-      const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsCoinbase(mocContracts);
+      this.mocContracts = await fixtureDeploy();
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
+      mocFunctions = this.mocFunctions;
       ({
         mocImpl,
         mocQueue,
         mocPeggedTokens: [tp],
-      } = mocContracts);
+      } = this.mocContracts);
     });
+    swapTPforTCQueueBehavior();
+
     describe("AND a non payable contract", () => {
       let nonPayable: NonPayableMock;
       let operId: OperId;
       const qACSent = pEth(100);
-      before(async () => {
+      beforeEach(async () => {
         const factory = await ethers.getContractFactory("NonPayableMock");
         nonPayable = await factory.deploy();
       });
       describe("WHEN it registers a swapTPforTC operation with exceeded amount of coinbase", () => {
-        before(async () => {
+        beforeEach(async () => {
           // mint TC to non payable contract
           await mocFunctions.mintTC({ from: deployer, to: nonPayable.address, qTC: 1000 });
           // mint TP to non payable contract
@@ -66,7 +70,7 @@ describe("Feature: MocCoinbase swap TP for TC", function () {
           let execTx: ContractTransaction;
           let prevTPBalance: Balance;
           let prevACBalance: Balance;
-          before(async () => {
+          beforeEach(async () => {
             prevTPBalance = await mocFunctions.tpBalanceOf(0, nonPayable.address);
             prevACBalance = await mocFunctions.assetBalanceOf(deployer);
             execTx = await mocQueue.execute(feeRecipient);

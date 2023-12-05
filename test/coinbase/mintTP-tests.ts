@@ -5,6 +5,7 @@ import { Address } from "hardhat-deploy/types";
 import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
+import { mintTPQueueBehavior } from "../behaviors/queue/mintTPQueue.behavior";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCoinbase } from "./fixture";
@@ -19,34 +20,37 @@ describe("Feature: MocCoinbase mint TP", function () {
     mintTPBehavior();
   });
 
-  describe("GIVEN a MocCoinbase implementation deployed behind MocQueue", () => {
+  describe("GIVEN a MocCoinbase implementation deployed behind MocQueue", function () {
     let mocImpl: MocCACoinbase;
     let tp: MocRC20;
     let mocQueue: MocQueue;
     let mocFunctions: any;
     let deployer: Address;
     let feeRecipient: Address;
-    before(async () => {
+    beforeEach(async function () {
       ({ deployer, otherUser: feeRecipient } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, false);
-      const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsCoinbase(mocContracts);
+      this.mocContracts = await fixtureDeploy();
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
+      mocFunctions = this.mocFunctions;
       ({
         mocImpl,
         mocQueue,
         mocPeggedTokens: [tp],
-      } = mocContracts);
+      } = this.mocContracts);
     });
+    mintTPQueueBehavior();
+
     describe("AND a non payable contract", () => {
       let nonPayable: NonPayableMock;
       let operId: OperId;
       const qACSent = pEth(100);
-      before(async () => {
+      beforeEach(async () => {
         const factory = await ethers.getContractFactory("NonPayableMock");
         nonPayable = await factory.deploy();
       });
       describe("WHEN it registers a mintTP operation but there is not collateral in the protocol", () => {
-        before(async () => {
+        beforeEach(async () => {
           operId = await mocQueue.operIdCount();
           // non payable contract registers mintTP operation
           const data = mocImpl.interface.encodeFunctionData("mintTP", [tp.address, pEth(1)]);
@@ -57,7 +61,7 @@ describe("Feature: MocCoinbase mint TP", function () {
         describe("AND execution is evaluated", () => {
           let execTx: ContractTransaction;
           let prevACBalance: Balance;
-          before(async () => {
+          beforeEach(async () => {
             prevACBalance = await mocFunctions.assetBalanceOf(deployer);
             execTx = await mocQueue.execute(feeRecipient);
           });
@@ -76,7 +80,7 @@ describe("Feature: MocCoinbase mint TP", function () {
         });
       });
       describe("WHEN it registers a mintTP operation with exceeded amount of coinbase", () => {
-        before(async () => {
+        beforeEach(async () => {
           // mint TC to add collateral
           await mocFunctions.mintTC({ from: deployer, qTC: 1000 });
 
@@ -92,7 +96,7 @@ describe("Feature: MocCoinbase mint TP", function () {
           let prevACBalance: Balance;
           let prevFallbackACBalance: Balance;
           let failedTransferFallback: Address;
-          before(async () => {
+          beforeEach(async () => {
             failedTransferFallback = await mocImpl.coinbaseFailedTransferFallback();
             prevACBalance = await mocFunctions.assetBalanceOf(deployer);
             prevFallbackACBalance = await mocFunctions.assetBalanceOf(failedTransferFallback);

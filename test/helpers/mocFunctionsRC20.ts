@@ -218,6 +218,7 @@ export const mocFunctionsRC20 = async ({
     acBalanceOf: tBalanceOf(collateralAsset),
     assertACResult: () => assertPrec,
     acTransfer: commonFncs.tTransfer(collateralAsset),
+    refreshACBalance: () => mocImpl.refreshACBalance(),
     ...commonFncs,
   };
 };

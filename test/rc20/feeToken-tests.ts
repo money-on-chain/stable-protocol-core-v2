@@ -1,5 +1,5 @@
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
-import { feeTokenBehavior } from "../behaviors/deferred/feeToken.behavior";
+import { feeTokenBehavior } from "../behaviors/queue/feeToken.behavior";
 import { tpParams } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
