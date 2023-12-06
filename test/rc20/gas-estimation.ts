@@ -1,4 +1,4 @@
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation-queue.behavior";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
@@ -10,7 +10,7 @@ describe("Feature: MocCARC20 gas estimation", function () {
       beforeEach(async function () {
         const fixtureDeploy = fixtureDeployedMocRC20(peggedTokenAmount, undefined, true);
         this.mocContracts = await fixtureDeploy();
-        this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+        this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
       });
       gasEstimationBehavior();
     });

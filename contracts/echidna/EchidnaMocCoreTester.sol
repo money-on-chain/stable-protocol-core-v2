@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+// TODO: validate if is not better using a MocQueueMock instead of a MocCoreMock
 import { MocCoreMock } from "../mocks/MocCoreMock.sol";
 import { MocCore, MocCoreExpansion, PeggedTokenParams } from "../core/MocCore.sol";
 import { MocCommons } from "../core/MocCommons.sol";

@@ -1,4 +1,4 @@
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { gasEstimationBehavior } from "../behaviors/gas-estimation-queue.behavior";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
@@ -10,7 +10,7 @@ describe("Feature: MocCoinbase gas estimation", function () {
       beforeEach(async function () {
         const fixtureDeploy = fixtureDeployedMocCoinbase(peggedTokenAmount, undefined, true);
         this.mocContracts = await fixtureDeploy();
-        this.mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
+        this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
       });
       gasEstimationBehavior();
     });

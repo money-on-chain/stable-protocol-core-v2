@@ -39,7 +39,7 @@ const swapTCforTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl, feeToken } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCSwappedForTP");
+      expectEvent = expectEventFor(mocContracts, "TCSwappedForTP");
       assertACResult = mocFunctions.assertACResult(swapTCforTPExecFee);
       tp0 = mocContracts.mocPeggedTokens[0].address;
     });
@@ -54,6 +54,15 @@ const swapTCforTPBehavior = function () {
           await expect(mocFunctions.swapTCforTP({ from: alice, qTC: 0 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO,
+          );
+        });
+      });
+      describe("WHEN alice tries to swap using a non-existent TP", function () {
+        it("THEN tx reverts", async function () {
+          const fakeTP = mocContracts.mocCollateralToken.address;
+          await expect(mocFunctions.swapTCforTP({ tp: fakeTP, from: alice, qTC: 100 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.INVALID_ADDRESS,
           );
         });
       });
@@ -152,13 +161,12 @@ const swapTCforTPBehavior = function () {
           await expectEvent(tx, [tp0, alice, alice, pEth(100), pEth(23500), pEth(100 * 0.01), 0, 0, 0, noVendor]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
-          // from: alice
+          // from: Moc
           // to: Zero Address
           // amount: 100 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(100));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(100));
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
           // from: Zero Address

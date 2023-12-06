@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { MocCore } from "../core/MocCore.sol";
+import { IMocRC20 } from "../tokens/MocRC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -128,7 +129,12 @@ contract MocCoreMock is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _redeemTCto(params, msg.sender);
+        // because operation is used with the queue, funds are locked and burned from this address
+        // we need to mint the same amount before
+        tcToken.mint(address(this), qTC_);
+        (qACtoRedeem, qFeeTokenTotalNeeded, feeCalcs) = _redeemTCto(params);
+        tcToken.burn(msg.sender, qTC_);
+        return (qACtoRedeem, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     /**
@@ -185,7 +191,12 @@ contract MocCoreMock is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _redeemTPto(params, msg.sender);
+        // because operation is used with the queue, funds are locked and burned from this address
+        // we need to mint the same amount before
+        IMocRC20(tp_).mint(address(this), qTP_);
+        (qACtoRedeem, qFeeTokenTotalNeeded, feeCalcs) = _redeemTPto(params);
+        IMocRC20(tp_).burn(msg.sender, qTP_);
+        return (qACtoRedeem, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     /**
@@ -259,7 +270,15 @@ contract MocCoreMock is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _redeemTCandTPto(params, msg.sender);
+        // because operation is used with the queue, funds are locked and burned from this address
+        // we need to mint the same amount before
+        IMocRC20(tp_).mint(address(this), qTP_);
+        tcToken.mint(address(this), qTC_);
+        (qACtoRedeem, qTPtoRedeem, qFeeTokenTotalNeeded, feeCalcs) = _redeemTCandTPto(params);
+        IMocRC20(tp_).burn(address(this), qTP_ - qTPtoRedeem);
+        IMocRC20(tp_).burn(msg.sender, qTPtoRedeem);
+        tcToken.burn(msg.sender, qTC_);
+        return (qACtoRedeem, qTPtoRedeem, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     /**
@@ -297,7 +316,12 @@ contract MocCoreMock is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _swapTPforTPto(params, msg.sender);
+        // because operation is used with the queue, funds are locked and burned from this address
+        // we need to mint the same amount before
+        IMocRC20(tpFrom_).mint(address(this), qTP_);
+        (qACSurcharges, qTPMinted, qFeeTokenTotalNeeded, feeCalcs) = _swapTPforTPto(params);
+        IMocRC20(tpFrom_).burn(msg.sender, qTP_);
+        return (qACSurcharges, qTPMinted, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     /**
@@ -332,7 +356,12 @@ contract MocCoreMock is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _swapTPforTCto(params, msg.sender);
+        // because operation is used with the queue, funds are locked and burned from this address
+        // we need to mint the same amount before
+        IMocRC20(tp_).mint(address(this), qTP_);
+        (qACSurcharges, qTCMinted, qFeeTokenTotalNeeded, feeCalcs) = _swapTPforTCto(params);
+        IMocRC20(tp_).burn(msg.sender, qTP_);
+        return (qACSurcharges, qTCMinted, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     /**
@@ -367,7 +396,12 @@ contract MocCoreMock is MocCore {
             recipient: recipient_,
             vendor: vendor_
         });
-        return _swapTCforTPto(params, msg.sender);
+        // because operation is used with the queue, funds are locked and burned from this address
+        // we need to mint the same amount before
+        tcToken.mint(address(this), qTC_);
+        (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs) = _swapTCforTPto(params);
+        tcToken.burn(msg.sender, qTC_);
+        return (qACSurcharges, qTPtoMint, qFeeTokenTotalNeeded, feeCalcs);
     }
 
     // ------- External Functions -------

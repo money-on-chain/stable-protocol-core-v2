@@ -44,7 +44,7 @@ const swapTPforTPBehavior = function () {
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTP");
+      expectEvent = expectEventFor(mocContracts, "TPSwappedForTP");
       assertACResult = mocFunctions.assertACResult(swapTPforTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
@@ -85,13 +85,18 @@ const swapTPforTPBehavior = function () {
       });
       describe("WHEN alice tries to swap using a non-existent TP", function () {
         it("THEN tx reverts", async function () {
-          // FIXME: generic revert because collateralbag implementation fail before accessing the tp array
-          await expect(mocFunctions.swapTPforTP({ tpFrom: alice, iTo: TP_0, from: alice, qTP: 23500 })).to.be.reverted;
+          const fakeTP = mocContracts.mocCollateralToken;
+          await expect(
+            mocFunctions.swapTPforTP({ tpFrom: fakeTP, iTo: TP_0, from: deployer, qTP: 100 }),
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
         });
       });
       describe("WHEN alice tries to swap TP 0 for a non-existent TP", function () {
         it("THEN tx reverts", async function () {
-          await expect(mocFunctions.swapTPforTP({ iFrom: TP_0, tpTo: alice, from: alice, qTP: 23500 })).to.be.reverted;
+          const fakeTP = mocContracts.mocCollateralToken;
+          await expect(
+            mocFunctions.swapTPforTP({ iFrom: TP_0, tpTo: fakeTP, from: alice, qTP: 100 }),
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
         });
       });
       describe("WHEN alice tries to swap 0 TP 0", function () {
@@ -210,12 +215,12 @@ const swapTPforTPBehavior = function () {
           await expectEvent(tx, [tps[0], tps[1], alice, alice, pEth(23500), pEth(525), pEth(1), 0, 0, 0, noVendor]);
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: Moc
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(23500));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(23500));
         });
         it("THEN a Pegged Token 1 Transfer event is emitted", async function () {
           // from: Zero Address

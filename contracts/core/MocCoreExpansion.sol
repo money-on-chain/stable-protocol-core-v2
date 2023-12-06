@@ -228,8 +228,7 @@ contract MocCoreExpansion is MocCommons {
      * @return feeCalcs platform fee detail breakdown
      */
     function redeemTCandTPto(
-        RedeemTCandTPParams memory params_,
-        address operator
+        RedeemTCandTPParams memory params_
     )
         external
         payable
@@ -272,8 +271,8 @@ contract MocCoreExpansion is MocCommons {
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         // update flux capacitor and reverts if not allowed by accumulators
         _updateAccumulatorsOnRedeemTP(qACtoRedeemTP);
-        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem, operator);
-        _withdrawAndBurnTP(i, qTPtoRedeem, 0, operator);
+        _withdrawAndBurnTC(params_.qTC, qACtotalToRedeem);
+        _withdrawAndBurnTP(i, qTPtoRedeem, 0);
     }
 
     /**
@@ -302,8 +301,7 @@ contract MocCoreExpansion is MocCommons {
      *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
      */
     function swapTPforTPto(
-        SwapTPforTPParams memory params_,
-        address operator
+        SwapTPforTPParams memory params_
     )
         external
         payable
@@ -341,7 +339,7 @@ contract MocCoreExpansion is MocCommons {
         );
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         _depositAndMintTP(iTo, qTPtoMint, 0, params_.recipient);
-        _withdrawAndBurnTP(iFrom, params_.qTP, 0, operator);
+        _withdrawAndBurnTP(iFrom, params_.qTP, 0);
     }
 
     /**
@@ -367,8 +365,7 @@ contract MocCoreExpansion is MocCommons {
      *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
      */
     function swapTPforTCto(
-        SwapTPforTCParams memory params_,
-        address operator
+        SwapTPforTCParams memory params_
     )
         external
         payable
@@ -399,7 +396,7 @@ contract MocCoreExpansion is MocCommons {
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         // update flux capacitor and reverts if not allowed by accumulators
         _updateAccumulatorsOnRedeemTP(qACtotalToRedeem);
-        _withdrawAndBurnTP(i, params_.qTP, 0, operator);
+        _withdrawAndBurnTP(i, params_.qTP, 0);
         _depositAndMintTC(qTCtoMint, 0, params_.recipient);
     }
 
@@ -425,8 +422,7 @@ contract MocCoreExpansion is MocCommons {
      *      qFeeTokenVendorMarkup amount of Fee Token needed to pay vendor markup
      */
     function swapTCforTPto(
-        SwapTCforTPParams memory params_,
-        address operator
+        SwapTCforTPParams memory params_
     )
         external
         payable
@@ -464,7 +460,7 @@ contract MocCoreExpansion is MocCommons {
         if (qACSurcharges > params_.qACmax) revert InsufficientQacSent(params_.qACmax, feeCalcs.qACFee);
         // update flux capacitor and reverts if not allowed by accumulators
         _updateAccumulatorsOnMintTP(qACtotalToRedeem);
-        _withdrawAndBurnTC(params_.qTC, 0, operator);
+        _withdrawAndBurnTC(params_.qTC, 0);
         _depositAndMintTP(i, qTPtoMint, 0, params_.recipient);
     }
 

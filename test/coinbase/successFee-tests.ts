@@ -1,4 +1,4 @@
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { successFeeBehavior } from "../behaviors/successFee.behavior";
 import { tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCoinbase } from "./fixture";
@@ -8,7 +8,7 @@ describe("Feature: MocCoinbase success fee distribution", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
     });
     successFeeBehavior();
   });

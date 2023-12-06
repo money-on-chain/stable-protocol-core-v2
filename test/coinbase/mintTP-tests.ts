@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechain";
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
@@ -14,7 +14,7 @@ describe("Feature: MocCoinbase mint TP", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
     });
     mintTPBehavior();
   });
@@ -30,7 +30,7 @@ describe("Feature: MocCoinbase mint TP", function () {
       ({ deployer, otherUser: feeRecipient } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsCoinbaseDeferred(mocContracts);
+      mocFunctions = await mocFunctionsCoinbase(mocContracts);
       ({
         mocImpl,
         mocQueue,

@@ -399,14 +399,13 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
-     * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_) internal {
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qAC_);
-        // burn qTP from this address
+        // burn the qTp previously locked from the user
         // slither-disable-next-line unused-return
-        tpTokens[i_].burn(toBurnFrom_, qTP_);
+        tpTokens[i_].burn(address(this), qTP_);
     }
 
     /**
@@ -427,13 +426,12 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @notice Subtracts Collateral Token and Collateral Asset from the Bucket and burns `qTC_`
      * @param qTC_ amount of Collateral Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
-     * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_) internal {
         // sub qTC and qAC from the Bucket
         _withdrawTC(qTC_, qAC_);
-        // burn qTC from this address
-        tcToken.burn(toBurnFrom_, qTC_);
+        // burn the qTC previously locked from the user
+        tcToken.burn(address(this), qTC_);
     }
 
     /**

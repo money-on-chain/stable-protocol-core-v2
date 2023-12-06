@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { OperId, mineUpTo, tpParams } from "../helpers/utils";
 import { MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
@@ -23,7 +23,7 @@ describe("Feature: MocQueue Operation min waiting Blk", function () {
       const mocContracts = await fixtureDeploy();
 
       ({ mocQueue } = mocContracts);
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
       await mocQueue.setMinOperWaitingBlk(10);
     });
     describe("WHEN both Alice and Bob register a valid operation", function () {

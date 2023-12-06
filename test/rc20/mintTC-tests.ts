@@ -2,7 +2,7 @@ import { expect } from "chai";
 import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 import {
   Balance,
@@ -31,7 +31,7 @@ describe("Feature: MocCARC20 mint TC", function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      mocFunctions = await mocFunctionsRC20(this.mocContracts);
       this.mocFunctions = mocFunctions;
       ({ collateralAsset } = this.mocContracts);
     });
@@ -87,7 +87,7 @@ describe("Feature: MocCARC20 mint TC", function () {
       ({ deployer, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
       ({ mocImpl, mocQueue } = mocContracts);
     });
 

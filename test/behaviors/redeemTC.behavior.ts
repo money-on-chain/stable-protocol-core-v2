@@ -31,7 +31,7 @@ const redeemTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCRedeemed");
+      expectEvent = expectEventFor(mocContracts, "TCRedeemed");
       assertACResult = mocFunctions.assertACResult(-tcRedeemExecFee);
     });
     describe("GIVEN alice has 300 TC", function () {
@@ -119,12 +119,12 @@ const redeemTCBehavior = function () {
           await expectEvent(tx, args);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: Moc
           // to: Zero Address
           // amount: 300 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(300));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(300));
         });
       });
       describe("WHEN alice redeems 300 TC to bob", function () {

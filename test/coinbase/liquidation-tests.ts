@@ -1,4 +1,4 @@
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { shouldBehaveLikeLiquidable } from "../behaviors/liquidation.behavior";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
@@ -7,7 +7,7 @@ describe("Feature: MocCoinbase Liquidation", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(2);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
     });
     shouldBehaveLikeLiquidable();
   });

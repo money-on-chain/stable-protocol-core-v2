@@ -1,4 +1,4 @@
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { caInjectionBehavior } from "../behaviors/caInjection.behavior";
 import { tpParams } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "./fixture";
@@ -8,7 +8,7 @@ describe("Feature: MocCARC20 allows for collateral injection", function () {
     before(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
     });
     caInjectionBehavior();
   });

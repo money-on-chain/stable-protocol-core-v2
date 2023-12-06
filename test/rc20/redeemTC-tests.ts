@@ -3,7 +3,7 @@ import { Address } from "hardhat-deploy/types";
 import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { MocCARC20, MocQueue } from "../../typechain";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { redeemTCBehavior } from "../behaviors/redeemTC.behavior";
 import { Balance, ERROR_SELECTOR, OperId, OperType, ethersGetBalance, pEth, tpParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
@@ -15,7 +15,7 @@ describe("Feature: MocCARC20 redeem TC", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
     });
     redeemTCBehavior();
   });
@@ -33,7 +33,7 @@ describe("Feature: MocCARC20 redeem TC", function () {
       ({ deployer, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
       ({ mocImpl, mocQueue } = mocContracts);
     });
 

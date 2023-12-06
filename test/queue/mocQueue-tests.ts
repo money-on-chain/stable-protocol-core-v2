@@ -2,7 +2,7 @@ import { expect } from "chai";
 import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import {
   Balance,
   CONSTANTS,
@@ -39,7 +39,7 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
       ({ deployer, alice, bob } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
 
       ({
         mocImpl,

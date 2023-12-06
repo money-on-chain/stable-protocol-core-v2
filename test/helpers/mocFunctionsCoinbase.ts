@@ -103,19 +103,25 @@ const swapTPforTP =
       qTPmin = pEth(qTPmin);
       qACmax = pEth(qACmax).add(execFee);
     } else qACmax += execFee;
-    tpFrom = tpFrom || mocPeggedTokens[iFrom].address;
-    tpTo = tpTo || mocPeggedTokens[iTo].address;
+    tpFrom = tpFrom || mocPeggedTokens[iFrom];
+    tpTo = tpTo || mocPeggedTokens[iTo];
+    await tpFrom.connect(signer).increaseAllowance(mocImpl.address, qTP);
     if (to) {
       if (!vendor)
-        return mocImpl.connect(signer).swapTPforTPto(tpFrom, tpTo, qTP, qTPmin, to, { value: qACmax, gasPrice });
+        return mocImpl
+          .connect(signer)
+          .swapTPforTPto(tpFrom.address, tpTo.address, qTP, qTPmin, to, { value: qACmax, gasPrice });
       return mocImpl
         .connect(signer)
-        .swapTPforTPtoViaVendor(tpFrom, tpTo, qTP, qTPmin, to, vendor, { value: qACmax, gasPrice });
+        .swapTPforTPtoViaVendor(tpFrom.address, tpTo.address, qTP, qTPmin, to, vendor, { value: qACmax, gasPrice });
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTP(tpFrom, tpTo, qTP, qTPmin, { value: qACmax, gasPrice });
+      if (!vendor)
+        return mocImpl
+          .connect(signer)
+          .swapTPforTP(tpFrom.address, tpTo.address, qTP, qTPmin, { value: qACmax, gasPrice });
       return mocImpl
         .connect(signer)
-        .swapTPforTPViaVendor(tpFrom, tpTo, qTP, qTPmin, vendor, { value: qACmax, gasPrice });
+        .swapTPforTPViaVendor(tpFrom.address, tpTo.address, qTP, qTPmin, vendor, { value: qACmax, gasPrice });
     }
   };
 
@@ -139,18 +145,22 @@ const swapTPforTC =
       qTCmin = pEth(qTCmin);
       qACmax = pEth(qACmax).add(execFee);
     } else qACmax += execFee;
-    tp = tp || mocPeggedTokens[i].address;
+    tp = tp || mocPeggedTokens[i];
+    await tp.connect(signer).increaseAllowance(mocImpl.address, qTP);
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTCto(tp, qTP, qTCmin, to, { value: qACmax, gasPrice });
-      return mocImpl.connect(signer).swapTPforTCtoViaVendor(tp, qTP, qTCmin, to, vendor, { value: qACmax, gasPrice });
+      if (!vendor)
+        return mocImpl.connect(signer).swapTPforTCto(tp.address, qTP, qTCmin, to, { value: qACmax, gasPrice });
+      return mocImpl
+        .connect(signer)
+        .swapTPforTCtoViaVendor(tp.address, qTP, qTCmin, to, vendor, { value: qACmax, gasPrice });
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTC(tp, qTP, qTCmin, { value: qACmax, gasPrice });
-      return mocImpl.connect(signer).swapTPforTCViaVendor(tp, qTP, qTCmin, vendor, { value: qACmax, gasPrice });
+      if (!vendor) return mocImpl.connect(signer).swapTPforTC(tp.address, qTP, qTCmin, { value: qACmax, gasPrice });
+      return mocImpl.connect(signer).swapTPforTCViaVendor(tp.address, qTP, qTCmin, vendor, { value: qACmax, gasPrice });
     }
   };
 
 const swapTCforTP =
-  (mocImpl, mocPeggedTokens, swapTCforTPExecFee) =>
+  (mocImpl, mocCollateralToken, mocPeggedTokens, swapTCforTPExecFee) =>
   async ({
     i = 0,
     tp,
@@ -170,6 +180,7 @@ const swapTCforTP =
       qACmax = pEth(qACmax).add(execFee);
     } else qACmax += execFee;
     tp = tp || mocPeggedTokens[i].address;
+    await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
     if (to) {
       if (!vendor) return mocImpl.connect(signer).swapTCforTPto(tp, qTC, qTPmin, to, { value: qACmax, gasPrice });
       return mocImpl.connect(signer).swapTCforTPtoViaVendor(tp, qTC, qTPmin, to, vendor, { value: qACmax, gasPrice });
@@ -189,16 +200,42 @@ const assertACResult =
     return assertPrec(args[0].add(execFee), ...args.slice(1));
   };
 
-export const mocFunctionsCoinbase = async ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders }) => {
-  const commonFncs = await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
+export const mocFunctionsCoinbase = async ({
+  mocImpl,
+  mocQueue,
+  mocCollateralToken,
+  mocPeggedTokens,
+  priceProviders,
+}) => {
   const { execFeeParams: execFee } = getNetworkDeployParams(hre).queueParams;
+  const commonFncs = await mocFunctionsCommons({
+    mocImpl,
+    mocQueue,
+    mocCollateralToken,
+    mocPeggedTokens,
+    priceProviders,
+    execFee,
+  });
+  const execWrap = commonFncs.execWrap;
   return {
-    mintTC: mintTC(mocImpl, execFee.tcMintExecFee),
-    mintTP: mintTP(mocImpl, mocPeggedTokens, execFee.tpMintExecFee),
-    mintTCandTP: mintTCandTP(mocImpl, mocPeggedTokens, execFee.mintTCandTPExecFee),
-    swapTPforTP: swapTPforTP(mocImpl, mocPeggedTokens, execFee.swapTPforTPExecFee),
-    swapTPforTC: swapTPforTC(mocImpl, mocPeggedTokens, execFee.swapTPforTCExecFee),
-    swapTCforTP: swapTCforTP(mocImpl, mocPeggedTokens, execFee.swapTCforTPExecFee),
+    mintTC: execWrap(execFee.tcMintExecFee, mintTC(mocImpl, execFee.tcMintExecFee)),
+    mintTP: execWrap(execFee.tpMintExecFee, mintTP(mocImpl, mocPeggedTokens, execFee.tpMintExecFee)),
+    mintTCandTP: execWrap(
+      execFee.mintTCandTPExecFee,
+      mintTCandTP(mocImpl, mocPeggedTokens, execFee.mintTCandTPExecFee),
+    ),
+    swapTPforTP: execWrap(
+      execFee.swapTPforTPExecFee,
+      swapTPforTP(mocImpl, mocPeggedTokens, execFee.swapTPforTPExecFee),
+    ),
+    swapTPforTC: execWrap(
+      execFee.swapTPforTCExecFee,
+      swapTPforTC(mocImpl, mocPeggedTokens, execFee.swapTPforTCExecFee),
+    ),
+    swapTCforTP: execWrap(
+      execFee.swapTCforTPExecFee,
+      swapTCforTP(mocImpl, mocCollateralToken, mocPeggedTokens, execFee.swapTCforTPExecFee),
+    ),
     assetBalanceOf: ethersGetBalance,
     acBalanceOf: ethersGetBalance,
     acTransfer: commonFncs.coinbaseTransfer,

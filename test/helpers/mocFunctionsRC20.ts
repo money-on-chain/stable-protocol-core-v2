@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
+import { getNetworkDeployParams } from "../../scripts/utils";
 import { pEth } from "./utils";
 import { mocFunctionsCommons, tBalanceOf } from "./mocFunctionsCommons";
 import { assertPrec } from "./assertHelper";
@@ -103,14 +104,21 @@ const swapTPforTP =
       qACmax = pEth(qACmax);
     }
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
-    tpFrom = tpFrom || mocPeggedTokens[iFrom].address;
-    tpTo = tpTo || mocPeggedTokens[iTo].address;
+    tpFrom = tpFrom || mocPeggedTokens[iFrom];
+    tpTo = tpTo || mocPeggedTokens[iTo];
+    await tpFrom.connect(signer).increaseAllowance(mocImpl.address, qTP);
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTPto(tpFrom, tpTo, qTP, qTPmin, qACmax, to, netParams);
-      return mocImpl.connect(signer).swapTPforTPtoViaVendor(tpFrom, tpTo, qTP, qTPmin, qACmax, to, vendor, netParams);
+      if (!vendor)
+        return mocImpl.connect(signer).swapTPforTPto(tpFrom.address, tpTo.address, qTP, qTPmin, qACmax, to, netParams);
+      return mocImpl
+        .connect(signer)
+        .swapTPforTPtoViaVendor(tpFrom.address, tpTo.address, qTP, qTPmin, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTP(tpFrom, tpTo, qTP, qTPmin, qACmax, netParams);
-      return mocImpl.connect(signer).swapTPforTPViaVendor(tpFrom, tpTo, qTP, qTPmin, qACmax, vendor, netParams);
+      if (!vendor)
+        return mocImpl.connect(signer).swapTPforTP(tpFrom.address, tpTo.address, qTP, qTPmin, qACmax, netParams);
+      return mocImpl
+        .connect(signer)
+        .swapTPforTPViaVendor(tpFrom.address, tpTo.address, qTP, qTPmin, qACmax, vendor, netParams);
     }
   };
 
@@ -135,18 +143,19 @@ const swapTPforTC =
       qACmax = pEth(qACmax);
     }
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
-    tp = tp || mocPeggedTokens[i].address;
+    tp = tp || mocPeggedTokens[i];
+    await tp.connect(signer).increaseAllowance(mocImpl.address, qTP);
     if (to) {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTCto(tp, qTP, qTCmin, qACmax, to, netParams);
-      return mocImpl.connect(signer).swapTPforTCtoViaVendor(tp, qTP, qTCmin, qACmax, to, vendor, netParams);
+      if (!vendor) return mocImpl.connect(signer).swapTPforTCto(tp.address, qTP, qTCmin, qACmax, to, netParams);
+      return mocImpl.connect(signer).swapTPforTCtoViaVendor(tp.address, qTP, qTCmin, qACmax, to, vendor, netParams);
     } else {
-      if (!vendor) return mocImpl.connect(signer).swapTPforTC(tp, qTP, qTCmin, qACmax, netParams);
-      return mocImpl.connect(signer).swapTPforTCViaVendor(tp, qTP, qTCmin, qACmax, vendor, netParams);
+      if (!vendor) return mocImpl.connect(signer).swapTPforTC(tp.address, qTP, qTCmin, qACmax, netParams);
+      return mocImpl.connect(signer).swapTPforTCViaVendor(tp.address, qTP, qTCmin, qACmax, vendor, netParams);
     }
   };
 
 const swapTCforTP =
-  (mocImpl, collateralAsset, mocPeggedTokens) =>
+  (mocImpl, collateralAsset, mocCollateralToken, mocPeggedTokens) =>
   async ({
     i = 0,
     tp,
@@ -166,6 +175,7 @@ const swapTCforTP =
       qACmax = pEth(qACmax);
     }
     tp = tp || mocPeggedTokens[i].address;
+    await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
     await collateralAsset.connect(signer).increaseAllowance(mocImpl.address, qACmax);
     if (to) {
       if (!vendor) return mocImpl.connect(signer).swapTCforTPto(tp, qTC, qTPmin, qACmax, to, netParams);
@@ -178,19 +188,32 @@ const swapTCforTP =
 
 export const mocFunctionsRC20 = async ({
   mocImpl,
+  mocQueue,
   collateralAsset,
   mocCollateralToken,
   mocPeggedTokens,
   priceProviders,
 }) => {
-  const commonFncs = await mocFunctionsCommons({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
+  const { execFeeParams: execFee } = getNetworkDeployParams(hre).queueParams;
+  const commonFncs = await mocFunctionsCommons({
+    mocImpl,
+    mocQueue,
+    mocCollateralToken,
+    mocPeggedTokens,
+    priceProviders,
+    execFee,
+  });
+  const execWrap = commonFncs.execWrap;
   return {
-    mintTC: mintTC(mocImpl, collateralAsset),
-    mintTP: mintTP(mocImpl, collateralAsset, mocPeggedTokens),
-    mintTCandTP: mintTCandTP(mocImpl, collateralAsset, mocPeggedTokens),
-    swapTPforTP: swapTPforTP(mocImpl, collateralAsset, mocPeggedTokens),
-    swapTPforTC: swapTPforTC(mocImpl, collateralAsset, mocPeggedTokens),
-    swapTCforTP: swapTCforTP(mocImpl, collateralAsset, mocPeggedTokens),
+    mintTC: execWrap(execFee.tcMintExecFee, mintTC(mocImpl, collateralAsset)),
+    mintTP: execWrap(execFee.tpMintExecFee, mintTP(mocImpl, collateralAsset, mocPeggedTokens)),
+    mintTCandTP: execWrap(execFee.mintTCandTPExecFee, mintTCandTP(mocImpl, collateralAsset, mocPeggedTokens)),
+    swapTPforTP: execWrap(execFee.swapTPforTPExecFee, swapTPforTP(mocImpl, collateralAsset, mocPeggedTokens)),
+    swapTPforTC: execWrap(execFee.swapTPforTCExecFee, swapTPforTC(mocImpl, collateralAsset, mocPeggedTokens)),
+    swapTCforTP: execWrap(
+      execFee.swapTCforTPExecFee,
+      swapTCforTP(mocImpl, collateralAsset, mocCollateralToken, mocPeggedTokens),
+    ),
     assetBalanceOf: tBalanceOf(collateralAsset),
     acBalanceOf: tBalanceOf(collateralAsset),
     assertACResult: () => assertPrec,

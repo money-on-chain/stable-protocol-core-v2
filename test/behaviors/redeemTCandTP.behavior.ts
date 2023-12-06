@@ -45,7 +45,7 @@ const redeemTCandTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPRedeemed");
+      expectEvent = expectEventFor(mocContracts, "TCandTPRedeemed");
       assertACResult = mocFunctions.assertACResult(-redeemTCandTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
@@ -196,20 +196,19 @@ const redeemTCandTPBehavior = function () {
           ]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: Moc
           // to: Zero Address
           // amount: 100 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(100));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(100));
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
           // to: Zero Address
           // amount: 783.33 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth("783.333333333333333333"));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth("783.333333333333333333"));
         });
       });
       describe("WHEN alice redeems 100 TC and 23500 TP (more amount of TP) to bob", function () {

@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
 import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
 import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechain";
@@ -14,7 +14,7 @@ describe("Feature: MocCoinbase swap TP for TP", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsCoinbaseDeferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsCoinbase(this.mocContracts);
     });
     swapTPforTPBehavior();
   });
@@ -31,7 +31,7 @@ describe("Feature: MocCoinbase swap TP for TP", function () {
       ({ deployer, otherUser: feeRecipient } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsCoinbaseDeferred(mocContracts);
+      mocFunctions = await mocFunctionsCoinbase(mocContracts);
       ({
         mocImpl,
         mocQueue,

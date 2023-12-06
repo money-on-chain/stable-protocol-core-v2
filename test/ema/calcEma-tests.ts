@@ -3,7 +3,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { BigNumber, ContractTransaction } from "ethers";
 import { MocCACoinbase, PriceProviderMock } from "../../typechain";
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mineNBlocks, pEth, getNetworkDeployParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCoinbase } from "./../coinbase/fixture";
@@ -50,7 +50,7 @@ describe("Feature: Ema Calculation", function () {
     ({ deployer, alice, bob } = await getNamedAccounts());
     const fixtureDeploy = fixtureDeployedMocCoinbase(peggedAmount, tpParams, true);
     mocContracts = await fixtureDeploy();
-    mocFunctions = await mocFunctionsCoinbaseDeferred(mocContracts);
+    mocFunctions = await mocFunctionsCoinbase(mocContracts);
     ({ mocImpl, priceProviders } = mocContracts);
   });
   describe("GIVEN a MocCoinbase implementation deployed with two Pegged Tokens", function () {

@@ -41,7 +41,7 @@ const swapTPforTCBehavior = function () {
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
       // add collateral
       await mocFunctions.mintTC({ from: deployer, qTC: 3000 });
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPSwappedForTC");
+      expectEvent = expectEventFor(mocContracts, "TPSwappedForTC");
       assertACResult = mocFunctions.assertACResult(swapTPforTCExecFee);
       tp0 = mocContracts.mocPeggedTokens[0].address;
     });
@@ -69,6 +69,14 @@ const swapTPforTCBehavior = function () {
           await expect(
             mocFunctions.swapTPforTC({ from: alice, qTP: 23500, qACmax: "0.999999999999999999" }),
           ).to.be.revertedWithCustomError(mocImpl, ERRORS.INSUFFICIENT_QAC_SENT);
+        });
+      });
+      describe("WHEN alice tries to swap using a non-existent TP", function () {
+        it("THEN tx reverts", async function () {
+          const fakeTP = mocContracts.mocCollateralToken;
+          await expect(
+            mocFunctions.swapTPforTC({ tp: fakeTP, from: deployer, qTP: 100 }),
+          ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_ADDRESS);
         });
       });
       describe("WHEN alice swap 23500 TP 0 expecting to receive 101 TC as minimum", function () {
@@ -138,13 +146,12 @@ const swapTPforTCBehavior = function () {
           await expectEvent(tx, [tp0, alice, alice, pEth(23500), pEth(100), pEth(1), 0, 0, 0, noVendor]);
         });
         it("THEN a Pegged Token 0 Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
-          // from: alice
+          // from: Moc
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(23500));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(23500));
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
           // from: Zero Address

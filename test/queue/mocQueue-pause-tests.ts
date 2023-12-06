@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { getNamedAccounts, ethers } from "hardhat";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { ERRORS, OperId, tpParams } from "../helpers/utils";
 import { GovernorMock__factory, MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
@@ -22,7 +22,7 @@ describe("Feature: MocQueue Pausing", function () {
       ({ deployer: pauser, deployer: executor, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
 
       ({ mocQueue } = mocContracts);
       const governorAddress = await mocQueue.governor();

@@ -32,8 +32,8 @@ const feeTokenBehavior = function () {
       spender = mocImpl.address;
       // give some TC to alice
       await mocFunctions.mintTC({ from: alice, qTC: 1000 });
-      expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
-      expectTCRedeemed = expectEventFor(mocImpl, mocFunctions, "TCRedeemed");
+      expectTCMinted = expectEventFor(mocContracts, "TCMinted");
+      expectTCRedeemed = expectEventFor(mocContracts, "TCRedeemed");
     });
     describe("GIVEN alice has 50 Fee Token", function () {
       beforeEach(async function () {

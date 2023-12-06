@@ -1,4 +1,5 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -296,14 +297,12 @@ export async function ensureERC1820(): Promise<void> {
   }
 }
 
-export function expectEventFor(mocImpl: any, mocFunctions: any, eventName: string): any {
+export function expectEventFor(mocContracts: any, eventName: string): any {
   return async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
+    // TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready
+    let args = [...rawArgs, anyValue];
     await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, eventName)
+      .to.emit(mocContracts.mocQueue, eventName)
       .withArgs(...args);
   };
 }

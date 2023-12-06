@@ -1,4 +1,4 @@
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { successFeeBehavior } from "../behaviors/successFee.behavior";
 import { tpParams } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "./fixture";
@@ -8,7 +8,7 @@ describe("Feature: MocCR20 success fee distribution", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
     });
     successFeeBehavior();
   });

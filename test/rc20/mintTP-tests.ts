@@ -2,7 +2,7 @@ import { expect } from "chai";
 import hre, { getNamedAccounts } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { Balance, ERROR_SELECTOR, OperId, OperType, ethersGetBalance, pEth, tpParams } from "../helpers/utils";
 import { MocCARC20, MocQueue } from "../../typechain";
@@ -15,7 +15,7 @@ describe("Feature: MocCARC20 mint TP", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
     });
     mintTPBehavior();
   });
@@ -34,7 +34,7 @@ describe("Feature: MocCARC20 mint TP", function () {
       ({ deployer, alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
       ({ mocImpl, mocQueue } = mocContracts);
     });
     describe("WHEN alice sends 100 Asset to mint 100 TP but there is not collateral in the protocol", function () {

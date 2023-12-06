@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { FallbackMock, MocCACoinbase, MocQueue, MocRC20 } from "../../typechain";
-import { mocFunctionsCoinbaseDeferred } from "../helpers/mocFunctionsCoinbaseDeferred";
+import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
 import { getNetworkDeployParams } from "../../scripts/utils";
 import { fixtureDeployedMocCoinbase } from "./fixture";
@@ -24,7 +24,7 @@ describe("Feature: MocCoinbase gas attack", function () {
       ({ deployer } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsCoinbaseDeferred(mocContracts);
+      mocFunctions = await mocFunctionsCoinbase(mocContracts);
       ({ mocImpl, mocQueue, mocCollateralToken } = mocContracts);
     });
     describe("AND a fallback contract with a redeemTC operation registered", () => {

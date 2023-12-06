@@ -31,7 +31,7 @@ const mintTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
-      expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
+      expectTCMinted = expectEventFor(mocContracts, "TCMinted");
       assertACResult = mocFunctions.assertACResult(tcMintExecFee);
     });
     describe("WHEN alice tries to mint 0 TC", function () {

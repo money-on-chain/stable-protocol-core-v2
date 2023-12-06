@@ -1,4 +1,4 @@
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { shouldBehaveLikeLiquidable } from "../behaviors/liquidation.behavior";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
@@ -7,7 +7,7 @@ describe("Feature: MocCARC20D Liquidation", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(2);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
     });
     shouldBehaveLikeLiquidable();
   });

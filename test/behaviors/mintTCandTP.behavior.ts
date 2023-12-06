@@ -35,7 +35,7 @@ const mintTCandTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPMinted");
+      expectEvent = expectEventFor(mocContracts, "TCandTPMinted");
       assertACResult = mocFunctions.assertACResult(mintTCandTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });

@@ -3,7 +3,7 @@ import { getNamedAccounts } from "hardhat";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
 import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { pEth, tpParams } from "../helpers/utils";
 import { MocQueue } from "../../typechain";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
@@ -22,7 +22,7 @@ describe("Feature: MocQueue flux capacitor", function () {
       const mocContracts = await fixtureDeploy();
 
       ({ mocQueue } = mocContracts);
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
       // add collateral
       await mocFunctions.mintTC({ from: alice, qTC: 100000000 });
 

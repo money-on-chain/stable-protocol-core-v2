@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { getNamedAccounts } from "hardhat";
 import { ContractTransaction, BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import { fluxCapacitorBehavior } from "../behaviors/fluxCapacitor.behavior";
 import { Balance, ERROR_SELECTOR, pEth, tpParams } from "../helpers/utils";
 import { MocCARC20, MocQueue } from "../../typechain";
@@ -15,7 +15,7 @@ describe("Feature: MocCARC20 Flux capacitor", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
-      this.mocFunctions = await mocFunctionsRC20Deferred(this.mocContracts);
+      this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
       ({ mocQueue } = this.mocContracts);
       // on flux capacitor tests all the operations happens in the same block, we need waiting blocks on 0
       await mocQueue.setMinOperWaitingBlk(0);
@@ -38,7 +38,7 @@ describe("Feature: MocCARC20 Flux capacitor", function () {
       ({ alice } = await getNamedAccounts());
       const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
       ({ mocImpl, mocQueue } = mocContracts);
       // add collateral
       await mocFunctions.mintTC({ from: alice, qTC: 100000000 });

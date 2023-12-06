@@ -32,7 +32,7 @@ const redeemTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPRedeemed");
+      expectEvent = expectEventFor(mocContracts, "TPRedeemed");
       assertACResult = mocFunctions.assertACResult(-tpRedeemExecFee);
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
@@ -58,9 +58,7 @@ const redeemTPBehavior = function () {
       });
       describe("WHEN alice tries to redeem a non-existent TP", function () {
         it("THEN tx reverts with invalid address", async function () {
-          const fakeTP = mocContracts.mocCollateralToken.address;
-          const signer = await ethers.getSigner(alice);
-          await mocContracts.mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, pEth(100));
+          const fakeTP = mocContracts.mocCollateralToken;
           await expect(mocFunctions.redeemTP({ tp: fakeTP, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.INVALID_ADDRESS,
@@ -160,12 +158,12 @@ const redeemTPBehavior = function () {
           await expectEvent(tx, args);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: Moc
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(23500));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(23500));
         });
       });
       describe("WHEN alice redeems 2350 TP to bob", function () {

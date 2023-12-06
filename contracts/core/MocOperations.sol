@@ -585,7 +585,7 @@ abstract contract MocOperations is MocCore {
     ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
         RedeemTCParams memory params = params_;
         // Override sender, as funds are now locked here
-        return _redeemTCto(params, address(this));
+        return _redeemTCto(params);
     }
 
     /**
@@ -605,7 +605,7 @@ abstract contract MocOperations is MocCore {
     function execRedeemTP(
         RedeemTPParams calldata params_
     ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
-        return _redeemTPto(params_, address(this));
+        return _redeemTPto(params_);
     }
 
     /**
@@ -633,7 +633,7 @@ abstract contract MocOperations is MocCore {
         onlyMocQueue
         returns (uint256 qACtoRedeem, uint256 qTPRedeemed, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        (qACtoRedeem, qTPRedeemed, qFeeTokenTotalNeeded, feeCalcs) = _redeemTCandTPto(params_, address(this));
+        (qACtoRedeem, qTPRedeemed, qFeeTokenTotalNeeded, feeCalcs) = _redeemTCandTPto(params_);
         // return the unused locked TPs
         unchecked {
             uint256 qTPDif = params_.qTP - qTPRedeemed;
@@ -652,7 +652,7 @@ abstract contract MocOperations is MocCore {
         onlyMocQueue
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _swapTCforTPto(params_, address(this));
+        return _swapTCforTPto(params_);
     }
 
     /**
@@ -666,7 +666,7 @@ abstract contract MocOperations is MocCore {
         onlyMocQueue
         returns (uint256 qACSurcharges, uint256 qTCMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _swapTPforTCto(params_, address(this));
+        return _swapTPforTCto(params_);
     }
 
     /**
@@ -680,7 +680,7 @@ abstract contract MocOperations is MocCore {
         onlyMocQueue
         returns (uint256 qACSurcharges, uint256 qTPMinted, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs)
     {
-        return _swapTPforTPto(params_, address(this));
+        return _swapTPforTPto(params_);
     }
 
     /**
