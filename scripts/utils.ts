@@ -2,6 +2,7 @@ import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
+import { MocQueue, MocQueue__factory } from "../typechain";
 
 export const CONSTANTS = {
   ZERO_ADDRESS: ethers.constants.AddressZero,
@@ -83,6 +84,34 @@ export const deployCollateralToken = (artifactBaseName: string) => async (hre: H
       governorAddress,
     ],
   });
+
+  return hre.network.live; // prevents re execution on live networks
+};
+
+export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
+  const { getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  const governorAddress = getGovernorAddresses(hre);
+  const signer = ethers.provider.getSigner();
+  const mocQueue = await deployUUPSArtifact({
+    hre,
+    artifactBaseName,
+    contract: "MocQueue",
+    initializeArgs: [
+      governorAddress,
+      mocAddresses.pauserAddress,
+      queueParams.minOperWaitingBlk,
+      queueParams.maxOperPerBatch,
+      queueParams.execFeeParams,
+    ],
+  });
+
+  if (hre.network.tags.local || hre.network.tags.testnet) {
+    console.log(`[ONLY TESTING] Whitelisting deployer: ${deployer} as executor`);
+    const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);
+    await mocQueueProxy.grantRole(EXECUTOR_ROLE, deployer);
+  }
 
   return hre.network.live; // prevents re execution on live networks
 };
@@ -209,6 +238,9 @@ export const deployCARC20 = async (
   const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
   if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
 
+  const deployedMocQueue = await deployments.getOrNull("MocQueueCARC20Proxy");
+  if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
+
   let {
     collateralAssetAddress,
     pauserAddress,
@@ -252,6 +284,7 @@ export const deployCARC20 = async (
       {
         initializeCoreParams: {
           initializeBaseBucketParams: {
+            mocQueueAddress: deployedMocQueue.address,
             feeTokenAddress,
             feeTokenPriceProviderAddress,
             tcTokenAddress: CollateralToken.address,
@@ -300,5 +333,30 @@ export const deployCARC20 = async (
     await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
   }
 
+  if (hre.network.tags.local) {
+    // On local environment, Governor is mocked, and we can register the bucket without changer
+    const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
+    console.log(`Registering MocRC20 bucket as enqueuer: ${mocCARC20.address}`);
+    await mocQueue.registerBucket(mocCARC20.address);
+  }
+
   return mocCARC20;
+};
+
+export const deployMocQueue = async (
+  hre: HardhatRuntimeEnvironment,
+  contractName: "MocQueueMock" | "MocQueue",
+): Promise<MocQueue> => {
+  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
+  const mocQueueMock = await mocQueueMockFactory.deploy();
+  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  await mocQueue.initialize(
+    await getGovernorAddresses(hre),
+    mocAddresses.pauserAddress,
+    queueParams.minOperWaitingBlk,
+    queueParams.maxOperPerBatch,
+    queueParams.execFeeParams,
+  );
+  return mocQueue;
 };

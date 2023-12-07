@@ -32,8 +32,8 @@ const feeTokenBehavior = function () {
       spender = mocImpl.address;
       // give some TC to alice
       await mocFunctions.mintTC({ from: alice, qTC: 1000 });
-      expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
-      expectTCRedeemed = expectEventFor(mocImpl, mocFunctions, "TCRedeemed");
+      expectTCMinted = expectEventFor(mocContracts, "TCMinted");
+      expectTCRedeemed = expectEventFor(mocContracts, "TCRedeemed");
     });
     describe("GIVEN alice has 50 Fee Token", function () {
       beforeEach(async function () {
@@ -297,12 +297,13 @@ const feeTokenBehavior = function () {
     });
     describe("GIVEN Alice has only enough AC to cover Operation, but not platform fee\n", function () {
       beforeEach(async function () {
+        const execFee = await mocQueue.execFee(1); // mintTC execution fee
         const aliceACBalance: Balance = await mocFunctions.acBalanceOf(alice);
         // Empty Alice AC balance except for the strictly needed for mintTC
         mocFunctions.acTransfer({
           from: alice,
           to: vendor,
-          amount: aliceACBalance.sub(pEth(10)),
+          amount: aliceACBalance.sub(pEth(10)).sub(execFee),
           applyPrecision: false,
         });
       });

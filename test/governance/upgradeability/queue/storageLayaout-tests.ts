@@ -9,7 +9,7 @@ describe("Feature: Check MocQueue storage layout compatibility using openzeppeli
     before(async () => {
       await deployments.fixture();
       const signer = ethers.provider.getSigner();
-      const deployedMocQueue = await deployments.getOrNull("MocQueueProxy");
+      const deployedMocQueue = await deployments.getOrNull("MocQueueCARC20Proxy");
       if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
       mocQueue = MocQueue__factory.connect(deployedMocQueue.address, signer);
       mocQueueFactory = await ethers.getContractFactory("MocQueue");

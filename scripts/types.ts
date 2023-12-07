@@ -38,6 +38,8 @@ export type DeployParameters = {
     tcInterestPaymentBlockSpan: number;
     // number of blocks that have to elapse for the linear decay factor to be 0
     decayBlockSpan: number;
+    // max amount of gas forwarded on AC transfer(only for coinbase flavor)
+    transferMaxGas?: number;
   };
   settlementParams: {
     // number of blocks between settlements
@@ -97,6 +99,8 @@ export type DeployParameters = {
     maxAbsoluteOpProviderAddress: Address;
     // max operation difference provider address
     maxOpDiffProviderAddress: Address;
+    // address who receives the funds when the coinbase unlock fails(only for coinbase flavor)
+    coinbaseFailedTransferFallback?: Address;
   };
   queueParams: {
     // min amount of blocks the Operation should wait in the Queue before execution

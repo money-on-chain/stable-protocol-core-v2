@@ -14,11 +14,17 @@ const redeemTPBehavior = function () {
   let bob: Address;
   let vendor: Address;
   let expectEvent: any;
+  let assertACResult: any;
   let tp0: Address;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_2 = 2;
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tpRedeemExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {
@@ -26,7 +32,8 @@ const redeemTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TPRedeemed");
+      expectEvent = expectEventFor(mocContracts, "TPRedeemed");
+      assertACResult = mocFunctions.assertACResult(-tpRedeemExecFee);
       tp0 = mocContracts.mocPeggedTokens[TP_0].address;
     });
 
@@ -51,9 +58,7 @@ const redeemTPBehavior = function () {
       });
       describe("WHEN alice tries to redeem a non-existent TP", function () {
         it("THEN tx reverts with invalid address", async function () {
-          const fakeTP = mocContracts.mocCollateralToken.address;
-          const signer = await ethers.getSigner(alice);
-          await mocContracts.mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, pEth(100));
+          const fakeTP = mocContracts.mocCollateralToken;
           await expect(mocFunctions.redeemTP({ tp: fakeTP, from: alice, qTP: 100 })).to.be.revertedWithCustomError(
             mocImpl,
             ERRORS.INVALID_ADDRESS,
@@ -137,7 +142,7 @@ const redeemTPBehavior = function () {
         it("THEN alice balance increase 100 Asset - 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(95, diff);
+          assertACResult(95, diff);
         });
         it("THEN a TPRedeemed event is emitted", async function () {
           // i: 0
@@ -153,12 +158,12 @@ const redeemTPBehavior = function () {
           await expectEvent(tx, args);
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: Moc
           // to: Zero Address
           // amount: 23500 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(23500));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(23500));
         });
       });
       describe("WHEN alice redeems 2350 TP to bob", function () {
@@ -227,7 +232,7 @@ const redeemTPBehavior = function () {
         it("THEN alice AC balance increase 85 Asset (100 qAC - 5% qACFee - 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(85, diff);
+          assertACResult(85, diff);
         });
         it("THEN vendor AC balance increase 10 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -475,7 +480,7 @@ const redeemTPBehavior = function () {
           it("THEN alice AC balance increase 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(100, diff);
+            assertACResult(100, diff);
           });
           it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);

@@ -15,13 +15,18 @@ const redeemTCandTPBehavior = function () {
   let bob: Address;
   let vendor: Address;
   let expectEvent: any;
+  let assertACResult: any;
   let tps: Address[];
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
   const TP_4 = 4;
-
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { redeemTCandTPExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   let coverageBefore: BigNumber;
   let tcPriceBefore: BigNumber;
@@ -40,7 +45,8 @@ const redeemTCandTPBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      expectEvent = expectEventFor(mocImpl, mocFunctions, "TCandTPRedeemed");
+      expectEvent = expectEventFor(mocContracts, "TCandTPRedeemed");
+      assertACResult = mocFunctions.assertACResult(-redeemTCandTPExecFee);
       tps = mocContracts.mocPeggedTokens.map((it: any) => it.address);
     });
 
@@ -152,7 +158,7 @@ const redeemTCandTPBehavior = function () {
         it("THEN alice AC balance increase 95.066 AC", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec("95.066666666666666667", diff);
+          assertACResult("95.066666666666666667", diff);
         });
         it("THEN Moc balance decrease 103.33 AC", async function () {
           const mocActualACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
@@ -190,20 +196,19 @@ const redeemTCandTPBehavior = function () {
           ]);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
+          // from: Moc
           // to: Zero Address
           // amount: 100 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth(100));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(100));
         });
         it("THEN a Pegged Token Transfer event is emitted", async function () {
-          const from = mocFunctions.getOperator ? mocFunctions.getOperator() : alice;
           // to: Zero Address
           // amount: 783.33 TP
           await expect(tx)
             .to.emit(mocContracts.mocPeggedTokens[TP_0], "Transfer")
-            .withArgs(from, CONSTANTS.ZERO_ADDRESS, pEth("783.333333333333333333"));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth("783.333333333333333333"));
         });
       });
       describe("WHEN alice redeems 100 TC and 23500 TP (more amount of TP) to bob", function () {
@@ -275,7 +280,7 @@ const redeemTCandTPBehavior = function () {
         it("THEN alice AC balance increase 84.73 Asset (103.33 qAC - 8% qACFee - 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec("84.733333333333333334", diff);
+          assertACResult("84.733333333333333334", diff);
         });
         it("THEN vendor AC balance increase 10.33 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -489,7 +494,7 @@ const redeemTCandTPBehavior = function () {
           it("THEN alice AC balance increase 103.33 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec("103.333333333333333333", diff);
+            assertACResult("103.333333333333333333", diff);
           });
           it("THEN alice Fee Token balance decrease 4.13 (103.33 * 8% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);

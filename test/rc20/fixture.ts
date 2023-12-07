@@ -1,10 +1,12 @@
-import { deployments, getNamedAccounts } from "hardhat";
+import hre, { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
 import {
   ERC20Mock,
   ERC20Mock__factory,
   MocCARC20,
   MocCARC20__factory,
+  MocQueue,
+  MocQueue__factory,
   MocRC20,
   MocRC20__factory,
   MocVendors,
@@ -16,12 +18,14 @@ import {
   MocCoreExpansion,
   MocCoreExpansion__factory,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { deployMocQueue } from "../../scripts/utils";
 
 export const fixtureDeployedMocRC20 = memoizee(
   (
     amountPegTokens: number,
     tpParams?: any,
+    useMockQueue?: boolean,
   ): (() => Promise<{
     mocImpl: MocCARC20;
     mocCollateralToken: MocRC20;
@@ -32,6 +36,7 @@ export const fixtureDeployedMocRC20 = memoizee(
     mocVendors: MocVendors;
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
+    mocQueue: MocQueue;
     maxAbsoluteOpProvider: DataProviderMock;
     maxOpDiffProvider: DataProviderMock;
   }>) => {
@@ -53,8 +58,21 @@ export const fixtureDeployedMocRC20 = memoizee(
       const mocVendors: MocVendors = MocVendors__factory.connect(await mocImpl.mocVendors(), signer);
       const mocCollateralToken: MocRC20 = MocRC20__factory.connect(await mocImpl.tcToken(), signer);
       const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(await mocImpl.acToken(), signer);
+      let mocQueue: MocQueue;
 
-      const { alice, bob, charlie, vendor } = await getNamedAccounts();
+      const { deployer, alice, bob, charlie, vendor } = await getNamedAccounts();
+
+      if (useMockQueue) {
+        mocQueue = await deployMocQueue(hre, "MocQueueMock");
+        await Promise.all([
+          mocImpl.setMocQueue(mocQueue.address),
+          mocQueue.registerBucket(mocImpl.address),
+          mocQueue.grantRole(EXECUTOR_ROLE, deployer),
+        ]);
+      } else {
+        mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
+      }
+
       // Fill users accounts with balance so that they can operate
       await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(1000000000000))));
 
@@ -78,6 +96,7 @@ export const fixtureDeployedMocRC20 = memoizee(
         mocVendors,
         feeToken,
         feeTokenPriceProvider,
+        mocQueue,
         maxAbsoluteOpProvider,
         maxOpDiffProvider,
       };

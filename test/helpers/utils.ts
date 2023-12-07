@@ -1,5 +1,5 @@
 import { ethers, getNamedAccounts, network } from "hardhat";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -15,13 +15,10 @@ import {
   MocTC__factory,
   PriceProviderMock,
   DataProviderMock,
-  MocQueue__factory,
-  MocQueue,
 } from "../../typechain";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
-import { getNetworkDeployParams, getGovernorAddresses } from "./utils";
 
 export * from "../../scripts/utils";
 
@@ -173,24 +170,6 @@ export async function deployAndAddPeggedTokens(
   return { mocPeggedTokens, priceProviders };
 }
 
-export const deployMocQueue = async (
-  hre: HardhatRuntimeEnvironment,
-  contractName: "MocQueueMock" | "MocQueue",
-): Promise<MocQueue> => {
-  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
-  const mocQueueMock = await mocQueueMockFactory.deploy();
-  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
-  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
-  await mocQueue.initialize(
-    await getGovernorAddresses(hre),
-    mocAddresses.pauserAddress,
-    queueParams.minOperWaitingBlk,
-    queueParams.maxOperPerBatch,
-    queueParams.execFeeParams,
-  );
-  return mocQueue;
-};
-
 export async function deployPriceProvider(price: BigNumber): Promise<PriceProviderMock> {
   const factory = await ethers.getContractFactory("PriceProviderMock");
   return factory.deploy(price);
@@ -285,6 +264,7 @@ export const ERROR_SELECTOR = {
   QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
   INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
+  TRANSFER_FAILED: getSelectorFor(ERRORS.TRANSFER_FAIL + "()"),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {
@@ -317,14 +297,12 @@ export async function ensureERC1820(): Promise<void> {
   }
 }
 
-export function expectEventFor(mocImpl: any, mocFunctions: any, eventName: string): any {
+export function expectEventFor(mocContracts: any, eventName: string): any {
   return async (tx: ContractTransaction, rawArgs: any[]) => {
-    let args = rawArgs;
-    if (mocFunctions.getEventArgs) {
-      args = mocFunctions.getEventArgs(args);
-    }
+    // TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready
+    let args = [...rawArgs, anyValue];
     await expect(tx)
-      .to.emit(mocFunctions.getEventSource ? mocFunctions.getEventSource() : mocImpl, eventName)
+      .to.emit(mocContracts.mocQueue, eventName)
       .withArgs(...args);
   };
 }

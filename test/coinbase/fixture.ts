@@ -1,5 +1,6 @@
-import { deployments, getNamedAccounts } from "hardhat";
+import hre, { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
+import { deployMocQueue } from "../../scripts/utils";
 import {
   ERC20Mock,
   ERC20Mock__factory,
@@ -13,13 +14,16 @@ import {
   PriceProviderMock__factory,
   DataProviderMock,
   DataProviderMock__factory,
+  MocQueue,
+  MocQueue__factory,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { deployAndAddPeggedTokens, EXECUTOR_ROLE, pEth } from "../helpers/utils";
 
 export const fixtureDeployedMocCoinbase = memoizee(
   (
     amountPegTokens: number,
     tpParams?: any,
+    useMockQueue?: boolean,
   ): (() => Promise<{
     mocImpl: MocCACoinbase;
     mocCollateralToken: MocRC20;
@@ -27,6 +31,7 @@ export const fixtureDeployedMocCoinbase = memoizee(
     priceProviders: PriceProviderMock[];
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
+    mocQueue: MocQueue;
     maxAbsoluteOpProvider: DataProviderMock;
     maxOpDiffProvider: DataProviderMock;
   }>) => {
@@ -55,7 +60,20 @@ export const fixtureDeployedMocCoinbase = memoizee(
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 
       // initialize vendor with 10% markup
-      const { vendor } = await getNamedAccounts();
+      const { deployer, vendor } = await getNamedAccounts();
+
+      let mocQueue: MocQueue;
+      if (useMockQueue) {
+        mocQueue = await deployMocQueue(hre, "MocQueueMock");
+        await Promise.all([
+          mocImpl.setMocQueue(mocQueue.address),
+          mocQueue.registerBucket(mocImpl.address),
+          mocQueue.grantRole(EXECUTOR_ROLE, deployer),
+        ]);
+      } else {
+        mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
+      }
+
       await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
 
       return {
@@ -65,6 +83,7 @@ export const fixtureDeployedMocCoinbase = memoizee(
         priceProviders,
         feeToken,
         feeTokenPriceProvider,
+        mocQueue,
         maxAbsoluteOpProvider,
         maxOpDiffProvider,
       };

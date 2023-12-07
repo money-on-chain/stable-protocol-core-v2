@@ -1,13 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { MocCoreShared, MocCore } from "../../core/MocCoreShared.sol";
+import { MocCore } from "../../core/MocCore.sol";
+import { MocQueue } from "../../queue/MocQueue.sol";
+import { MocOperations } from "../../core/MocOperations.sol";
+import { MocQueueExecFees } from "../../queue/MocQueueExecFees.sol";
 
 /**
  * @title MocCACoinbase: Moc Collateral Asset Coinbase
  * @notice Moc protocol implementation using network Coinbase as Collateral Asset
  */
-contract MocCACoinbase is MocCoreShared {
+contract MocCACoinbase is MocOperations {
+    // ------- Structs -------
+    struct InitializeParams {
+        InitializeCoreParams initializeCoreParams;
+        // max amount of gas forwarded on AC transfer
+        uint256 transferMaxGas;
+        // when the coinbase unlock fails funds are sent to this address to don't revert the queue execution
+        address coinbaseFailedTransferFallback;
+    }
+
+    // ------- Storage -------
+    // max amount of gas forwarded on AC transfer to avoid
+    // using all the gas on the fallback function
+    uint256 public transferMaxGas;
+    // when the coinbase unlock fails funds are sent to this address to don't revert the queue execution
+    address public coinbaseFailedTransferFallback;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -16,7 +35,7 @@ contract MocCACoinbase is MocCoreShared {
     // ------- Initializer -------
     /**
      * @notice contract initializer
-     * @param initializeCoreParams_ contract initializer params
+     * @param initializeParams_ contract initializer params
      * @dev governorAddress The address that will define when a change contract is authorized
      *      pauserAddress The address that is authorized to pause this contract
      *      tcTokenAddress Collateral Token contract address
@@ -40,9 +59,14 @@ contract MocCACoinbase is MocCoreShared {
      *      decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      *      emaCalculationBlockSpan amount of blocks to wait between Pegged ema calculation
      *      mocVendors address for MocVendors contract
+     *      mocQueueAddress address for MocQueue contract
+     *      transferMaxGas max amount of gas forwarded on AC transfer
+     *      coinbaseFailedTransferFallback address who receives the funds when the coinbase unlock fails
      */
-    function initialize(InitializeCoreParams calldata initializeCoreParams_) external initializer {
-        __MocCore_init(initializeCoreParams_);
+    function initialize(InitializeParams calldata initializeParams_) external initializer {
+        __MocCore_init(initializeParams_.initializeCoreParams);
+        transferMaxGas = initializeParams_.transferMaxGas;
+        coinbaseFailedTransferFallback = initializeParams_.coinbaseFailedTransferFallback;
     }
 
     // ------- Internal Functions -------
@@ -53,12 +77,27 @@ contract MocCACoinbase is MocCoreShared {
     function acTransfer(address to_, uint256 amount_) internal override {
         if (amount_ > 0) {
             if (to_ == address(0)) revert InvalidAddress();
+            // this transfer is gas capped to avoid spent more than the fixed precalculated execution fees
+            // by using the fallback function if `to_` is a contract
             // solhint-disable-next-line avoid-low-level-calls
-            // TODO: when queued CA coinbase is allowed, this transfer should be gas capped
-            // TODO: queue should also handle this fail when returning funds (unlocking)
-            (bool success, ) = to_.call{ value: amount_ }("");
+            (bool success, ) = to_.call{ value: amount_, gas: transferMaxGas }("");
             if (!success) revert TransferFailed();
         }
+    }
+
+    /**
+     * @inheritdoc MocOperations
+     */
+    function unlockACInPending(address owner_, uint256 qACToUnlock_) external override onlyMocQueue {
+        unchecked {
+            qACLockedInPending -= qACToUnlock_;
+        }
+        // this transfer is gas capped to avoid spent more than the fixed precalculated execution fees
+        // by using the fallback function if `to_` is a contract
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, ) = owner_.call{ value: qACToUnlock_, gas: transferMaxGas }("");
+        // if cannot receive the AC, it is transferred to another address to don't revert the queue execution
+        if (!success) acTransfer(coinbaseFailedTransferFallback, qACToUnlock_);
     }
 
     /**
@@ -69,14 +108,14 @@ contract MocCACoinbase is MocCoreShared {
     }
 
     /**
-     * @notice hook before any AC reception involving operation, as dealing with an RC20 Token
-     * we need to transfer the AC amount from the user, to the contract
-     * @param qACMax_ max amount of AC available
-     * @param qACNeeded_ amount of AC needed
-     * @return change amount needed to be return to the sender after the operation is complete
+     * @inheritdoc MocOperations
      */
-    function _onACNeededOperation(uint256 qACMax_, uint256 qACNeeded_) internal pure override returns (uint256 change) {
-        change = qACMax_ - qACNeeded_;
+    function _getExecFeeSent(
+        uint256 qACmax_,
+        MocQueueExecFees.OperType operType_
+    ) internal view override returns (uint256 qACmaxSent, uint256 execFeeSent) {
+        uint256 execFee = MocQueue(mocQueue).getAndVerifyExecFee(operType_, qACmax_);
+        return (qACmax_ - execFee, execFee);
     }
 
     // ------- External Functions -------
@@ -85,18 +124,10 @@ contract MocCACoinbase is MocCoreShared {
      * @notice caller sends coinbase as Collateral Asset and receives Collateral Token
      * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
-     * @return qACtotalNeeded amount of AC used to mint qTC
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTC(uint256 qTC_) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTCParams memory params = MintTCParams({
-            qTC: qTC_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
+    function mintTC(uint256 qTC_) external payable returns (uint256 operId) {
+        return _mintTCtoViaVendor(qTC_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -105,21 +136,10 @@ contract MocCACoinbase is MocCoreShared {
      * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
      * @param vendor_ address who receives a markup
-     * @return qACtotalNeeded amount of AC used to mint qTC
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTCViaVendor(
-        uint256 qTC_,
-        address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTCParams memory params = MintTCParams({
-            qTC: qTC_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: vendor_
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
+    function mintTCViaVendor(uint256 qTC_, address vendor_) external payable returns (uint256 operId) {
+        return _mintTCtoViaVendor(qTC_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -127,21 +147,10 @@ contract MocCACoinbase is MocCoreShared {
      * @dev any extra value, not spent on TC nor fees, will be return to sender
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
-     * @return qACtotalNeeded amount of AC used to mint qTC
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTCto(
-        uint256 qTC_,
-        address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTCParams memory params = MintTCParams({
-            qTC: qTC_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: address(0)
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
+    function mintTCto(uint256 qTC_, address recipient_) external payable returns (uint256 operId) {
+        return _mintTCtoViaVendor(qTC_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -151,22 +160,14 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTC_ amount of Collateral Token to mint
      * @param recipient_ address who receives the Collateral Token
      * @param vendor_ address who receives a markup
-     * @return qACtotalNeeded amount of AC used to mint qTC
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCtoViaVendor(
         uint256 qTC_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTCParams memory params = MintTCParams({
-            qTC: qTC_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: vendor_
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTCto(params);
+    ) external payable returns (uint256 operId) {
+        return _mintTCtoViaVendor(qTC_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -174,19 +175,10 @@ contract MocCACoinbase is MocCoreShared {
      * @dev any extra value, not spent on TP nor fees, will be return to sender
      * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
-     * @return qACtotalNeeded amount of AC used to mint qTP
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTP(address tp_, uint256 qTP_) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTPParams memory params = MintTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
+    function mintTP(address tp_, uint256 qTP_) external payable returns (uint256 operId) {
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -196,23 +188,10 @@ contract MocCACoinbase is MocCoreShared {
      * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param vendor_ address who receives a markup
-     * @return qACtotalNeeded amount of AC used to mint qTP
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTPViaVendor(
-        address tp_,
-        uint256 qTP_,
-        address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTPParams memory params = MintTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: vendor_
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
+    function mintTPViaVendor(address tp_, uint256 qTP_, address vendor_) external payable returns (uint256 operId) {
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -221,23 +200,10 @@ contract MocCACoinbase is MocCoreShared {
      * @param tp_ Pegged Token address to mint
      * @param qTP_ amount of Pegged Token to mint
      * @param recipient_ address who receives the Pegged Token
-     * @return qACtotalNeeded amount of AC used to mint qTP
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTPto(
-        address tp_,
-        uint256 qTP_,
-        address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTPParams memory params = MintTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: address(0)
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
+    function mintTPto(address tp_, uint256 qTP_, address recipient_) external payable returns (uint256 operId) {
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -248,24 +214,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of Pegged Token to mint
      * @param recipient_ address who receives the Pegged Token
      * @param vendor_ address who receives a markup
-     * @return qACtotalNeeded amount of AC used to mint qTP
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTPtoViaVendor(
         address tp_,
         uint256 qTP_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qFeeToken) {
-        MintTPParams memory params = MintTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: vendor_
-        });
-        (qACtotalNeeded, qFeeToken, ) = _mintTPto(params);
+    ) external payable returns (uint256 operId) {
+        return _mintTPtoViaVendor(tp_, qTP_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -276,23 +233,10 @@ contract MocCACoinbase is MocCoreShared {
      *  Reverts if qAC sent are insufficient.
      * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
-     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTCandTP(
-        address tp_,
-        uint256 qTP_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
-        MintTCandTPParams memory params = MintTCandTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
-        });
-        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    function mintTCandTP(address tp_, uint256 qTP_) external payable returns (uint256 operId) {
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -305,24 +249,14 @@ contract MocCACoinbase is MocCoreShared {
      * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param vendor_ address who receives a markup
-     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTPViaVendor(
         address tp_,
         uint256 qTP_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
-        MintTCandTPParams memory params = MintTCandTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: vendor_
-        });
-        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    ) external payable returns (uint256 operId) {
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -334,24 +268,10 @@ contract MocCACoinbase is MocCoreShared {
      * @param tp_ Pegged Token address
      * @param qTP_ amount of Pegged Token to mint
      * @param recipient_ address who receives the Collateral Token and Pegged Token
-     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function mintTCandTPto(
-        address tp_,
-        uint256 qTP_,
-        address recipient_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
-        MintTCandTPParams memory params = MintTCandTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: address(0)
-        });
-        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    function mintTCandTPto(address tp_, uint256 qTP_, address recipient_) external payable returns (uint256 operId) {
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -365,25 +285,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of Pegged Token to mint
      * @param recipient_ address who receives the Collateral Token and Pegged Token
      * @param vendor_ address who receives a markup
-     * @return qACtotalNeeded amount of AC used to mint Collateral Token and Pegged Token
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function mintTCandTPtoViaVendor(
         address tp_,
         uint256 qTP_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACtotalNeeded, uint256 qTCMinted, uint256 qFeeToken) {
-        MintTCandTPParams memory params = MintTCandTPParams({
-            tp: tp_,
-            qTP: qTP_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: vendor_
-        });
-        (qACtotalNeeded, qTCMinted, qFeeToken, ) = _mintTCandTPto(params);
+    ) external payable returns (uint256 operId) {
+        return _mintTCandTPtoViaVendor(tp_, qTP_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -392,27 +302,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param tpTo_ target Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTP(
         address tpFrom_,
         address tpTo_,
         uint256 qTP_,
         uint256 qTPmin_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTPforTPParams memory params = SwapTPforTPParams({
-            tpFrom: tpFrom_,
-            tpTo: tpTo_,
-            qTP: qTP_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -423,9 +321,7 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that the sender expects to receive
      * @param vendor_ address who receives a markup
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTPViaVendor(
         address tpFrom_,
@@ -433,18 +329,8 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTP_,
         uint256 qTPmin_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTPforTPParams memory params = SwapTPforTPParams({
-            tpFrom: tpFrom_,
-            tpTo: tpTo_,
-            qTP: qTP_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: vendor_
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -454,9 +340,7 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param recipient_ address who receives the target Pegged Token
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTPto(
         address tpFrom_,
@@ -464,18 +348,8 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTP_,
         uint256 qTPmin_,
         address recipient_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTPforTPParams memory params = SwapTPforTPParams({
-            tpFrom: tpFrom_,
-            tpTo: tpTo_,
-            qTP: qTP_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: address(0)
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -487,9 +361,7 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTPmin_ minimum amount of target Pegged Token that `recipient_` expects to receive
      * @param recipient_ address who receives the target Pegged Token
      * @param vendor_ address who receives a markup
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTPtoViaVendor(
         address tpFrom_,
@@ -498,18 +370,8 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTPmin_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTPforTPParams memory params = SwapTPforTPParams({
-            tpFrom: tpFrom_,
-            tpTo: tpTo_,
-            qTP: qTP_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: vendor_
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTPforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTPtoViaVendor(tpFrom_, tpTo_, qTP_, qTPmin_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -517,25 +379,10 @@ contract MocCACoinbase is MocCoreShared {
      * @param tp_ Pegged Token address
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
-     * @return qACFee amount of AC used to pay fee
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function swapTPforTC(
-        address tp_,
-        uint256 qTP_,
-        uint256 qTCmin_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
-        SwapTPforTCParams memory params = SwapTPforTCParams({
-            tp: tp_,
-            qTP: qTP_,
-            qTCmin: qTCmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
-        });
-        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params, msg.sender);
+    function swapTPforTC(address tp_, uint256 qTP_, uint256 qTCmin_) external payable returns (uint256 operId) {
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -545,26 +392,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that the sender expects to receive
      * @param vendor_ address who receives a markup
-     * @return qACFee amount of AC used to pay fee
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTCViaVendor(
         address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
-        SwapTPforTCParams memory params = SwapTPforTCParams({
-            tp: tp_,
-            qTP: qTP_,
-            qTCmin: qTCmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: vendor_
-        });
-        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -573,26 +409,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTP_ amount of owned Pegged Token to swap
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Token
-     * @return qACFee amount of AC used to pay fee
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTCto(
         address tp_,
         uint256 qTP_,
         uint256 qTCmin_,
         address recipient_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
-        SwapTPforTCParams memory params = SwapTPforTCParams({
-            tp: tp_,
-            qTP: qTP_,
-            qTCmin: qTCmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: address(0)
-        });
-        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -603,9 +428,7 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTCmin_ minimum amount of Collateral Token that `recipient_` expects to receive
      * @param recipient_ address who receives the Collateral Token
      * @param vendor_ address who receives a markup
-     * @return qACFee amount of AC used to pay fee
-     * @return qTCMinted amount of Collateral Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTPforTCtoViaVendor(
         address tp_,
@@ -613,17 +436,8 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTCmin_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTCMinted, uint256 qFeeToken) {
-        SwapTPforTCParams memory params = SwapTPforTCParams({
-            tp: tp_,
-            qTP: qTP_,
-            qTCmin: qTCmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: vendor_
-        });
-        (qACFee, qTCMinted, qFeeToken, ) = _swapTPforTCto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTPforTCtoViaVendor(tp_, qTP_, qTCmin_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -631,25 +445,10 @@ contract MocCACoinbase is MocCoreShared {
      * @param tp_ Pegged Token address
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
-    function swapTCforTP(
-        address tp_,
-        uint256 qTC_,
-        uint256 qTPmin_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTCforTPParams memory params = SwapTCforTPParams({
-            tp: tp_,
-            qTC: qTC_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: address(0)
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params, msg.sender);
+    function swapTCforTP(address tp_, uint256 qTC_, uint256 qTPmin_) external payable returns (uint256 operId) {
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, msg.sender, address(0));
     }
 
     /**
@@ -659,26 +458,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTC_ amount of Collateral Token to swap
      * @param qTPmin_ minimum amount of Pegged Token that the sender expects to receive
      * @param vendor_ address who receives a markup
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTPViaVendor(
         address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTCforTPParams memory params = SwapTCforTPParams({
-            tp: tp_,
-            qTC: qTC_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: msg.sender,
-            vendor: vendor_
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, msg.sender, vendor_);
     }
 
     /**
@@ -687,26 +475,15 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTC_ amount of Collateral to swap
      * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
      * @param recipient_ address who receives the Pegged Token
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTPto(
         address tp_,
         uint256 qTC_,
         uint256 qTPmin_,
         address recipient_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTCforTPParams memory params = SwapTCforTPParams({
-            tp: tp_,
-            qTC: qTC_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: address(0)
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, recipient_, address(0));
     }
 
     /**
@@ -717,9 +494,7 @@ contract MocCACoinbase is MocCoreShared {
      * @param qTPmin_ minimum amount of Pegged Token that `recipient_` expects to receive
      * @param recipient_ address who receives the Pegged Token
      * @param vendor_ address who receives a markup
-     * @return qACFee amount of AC used to pay fee
-     * @return qTPMinted amount of Pegged Token minted
-     * @return qFeeToken amount of Fee Token used by sender to pay fees. 0 if qAC is used instead
+     * @return operId Identifier to track the Operation lifecycle
      */
     function swapTCforTPtoViaVendor(
         address tp_,
@@ -727,17 +502,8 @@ contract MocCACoinbase is MocCoreShared {
         uint256 qTPmin_,
         address recipient_,
         address vendor_
-    ) external payable returns (uint256 qACFee, uint256 qTPMinted, uint256 qFeeToken) {
-        SwapTCforTPParams memory params = SwapTCforTPParams({
-            tp: tp_,
-            qTC: qTC_,
-            qTPmin: qTPmin_,
-            qACmax: msg.value,
-            sender: msg.sender,
-            recipient: recipient_,
-            vendor: vendor_
-        });
-        (qACFee, qTPMinted, qFeeToken, ) = _swapTCforTPto(params, msg.sender);
+    ) external payable returns (uint256 operId) {
+        return _swapTCforTPtoViaVendor(tp_, qTC_, qTPmin_, msg.value, recipient_, vendor_);
     }
 
     /**
@@ -745,6 +511,14 @@ contract MocCACoinbase is MocCoreShared {
      */
     receive() external payable {
         _depositAC(msg.value);
+    }
+
+    /**
+     * @notice sets max amount of gas forwarded on AC transfer
+     * @param transferMaxGas_ new max amount of gas forwarded on AC transfer
+     */
+    function setTransferMAxGas(uint256 transferMaxGas_) external onlyAuthorizedChanger {
+        transferMaxGas = transferMaxGas_;
     }
 
     /**

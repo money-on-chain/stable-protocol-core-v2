@@ -11,4 +11,4 @@ export default deployFunc;
 
 deployFunc.id = "deployed_MocCARC20"; // id required to prevent re-execution
 deployFunc.tags = ["MocCARC20"];
-deployFunc.dependencies = ["CollateralTokenCARC20", "MocVendorsCARC20", "MocCARC20Expansion"];
+deployFunc.dependencies = ["CollateralTokenCARC20", "MocVendorsCARC20", "MocCARC20Expansion", "MocQueueCARC20"];

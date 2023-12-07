@@ -5,8 +5,6 @@ import { MocTC, IMocRC20 } from "../tokens/MocTC.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 import { IDataProvider } from "../interfaces/IDataProvider.sol";
 import { MocUpgradable } from "../governance/MocUpgradable.sol";
-/* solhint-disable-next-line max-line-length */
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -14,7 +12,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice MocBaseBucket holds Bucket Zero state, both for the Collateral Bag and PeggedTokens Items.
  * @dev Abstracts all rw operations on the main bucket and expose all calculations relative to its state.
  */
-abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
+abstract contract MocBaseBucket is MocUpgradable {
     // ------- Events -------
 
     event ContractLiquidated();
@@ -40,6 +38,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     }
 
     struct InitializeBaseBucketParams {
+        // MocQueue contract address
+        address mocQueueAddress;
         // Fee Token contract address
         address feeTokenAddress;
         // Fee Token price provider address
@@ -185,6 +185,13 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // next settlement block
     uint256 public bns;
 
+    // ------- Storage Queue -------
+
+    // amount of AC locked on MocQueue for pending operations
+    uint256 public qACLockedInPending;
+    // address for MocQueue contract
+    address public mocQueue; // cannot used MocQueue, import failed due circular reference
+
     // ------- Storage Success Fee Tracking -------
 
     // profit and loss in collateral asset for each Pegged Token because its devaluation [N]
@@ -234,7 +241,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     /**
      * @notice contract initializer
      * @param initializeBaseBucketParams_ contract initializer params
-     * @dev   feeTokenAddress Fee Token contract address
+     * @dev   mocQueueAddress address for MocQueue contract
+     *        feeTokenAddress Fee Token contract address
      *        feeTokenPriceProviderAddress Fee Token price provider contract address
      *        tcTokenAddress Collateral Token contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
@@ -277,6 +285,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.feeTokenPct);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
+        mocQueue = initializeBaseBucketParams_.mocQueueAddress;
         feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
         feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
@@ -390,14 +399,13 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
-     * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_) internal {
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qAC_);
-        // burn qTP from this address
+        // burn the qTp previously locked from the user
         // slither-disable-next-line unused-return
-        tpTokens[i_].burn(toBurnFrom_, qTP_);
+        tpTokens[i_].burn(address(this), qTP_);
     }
 
     /**
@@ -418,13 +426,12 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @notice Subtracts Collateral Token and Collateral Asset from the Bucket and burns `qTC_`
      * @param qTC_ amount of Collateral Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
-     * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_) internal {
         // sub qTC and qAC from the Bucket
         _withdrawTC(qTC_, qAC_);
-        // burn qTC from this address
-        tcToken.burn(toBurnFrom_, qTC_);
+        // burn the qTC previously locked from the user
+        tcToken.burn(address(this), qTC_);
     }
 
     /**
@@ -1007,6 +1014,15 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     function setDecayBlockSpan(uint256 decayBlockSpan_) external onlyAuthorizedChanger {
         // slither-disable-next-line missing-zero-check
         decayBlockSpan = decayBlockSpan_;
+    }
+
+    /**
+     * @dev sets Moc Queue contract address
+     * @param mocQueueAddress_ moc queue new contract address
+     */
+    function setMocQueue(address mocQueueAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        mocQueue = mocQueueAddress_;
     }
 
     /**

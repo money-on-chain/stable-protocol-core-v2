@@ -4,20 +4,26 @@ import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
 import { Balance, CONSTANTS, ERRORS, pEth, expectEventFor, getNetworkDeployParams } from "../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocCARC20Deferred } from "../../typechain";
+import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const mintTCBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
-  let mocImpl: MocCACoinbase | MocCARC20 | MocCARC20Deferred;
+  let mocImpl: MocCACoinbase | MocCARC20;
   let deployer: Address;
   let alice: Address;
   let bob: Address;
   let vendor: Address;
   let expectTCMinted: any;
+  let assertACResult: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tcMintExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: mint Collateral Token", function () {
     beforeEach(async function () {
@@ -25,7 +31,8 @@ const mintTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ deployer, alice, bob, vendor } = await getNamedAccounts());
-      expectTCMinted = expectEventFor(mocImpl, mocFunctions, "TCMinted");
+      expectTCMinted = expectEventFor(mocContracts, "TCMinted");
+      assertACResult = mocFunctions.assertACResult(tcMintExecFee);
     });
     describe("WHEN alice tries to mint 0 TC", function () {
       it("THEN tx reverts because the amount of TC is too low and out of precision", async function () {
@@ -69,7 +76,7 @@ const mintTCBehavior = function () {
       it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
         const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
-        assertPrec(100 * 1.05, diff);
+        assertACResult(100 * 1.05, diff);
       });
       it("THEN a TCMinted event is emitted", async function () {
         // sender: alice
@@ -121,7 +128,7 @@ const mintTCBehavior = function () {
         it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(100 * 1.05, diff);
+          assertACResult(100 * 1.05, diff);
         });
       });
     });
@@ -137,7 +144,7 @@ const mintTCBehavior = function () {
       it("THEN alice AC balance decrease 115 Asset (100 qAC + 5% qACFee + 10% qACVendorMarkup)", async function () {
         const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
-        assertPrec(115, diff);
+        assertACResult(115, diff);
       });
       it("THEN vendor AC balance increase 10 Asset", async function () {
         const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -195,7 +202,7 @@ const mintTCBehavior = function () {
       it("THEN alice balance decrease 100 Asset + 5% for Moc Fee Flow", async function () {
         const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
         const diff = alicePrevACBalance.sub(aliceActualACBalance);
-        assertPrec(100 * 1.05, diff);
+        assertACResult(100 * 1.05, diff);
       });
       it("THEN a TCMinted event is emitted", async function () {
         // sender: alice
@@ -241,7 +248,7 @@ const mintTCBehavior = function () {
           it("THEN alice spends 101.51 assets instead of 105", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("101.51489361702127656", diff);
+            assertACResult("101.51489361702127656", diff);
           });
         });
       });
@@ -291,7 +298,7 @@ const mintTCBehavior = function () {
           it("THEN alice spends 105.003 assets instead of 105", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("105.003157446808510575", diff);
+            assertACResult("105.003157446808510575", diff);
           });
         });
       });
@@ -322,7 +329,7 @@ const mintTCBehavior = function () {
           it("THEN alice spends 104.979 assets instead of 105", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = alicePrevACBalance.sub(aliceActualACBalance);
-            assertPrec("104.979893617021276560", diff);
+            assertACResult("104.979893617021276560", diff);
           });
         });
       });
@@ -364,7 +371,7 @@ const mintTCBehavior = function () {
         it("THEN alice AC balance decrease 100 Asset", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(100, diff);
+          assertACResult(100, diff);
         });
         it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
           const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
@@ -400,7 +407,7 @@ const mintTCBehavior = function () {
         it("THEN alice AC balance decrease 100 Asset", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = alicePrevACBalance.sub(aliceActualACBalance);
-          assertPrec(100, diff);
+          assertACResult(100, diff);
         });
         it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
           const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);

@@ -2,7 +2,7 @@ import { expect } from "chai";
 import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
-import { mocFunctionsRC20Deferred } from "../helpers/mocFunctionsRC20Deferred";
+import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import {
   Balance,
   CONSTANTS,
@@ -15,18 +15,18 @@ import {
   tpParams,
   getNetworkDeployParams,
 } from "../helpers/utils";
-import { MocCARC20Deferred, MocQueue, NonPayableMock } from "../../typechain";
-import { fixtureDeployedMocRC20Deferred } from "../rc20/deferred/fixture";
+import { MocCARC20, MocQueue, NonPayableMock } from "../../typechain";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
-describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
+describe("Feature: MocQueue with a MocCARC20 bucket", function () {
   const vendor = CONSTANTS.ZERO_ADDRESS;
   const { execFeeParams } = getNetworkDeployParams(hre).queueParams;
   let mocFunctions: any;
   let deployer: Address;
   let executor: Address;
 
-  describe("GIVEN a MocQueue MocCARC20Deferred implementation deployed", function () {
-    let mocImpl: MocCARC20Deferred;
+  describe("GIVEN a MocQueue MocCARC20 implementation deployed", function () {
+    let mocImpl: MocCARC20;
     let mocQueue: MocQueue;
     let tp: Address;
     let operId: OperId;
@@ -37,9 +37,9 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
     let commonParams: { sender: Address; recipient: Address; vendor: Address };
     beforeEach(async function () {
       ({ deployer, alice, bob } = await getNamedAccounts());
-      const fixtureDeploy = fixtureDeployedMocRC20Deferred(tpParams.length, tpParams, false);
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, false);
       const mocContracts = await fixtureDeploy();
-      mocFunctions = await mocFunctionsRC20Deferred(mocContracts);
+      mocFunctions = await mocFunctionsRC20(mocContracts);
 
       ({
         mocImpl,
@@ -183,7 +183,7 @@ describe("Feature: MocQueue with a MocCARC20Deferred bucket", function () {
           it(`THEN exec fee gets updated`, async function () {
             const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: 42 });
             await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
-            const actualTcMintExecFee = await mocQueue.tcMintExecFee();
+            const actualTcMintExecFee = await mocQueue.execFee(OperType.mintTC);
             await expect(42, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
           });
         });

@@ -67,7 +67,7 @@ const gasEstimationBehavior = function () {
             expect(gasSummaries[op].estimatedGas, op).lt(blockGasLimit / 2);
           }
           console.table(gasSummaries);
-        });
+        }).timeout(10e6);
       });
     });
   });

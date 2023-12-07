@@ -109,6 +109,7 @@ const config: HardhatUserConfig = {
           tcInterestRate: PCT_BASE.mul(5).div(100000), // 0.005% : weekly 0.0025 / 365 * 7
           tcInterestPaymentBlockSpan: WEEK_BLOCK_SPAN,
           decayBlockSpan: DAY_BLOCK_SPAN,
+          transferMaxGas: 3000,
         },
         settlementParams: {
           bes: MONTH_BLOCK_SPAN,
@@ -139,6 +140,7 @@ const config: HardhatUserConfig = {
           tcInterestCollectorAddress: "0x27a00Af444928D689DDec7B4D17c0E4a8c9d407F",
           maxAbsoluteOpProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
           maxOpDiffProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
+          coinbaseFailedTransferFallback: "0x28A00Af444928D689DDeC7B4d17c0E4a8C9D407f",
         },
         queueParams: {
           minOperWaitingBlk: 1,
