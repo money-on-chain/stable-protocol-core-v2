@@ -84,8 +84,8 @@ const mintTCandTP =
 const swapTPforTP =
   (mocImpl, mocPeggedTokens, swapTPforTPExecFee) =>
   async ({
-    iFrom,
-    iTo,
+    iFrom = 0,
+    iTo = 1,
     tpFrom,
     tpTo,
     from,
@@ -240,6 +240,7 @@ export const mocFunctionsCoinbase = async ({
     acBalanceOf: ethersGetBalance,
     acTransfer: commonFncs.coinbaseTransfer,
     assertACResult: assertACResult(),
+    refreshACBalance: () => {},
     ...commonFncs,
   };
 };
