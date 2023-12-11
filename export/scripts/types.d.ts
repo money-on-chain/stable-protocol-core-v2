@@ -20,6 +20,7 @@ export type DeployParameters = {
         tcInterestRate: BigNumber;
         tcInterestPaymentBlockSpan: number;
         decayBlockSpan: number;
+        transferMaxGas?: number;
     };
     settlementParams: {
         bes: number;
@@ -54,9 +55,11 @@ export type DeployParameters = {
         tcInterestCollectorAddress: Address;
         maxAbsoluteOpProviderAddress: Address;
         maxOpDiffProviderAddress: Address;
+        coinbaseFailedTransferFallback?: Address;
     };
     queueParams: {
         minOperWaitingBlk: number;
+        maxOperPerBatch: number;
         execFeeParams: {
             tpMintExecFee: BigNumber;
             tpRedeemExecFee: BigNumber;
