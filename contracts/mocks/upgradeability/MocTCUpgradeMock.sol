@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 // This contract is not intended to be used in a production system
 // It was designed to be used in a testing environment only

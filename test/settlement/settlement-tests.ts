@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import { MocCARC20 } from "../../typechain";
-import { fixtureDeployedMocCABag } from "../collateralBag/fixture";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 import { ERRORS, mineUpTo } from "../helpers/utils";
 
 describe("Feature: Moc Settlement block triggering", () => {
   let mocImpl: MocCARC20;
   before(async () => {
-    const fixtureDeploy = fixtureDeployedMocCABag(2, undefined);
+    const fixtureDeploy = fixtureDeployedMocRC20(2, undefined);
     ({ mocImpl } = await fixtureDeploy());
   });
 

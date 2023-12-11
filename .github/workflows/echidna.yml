@@ -4,8 +4,66 @@ env:
   INFURA_API_KEY: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
   MNEMONIC: "here is where your twelve words mnemonic should be put my friend"
 jobs:
-  assertion:
-    name: Run Echidna Assertion
+  assertion-core:
+    name: Run Echidna Assertion MocCore
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.14.2]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm ci
+    - name: Compile contracts
+      run: npm run compile
+    - name: Run Echidna Assertion Mode
+      uses: crytic/echidna-action@v2
+      with:
+        solc-version: 0.8.20
+        files: .
+        contract: EchidnaMocCoreTester
+        config: contracts/echidna/default.yaml
+        test-mode: assertion
+        test-limit: 20000
+        crytic-args: --hardhat-ignore-compile
+  property-core:
+    name: Run Echidna Property MocCore
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.14.2]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm ci
+    - name: Compile contracts
+      run: npm run compile
+    - name: Run Echidna Property Mode
+      uses: crytic/echidna-action@v2
+      with:
+        solc-version: 0.8.20
+        files: .
+        contract: EchidnaMocCoreTester
+        config: contracts/echidna/default.yaml
+        test-mode: property
+        test-limit: 20000
+        crytic-args: --hardhat-ignore-compile
+  assertion-queue:
+    name: Run Echidna Assertion MocQueue
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,37 +86,8 @@ jobs:
       with:
         solc-version: 0.8.18
         files: .
-        contract: EchidnaMocCoreTester
+        contract: EchidnaMocQueueTester
         config: contracts/echidna/default.yaml
         test-mode: assertion
-        test-limit: 20000
-        crytic-args: --hardhat-ignore-compile
-  property:
-    name: Run Echidna Property
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.14.2]
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-          node-version: ${{ matrix.node-version }}
-    - name: Install dependencies
-      run: npm ci
-    - name: Compile contracts
-      run: npm run compile
-    - name: Run Echidna Property Mode
-      uses: crytic/echidna-action@v2
-      with:
-        solc-version: 0.8.18
-        files: .
-        contract: EchidnaMocCoreTester
-        config: contracts/echidna/default.yaml
-        test-mode: property
         test-limit: 20000
         crytic-args: --hardhat-ignore-compile

@@ -2,13 +2,14 @@ import { expect } from "chai";
 import { deployments, ethers, getNamedAccounts } from "hardhat";
 import { Contract } from "ethers";
 
-import { MocCACoinbase, MocRC20, MocTcMock, MocTcMock__factory } from "../../../../typechain";
+import { MocCACoinbase, MocQueue, MocRC20, MocTcMock, MocTcMock__factory } from "../../../../typechain";
 import { fixtureDeployedMocCoinbase } from "../../../coinbase/fixture";
 import { deployAeropagusGovernor, ERRORS, tpParams } from "../../../helpers/utils";
 
 describe("Feature: MocRC20 Upgradeability UUPS", () => {
   let mocTCProxy: MocRC20;
   let mocImpl: MocCACoinbase;
+  let mocQueue: MocQueue;
   let mocTCProxyAsTCMock: MocTcMock;
   let mocTCMockImpl: Contract;
   let governor: Contract;
@@ -17,8 +18,8 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
 
   before(async () => {
     const { deployer } = await getNamedAccounts();
-    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams);
-    ({ mocCollateralToken: mocTCProxy, mocImpl } = await fixtureDeploy());
+    const fixtureDeploy = fixtureDeployedMocCoinbase(tpParams.length, tpParams, true);
+    ({ mocCollateralToken: mocTCProxy, mocImpl, mocQueue } = await fixtureDeploy());
 
     // set a real governor
     governor = await deployAeropagusGovernor(deployer);
@@ -32,13 +33,15 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
 
     wrongChangeContract = await changerFactory.deploy(
       (
-        await deployments.get("CollateralTokenCABagProxy")
+        await deployments.get("CollateralTokenCARC20Proxy")
       ).implementation!,
       mocTCMockImpl.address,
     );
 
     // mint 10 TC
-    await mocImpl.mintTC(10, { value: 100 });
+    const execFee = await mocQueue.execFee(1); // mintTC execution fee
+    await mocImpl.mintTC(10, { value: execFee.add(100) });
+    await mocQueue.execute(deployer);
   });
 
   describe("GIVEN a Changer contract is set up to upgrade MocRC20", () => {

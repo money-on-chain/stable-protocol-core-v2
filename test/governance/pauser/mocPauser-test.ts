@@ -7,7 +7,7 @@ import { GovernorMock, MocCACoinbase, GovernorMock__factory } from "../../../typ
 import { ERRORS, pEth } from "../../helpers/utils";
 import { mocFunctionsCoinbase } from "../../helpers/mocFunctionsCoinbase";
 
-const fixtureDeploy = fixtureDeployedMocCoinbase(1);
+const fixtureDeploy = fixtureDeployedMocCoinbase(2);
 
 describe("Feature: Verify pausing mechanism and restrictions", () => {
   let mocContracts: any;

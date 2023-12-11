@@ -1,7 +1,22 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { ethers } from "hardhat";
-import { Address } from "hardhat-deploy/types";
+import { BigNumber } from "@ethersproject/bignumber";
+
+export const CONSTANTS = {
+  ZERO_ADDRESS: ethers.constants.AddressZero,
+  MAX_UINT256: ethers.constants.MaxUint256,
+  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
+  PRECISION: BigNumber.from((1e18).toString()),
+  ONE: BigNumber.from((1e18).toString()),
+};
+
+export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
+export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
+export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
+export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
+export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,
@@ -72,6 +87,34 @@ export const deployCollateralToken = (artifactBaseName: string) => async (hre: H
   return hre.network.live; // prevents re execution on live networks
 };
 
+export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
+  const { getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  const governorAddress = getGovernorAddresses(hre);
+  const signer = ethers.provider.getSigner();
+  const mocQueue = await deployUUPSArtifact({
+    hre,
+    artifactBaseName,
+    contract: "MocQueue",
+    initializeArgs: [
+      governorAddress,
+      mocAddresses.pauserAddress,
+      queueParams.minOperWaitingBlk,
+      queueParams.maxOperPerBatch,
+      queueParams.execFeeParams,
+    ],
+  });
+
+  if (hre.network.tags.local || hre.network.tags.testnet) {
+    console.log(`[ONLY TESTING] Whitelisting deployer: ${deployer} as executor`);
+    const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);
+    await mocQueueProxy.grantRole(EXECUTOR_ROLE, deployer);
+  }
+
+  return hre.network.live; // prevents re execution on live networks
+};
+
 export const getGovernorAddresses = async (hre: HardhatRuntimeEnvironment) => {
   let {
     mocAddresses: { governorAddress },
@@ -91,6 +134,7 @@ export const getGovernorAddresses = async (hre: HardhatRuntimeEnvironment) => {
       from: deployer,
       gasLimit,
     });
+    console.log("[ONLY TESTING] Using GovernorMock:", deployResult.address);
     governorAddress = deployResult.address;
   }
   return governorAddress;
@@ -172,46 +216,128 @@ export const addPeggedTokensAndChangeGovernor = async (
   console.log(`mocCore governor is now: ${governorAddress}`);
 };
 
-export const addAssetsAndChangeGovernor = async (
+export const deployCARC20 = async (
   hre: HardhatRuntimeEnvironment,
-  governorAddress: string,
-  mocWrapperAddress: Address,
-  assetParams: any,
+  mocCARC20Variant: string,
+  ctVariant: string,
+  extraInitParams = {},
 ) => {
+  const { deployments, getNamedAccounts } = hre;
+  const { deployer } = await getNamedAccounts();
+  const { coreParams, settlementParams, feeParams, tpParams, mocAddresses, gasLimit } = getNetworkDeployParams(hre);
   const signer = ethers.provider.getSigner();
-  const mocWrapper = await ethers.getContractAt("MocCAWrapper", mocWrapperAddress, signer);
-  const gasLimit = getNetworkDeployParams(hre).gasLimit;
-  if (assetParams) {
-    for (let i = 0; i < assetParams.assetParams.length; i++) {
-      console.log(`Adding ${assetParams.assetParams[i].assetAddress} as Asset ${i}...`);
-      let priceProvider = assetParams.assetParams[i].priceProvider;
-      if (assetParams.assetParams[i].decimals < 18) {
-        console.log("Deploying price provider shifter");
-        const shifterFactory = await ethers.getContractFactory("PriceProviderShifter");
-        const shiftedPriceProvider = await shifterFactory.deploy(
-          assetParams.assetParams[i].priceProvider,
-          18 - assetParams.assetParams[i].decimals,
-        );
-        priceProvider = shiftedPriceProvider.address;
-        console.log(`price provider shifter deployed at: ${priceProvider}`);
-      }
-      await waitForTxConfirmation(
-        mocWrapper.addOrEditAsset(
-          assetParams.assetParams[i].assetAddress,
-          priceProvider,
-          assetParams.assetParams[i].decimals,
-          {
-            gasLimit,
-          },
-        ),
-      );
-    }
-  }
-  console.log("Renouncing temp governance...");
-  await waitForTxConfirmation(
-    mocWrapper.changeGovernor(governorAddress, {
+
+  const deployedMocExpansionContract = await deployments.getOrNull("MocCARC20Expansion");
+  if (!deployedMocExpansionContract) throw new Error("No MocCARC20Expansion deployed.");
+
+  const deployedTCContract = await deployments.getOrNull(ctVariant + "Proxy");
+  if (!deployedTCContract) throw new Error(`No ${ctVariant} deployed.`);
+  const CollateralToken = await ethers.getContractAt("MocTC", deployedTCContract.address, signer);
+
+  const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
+  if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
+
+  const deployedMocQueue = await deployments.getOrNull("MocQueueCARC20Proxy");
+  if (!deployedMocQueue) throw new Error("No MocQueue deployed.");
+
+  let {
+    collateralAssetAddress,
+    pauserAddress,
+    feeTokenAddress,
+    feeTokenPriceProviderAddress,
+    mocFeeFlowAddress,
+    mocAppreciationBeneficiaryAddress,
+    tcInterestCollectorAddress,
+    maxAbsoluteOpProviderAddress,
+    maxOpDiffProviderAddress,
+  } = mocAddresses;
+
+  // for tests and testnet we deploy a Governor Mock
+  const governorAddress = getGovernorAddresses(hre);
+
+  // for tests we deploy a Collateral Asset mock, a FeeToken mock and its price provider
+  if (hre.network.tags.local) {
+    // use deployments.deploy to get contract in fixture using deployments.getOrNull
+    const deployedERC20MockContract = await deployments.deploy("CollateralAssetCARC20", {
+      contract: "ERC20Mock",
+      from: deployer,
       gasLimit,
-    }),
-  );
-  console.log(`MocCAWrapper governor is now: ${governorAddress}`);
+    });
+    collateralAssetAddress = deployedERC20MockContract.address;
+
+    const rc20MockFactory = await ethers.getContractFactory("ERC20Mock");
+    feeTokenAddress = (await rc20MockFactory.deploy()).address;
+
+    const priceProviderMockFactory = await ethers.getContractFactory("PriceProviderMock");
+    feeTokenPriceProviderAddress = (await priceProviderMockFactory.deploy(ethers.utils.parseEther("1"))).address;
+
+    const DataProviderMockFactory = await ethers.getContractFactory("DataProviderMock");
+    maxAbsoluteOpProviderAddress = (await DataProviderMockFactory.deploy(CONSTANTS.MAX_UINT256)).address;
+    maxOpDiffProviderAddress = (await DataProviderMockFactory.deploy(CONSTANTS.MAX_UINT256)).address;
+  }
+  const mocCARC20 = await deployUUPSArtifact({
+    hre,
+    artifactBaseName: mocCARC20Variant,
+    contract: mocCARC20Variant,
+    initializeArgs: [
+      {
+        initializeCoreParams: {
+          initializeBaseBucketParams: {
+            mocQueueAddress: deployedMocQueue.address,
+            feeTokenAddress,
+            feeTokenPriceProviderAddress,
+            tcTokenAddress: CollateralToken.address,
+            mocFeeFlowAddress,
+            mocAppreciationBeneficiaryAddress,
+            protThrld: coreParams.protThrld,
+            liqThrld: coreParams.liqThrld,
+            feeRetainer: feeParams.feeRetainer,
+            tcMintFee: feeParams.mintFee,
+            tcRedeemFee: feeParams.redeemFee,
+            swapTPforTPFee: feeParams.swapTPforTPFee,
+            swapTPforTCFee: feeParams.swapTPforTCFee,
+            swapTCforTPFee: feeParams.swapTCforTPFee,
+            redeemTCandTPFee: feeParams.redeemTCandTPFee,
+            mintTCandTPFee: feeParams.mintTCandTPFee,
+            feeTokenPct: feeParams.feeTokenPct,
+            successFee: coreParams.successFee,
+            appreciationFactor: coreParams.appreciationFactor,
+            bes: settlementParams.bes,
+            tcInterestCollectorAddress,
+            tcInterestRate: coreParams.tcInterestRate,
+            tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+            maxAbsoluteOpProviderAddress,
+            maxOpDiffProviderAddress,
+            decayBlockSpan: coreParams.decayBlockSpan,
+          },
+          governorAddress,
+          pauserAddress,
+          mocCoreExpansion: deployedMocExpansionContract.address,
+          emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+          mocVendors: deployedMocVendors.address,
+        },
+        acTokenAddress: collateralAssetAddress,
+        ...extraInitParams,
+      },
+    ],
+  });
+
+  console.log("Delegating CT roles to Moc");
+  // Assign TC Roles, and renounce deployer ADMIN
+  await waitForTxConfirmation(CollateralToken.transferAllRoles(mocCARC20.address));
+
+  console.log("initialization completed!");
+  // for testnet we add some Pegged Token and then transfer governance to the real governor
+  if (hre.network.tags.testnet) {
+    await addPeggedTokensAndChangeGovernor(hre, mocAddresses.governorAddress, mocCARC20, tpParams);
+  }
+
+  if (hre.network.tags.local) {
+    // On local environment, Governor is mocked, and we can register the bucket without changer
+    const mocQueue = await ethers.getContractAt("MocQueue", deployedMocQueue.address, signer);
+    console.log(`Registering MocRC20 bucket as enqueuer: ${mocCARC20.address}`);
+    await mocQueue.registerBucket(mocCARC20.address);
+  }
+
+  return mocCARC20;
 };

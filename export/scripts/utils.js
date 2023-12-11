@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -14,7 +25,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -36,8 +47,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addAssetsAndChangeGovernor = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployUUPSArtifact = exports.waitForTxConfirmation = void 0;
+exports.deployCARC20 = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployVendors = exports.getGovernorAddresses = exports.deployQueue = exports.deployCollateralToken = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.ENQUEUER_ROLE = exports.EXECUTOR_ROLE = exports.PAUSER_ROLE = exports.BURNER_ROLE = exports.MINTER_ROLE = exports.DEFAULT_ADMIN_ROLE = exports.CONSTANTS = void 0;
 var hardhat_1 = require("hardhat");
+var bignumber_1 = require("@ethersproject/bignumber");
+exports.CONSTANTS = {
+    ZERO_ADDRESS: hardhat_1.ethers.constants.AddressZero,
+    MAX_UINT256: hardhat_1.ethers.constants.MaxUint256,
+    MAX_BALANCE: hardhat_1.ethers.constants.MaxUint256.div((1e17).toString()),
+    PRECISION: bignumber_1.BigNumber.from((1e18).toString()),
+    ONE: bignumber_1.BigNumber.from((1e18).toString()),
+};
+exports.DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
+exports.MINTER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("MINTER_ROLE"));
+exports.BURNER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("BURNER_ROLE"));
+exports.PAUSER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
+exports.EXECUTOR_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
+exports.ENQUEUER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 var waitForTxConfirmation = function (tx, confirmations) {
     if (confirmations === void 0) { confirmations = 1; }
     return __awaiter(void 0, void 0, void 0, function () {
@@ -51,56 +76,179 @@ var waitForTxConfirmation = function (tx, confirmations) {
 };
 exports.waitForTxConfirmation = waitForTxConfirmation;
 var deployUUPSArtifact = function (_a) {
-    var hre = _a.hre, artifactBaseName = _a.artifactBaseName, contract = _a.contract;
+    var hre = _a.hre, artifactBaseName = _a.artifactBaseName, contract = _a.contract, initializeArgs = _a.initializeArgs;
     return __awaiter(void 0, void 0, void 0, function () {
-        var deployments, getNamedAccounts, deployer, deploy, gasLimit, deployImplResult, deployProxyResult;
+        var deploy, getNamedAccounts, deployer, gasLimit, execute, deployResult;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    deployments = hre.deployments, getNamedAccounts = hre.getNamedAccounts;
+                    deploy = hre.deployments.deploy, getNamedAccounts = hre.getNamedAccounts;
                     return [4 /*yield*/, getNamedAccounts()];
                 case 1:
                     deployer = (_b.sent()).deployer;
-                    deploy = deployments.deploy;
                     gasLimit = (0, exports.getNetworkDeployParams)(hre).gasLimit;
                     artifactBaseName = artifactBaseName || contract;
-                    return [4 /*yield*/, deploy("".concat(artifactBaseName, "Impl"), {
+                    if (initializeArgs) {
+                        execute = {
+                            init: {
+                                methodName: "initialize",
+                                args: initializeArgs,
+                            },
+                        };
+                    }
+                    return [4 /*yield*/, deploy("".concat(artifactBaseName, "Proxy"), {
                             contract: contract,
                             from: deployer,
+                            proxy: {
+                                proxyContract: "ERC1967Proxy",
+                                proxyArgs: ["{implementation}", "{data}"],
+                                execute: execute,
+                            },
                             gasLimit: gasLimit,
                         })];
                 case 2:
-                    deployImplResult = _b.sent();
-                    console.log("".concat(contract, ", as ").concat(artifactBaseName, " implementation deployed at ").concat(deployImplResult.address));
-                    return [4 /*yield*/, deploy("".concat(artifactBaseName, "Proxy"), {
-                            contract: "ERC1967Proxy",
-                            from: deployer,
-                            gasLimit: gasLimit,
-                            args: [deployImplResult.address, "0x"],
-                        })];
-                case 3:
-                    deployProxyResult = _b.sent();
-                    console.log("".concat(artifactBaseName, " ERC1967Proxy deployed at ").concat(deployProxyResult.address));
-                    return [2 /*return*/];
+                    deployResult = _b.sent();
+                    console.log("".concat(contract, ", as ").concat(artifactBaseName, " implementation deployed at ").concat(deployResult.implementation));
+                    console.log("".concat(artifactBaseName, "Proxy ERC1967Proxy deployed at ").concat(deployResult.address));
+                    return [2 /*return*/, deployResult];
             }
         });
     });
 };
 exports.deployUUPSArtifact = deployUUPSArtifact;
+var deployCollateralToken = function (artifactBaseName) { return function (hre) { return __awaiter(void 0, void 0, void 0, function () {
+    var ctParams, governorAddress, deployer;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                ctParams = (0, exports.getNetworkDeployParams)(hre).ctParams;
+                return [4 /*yield*/, (0, exports.getGovernorAddresses)(hre)];
+            case 1:
+                governorAddress = _a.sent();
+                return [4 /*yield*/, hre.getNamedAccounts()];
+            case 2:
+                deployer = (_a.sent()).deployer;
+                return [4 /*yield*/, (0, exports.deployUUPSArtifact)({
+                        hre: hre,
+                        artifactBaseName: artifactBaseName,
+                        contract: "MocTC",
+                        initializeArgs: [
+                            ctParams.name,
+                            ctParams.symbol,
+                            deployer,
+                            governorAddress,
+                        ],
+                    })];
+            case 3:
+                _a.sent();
+                return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+        }
+    });
+}); }; };
+exports.deployCollateralToken = deployCollateralToken;
+var deployQueue = function (artifactBaseName) { return function (hre) { return __awaiter(void 0, void 0, void 0, function () {
+    var getNamedAccounts, deployer, _a, queueParams, mocAddresses, governorAddress, signer, mocQueue, mocQueueProxy;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                getNamedAccounts = hre.getNamedAccounts;
+                return [4 /*yield*/, getNamedAccounts()];
+            case 1:
+                deployer = (_b.sent()).deployer;
+                _a = (0, exports.getNetworkDeployParams)(hre), queueParams = _a.queueParams, mocAddresses = _a.mocAddresses;
+                governorAddress = (0, exports.getGovernorAddresses)(hre);
+                signer = hardhat_1.ethers.provider.getSigner();
+                return [4 /*yield*/, (0, exports.deployUUPSArtifact)({
+                        hre: hre,
+                        artifactBaseName: artifactBaseName,
+                        contract: "MocQueue",
+                        initializeArgs: [
+                            governorAddress,
+                            mocAddresses.pauserAddress,
+                            queueParams.minOperWaitingBlk,
+                            queueParams.maxOperPerBatch,
+                            queueParams.execFeeParams,
+                        ],
+                    })];
+            case 2:
+                mocQueue = _b.sent();
+                if (!(hre.network.tags.local || hre.network.tags.testnet)) return [3 /*break*/, 5];
+                console.log("[ONLY TESTING] Whitelisting deployer: ".concat(deployer, " as executor"));
+                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocQueue", mocQueue.address, signer)];
+            case 3:
+                mocQueueProxy = _b.sent();
+                return [4 /*yield*/, mocQueueProxy.grantRole(exports.EXECUTOR_ROLE, deployer)];
+            case 4:
+                _b.sent();
+                _b.label = 5;
+            case 5: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+        }
+    });
+}); }; };
+exports.deployQueue = deployQueue;
+var getGovernorAddresses = function (hre) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, governorAddress, gasLimit, deploy, getNamedAccounts, deployer, deployResult;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = (0, exports.getNetworkDeployParams)(hre), governorAddress = _a.mocAddresses.governorAddress, gasLimit = _a.gasLimit;
+                if (!(hre.network.tags.testnet || hre.network.tags.local)) return [3 /*break*/, 3];
+                deploy = hre.deployments.deploy, getNamedAccounts = hre.getNamedAccounts;
+                return [4 /*yield*/, getNamedAccounts()];
+            case 1:
+                deployer = (_b.sent()).deployer;
+                return [4 /*yield*/, deploy("GovernorMock", {
+                        contract: "GovernorMock",
+                        from: deployer,
+                        gasLimit: gasLimit,
+                    })];
+            case 2:
+                deployResult = _b.sent();
+                console.log("[ONLY TESTING] Using GovernorMock:", deployResult.address);
+                governorAddress = deployResult.address;
+                _b.label = 3;
+            case 3: return [2 /*return*/, governorAddress];
+        }
+    });
+}); };
+exports.getGovernorAddresses = getGovernorAddresses;
+var deployVendors = function (artifactBaseName) { return function (hre) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, pauserAddress, vendorsGuardianAddress, _b, _c;
+    var _d;
+    return __generator(this, function (_e) {
+        switch (_e.label) {
+            case 0:
+                _a = (0, exports.getNetworkDeployParams)(hre).mocAddresses, pauserAddress = _a.pauserAddress, vendorsGuardianAddress = _a.vendorsGuardianAddress;
+                _b = exports.deployUUPSArtifact;
+                _d = {
+                    hre: hre,
+                    artifactBaseName: artifactBaseName,
+                    contract: "MocVendors"
+                };
+                _c = [vendorsGuardianAddress];
+                return [4 /*yield*/, (0, exports.getGovernorAddresses)(hre)];
+            case 1: return [4 /*yield*/, _b.apply(void 0, [(_d.initializeArgs = _c.concat([_e.sent(), pauserAddress]),
+                        _d)])];
+            case 2:
+                _e.sent();
+                return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+        }
+    });
+}); }; };
+exports.deployVendors = deployVendors;
 var getNetworkDeployParams = function (hre) {
     var network = hre.network.name === "localhost" ? "hardhat" : hre.network.name;
     return hre.config.networks[network].deployParameters;
 };
 exports.getNetworkDeployParams = getNetworkDeployParams;
 var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, tpParams) { return __awaiter(void 0, void 0, void 0, function () {
-    var gasLimit, deployments, signer, i, mocRC20TP, mocRC20Proxy;
+    var gasLimit, deployments, i, mocRC20TP, signer, mocRC20Proxy;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 gasLimit = (0, exports.getNetworkDeployParams)(hre).gasLimit;
                 if (!tpParams) return [3 /*break*/, 8];
                 deployments = hre.deployments;
-                signer = hardhat_1.ethers.provider.getSigner();
                 i = 0;
                 _a.label = 1;
             case 1:
@@ -113,6 +261,7 @@ var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, 
                 mocRC20TP = _a.sent();
                 if (!mocRC20TP)
                     throw new Error("No ".concat(tpParams.tpParams[i].name, " deployed"));
+                signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocRC20", mocRC20TP.address, signer)];
             case 4:
                 mocRC20Proxy = _a.sent();
@@ -153,50 +302,145 @@ var addPeggedTokensAndChangeGovernor = function (hre, governorAddress, mocCore, 
     });
 }); };
 exports.addPeggedTokensAndChangeGovernor = addPeggedTokensAndChangeGovernor;
-var addAssetsAndChangeGovernor = function (hre, governorAddress, mocWrapper, assetParams) { return __awaiter(void 0, void 0, void 0, function () {
-    var gasLimit, i, priceProvider, shifterFactory, shiftedPriceProvider;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                gasLimit = (0, exports.getNetworkDeployParams)(hre).gasLimit;
-                if (!assetParams) return [3 /*break*/, 7];
-                i = 0;
-                _a.label = 1;
-            case 1:
-                if (!(i < assetParams.assetParams.length)) return [3 /*break*/, 7];
-                console.log("Adding ".concat(assetParams.assetParams[i].assetAddress, " as Asset ").concat(i, "..."));
-                priceProvider = assetParams.assetParams[i].priceProvider;
-                if (!(assetParams.assetParams[i].decimals < 18)) return [3 /*break*/, 4];
-                console.log("Deploying price provider shifter");
-                return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderShifter")];
-            case 2:
-                shifterFactory = _a.sent();
-                return [4 /*yield*/, shifterFactory.deploy(assetParams.assetParams[i].priceProvider, 18 - assetParams.assetParams[i].decimals)];
-            case 3:
-                shiftedPriceProvider = _a.sent();
-                priceProvider = shiftedPriceProvider.address;
-                console.log("price provider shifter deployed at: ".concat(priceProvider));
-                _a.label = 4;
-            case 4: return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocWrapper.addOrEditAsset(assetParams.assetParams[i].assetAddress, priceProvider, assetParams.assetParams[i].decimals, {
-                    gasLimit: gasLimit,
-                }))];
-            case 5:
-                _a.sent();
-                _a.label = 6;
-            case 6:
-                i++;
-                return [3 /*break*/, 1];
-            case 7:
-                console.log("Renouncing temp governance...");
-                return [4 /*yield*/, (0, exports.waitForTxConfirmation)(mocWrapper.changeGovernor(governorAddress, {
-                        gasLimit: gasLimit,
-                    }))];
-            case 8:
-                _a.sent();
-                console.log("MocCAWrapper governor is now: ".concat(governorAddress));
-                return [2 /*return*/];
-        }
+var deployCARC20 = function (hre, mocCARC20Variant, ctVariant, extraInitParams) {
+    if (extraInitParams === void 0) { extraInitParams = {}; }
+    return __awaiter(void 0, void 0, void 0, function () {
+        var deployments, getNamedAccounts, deployer, _a, coreParams, settlementParams, feeParams, tpParams, mocAddresses, gasLimit, signer, deployedMocExpansionContract, deployedTCContract, CollateralToken, deployedMocVendors, deployedMocQueue, collateralAssetAddress, pauserAddress, feeTokenAddress, feeTokenPriceProviderAddress, mocFeeFlowAddress, mocAppreciationBeneficiaryAddress, tcInterestCollectorAddress, maxAbsoluteOpProviderAddress, maxOpDiffProviderAddress, governorAddress, deployedERC20MockContract, rc20MockFactory, priceProviderMockFactory, DataProviderMockFactory, mocCARC20, mocQueue;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    deployments = hre.deployments, getNamedAccounts = hre.getNamedAccounts;
+                    return [4 /*yield*/, getNamedAccounts()];
+                case 1:
+                    deployer = (_b.sent()).deployer;
+                    _a = (0, exports.getNetworkDeployParams)(hre), coreParams = _a.coreParams, settlementParams = _a.settlementParams, feeParams = _a.feeParams, tpParams = _a.tpParams, mocAddresses = _a.mocAddresses, gasLimit = _a.gasLimit;
+                    signer = hardhat_1.ethers.provider.getSigner();
+                    return [4 /*yield*/, deployments.getOrNull("MocCARC20Expansion")];
+                case 2:
+                    deployedMocExpansionContract = _b.sent();
+                    if (!deployedMocExpansionContract)
+                        throw new Error("No MocCARC20Expansion deployed.");
+                    return [4 /*yield*/, deployments.getOrNull(ctVariant + "Proxy")];
+                case 3:
+                    deployedTCContract = _b.sent();
+                    if (!deployedTCContract)
+                        throw new Error("No ".concat(ctVariant, " deployed."));
+                    return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocTC", deployedTCContract.address, signer)];
+                case 4:
+                    CollateralToken = _b.sent();
+                    return [4 /*yield*/, deployments.getOrNull("MocVendorsCARC20Proxy")];
+                case 5:
+                    deployedMocVendors = _b.sent();
+                    if (!deployedMocVendors)
+                        throw new Error("No MocVendors deployed.");
+                    return [4 /*yield*/, deployments.getOrNull("MocQueueCARC20Proxy")];
+                case 6:
+                    deployedMocQueue = _b.sent();
+                    if (!deployedMocQueue)
+                        throw new Error("No MocQueue deployed.");
+                    collateralAssetAddress = mocAddresses.collateralAssetAddress, pauserAddress = mocAddresses.pauserAddress, feeTokenAddress = mocAddresses.feeTokenAddress, feeTokenPriceProviderAddress = mocAddresses.feeTokenPriceProviderAddress, mocFeeFlowAddress = mocAddresses.mocFeeFlowAddress, mocAppreciationBeneficiaryAddress = mocAddresses.mocAppreciationBeneficiaryAddress, tcInterestCollectorAddress = mocAddresses.tcInterestCollectorAddress, maxAbsoluteOpProviderAddress = mocAddresses.maxAbsoluteOpProviderAddress, maxOpDiffProviderAddress = mocAddresses.maxOpDiffProviderAddress;
+                    governorAddress = (0, exports.getGovernorAddresses)(hre);
+                    if (!hre.network.tags.local) return [3 /*break*/, 15];
+                    return [4 /*yield*/, deployments.deploy("CollateralAssetCARC20", {
+                            contract: "ERC20Mock",
+                            from: deployer,
+                            gasLimit: gasLimit,
+                        })];
+                case 7:
+                    deployedERC20MockContract = _b.sent();
+                    collateralAssetAddress = deployedERC20MockContract.address;
+                    return [4 /*yield*/, hardhat_1.ethers.getContractFactory("ERC20Mock")];
+                case 8:
+                    rc20MockFactory = _b.sent();
+                    return [4 /*yield*/, rc20MockFactory.deploy()];
+                case 9:
+                    feeTokenAddress = (_b.sent()).address;
+                    return [4 /*yield*/, hardhat_1.ethers.getContractFactory("PriceProviderMock")];
+                case 10:
+                    priceProviderMockFactory = _b.sent();
+                    return [4 /*yield*/, priceProviderMockFactory.deploy(hardhat_1.ethers.utils.parseEther("1"))];
+                case 11:
+                    feeTokenPriceProviderAddress = (_b.sent()).address;
+                    return [4 /*yield*/, hardhat_1.ethers.getContractFactory("DataProviderMock")];
+                case 12:
+                    DataProviderMockFactory = _b.sent();
+                    return [4 /*yield*/, DataProviderMockFactory.deploy(exports.CONSTANTS.MAX_UINT256)];
+                case 13:
+                    maxAbsoluteOpProviderAddress = (_b.sent()).address;
+                    return [4 /*yield*/, DataProviderMockFactory.deploy(exports.CONSTANTS.MAX_UINT256)];
+                case 14:
+                    maxOpDiffProviderAddress = (_b.sent()).address;
+                    _b.label = 15;
+                case 15: return [4 /*yield*/, (0, exports.deployUUPSArtifact)({
+                        hre: hre,
+                        artifactBaseName: mocCARC20Variant,
+                        contract: mocCARC20Variant,
+                        initializeArgs: [
+                            __assign({ initializeCoreParams: {
+                                    initializeBaseBucketParams: {
+                                        mocQueueAddress: deployedMocQueue.address,
+                                        feeTokenAddress: feeTokenAddress,
+                                        feeTokenPriceProviderAddress: feeTokenPriceProviderAddress,
+                                        tcTokenAddress: CollateralToken.address,
+                                        mocFeeFlowAddress: mocFeeFlowAddress,
+                                        mocAppreciationBeneficiaryAddress: mocAppreciationBeneficiaryAddress,
+                                        protThrld: coreParams.protThrld,
+                                        liqThrld: coreParams.liqThrld,
+                                        feeRetainer: feeParams.feeRetainer,
+                                        tcMintFee: feeParams.mintFee,
+                                        tcRedeemFee: feeParams.redeemFee,
+                                        swapTPforTPFee: feeParams.swapTPforTPFee,
+                                        swapTPforTCFee: feeParams.swapTPforTCFee,
+                                        swapTCforTPFee: feeParams.swapTCforTPFee,
+                                        redeemTCandTPFee: feeParams.redeemTCandTPFee,
+                                        mintTCandTPFee: feeParams.mintTCandTPFee,
+                                        feeTokenPct: feeParams.feeTokenPct,
+                                        successFee: coreParams.successFee,
+                                        appreciationFactor: coreParams.appreciationFactor,
+                                        bes: settlementParams.bes,
+                                        tcInterestCollectorAddress: tcInterestCollectorAddress,
+                                        tcInterestRate: coreParams.tcInterestRate,
+                                        tcInterestPaymentBlockSpan: coreParams.tcInterestPaymentBlockSpan,
+                                        maxAbsoluteOpProviderAddress: maxAbsoluteOpProviderAddress,
+                                        maxOpDiffProviderAddress: maxOpDiffProviderAddress,
+                                        decayBlockSpan: coreParams.decayBlockSpan,
+                                    },
+                                    governorAddress: governorAddress,
+                                    pauserAddress: pauserAddress,
+                                    mocCoreExpansion: deployedMocExpansionContract.address,
+                                    emaCalculationBlockSpan: coreParams.emaCalculationBlockSpan,
+                                    mocVendors: deployedMocVendors.address,
+                                }, acTokenAddress: collateralAssetAddress }, extraInitParams),
+                        ],
+                    })];
+                case 16:
+                    mocCARC20 = _b.sent();
+                    console.log("Delegating CT roles to Moc");
+                    // Assign TC Roles, and renounce deployer ADMIN
+                    return [4 /*yield*/, (0, exports.waitForTxConfirmation)(CollateralToken.transferAllRoles(mocCARC20.address))];
+                case 17:
+                    // Assign TC Roles, and renounce deployer ADMIN
+                    _b.sent();
+                    console.log("initialization completed!");
+                    if (!hre.network.tags.testnet) return [3 /*break*/, 19];
+                    return [4 /*yield*/, (0, exports.addPeggedTokensAndChangeGovernor)(hre, mocAddresses.governorAddress, mocCARC20, tpParams)];
+                case 18:
+                    _b.sent();
+                    _b.label = 19;
+                case 19:
+                    if (!hre.network.tags.local) return [3 /*break*/, 22];
+                    return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocQueue", deployedMocQueue.address, signer)];
+                case 20:
+                    mocQueue = _b.sent();
+                    console.log("Registering MocRC20 bucket as enqueuer: ".concat(mocCARC20.address));
+                    return [4 /*yield*/, mocQueue.registerBucket(mocCARC20.address)];
+                case 21:
+                    _b.sent();
+                    _b.label = 22;
+                case 22: return [2 /*return*/, mocCARC20];
+            }
+        });
     });
-}); };
-exports.addAssetsAndChangeGovernor = addAssetsAndChangeGovernor;
+};
+exports.deployCARC20 = deployCARC20;
 //# sourceMappingURL=utils.js.map

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { MocTC, IMocRC20 } from "../tokens/MocTC.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
+import { IDataProvider } from "../interfaces/IDataProvider.sol";
 import { MocUpgradable } from "../governance/MocUpgradable.sol";
-/* solhint-disable-next-line max-line-length */
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -13,7 +12,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice MocBaseBucket holds Bucket Zero state, both for the Collateral Bag and PeggedTokens Items.
  * @dev Abstracts all rw operations on the main bucket and expose all calculations relative to its state.
  */
-abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
+abstract contract MocBaseBucket is MocUpgradable {
     // ------- Events -------
 
     event ContractLiquidated();
@@ -39,6 +38,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     }
 
     struct InitializeBaseBucketParams {
+        // MocQueue contract address
+        address mocQueueAddress;
         // Fee Token contract address
         address feeTokenAddress;
         // Fee Token price provider address
@@ -86,6 +87,16 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 tcInterestRate;
         // amount of blocks to wait for next TC interest payment
         uint256 tcInterestPaymentBlockSpan;
+        // max absolute operation provider address:
+        //  absolute maximum transaction allowed for a certain number of blocks
+        //  if absoluteAccumulator is above the value provided the operation will be rejected
+        address maxAbsoluteOpProviderAddress;
+        // max operation difference provider address:
+        //  differential maximum transaction allowed for a certain number of blocks
+        //  if operationalDifference is above the value provided the operation will be rejected
+        address maxOpDiffProviderAddress;
+        // number of blocks that have to elapse for the linear decay factor to be 0
+        uint256 decayBlockSpan;
     }
 
     // ------- Storage -------
@@ -126,9 +137,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
 
     // pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
     uint256 public feeRetainer; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // addition fee pct applied on Collateral Tokens mint [PREC]
+    // additional fee pct applied on Collateral Tokens mint [PREC]
     uint256 public tcMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // addition fee pct applied on Collateral Tokens redeem [PREC]
+    // additional fee pct applied on Collateral Tokens redeem [PREC]
     uint256 public tcRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
     // additional fee pct applied on swap a Pegged Token for another Pegged Token [PREC]
     uint256 public swapTPforTPFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
@@ -144,10 +155,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // e.g. if tcMintFee = 1%, FeeTokenPct = 50% => qFeeToken = 0.5%
     uint256 public feeTokenPct; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
-    // addition fee pct applied on Pegged Tokens mint [PREC]
-    uint256[] public tpMintFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
-    // addition fee pct applied on Pegged Tokens redeem [PREC]
-    uint256[] public tpRedeemFee; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // Pegged Token => addition fee pct applied on TP mint [PREC]
+    mapping(address => uint256) public tpMintFees; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
+    // Pegged Token =>  addition fee pct applied on TP redeem [PREC]
+    mapping(address => uint256) public tpRedeemFees; // 0% = 0; 1% = 10 ** 16; 100% = 10 ** 18
 
     // Moc Fee Flow contract address
     address public mocFeeFlowAddress;
@@ -174,6 +185,13 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     // next settlement block
     uint256 public bns;
 
+    // ------- Storage Queue -------
+
+    // amount of AC locked on MocQueue for pending operations
+    uint256 public qACLockedInPending;
+    // address for MocQueue contract
+    address public mocQueue; // cannot used MocQueue, import failed due circular reference
+
     // ------- Storage Success Fee Tracking -------
 
     // profit and loss in collateral asset for each Pegged Token because its devaluation [N]
@@ -181,6 +199,25 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     int256[] internal tpiou;
     // Pegged Token price used at last operation(redeem or mint) [PREC]
     uint256[] internal pACtpLstop;
+
+    // ------- Storage Flux Capacitor -------
+
+    // max absolute operation provider:
+    //  absolute maximum transaction allowed for a certain number of blocks
+    //  if absoluteAccumulator is above the value provided the operation will be rejected
+    IDataProvider public maxAbsoluteOpProvider;
+    // max operation difference provider:
+    //  differential maximum transaction allowed for a certain number of blocks
+    //  if operationalDifference is above the value provided the operation will be rejected
+    IDataProvider public maxOpDiffProvider;
+    // number of blocks that have to elapse for the linear decay factor to be 0
+    uint256 public decayBlockSpan;
+    // accumulator increased by minting and redeeming TP operations
+    uint256 public absoluteAccumulator;
+    // accumulator increased by minting and decreased by redeeming TP operations
+    int256 public differentialAccumulator;
+    // last block number where an operation was submitted
+    uint256 public lastOperationBlockNumber;
 
     // ------- Storage TC Holders Interest Payment -------
 
@@ -204,7 +241,8 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
     /**
      * @notice contract initializer
      * @param initializeBaseBucketParams_ contract initializer params
-     * @dev   feeTokenAddress Fee Token contract address
+     * @dev   mocQueueAddress address for MocQueue contract
+     *        feeTokenAddress Fee Token contract address
      *        feeTokenPriceProviderAddress Fee Token price provider contract address
      *        tcTokenAddress Collateral Token contract address
      *        mocFeeFlowAddress Moc Fee Flow contract address
@@ -229,6 +267,9 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      *        tcInterestCollectorAddress TC interest collector address
      *        tcInterestRate pct interest charged to TC holders on the total collateral in the protocol [PREC]
      *        tcInterestPaymentBlockSpan amount of blocks to wait for next TC interest payment
+     *        maxAbsoluteOpProviderAddress max absolute operation provider address
+     *        maxOpDiffProviderAddress max operation difference provider address
+     *        decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
      */
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
@@ -244,6 +285,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         _checkLessThanOne(initializeBaseBucketParams_.mintTCandTPFee);
         _checkLessThanOne(initializeBaseBucketParams_.feeTokenPct);
         _checkLessThanOne(initializeBaseBucketParams_.successFee + initializeBaseBucketParams_.appreciationFactor);
+        mocQueue = initializeBaseBucketParams_.mocQueueAddress;
         feeToken = IERC20(initializeBaseBucketParams_.feeTokenAddress);
         feeTokenPriceProvider = IPriceProvider(initializeBaseBucketParams_.feeTokenPriceProviderAddress);
         tcToken = MocTC(initializeBaseBucketParams_.tcTokenAddress);
@@ -266,6 +308,10 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         tcInterestCollectorAddress = initializeBaseBucketParams_.tcInterestCollectorAddress;
         tcInterestRate = initializeBaseBucketParams_.tcInterestRate;
         tcInterestPaymentBlockSpan = initializeBaseBucketParams_.tcInterestPaymentBlockSpan;
+        maxAbsoluteOpProvider = IDataProvider(initializeBaseBucketParams_.maxAbsoluteOpProviderAddress);
+        maxOpDiffProvider = IDataProvider(initializeBaseBucketParams_.maxOpDiffProviderAddress);
+        decayBlockSpan = initializeBaseBucketParams_.decayBlockSpan;
+        lastOperationBlockNumber = block.number;
         unchecked {
             bns = block.number + initializeBaseBucketParams_.bes;
             nextTCInterestPayment = block.number + initializeBaseBucketParams_.tcInterestPaymentBlockSpan;
@@ -353,14 +399,13 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param i_ Pegged Token index
      * @param qTP_ amount of Pegged Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
-     * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTP(uint256 i_, uint256 qTP_, uint256 qAC_) internal {
         // sub qTP and qAC from the Bucket
         _withdrawTP(i_, qTP_, qAC_);
-        // burn qTP from this address
+        // burn the qTp previously locked from the user
         // slither-disable-next-line unused-return
-        tpTokens[i_].burn(toBurnFrom_, qTP_);
+        tpTokens[i_].burn(address(this), qTP_);
     }
 
     /**
@@ -381,13 +426,12 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @notice Subtracts Collateral Token and Collateral Asset from the Bucket and burns `qTC_`
      * @param qTC_ amount of Collateral Token to subtract
      * @param qAC_ amount of Collateral Asset to subtract
-     * @param toBurnFrom_ the account to burn tokens from
      */
-    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_, address toBurnFrom_) internal {
+    function _withdrawAndBurnTC(uint256 qTC_, uint256 qAC_) internal {
         // sub qTC and qAC from the Bucket
         _withdrawTC(qTC_, qAC_);
-        // burn qTC from this address
-        tcToken.burn(toBurnFrom_, qTC_);
+        // burn the qTC previously locked from the user
+        tcToken.burn(address(this), qTC_);
     }
 
     /**
@@ -436,7 +480,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 ctargemaCA_,
         uint256 lckAC_,
         uint256 nACgain_
-    ) internal view returns (uint256 tcAvailableToRedeem) {
+    ) internal view virtual returns (uint256 tcAvailableToRedeem) {
         int256 tcAvailableToRedeemSigned = _getTCAvailableToRedeemSigned(ctargemaCA_, lckAC_, nACgain_);
         // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
         if (tcAvailableToRedeemSigned < 0 || _getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
@@ -480,7 +524,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 pACtp_,
         uint256 lckAC_,
         uint256 nACgain_
-    ) internal view returns (uint256 tpAvailableToMint) {
+    ) internal view virtual returns (uint256 tpAvailableToMint) {
         int256 tpAvailableToMintSigned = _getTPAvailableToMintSigned(
             ctargemaCA_,
             ctargemaTP_,
@@ -528,7 +572,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         // for each peg, calculates the proportion of AC reserves it's locked
 
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            pACtps[i] = getPACtp(i);
+            pACtps[i] = _getPACtp(i);
             // [N] = [N] * [PREC] / [PREC]
             lckAC += _divPrec(pegContainer[i].nTP, pACtps[i]);
         }
@@ -652,11 +696,17 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
      * @return cglob [PREC]
      */
-    function _getCglb(uint256 lckAC_, uint256 nACgain_) internal view returns (uint256 cglob) {
+    function _getCglb(uint256 lckAC_, uint256 nACgain_) internal view virtual returns (uint256 cglob) {
         // slither-disable-next-line incorrect-equality
         if (lckAC_ == 0) return UINT256_MAX;
         // [PREC] = [N] * [PREC] / [N]
         return _divPrec(_getTotalACavailable(nACgain_), lckAC_);
+    }
+
+    function _tpi(address tpAddress) internal view returns (uint256) {
+        PeggedTokenIndex storage ptIndex = peggedTokenIndex[tpAddress];
+        if (!ptIndex.exists) revert InvalidAddress();
+        return ptIndex.index;
     }
 
     // ------- Public Functions -------
@@ -690,10 +740,24 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
 
     /**
      * @notice get how many Pegged Token equal 1 Collateral Asset
+     * @param tp_ Pegged Token address
+     * @return price [PREC]
+     */
+    function getPACtp(address tp_) public view virtual returns (uint256) {
+        IPriceProvider priceProvider = pegContainer[_tpi(tp_)].priceProvider;
+        (uint256 price, bool has) = _peekPrice(priceProvider);
+        if (!has) revert MissingProviderPrice(address(priceProvider));
+        return price;
+    }
+
+    // ------- Internal Functions -------
+
+    /**
+     * @notice get how many Pegged Token equal 1 Collateral Asset
      * @param i_ Pegged Token index
      * @return price [PREC]
      */
-    function getPACtp(uint256 i_) public view virtual returns (uint256) {
+    function _getPACtp(uint256 i_) internal view virtual returns (uint256) {
         IPriceProvider priceProvider = pegContainer[i_].priceProvider;
         (uint256 price, bool has) = _peekPrice(priceProvider);
         if (!has) revert MissingProviderPrice(address(priceProvider));
@@ -720,7 +784,7 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
         uint256 pegAmount = pegContainer.length;
         pACtps = new uint256[](pegAmount);
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            pACtps[i] = getPACtp(i);
+            pACtps[i] = _getPACtp(i);
         }
     }
 
@@ -923,6 +987,42 @@ abstract contract MocBaseBucket is MocUpgradable, ReentrancyGuardUpgradeable {
      **/
     function setBes(uint256 bes_) external onlyAuthorizedChanger {
         bes = bes_;
+    }
+
+    /**
+     * @dev sets max absolute operation provider address
+     * @param maxAbsoluteOpProviderAddress_ max absolute operation provider address
+     */
+    function setMaxAbsoluteOpProviderAddress(address maxAbsoluteOpProviderAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        maxAbsoluteOpProvider = IDataProvider(maxAbsoluteOpProviderAddress_);
+    }
+
+    /**
+     * @dev sets max operation difference provider address
+     * @param maxOpDiffProviderAddress_ max operation difference provider address
+     */
+    function setMaxOpDiffProviderAddress(address maxOpDiffProviderAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        maxOpDiffProvider = IDataProvider(maxOpDiffProviderAddress_);
+    }
+
+    /**
+     * @dev sets flux capacitor decay block span
+     * @param decayBlockSpan_ flux capacitor decay block span
+     */
+    function setDecayBlockSpan(uint256 decayBlockSpan_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        decayBlockSpan = decayBlockSpan_;
+    }
+
+    /**
+     * @dev sets Moc Queue contract address
+     * @param mocQueueAddress_ moc queue new contract address
+     */
+    function setMocQueue(address mocQueueAddress_) external onlyAuthorizedChanger {
+        // slither-disable-next-line missing-zero-check
+        mocQueue = mocQueueAddress_;
     }
 
     /**

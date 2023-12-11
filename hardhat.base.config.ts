@@ -108,6 +108,8 @@ const config: HardhatUserConfig = {
           appreciationFactor: PCT_BASE.mul(50).div(100), // 50%
           tcInterestRate: PCT_BASE.mul(5).div(100000), // 0.005% : weekly 0.0025 / 365 * 7
           tcInterestPaymentBlockSpan: WEEK_BLOCK_SPAN,
+          decayBlockSpan: DAY_BLOCK_SPAN,
+          transferMaxGas: 3000,
         },
         settlementParams: {
           bes: MONTH_BLOCK_SPAN,
@@ -136,6 +138,24 @@ const config: HardhatUserConfig = {
           mocAppreciationBeneficiaryAddress: "0x26A00aF444928D689ddEC7B4D17C0E4A8C9d407F",
           vendorsGuardianAddress: "0x26a00AF444928D689DDeC7b4D17c0E4a8C9d407E",
           tcInterestCollectorAddress: "0x27a00Af444928D689DDec7B4D17c0E4a8c9d407F",
+          maxAbsoluteOpProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
+          maxOpDiffProviderAddress: "0x26A00AF444928d689ddec7b4d17c0E4A8C9D4061",
+          coinbaseFailedTransferFallback: "0x28A00Af444928D689DDeC7B4d17c0E4a8C9D407f",
+        },
+        queueParams: {
+          minOperWaitingBlk: 1,
+          maxOperPerBatch: 10,
+          execFeeParams: {
+            tcMintExecFee: BigNumber.from("1000000"),
+            tcRedeemExecFee: BigNumber.from("1000001"),
+            tpMintExecFee: BigNumber.from("1000002"),
+            tpRedeemExecFee: BigNumber.from("1000003"),
+            mintTCandTPExecFee: BigNumber.from("2000000"),
+            redeemTCandTPExecFee: BigNumber.from("2000001"),
+            swapTPforTPExecFee: BigNumber.from("2000002"),
+            swapTPforTCExecFee: BigNumber.from("1000003"),
+            swapTCforTPExecFee: BigNumber.from("1000004"),
+          },
         },
         gasLimit: 30000000, // high value to avoid coverage issue. https://github.com/NomicFoundation/hardhat/issues/3121
       },
@@ -153,7 +173,7 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.18",
+    version: "0.8.20",
     settings: {
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {

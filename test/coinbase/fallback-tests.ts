@@ -7,7 +7,7 @@ import { fixtureDeployedMocCoinbase } from "./fixture";
 describe("Feature: MocCoinbase fallback", function () {
   let mocImpl: MocCACoinbase;
 
-  describe("GIVEN a MocCoinbase implementation deployed", function () {
+  describe("GIVEN a MocCoinbase implementation deployed with mocQueueMock", function () {
     beforeEach(async function () {
       const fixtureDeploy = fixtureDeployedMocCoinbase(1);
       ({ mocImpl } = await fixtureDeploy());

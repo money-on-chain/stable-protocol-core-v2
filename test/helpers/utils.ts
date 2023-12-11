@@ -1,10 +1,12 @@
-import { ethers, getNamedAccounts, network } from "hardhat";
+import hre, { ethers, getNamedAccounts, network } from "hardhat";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
+import { expect } from "chai";
+import { ContractTransaction } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/types";
 import { mineUpTo } from "@nomicfoundation/hardhat-network-helpers";
 import {
   ERC20Mock,
-  MocCAWrapper,
   MocCore,
   MocRC20,
   MocRC20__factory,
@@ -12,18 +14,32 @@ import {
   ERC777Mock,
   MocTC__factory,
   PriceProviderMock,
+  DataProviderMock,
+  MocQueue,
+  MocQueue__factory,
 } from "../../typechain";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
+import { getNetworkDeployParams, getGovernorAddresses } from "./utils";
+
+export * from "../../scripts/utils";
 
 export const GAS_LIMIT_PATCH = 30000000;
 const PCT_BASE = BigNumber.from((1e18).toString());
 
-export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
-export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
-export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
-export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
+export enum OperType {
+  none, // avoid using zero as Type
+  mintTC,
+  redeemTC,
+  mintTP,
+  redeemTP,
+  mintTCandTP,
+  redeemTCandTP,
+  swapTCforTP,
+  swapTPforTC,
+  swapTPforTP,
+}
 
 export function pEth(eth: string | number): BigNumber {
   let ethStr: string;
@@ -49,7 +65,7 @@ export async function deployPeggedToken({
   return mocRC20Proxy;
 }
 
-export async function deployCollateralToken({
+export async function deployAndInitTC({
   adminAddress,
   governorAddress,
 }: {
@@ -64,6 +80,21 @@ export async function deployCollateralToken({
   await mocTCProxy.initialize("mocCT", "CT", adminAddress, governorAddress);
   return mocTCProxy;
 }
+
+export const deployMocQueue = async (contractName: "MocQueueMock" | "MocQueue"): Promise<MocQueue> => {
+  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
+  const mocQueueMock = await mocQueueMockFactory.deploy();
+  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  await mocQueue.initialize(
+    await getGovernorAddresses(hre),
+    mocAddresses.pauserAddress,
+    queueParams.minOperWaitingBlk,
+    queueParams.maxOperPerBatch,
+    queueParams.execFeeParams,
+  );
+  return mocQueue;
+};
 
 export const tpParamsDefault = {
   price: PCT_BASE, // 1
@@ -131,7 +162,10 @@ export async function deployAndAddPeggedTokens(
   mocImpl: MocCore,
   amountPegTokens: number,
   tpParams?: any[],
-): Promise<{ mocPeggedTokens: MocRC20[]; priceProviders: PriceProviderMock[] }> {
+): Promise<{
+  mocPeggedTokens: MocRC20[];
+  priceProviders: PriceProviderMock[];
+}> {
   const mocPeggedTokens: Array<MocRC20> = [];
   const priceProviders: Array<PriceProviderMock> = [];
   const governorAddress = await mocImpl.governor();
@@ -159,6 +193,11 @@ export async function deployPriceProvider(price: BigNumber): Promise<PriceProvid
   return factory.deploy(price);
 }
 
+export async function deployDataProvider(data: BigNumber): Promise<DataProviderMock> {
+  const factory = await ethers.getContractFactory("DataProviderMock");
+  return factory.deploy(data);
+}
+
 export async function deployAeropagusGovernor(deployer: Address): Promise<IGovernor> {
   const factory = await ethers.getContractFactory(GovernorCompiled.abi, GovernorCompiled.bytecode);
   const governor = await factory.deploy();
@@ -175,22 +214,6 @@ export async function deployAsset(): Promise<ERC20Mock> {
   return asset;
 }
 
-export async function deployAndAddAssets(
-  mocWrapper: MocCAWrapper,
-  amountAsset: number,
-): Promise<{ assets: ERC20Mock[]; assetPriceProviders: PriceProviderMock[] }> {
-  const assets: Array<ERC20Mock> = [];
-  const assetPriceProviders: Array<PriceProviderMock> = [];
-  for (let i = 0; i < amountAsset; i++) {
-    const asset = await deployAsset();
-    const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
-    assets.push(asset);
-    assetPriceProviders.push(priceProvider);
-  }
-  return { assets, assetPriceProviders };
-}
-
 export async function deployAssetERC777(): Promise<ERC777Mock> {
   const factory = await ethers.getContractFactory("ERC777Mock");
   const { deployer } = await getNamedAccounts();
@@ -198,23 +221,10 @@ export async function deployAssetERC777(): Promise<ERC777Mock> {
   return asset;
 }
 
-export async function deployAndAddAssetsERC777(
-  mocWrapper: MocCAWrapper,
-  amountAsset: number,
-): Promise<{ assets: ERC777Mock[]; assetPriceProviders: PriceProviderMock[] }> {
-  const assets: Array<ERC777Mock> = [];
-  const assetPriceProviders: Array<PriceProviderMock> = [];
-  for (let i = 0; i < amountAsset; i++) {
-    const asset = await deployAssetERC777();
-    const priceProvider = await deployPriceProvider(pEth(1));
-    await mocWrapper.addOrEditAsset(asset.address, priceProvider.address, 18);
-    assets.push(asset);
-    assetPriceProviders.push(priceProvider);
-  }
-  return { assets, assetPriceProviders };
-}
-
 export type Balance = BigNumber;
+export type OperId = BigNumber;
+
+export const ethersGetBalance = (account: Address) => ethers.provider.getBalance(account);
 
 export const ERRORS = {
   BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
@@ -249,14 +259,30 @@ export const ERRORS = {
   UNSTOPPABLE: "Unstoppable",
   MISSING_BLOCKS_TO_SETTLEMENT: "MissingBlocksToSettlement",
   MISSING_BLOCKS_TO_TC_INTEREST_PAYMENT: "MissingBlocksToTCInterestPayment",
+  EXEC_FEE_PAYMENT_FAILED: "ExecutionFeePaymentFailed",
+  NOT_ALLOW_ON_EMPTY_QUEUE: "NotAllowOnNoneEmptyQueue",
+  WRONG_EXEC_FEES: "WrongExecutionFee",
+  MAX_FLUX_CAPACITOR_REACHED: "MaxFluxCapacitorOperationReached",
+  INVALID_FLUX_CAPACITOR_OPERATION: "InvalidFluxCapacitorOperation",
+  MISSING_PROVIDER_DATA: "MissingProviderData",
+  BUCKET_ALREADY_REGISTERED: "BucketAlreadyRegistered",
 };
 
-export const CONSTANTS = {
-  ZERO_ADDRESS: ethers.constants.AddressZero,
-  MAX_UINT256: ethers.constants.MaxUint256,
-  MAX_BALANCE: ethers.constants.MaxUint256.div((1e17).toString()),
-  PRECISION: BigNumber.from((1e18).toString()),
-  ONE: BigNumber.from((1e18).toString()),
+const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);
+
+export const ERROR_SELECTOR = {
+  LOW_COVERAGE: getSelectorFor(ERRORS.LOW_COVERAGE + "(uint256,uint256)"),
+  INSUFFICIENT_QAC_SENT: getSelectorFor(ERRORS.INSUFFICIENT_QAC_SENT + "(uint256,uint256)"),
+  INSUFFICIENT_TC_TO_REDEEM: getSelectorFor(ERRORS.INSUFFICIENT_TC_TO_REDEEM + "(uint256,uint256)"),
+  INSUFFICIENT_TP_TO_MINT: getSelectorFor(ERRORS.INSUFFICIENT_TP_TO_MINT + "(uint256,uint256)"),
+  INSUFFICIENT_TP_TO_REDEEM: getSelectorFor(ERRORS.INSUFFICIENT_TP_TO_REDEEM + "(uint256,uint256)"),
+  INSUFFICIENT_QTP_SENT: getSelectorFor(ERRORS.INSUFFICIENT_QTP_SENT + "(uint256,uint256)"),
+  QAC_NEEDED_MUST_BE_GREATER_ZERO: getSelectorFor(ERRORS.QAC_NEEDED_MUST_BE_GREATER_ZERO + "()"),
+  QAC_BELOW_MINIMUM: getSelectorFor(ERRORS.QAC_BELOW_MINIMUM + "(uint256,uint256)"),
+  QTP_BELOW_MINIMUM: getSelectorFor(ERRORS.QTP_BELOW_MINIMUM + "(uint256,uint256)"),
+  QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
+  INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
+  TRANSFER_FAILED: getSelectorFor(ERRORS.TRANSFER_FAIL + "()"),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {
@@ -287,6 +313,16 @@ export async function ensureERC1820(): Promise<void> {
 
     await ethers.provider.send("eth_sendRawTransaction", [ERC1820_PAYLOAD]);
   }
+}
+
+export function expectEventFor(mocContracts: any, eventName: string): any {
+  return async (tx: ContractTransaction, rawArgs: any[]) => {
+    // TODO: replace with withNamedArgs when https://github.com/NomicFoundation/hardhat/issues/4166#issuecomment-1640291151 is ready
+    let args = [...rawArgs, anyValue];
+    await expect(tx)
+      .to.emit(mocContracts.mocQueue, eventName)
+      .withArgs(...args);
+  };
 }
 
 export { mineUpTo };

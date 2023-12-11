@@ -13,7 +13,7 @@ const fixtureDeploy = memoizee(
       await deployments.fixture();
       const signer = ethers.provider.getSigner();
 
-      const deployedMocVendors = await deployments.getOrNull("MocVendorsCABagProxy");
+      const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
       if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 
@@ -24,7 +24,7 @@ const fixtureDeploy = memoizee(
   },
 );
 
-describe("Feature: Verify that all config settings are protected by governance", () => {
+describe("Feature: Verify all MocVendors config settings are protected by governance", () => {
   let governorMock: GovernorMock;
   let mocVendors: MocVendors;
   let mockAddress: Address;

@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
-export declare type TPParams = {
+export type TPParams = {
     name: string;
     symbol: string;
     priceProvider: Address;
@@ -10,18 +10,17 @@ export declare type TPParams = {
     initialEma: BigNumber;
     smoothingFactor: BigNumber;
 };
-export declare type AssetParams = {
-    assetAddress: Address;
-    priceProvider: Address;
-    decimals: number;
-};
-export declare type DeployParameters = {
+export type DeployParameters = {
     coreParams: {
         protThrld: BigNumber;
         liqThrld: BigNumber;
         emaCalculationBlockSpan: number;
         successFee: BigNumber;
         appreciationFactor: BigNumber;
+        tcInterestRate: BigNumber;
+        tcInterestPaymentBlockSpan: number;
+        decayBlockSpan: number;
+        transferMaxGas?: number;
     };
     settlementParams: {
         bes: number;
@@ -44,9 +43,6 @@ export declare type DeployParameters = {
     tpParams?: {
         tpParams: TPParams[];
     };
-    assetParams?: {
-        assetParams: AssetParams[];
-    };
     mocAddresses: {
         collateralAssetAddress?: Address;
         governorAddress: Address;
@@ -56,6 +52,25 @@ export declare type DeployParameters = {
         mocFeeFlowAddress: Address;
         mocAppreciationBeneficiaryAddress: Address;
         vendorsGuardianAddress: Address;
+        tcInterestCollectorAddress: Address;
+        maxAbsoluteOpProviderAddress: Address;
+        maxOpDiffProviderAddress: Address;
+        coinbaseFailedTransferFallback?: Address;
+    };
+    queueParams: {
+        minOperWaitingBlk: number;
+        maxOperPerBatch: number;
+        execFeeParams: {
+            tpMintExecFee: BigNumber;
+            tpRedeemExecFee: BigNumber;
+            tcMintExecFee: BigNumber;
+            tcRedeemExecFee: BigNumber;
+            swapTPforTPExecFee: BigNumber;
+            swapTPforTCExecFee: BigNumber;
+            swapTCforTPExecFee: BigNumber;
+            redeemTCandTPExecFee: BigNumber;
+            mintTCandTPExecFee: BigNumber;
+        };
     };
     gasLimit: number;
 };

@@ -20,15 +20,6 @@ export type TPParams = {
   smoothingFactor: BigNumber;
 };
 
-export type AssetParams = {
-  // Asset contract address
-  assetAddress: Address;
-  // Asset Price Provider contract address
-  priceProvider: Address;
-  // Asset decimal places
-  decimals: number;
-};
-
 export type DeployParameters = {
   coreParams: {
     // protected coverage threshold [PREC]
@@ -45,6 +36,10 @@ export type DeployParameters = {
     tcInterestRate: BigNumber;
     // amount of blocks to wait for next TC interest payment
     tcInterestPaymentBlockSpan: number;
+    // number of blocks that have to elapse for the linear decay factor to be 0
+    decayBlockSpan: number;
+    // max amount of gas forwarded on AC transfer(only for coinbase flavor)
+    transferMaxGas?: number;
   };
   settlementParams: {
     // number of blocks between settlements
@@ -81,10 +76,6 @@ export type DeployParameters = {
   tpParams?: {
     tpParams: TPParams[];
   };
-  // only for initialization in testnet and for collateral bag implementation
-  assetParams?: {
-    assetParams: AssetParams[];
-  };
   mocAddresses: {
     // collateral asset token address, only used for RC20 implementation
     collateralAssetAddress?: Address;
@@ -104,6 +95,29 @@ export type DeployParameters = {
     vendorsGuardianAddress: Address;
     // TC interest collector address
     tcInterestCollectorAddress: Address;
+    // max absolute operation provider address
+    maxAbsoluteOpProviderAddress: Address;
+    // max operation difference provider address
+    maxOpDiffProviderAddress: Address;
+    // address who receives the funds when the coinbase unlock fails(only for coinbase flavor)
+    coinbaseFailedTransferFallback?: Address;
+  };
+  queueParams: {
+    // min amount of blocks the Operation should wait in the Queue before execution
+    minOperWaitingBlk: number;
+    // max amount of Operations that can be executed on a single batch
+    maxOperPerBatch: number;
+    execFeeParams: {
+      tpMintExecFee: BigNumber;
+      tpRedeemExecFee: BigNumber;
+      tcMintExecFee: BigNumber;
+      tcRedeemExecFee: BigNumber;
+      swapTPforTPExecFee: BigNumber;
+      swapTPforTCExecFee: BigNumber;
+      swapTCforTPExecFee: BigNumber;
+      redeemTCandTPExecFee: BigNumber;
+      mintTCandTPExecFee: BigNumber;
+    };
   };
   // gas limit applied for each tx during deployment
   // Hardhat gas limit config cannot be used because we are using ethers.js library. https://github.com/NomicFoundation/hardhat/pull/2406

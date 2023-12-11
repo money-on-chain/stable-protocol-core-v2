@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
-import { Balance, CONSTANTS, ERRORS, pEth } from "../helpers/utils";
+import { Balance, ERRORS, pEth } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 
@@ -11,6 +11,7 @@ const shouldBehaveLikeLiquidable = function () {
   let mocCollateralToken: MocRC20;
   let priceProviders: PriceProviderMock[];
   let alice: Address, bob: Address, charlie: Address, otherUser: Address;
+  let tp1: Address;
 
   describe("GIVEN there are open positions by multiple users", function () {
     beforeEach(async function () {
@@ -19,6 +20,7 @@ const shouldBehaveLikeLiquidable = function () {
       await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
       await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
       ({ mocImpl, mocCollateralToken, priceProviders } = this.mocContracts);
+      tp1 = this.mocContracts.mocPeggedTokens[1].address;
     });
     describe("WHEN AC prices falls, and makes the coverage go under liquidation threshold", function () {
       beforeEach(async function () {
@@ -120,35 +122,20 @@ const shouldBehaveLikeLiquidable = function () {
               [bob, charlie, otherUser].map(account => this.mocFunctions.assetBalanceOf(account)),
             );
             await this.mocFunctions.liqRedeemTP({ from: bob });
-            tx = await this.mocFunctions.liqRedeemTPto({ i: 1, from: charlie, to: otherUser });
+            tx = await this.mocFunctions.liqRedeemTP({ i: 1, from: charlie, to: otherUser });
           });
           it("THEN theirs TP are burned", async function () {
             assertPrec(0, await this.mocFunctions.tpBalanceOf(0, bob));
             assertPrec(0, await this.mocFunctions.tpBalanceOf(1, charlie));
           });
-          it("THEN a redeem event is generated for Charlie", async function () {
-            // i: 0
-            // sender: charlie || mocWrapper
-            // receiver: charlie || mocWrapper
+          it("THEN a liq redeem event is generated for Charlie", async function () {
+            // i: 1
+            // sender: charlie
+            // receiver: otherUser
             // qTP: 10 TP
             // qAC: 0.43333... AC
-            // qACfee: 0 AC
-            // qACVendorMarkup: 0
-            // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TPRedeemed")
-              .withArgs(
-                1,
-                this.mocContracts.mocWrapper?.address || charlie,
-                this.mocContracts.mocWrapper?.address || otherUser,
-                pEth(10),
-                "43333333333333333247",
-                0,
-                0,
-                0,
-                0,
-                CONSTANTS.ZERO_ADDRESS,
-              );
+            const qAC = "43333333333333333247";
+            await expect(tx).to.emit(mocImpl, "LiqTPRedeemed").withArgs(tp1, charlie, otherUser, pEth(10), qAC);
           });
           it("THEN they receive the corresponding AC amount", async function () {
             // Alice, bob and Charlie contribution at 1:1

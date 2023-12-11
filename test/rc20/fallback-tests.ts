@@ -4,10 +4,10 @@ import { MocCARC20 } from "../../typechain";
 import { pEth } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "./fixture";
 
-describe("Feature: MocRC20 rejects coinbase transfers", function () {
+describe("Feature: MocCARC20 rejects coinbase transfers", function () {
   let mocImpl: MocCARC20;
 
-  describe("GIVEN a MocRC20 implementation deployed", function () {
+  describe("GIVEN a MocCARC20 implementation deployed", function () {
     beforeEach(async function () {
       ({ mocImpl } = await fixtureDeployedMocRC20(0)());
     });

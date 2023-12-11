@@ -6,7 +6,7 @@ import { fixtureDeployedMocRC20 } from "./fixture";
 describe("Feature: MocCARC20 TC holders interest payment", function () {
   describe("GIVEN a MocCARC20 implementation deployed", function () {
     before(async function () {
-      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams);
+      const fixtureDeploy = fixtureDeployedMocRC20(tpParams.length, tpParams, true);
       this.mocContracts = await fixtureDeploy();
       this.mocFunctions = await mocFunctionsRC20(this.mocContracts);
     });

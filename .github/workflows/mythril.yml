@@ -39,23 +39,6 @@ jobs:
       - run: npm ci
       - run: pip3 install mythril
       - run: npm run mythril:MocCARC20
-  wrapper:
-    name: Run Mythril Wrapper
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.14.2]
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: pip3 install mythril
-      - run: npm run mythril:MocCAWrapper
   expansion:
     name: Run Mythril Core Expansion
     runs-on: ubuntu-latest

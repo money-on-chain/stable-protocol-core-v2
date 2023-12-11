@@ -2,20 +2,18 @@ import hre, { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { BigNumber, ContractTransaction } from "ethers";
-import { MocCACoinbase, MocRC20, PriceProviderMock } from "../../typechain";
+import { MocCACoinbase, PriceProviderMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
-import { mineNBlocks, pEth } from "../helpers/utils";
+import { mineNBlocks, pEth, getNetworkDeployParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
-import { getNetworkDeployParams } from "../../scripts/utils";
 import { fixtureDeployedMocCoinbase } from "./../coinbase/fixture";
 
 const { coreParams } = getNetworkDeployParams(hre);
 
 describe("Feature: Ema Calculation", function () {
+  let mocContracts: any;
   let mocFunctions: any;
   let mocImpl: MocCACoinbase;
-  let mocCollateralToken: MocRC20;
-  let mocPeggedTokens: MocRC20[];
   let priceProviders: PriceProviderMock[];
   let deployer: Address;
   let alice: Address;
@@ -50,9 +48,10 @@ describe("Feature: Ema Calculation", function () {
 
   beforeEach(async function () {
     ({ deployer, alice, bob } = await getNamedAccounts());
-    const fixtureDeploy = fixtureDeployedMocCoinbase(peggedAmount, tpParams);
-    ({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders } = await fixtureDeploy());
-    mocFunctions = await mocFunctionsCoinbase({ mocImpl, mocCollateralToken, mocPeggedTokens, priceProviders });
+    const fixtureDeploy = fixtureDeployedMocCoinbase(peggedAmount, tpParams, true);
+    mocContracts = await fixtureDeploy();
+    mocFunctions = await mocFunctionsCoinbase(mocContracts);
+    ({ mocImpl, priceProviders } = mocContracts);
   });
   describe("GIVEN a MocCoinbase implementation deployed with two Pegged Tokens", function () {
     describe("WHEN pegged price changes, but update ema is evaluated before time", function () {
@@ -72,7 +71,6 @@ describe("Feature: Ema Calculation", function () {
         await mocFunctions.mintTC({ from: alice, qTC: 10, qACmax: 15 });
         await mocFunctions.mintTP({ from: alice, qTP: 1 });
         await mocFunctions.mintTP({ from: alice, i: 3, qTP: 1 });
-
         await mineNBlocks(coreParams.emaCalculationBlockSpan);
         prevValues = await Promise.all(priceProviders.map((_, i) => mocImpl.tpEma(i)));
         await Promise.all(priceProviders.map(pp => pp.poke(pEth(2))));

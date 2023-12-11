@@ -3,8 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, mineUpTo, pEth } from "../helpers/utils";
-import { getNetworkDeployParams } from "../../scripts/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, mineUpTo, pEth, getNetworkDeployParams } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const redeemTCBehavior = function () {
@@ -13,12 +12,18 @@ const redeemTCBehavior = function () {
   let mocImpl: MocCACoinbase | MocCARC20;
   let alice: Address;
   let bob: Address;
-  let operator: Address;
   let vendor: Address;
+  let expectEvent: any;
+  let assertACResult: any;
   const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
-  const { mocFeeFlowAddress } = getNetworkDeployParams(hre).mocAddresses;
+  const {
+    mocAddresses: { mocFeeFlowAddress },
+    queueParams: {
+      execFeeParams: { tcRedeemExecFee },
+    },
+  } = getNetworkDeployParams(hre);
 
   describe("Feature: redeem Collateral Token", function () {
     beforeEach(async function () {
@@ -26,7 +31,8 @@ const redeemTCBehavior = function () {
       mocFunctions = this.mocFunctions;
       ({ mocImpl } = mocContracts);
       ({ alice, bob, vendor } = await getNamedAccounts());
-      operator = mocContracts.mocWrapper?.address || alice;
+      expectEvent = expectEventFor(mocContracts, "TCRedeemed");
+      assertACResult = mocFunctions.assertACResult(-tcRedeemExecFee);
     });
     describe("GIVEN alice has 300 TC", function () {
       beforeEach(async function () {
@@ -42,7 +48,7 @@ const redeemTCBehavior = function () {
       });
       describe("WHEN alice tries to redeem 300 TC to the zero address", function () {
         it("THEN tx reverts because recipient is the zero address", async function () {
-          await expect(mocFunctions.redeemTCto({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 300 })).to.be.reverted;
+          await expect(mocFunctions.redeemTC({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 300 })).to.be.reverted;
         });
       });
       describe("WHEN alice tries to redeem 301 TC", function () {
@@ -98,28 +104,27 @@ const redeemTCBehavior = function () {
         it("THEN alice balance increase 300 Asset - 5% for Moc Fee Flow", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(300 * 0.95, diff);
+          assertACResult(300 * 0.95, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: alice || mocWrapper
+          // sender: alice
+          // receiver: alice
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(operator, operator, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor);
+          const args = [alice, alice, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
         it("THEN a Collateral Token Transfer event is emitted", async function () {
-          // from: alice || mocWrapper
+          // from: Moc
           // to: Zero Address
           // amount: 300 TC
           await expect(tx)
             .to.emit(mocContracts.mocCollateralToken, "Transfer")
-            .withArgs(operator, CONSTANTS.ZERO_ADDRESS, pEth(300));
+            .withArgs(mocImpl.address, CONSTANTS.ZERO_ADDRESS, pEth(300));
         });
       });
       describe("WHEN alice redeems 300 TC to bob", function () {
@@ -129,7 +134,7 @@ const redeemTCBehavior = function () {
         beforeEach(async function () {
           bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
-          tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 300 });
+          tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 300 });
         });
         it("THEN alice has 0 TC", async function () {
           assertPrec(0, await mocFunctions.tcBalanceOf(alice));
@@ -148,27 +153,16 @@ const redeemTCBehavior = function () {
           assertPrec(300 * 0.95, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: bob || mocWrapper
+          // sender: alice
+          // receiver: bob
           // qTC: 300 TC
           // qAC: 300 AC - 5% for Moc Fee Flow
           // qACfee: 5% AC
           // qFeeToken: 0
           // qACVendorMarkup: 0
           // qFeeTokenVendorMarkup: 0
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(300),
-              pEth(300 * 0.95),
-              pEth(300 * 0.05),
-              0,
-              0,
-              0,
-              noVendor,
-            );
+          const args = [alice, bob, pEth(300), pEth(300 * 0.95), pEth(300 * 0.05), 0, 0, 0, noVendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice redeems 100 TC via vendor", function () {
@@ -183,7 +177,7 @@ const redeemTCBehavior = function () {
         it("THEN alice AC balance increase 85 Asset (100 qAC - 5% qACFee - 10% qACVendorMarkup)", async function () {
           const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
           const diff = aliceActualACBalance.sub(alicePrevACBalance);
-          assertPrec(85, diff);
+          assertACResult(85, diff);
         });
         it("THEN vendor AC balance increase 10 Asset", async function () {
           const vendorActualACBalance = await mocFunctions.acBalanceOf(vendor);
@@ -191,51 +185,39 @@ const redeemTCBehavior = function () {
           assertPrec(10, diff);
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: alice || mocWrapper
+          // sender: alice
+          // receiver: alice
           // qTC: 100 TC
           // qAC: 100 AC - 5% for Moc Fee Flow - 10% for vendor
           // qACfee: 5% qAC
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 10% qAC
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(operator, operator, pEth(100), pEth(100 * 0.85), pEth(100 * 0.05), 0, pEth(100 * 0.1), 0, vendor);
+          const args = [alice, alice, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("WHEN alice redeems 100 TC to bob via vendor", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
-          tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 100, vendor });
+          tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 100, vendor });
         });
         it("THEN a TCRedeemed event is emitted", async function () {
-          // sender: alice || mocWrapper
-          // receiver: bob || mocWrapper
+          // sender: alice
+          // receiver: bob
           // qTC: 100 TC
           // qAC: 100 AC - 5% for Moc Fee Flow - 10% for vendor
           // qACfee: 5% qAC
           // qFeeToken: 0
           // qACVendorMarkup: 10% qAC
           // qFeeTokenVendorMarkup: 10% qAC
-          await expect(tx)
-            .to.emit(mocImpl, "TCRedeemed")
-            .withArgs(
-              operator,
-              mocContracts.mocWrapper?.address || bob,
-              pEth(100),
-              pEth(100 * 0.85),
-              pEth(100 * 0.05),
-              0,
-              pEth(100 * 0.1),
-              0,
-              vendor,
-            );
+          const args = [alice, bob, pEth(100), pEth(85), pEth(5), 0, pEth(10), 0, vendor];
+          await expectEvent(tx, args);
         });
       });
       describe("AND alice mints 2350 TP0, so there are 254.5859272 TC available to reedem", function () {
         beforeEach(async function () {
-          await mocFunctions.mintTP({ i: TP_0, from: alice, qTP: 2350 });
+          await mocFunctions.mintTP({ from: alice, qTP: 2350 });
         });
         /*  
         nAC = 310   
@@ -317,7 +299,7 @@ const redeemTCBehavior = function () {
           it("THEN alice balance increase 254.58 Asset - 5% for Moc Fee Flow", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec("241.856630824372759863", diff);
+            assertACResult("241.856630824372759863", diff);
           });
           describe("AND bob mints 10 TC and 10 TP1, making TC available to redeem go to 3.968", function () {
             beforeEach(async function () {
@@ -355,7 +337,7 @@ const redeemTCBehavior = function () {
               it("THEN alice balance increase 3.968 Asset - 5% for Moc Fee Flow", async function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
-                assertPrec("3.769841269841269848", diff);
+                assertACResult("3.769841269841269848", diff);
               });
             });
           });
@@ -386,7 +368,7 @@ const redeemTCBehavior = function () {
             it("THEN alice receives 90.72 assets instead of 95", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = aliceActualACBalance.sub(alicePrevACBalance);
-              assertPrec("90.725", diff);
+              assertACResult("90.725", diff);
             });
           });
         });
@@ -435,7 +417,7 @@ const redeemTCBehavior = function () {
             it("THEN alice receives 95.67 assets instead of 95", async function () {
               const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
               const diff = aliceActualACBalance.sub(alicePrevACBalance);
-              assertPrec("95.671333333333333270", diff);
+              assertACResult("95.671333333333333270", diff);
             });
           });
           describe("AND Pegged Token has been revaluated to 100 making TC price falls", function () {
@@ -483,7 +465,7 @@ const redeemTCBehavior = function () {
               it("THEN alice receives 90.725 assets instead of 95", async function () {
                 const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
                 const diff = aliceActualACBalance.sub(alicePrevACBalance);
-                assertPrec("90.725", diff);
+                assertACResult("90.725", diff);
               });
             });
           });
@@ -510,9 +492,7 @@ const redeemTCBehavior = function () {
         beforeEach(async function () {
           // mint FeeToken to alice
           await mocContracts.feeToken.mint(alice, pEth(50));
-          // for collateral bag implementation approve must be set to Moc Wrapper contract
-          const spender = mocContracts.mocWrapper?.address || mocImpl.address;
-          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(spender, pEth(50));
+          await mocContracts.feeToken.connect(await ethers.getSigner(alice)).approve(mocImpl.address, pEth(50));
 
           // initialize previous balances
           alicePrevFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
@@ -528,7 +508,7 @@ const redeemTCBehavior = function () {
           it("THEN alice AC balance increase 100 Asset", async function () {
             const aliceActualACBalance = await mocFunctions.assetBalanceOf(alice);
             const diff = aliceActualACBalance.sub(alicePrevACBalance);
-            assertPrec(100, diff);
+            assertACResult(100, diff);
           });
           it("THEN alice Fee Token balance decrease 2.5 (100 * 5% * 50%)", async function () {
             const aliceActualFeeTokenBalance = await mocContracts.feeToken.balanceOf(alice);
@@ -545,24 +525,23 @@ const redeemTCBehavior = function () {
             assertPrec(2.5, diff);
           });
           it("THEN Fee Token is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
-            // receiver: alice || mocWrapper
+            // sender: alice
+            // receiver: alice
             // qTC: 100 TC
             // qAC: 100 AC
             // qACfee: 0 AC
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(operator, operator, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor);
+            const args = [alice, alice, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
         describe("WHEN alice redeems 100 TC to bob", function () {
           let bobPrevACBalance: Balance;
           beforeEach(async function () {
             bobPrevACBalance = await mocFunctions.assetBalanceOf(bob);
-            tx = await mocFunctions.redeemTCto({ from: alice, to: bob, qTC: 100 });
+            tx = await mocFunctions.redeemTC({ from: alice, to: bob, qTC: 100 });
           });
           it("THEN bob AC balance increase 100 Asset", async function () {
             const bobActualACBalance = await mocFunctions.assetBalanceOf(bob);
@@ -584,27 +563,16 @@ const redeemTCBehavior = function () {
             assertPrec(2.5, diff);
           });
           it("THEN Fee Token is used as fee payment method", async function () {
-            // sender: alice || mocWrapper
-            // receiver: bob || mocWrapper
+            // sender: alice
+            // receiver: bob
             // qTC: 100 TC
             // qAC: 100 AC
             // qACfee: 0 AC
             // qFeeToken: 100 (5% * 50%)
             // qACVendorMarkup: 0
             // qFeeTokenVendorMarkup: 0
-            await expect(tx)
-              .to.emit(mocImpl, "TCRedeemed")
-              .withArgs(
-                operator,
-                mocContracts.mocWrapper?.address || bob,
-                pEth(100),
-                pEth(100),
-                0,
-                pEth(100 * 0.05 * 0.5),
-                0,
-                0,
-                noVendor,
-              );
+            const args = [alice, bob, pEth(100), pEth(100), 0, pEth(100 * 0.05 * 0.5), 0, 0, noVendor];
+            await expectEvent(tx, args);
           });
         });
       });

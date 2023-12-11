@@ -11,13 +11,18 @@ import {
   MocVendors__factory,
   PriceProviderMock,
   PriceProviderMock__factory,
+  DataProviderMock,
+  DataProviderMock__factory,
+  MocQueue,
+  MocQueue__factory,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { deployAndAddPeggedTokens, EXECUTOR_ROLE, pEth, deployMocQueue } from "../helpers/utils";
 
 export const fixtureDeployedMocCoinbase = memoizee(
   (
     amountPegTokens: number,
     tpParams?: any,
+    useMockQueue?: boolean,
   ): (() => Promise<{
     mocImpl: MocCACoinbase;
     mocCollateralToken: MocRC20;
@@ -25,6 +30,9 @@ export const fixtureDeployedMocCoinbase = memoizee(
     priceProviders: PriceProviderMock[];
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
+    mocQueue: MocQueue;
+    maxAbsoluteOpProvider: DataProviderMock;
+    maxOpDiffProvider: DataProviderMock;
   }>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
@@ -43,12 +51,28 @@ export const fixtureDeployedMocCoinbase = memoizee(
       const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
       const feeTokenPriceProvider = PriceProviderMock__factory.connect(await mocImpl.feeTokenPriceProvider(), signer);
 
+      const maxAbsoluteOpProvider = DataProviderMock__factory.connect(await mocImpl.maxAbsoluteOpProvider(), signer);
+      const maxOpDiffProvider = DataProviderMock__factory.connect(await mocImpl.maxOpDiffProvider(), signer);
+
       const deployedMocVendors = await deployments.getOrNull("MocVendorsCACoinbaseProxy");
       if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 
       // initialize vendor with 10% markup
-      const { vendor } = await getNamedAccounts();
+      const { deployer, vendor } = await getNamedAccounts();
+
+      let mocQueue: MocQueue;
+      if (useMockQueue) {
+        mocQueue = await deployMocQueue("MocQueueMock");
+        await Promise.all([
+          mocImpl.setMocQueue(mocQueue.address),
+          mocQueue.registerBucket(mocImpl.address),
+          mocQueue.grantRole(EXECUTOR_ROLE, deployer),
+        ]);
+      } else {
+        mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
+      }
+
       await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
 
       return {
@@ -58,6 +82,9 @@ export const fixtureDeployedMocCoinbase = memoizee(
         priceProviders,
         feeToken,
         feeTokenPriceProvider,
+        mocQueue,
+        maxAbsoluteOpProvider,
+        maxOpDiffProvider,
       };
     });
   },

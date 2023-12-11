@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
 import { MocBaseBucket } from "./MocBaseBucket.sol";
@@ -89,7 +89,7 @@ abstract contract MocEma is MocBaseBucket {
      */
     function updateTPema(uint256 i_) internal {
         EmaItem memory currentTPema = tpEma[i_];
-        uint256 pACtp = getPACtp(i_);
+        uint256 pACtp = _getPACtp(i_);
         uint256 newEma = __calcNewEma(currentTPema, pACtp);
         // save new ema value to storage
         tpEma[i_].ema = newEma;
@@ -111,7 +111,7 @@ abstract contract MocEma is MocBaseBucket {
         uint256 pegAmount = pegContainer.length;
         pACtps = new uint256[](pegAmount);
         for (uint256 i = 0; i < pegAmount; i = unchecked_inc(i)) {
-            uint256 pACtp = getPACtp(i);
+            uint256 pACtp = _getPACtp(i);
             pACtps[i] = pACtp;
             (uint256 tpGain, ) = _getPnLTP(i, pACtp);
             // [PREC] = [N] * [PREC] * [PREC]  / [PREC]

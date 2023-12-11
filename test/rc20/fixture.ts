@@ -5,27 +5,39 @@ import {
   ERC20Mock__factory,
   MocCARC20,
   MocCARC20__factory,
+  MocQueue,
+  MocQueue__factory,
   MocRC20,
   MocRC20__factory,
   MocVendors,
   MocVendors__factory,
   PriceProviderMock,
   PriceProviderMock__factory,
+  DataProviderMock,
+  DataProviderMock__factory,
+  MocCoreExpansion,
+  MocCoreExpansion__factory,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, pEth } from "../helpers/utils";
+import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth, deployMocQueue } from "../helpers/utils";
 
 export const fixtureDeployedMocRC20 = memoizee(
   (
     amountPegTokens: number,
     tpParams?: any,
+    useMockQueue?: boolean,
   ): (() => Promise<{
     mocImpl: MocCARC20;
     mocCollateralToken: MocRC20;
     mocPeggedTokens: MocRC20[];
     priceProviders: PriceProviderMock[];
     collateralAsset: ERC20Mock;
+    mocCoreExpansion: MocCoreExpansion;
+    mocVendors: MocVendors;
     feeToken: ERC20Mock;
     feeTokenPriceProvider: PriceProviderMock;
+    mocQueue: MocQueue;
+    maxAbsoluteOpProvider: DataProviderMock;
+    maxOpDiffProvider: DataProviderMock;
   }>) => {
     return deployments.createFixture(async ({ ethers }) => {
       await deployments.fixture();
@@ -35,19 +47,31 @@ export const fixtureDeployedMocRC20 = memoizee(
       if (!deployedMocContract) throw new Error("No MocCARC20Proxy deployed.");
       const mocImpl: MocCARC20 = MocCARC20__factory.connect(deployedMocContract.address, signer);
 
-      const deployedMocVendors = await deployments.getOrNull("MocVendorsCARC20Proxy");
-      if (!deployedMocVendors) throw new Error("No MocVendors deployed.");
-      const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
+      const deployedMocExpansionContract = await deployments.getOrNull("MocCARC20Expansion");
+      if (!deployedMocExpansionContract) throw new Error("No MocCARC20Expansion deployed.");
+      const mocCoreExpansion: MocCoreExpansion = MocCoreExpansion__factory.connect(
+        deployedMocExpansionContract.address,
+        signer,
+      );
 
-      const deployedTCContract = await deployments.getOrNull("CollateralTokenCARC20Proxy");
-      if (!deployedTCContract) throw new Error("No CollateralTokenCARC20Proxy deployed.");
-      const mocCollateralToken: MocRC20 = MocRC20__factory.connect(deployedTCContract.address, signer);
+      const mocVendors: MocVendors = MocVendors__factory.connect(await mocImpl.mocVendors(), signer);
+      const mocCollateralToken: MocRC20 = MocRC20__factory.connect(await mocImpl.tcToken(), signer);
+      const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(await mocImpl.acToken(), signer);
+      let mocQueue: MocQueue;
 
-      const deployedERC20MockContract = await deployments.getOrNull("CollateralAssetCARC20");
-      if (!deployedERC20MockContract) throw new Error("No CollateralAssetCARC20 deployed.");
-      const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(deployedERC20MockContract.address, signer);
+      const { deployer, alice, bob, charlie, vendor } = await getNamedAccounts();
 
-      const { alice, bob, charlie, vendor } = await getNamedAccounts();
+      if (useMockQueue) {
+        mocQueue = await deployMocQueue("MocQueueMock");
+        await Promise.all([
+          mocImpl.setMocQueue(mocQueue.address),
+          mocQueue.registerBucket(mocImpl.address),
+          mocQueue.grantRole(EXECUTOR_ROLE, deployer),
+        ]);
+      } else {
+        mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
+      }
+
       // Fill users accounts with balance so that they can operate
       await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(1000000000000))));
 
@@ -58,6 +82,8 @@ export const fixtureDeployedMocRC20 = memoizee(
 
       const feeToken = ERC20Mock__factory.connect(await mocImpl.feeToken(), signer);
       const feeTokenPriceProvider = PriceProviderMock__factory.connect(await mocImpl.feeTokenPriceProvider(), signer);
+      const maxAbsoluteOpProvider = DataProviderMock__factory.connect(await mocImpl.maxAbsoluteOpProvider(), signer);
+      const maxOpDiffProvider = DataProviderMock__factory.connect(await mocImpl.maxOpDiffProvider(), signer);
 
       return {
         mocImpl,
@@ -65,9 +91,13 @@ export const fixtureDeployedMocRC20 = memoizee(
         mocPeggedTokens,
         priceProviders,
         collateralAsset,
+        mocCoreExpansion,
         mocVendors,
         feeToken,
         feeTokenPriceProvider,
+        mocQueue,
+        maxAbsoluteOpProvider,
+        maxOpDiffProvider,
       };
     });
   },

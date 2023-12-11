@@ -8,6 +8,8 @@ propMaxGas: 1000000000
 testMaxGas: 1000000000
 #balanceAddr is default balance for addresses
 balanceAddr: 0xffffffffffffffffffffffff
+#balanceContract overrides balanceAddr for the contract address
+balanceContract: 0xffffffffffffffffffffffff
 #codeSize max code size for deployed contracts (default 24576, per EIP-170)
 codeSize: 245760
 #testLimit is the number of test sequences to run

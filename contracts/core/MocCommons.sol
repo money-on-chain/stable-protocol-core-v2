@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { MocVendors } from "../vendors/MocVendors.sol";
 import { MocEma } from "./MocEma.sol";
+import { IDataProvider } from "../interfaces/IDataProvider.sol";
+import { SignedMath } from "@openzeppelin/contracts/utils/math/SignedMath.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // ------- External Structs -------
 
@@ -47,6 +50,13 @@ struct PeggedTokenParams {
 //    +-----------------+           +-----------------+
 //            ^
 //            | is
+//            |
+//            |
+//    +-----------------+
+//    |  MocOperations  |
+//    +-----------------+
+//            ^
+//            | is
 //            | _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 //            |                              |
 //    +-----------------+           +-----------------+
@@ -69,9 +79,28 @@ abstract contract MocCommons is MocEma {
 
     // ------- Internal Structs -------
 
+    struct MintTCandTPParams {
+        address tp;
+        uint256 qTP;
+        uint256 qACmax;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
+    struct RedeemTCandTPParams {
+        address tp;
+        uint256 qTC;
+        uint256 qTP;
+        uint256 qACmin;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
     struct SwapTPforTPParams {
-        uint256 iFrom;
-        uint256 iTo;
+        address tpFrom;
+        address tpTo;
         uint256 qTP;
         uint256 qTPmin;
         uint256 qACmax;
@@ -81,7 +110,7 @@ abstract contract MocCommons is MocEma {
     }
 
     struct SwapTPforTCParams {
-        uint256 i;
+        address tp;
         uint256 qTP;
         uint256 qTCmin;
         uint256 qACmax;
@@ -91,10 +120,19 @@ abstract contract MocCommons is MocEma {
     }
 
     struct SwapTCforTPParams {
-        uint256 i;
+        address tp;
         uint256 qTC;
         uint256 qTPmin;
         uint256 qACmax;
+        address sender;
+        address recipient;
+        address vendor;
+    }
+
+    struct RedeemTPParams {
+        address tp;
+        uint256 qTP;
+        uint256 qACmin;
         address sender;
         address recipient;
         address vendor;
@@ -119,59 +157,22 @@ abstract contract MocCommons is MocEma {
     error QtcBelowMinimumRequired(uint256 qTCmin_, uint256 qTC_);
     error QacNeededMustBeGreaterThanZero();
     error InsufficientTCtoRedeem(uint256 qTC_, uint256 tcAvailableToRedeem_);
+    error MissingProviderData(address dataProviderAddress_);
+    error MaxFluxCapacitorOperationReached(uint256 max_, uint256 new_);
+    error InvalidFluxCapacitorOperation();
+    error InsufficientQtpSent(uint256 qTPsent_, uint256 qTPNeeded_);
+    error QacBelowMinimumRequired(uint256 qACmin_, uint256 qACtoRedeem_);
 
     // ------- Events -------
 
-    event TPRedeemed(
-        uint256 indexed i_,
+    event LiqTPRedeemed(
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
-        uint256 qAC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
+        uint256 qAC_
     );
-    event PeggedTokenChange(uint256 indexed i_, PeggedTokenParams peggedTokenParams_);
-    event TPSwappedForTP(
-        uint256 indexed iFrom_,
-        uint256 iTo_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTPfrom_,
-        uint256 qTPto_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
-    event TPSwappedForTC(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTP_,
-        uint256 qTC_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
-    event TCSwappedForTP(
-        uint256 indexed i_,
-        address indexed sender_,
-        address indexed recipient_,
-        uint256 qTC_,
-        uint256 qTP_,
-        uint256 qACfee_,
-        uint256 qFeeToken_,
-        uint256 qACVendorMarkup_,
-        uint256 qFeeTokenVendorMarkup_,
-        address vendor
-    );
+    event PeggedTokenChange(uint256 i_, PeggedTokenParams peggedTokenParams_);
 
     // ------- Initializer -------
 
@@ -296,6 +297,159 @@ abstract contract MocCommons is MocEma {
         uint256 tcAvailableToRedeem = _getTCAvailableToRedeem(ctargemaCA_, lckAC_, nACgain_);
         // check if there are enough TC available to redeem
         if (tcAvailableToRedeem < qTC_) revert InsufficientTCtoRedeem(qTC_, tcAvailableToRedeem);
+    }
+
+    /**
+     * @notice ask to oracles for flux capacitor settings
+     * @return absolute maximum transaction allowed for a certain number of blocks
+     * @return differential maximum transaction allowed for a certain number of blocks
+     */
+    function _peekFluxCapacitorSettings() internal view returns (uint256, uint256) {
+        bytes32 maxAbsoluteOp;
+        bytes32 maxOpDiff;
+        bool has;
+        // get max absolute operation
+        IDataProvider dataProvider = maxAbsoluteOpProvider;
+        (maxAbsoluteOp, has) = dataProvider.peek();
+        if (!has) revert MissingProviderData(address(dataProvider));
+        // get max operational difference
+        dataProvider = maxOpDiffProvider;
+        (maxOpDiff, has) = dataProvider.peek();
+        if (!has) revert MissingProviderData(address(dataProvider));
+        return (uint256(maxAbsoluteOp), uint256(maxOpDiff));
+    }
+
+    /**
+     * @notice returns lineal decay factor
+     * @param blocksAmount_ amount of blocks to ask for the decay
+     * @return newAbsoluteAccumulator absolute accumulator updated by lineal decay factor [N]
+     * @return newDifferentialAccumulator differential accumulator updated by lineal decay factor [N]
+     */
+    function _calcAccWithDecayFactor(
+        uint256 blocksAmount_
+    ) internal view returns (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) {
+        unchecked {
+            // [N] = [N] - [N]
+            uint256 blocksElapsed = block.number + blocksAmount_ - lastOperationBlockNumber;
+            // [PREC] = [N] * [PREC] / [N]
+            uint256 blocksRatio = (blocksElapsed * PRECISION) / decayBlockSpan;
+            if (blocksRatio >= ONE) return (0, 0);
+            uint256 decayFactor = ONE - blocksRatio;
+            // [N] = [N] * [PREC] / [PREC]
+            newAbsoluteAccumulator = (absoluteAccumulator * decayFactor) / PRECISION;
+            // [N] = [N] * [PREC] / [PREC]
+            newDifferentialAccumulator = (differentialAccumulator * int256(decayFactor)) / int256(PRECISION);
+            return (newAbsoluteAccumulator, newDifferentialAccumulator);
+        }
+    }
+
+    /**
+     * @notice common function used to update accumulators during a TP operation
+     *  reverts if not allowed
+     * @dev the only difference between a redeem and a mint operation is that in the first one,
+     * the qAC is subtracted on newDifferentialAccumulator instead of added
+     * @param qAC_ amount of Collateral Asset used to mint
+     * @param redeemFlag_ true if it is a redeem TP operation
+     */
+    function _updateAccumulators(uint256 qAC_, bool redeemFlag_) internal {
+        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings();
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(0);
+        unchecked {
+            newAbsoluteAccumulator += qAC_;
+            int256 qACInt = int256(qAC_);
+            if (redeemFlag_) qACInt = -qACInt;
+            newDifferentialAccumulator += qACInt;
+            // cannot underflow, always newDifferentialAccumulator <= newAbsoluteAccumulator
+            uint256 operationalDifference = newAbsoluteAccumulator - SignedMath.abs(newDifferentialAccumulator);
+            if (newAbsoluteAccumulator > maxAbsoluteOperation) {
+                if (qAC_ > maxAbsoluteOperation) revert InvalidFluxCapacitorOperation();
+                revert MaxFluxCapacitorOperationReached(maxAbsoluteOperation, newAbsoluteAccumulator);
+            }
+            if (operationalDifference > maxOperationalDifference)
+                revert MaxFluxCapacitorOperationReached(maxOperationalDifference, operationalDifference);
+            // update storage
+            absoluteAccumulator = newAbsoluteAccumulator;
+            differentialAccumulator = newDifferentialAccumulator;
+            lastOperationBlockNumber = block.number;
+        }
+    }
+
+    /**
+     * @notice update accumulators during a mint TP operation
+     *  reverts if not allowed
+     * @param qAC_ amount of Collateral Asset used to mint
+     */
+    function _updateAccumulatorsOnMintTP(uint256 qAC_) internal {
+        _updateAccumulators(qAC_, false);
+    }
+
+    /**
+     * @notice update accumulators during a redeem operation
+     *  reverts if not allowed
+     * @param qAC_ reserve amount used for redeem
+     */
+    function _updateAccumulatorsOnRedeemTP(uint256 qAC_) internal {
+        _updateAccumulators(qAC_, true);
+    }
+
+    /**
+     * @notice internal common function used to calc max AC allowed to mint or redeem TP
+     *  due to accumulators
+     * // TODO: move this function to a MocView contract
+     * @param newAbsoluteAccumulator_ absolute accumulator updated by lineal decay factor [N]
+     * @param a_ on mint = AA - DA ; on redeem = AA + DA
+     * @param b_ on mint = AA + DA ; on redeem = AA - DA
+     * @return maxQAC minimum regarding maxAbsoluteOperation and maxOperationalDifference
+     */
+    function _calcMaxQACToOperateTP(
+        uint256 newAbsoluteAccumulator_,
+        uint256 a_,
+        uint256 b_
+    ) internal view returns (uint256 maxQAC) {
+        (uint256 maxAbsoluteOperation, uint256 maxOperationalDifference) = _peekFluxCapacitorSettings();
+        if (newAbsoluteAccumulator_ >= maxAbsoluteOperation) return 0;
+        uint256 absoluteAccAllowed = maxAbsoluteOperation - newAbsoluteAccumulator_;
+
+        if (a_ <= maxOperationalDifference) return absoluteAccAllowed;
+        if (b_ >= maxOperationalDifference) return 0;
+        uint256 differentialAccAllowed = (maxOperationalDifference - b_) / 2;
+        return Math.min(absoluteAccAllowed, differentialAccAllowed);
+    }
+
+    /**
+     * @notice gets the max amount of AC allowed to operate to mint TP with, restricted by accumulators
+     * // TODO: move this function to a MocView contract
+     * @return maxQAC minimum regarding maxAbsoluteOperation and maxOperationalDifference
+     */
+    function maxQACToMintTP() external view returns (uint256 maxQAC) {
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(1);
+        // X = mint amount
+        // (AA + X) - |DA + X| <= MODA && X >= 0
+        // 1) if DA + X >= 0 ---> AA + X - DA - X <= MODA ---> AA - DA <= MODA
+        // 2) if DA + X < 0 ---> X <= (MODA - (AA + DA)) / 2
+
+        // AA >= |DA|
+        uint256 a = uint256(int256(newAbsoluteAccumulator) - newDifferentialAccumulator);
+        uint256 b = uint256(int256(newAbsoluteAccumulator) + newDifferentialAccumulator);
+        return _calcMaxQACToOperateTP(newAbsoluteAccumulator, a, b);
+    }
+
+    /**
+     * @notice gets the max amount of AC allowed to operate to redeem TP with, restricted by accumulators
+     * // TODO: move this function to a MocView contract
+     * @return maxQAC minimum regarding maxAbsoluteOperation and maxOperationalDifference
+     */
+    function maxQACToRedeemTP() external view returns (uint256 maxQAC) {
+        (uint256 newAbsoluteAccumulator, int256 newDifferentialAccumulator) = _calcAccWithDecayFactor(1);
+        // X = redeem amount
+        // (AA + X) - |DA - X| <= MODA && X >= 0
+        // 1) if DA - X < 0 ---> AA + X + DA - X <= MODA ---> AA + DA <= MODA
+        // 2) if DA - X >= 0 ---> X <= (MODA - (AA - DA)) / 2
+
+        // AA >= |DA|
+        uint256 a = uint256(int256(newAbsoluteAccumulator) + newDifferentialAccumulator);
+        uint256 b = uint256(int256(newAbsoluteAccumulator) - newDifferentialAccumulator);
+        return _calcMaxQACToOperateTP(newAbsoluteAccumulator, a, b);
     }
 
     /**
