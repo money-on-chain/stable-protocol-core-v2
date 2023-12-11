@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import hre, { deployments, ethers } from "hardhat";
+import { deployments, ethers } from "hardhat";
 import memoizee from "memoizee";
 import { GovernorMock, GovernorMock__factory, MocQueue } from "../../../typechain";
 import { ERRORS, deployMocQueue } from "../../helpers/utils";
@@ -11,7 +11,7 @@ const fixtureDeploy = memoizee(
   }>) => {
     return deployments.createFixture(async () => {
       await deployments.fixture();
-      const mocQueue = await deployMocQueue(hre, "MocQueue");
+      const mocQueue = await deployMocQueue("MocQueue");
       const governorAddress = await mocQueue.governor();
       return {
         mocQueue,

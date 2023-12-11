@@ -47,10 +47,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deployMocQueue = exports.deployCARC20 = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployVendors = exports.getGovernorAddresses = exports.deployQueue = exports.deployCollateralToken = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.ENQUEUER_ROLE = exports.EXECUTOR_ROLE = exports.PAUSER_ROLE = exports.BURNER_ROLE = exports.MINTER_ROLE = exports.DEFAULT_ADMIN_ROLE = exports.CONSTANTS = void 0;
+exports.deployCARC20 = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployVendors = exports.getGovernorAddresses = exports.deployQueue = exports.deployCollateralToken = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.ENQUEUER_ROLE = exports.EXECUTOR_ROLE = exports.PAUSER_ROLE = exports.BURNER_ROLE = exports.MINTER_ROLE = exports.DEFAULT_ADMIN_ROLE = exports.CONSTANTS = void 0;
 var hardhat_1 = require("hardhat");
 var bignumber_1 = require("@ethersproject/bignumber");
-var typechain_1 = require("../typechain");
 exports.CONSTANTS = {
     ZERO_ADDRESS: hardhat_1.ethers.constants.AddressZero,
     MAX_UINT256: hardhat_1.ethers.constants.MaxUint256,
@@ -444,29 +443,4 @@ var deployCARC20 = function (hre, mocCARC20Variant, ctVariant, extraInitParams) 
     });
 };
 exports.deployCARC20 = deployCARC20;
-var deployMocQueue = function (hre, contractName) { return __awaiter(void 0, void 0, void 0, function () {
-    var mocQueueMockFactory, mocQueueMock, mocQueue, _a, queueParams, mocAddresses, _b, _c;
-    return __generator(this, function (_d) {
-        switch (_d.label) {
-            case 0: return [4 /*yield*/, hardhat_1.ethers.getContractFactory(contractName)];
-            case 1:
-                mocQueueMockFactory = _d.sent();
-                return [4 /*yield*/, mocQueueMockFactory.deploy()];
-            case 2:
-                mocQueueMock = _d.sent();
-                mocQueue = typechain_1.MocQueue__factory.connect(mocQueueMock.address, hardhat_1.ethers.provider.getSigner());
-                _a = (0, exports.getNetworkDeployParams)(hre), queueParams = _a.queueParams, mocAddresses = _a.mocAddresses;
-                _c = (_b = mocQueue).initialize;
-                return [4 /*yield*/, (0, exports.getGovernorAddresses)(hre)];
-            case 3: return [4 /*yield*/, _c.apply(_b, [_d.sent(), mocAddresses.pauserAddress,
-                    queueParams.minOperWaitingBlk,
-                    queueParams.maxOperPerBatch,
-                    queueParams.execFeeParams])];
-            case 4:
-                _d.sent();
-                return [2 /*return*/, mocQueue];
-        }
-    });
-}); };
-exports.deployMocQueue = deployMocQueue;
 //# sourceMappingURL=utils.js.map

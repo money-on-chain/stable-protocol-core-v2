@@ -1,6 +1,5 @@
-import hre, { deployments, getNamedAccounts } from "hardhat";
+import { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
-import { deployMocQueue } from "../../scripts/utils";
 import {
   ERC20Mock,
   ERC20Mock__factory,
@@ -17,7 +16,7 @@ import {
   MocQueue,
   MocQueue__factory,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, EXECUTOR_ROLE, pEth } from "../helpers/utils";
+import { deployAndAddPeggedTokens, EXECUTOR_ROLE, pEth, deployMocQueue } from "../helpers/utils";
 
 export const fixtureDeployedMocCoinbase = memoizee(
   (
@@ -64,7 +63,7 @@ export const fixtureDeployedMocCoinbase = memoizee(
 
       let mocQueue: MocQueue;
       if (useMockQueue) {
-        mocQueue = await deployMocQueue(hre, "MocQueueMock");
+        mocQueue = await deployMocQueue("MocQueueMock");
         await Promise.all([
           mocImpl.setMocQueue(mocQueue.address),
           mocQueue.registerBucket(mocImpl.address),

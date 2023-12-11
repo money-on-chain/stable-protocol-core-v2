@@ -1,4 +1,4 @@
-import { ethers, getNamedAccounts, network } from "hardhat";
+import hre, { ethers, getNamedAccounts, network } from "hardhat";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
@@ -15,10 +15,13 @@ import {
   MocTC__factory,
   PriceProviderMock,
   DataProviderMock,
+  MocQueue,
+  MocQueue__factory,
 } from "../../typechain";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
 import GovernorCompiled from "../governance/aeropagusImports/Governor.json";
+import { getNetworkDeployParams, getGovernorAddresses } from "./utils";
 
 export * from "../../scripts/utils";
 
@@ -77,6 +80,21 @@ export async function deployAndInitTC({
   await mocTCProxy.initialize("mocCT", "CT", adminAddress, governorAddress);
   return mocTCProxy;
 }
+
+export const deployMocQueue = async (contractName: "MocQueueMock" | "MocQueue"): Promise<MocQueue> => {
+  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
+  const mocQueueMock = await mocQueueMockFactory.deploy();
+  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  await mocQueue.initialize(
+    await getGovernorAddresses(hre),
+    mocAddresses.pauserAddress,
+    queueParams.minOperWaitingBlk,
+    queueParams.maxOperPerBatch,
+    queueParams.execFeeParams,
+  );
+  return mocQueue;
+};
 
 export const tpParamsDefault = {
   price: PCT_BASE, // 1

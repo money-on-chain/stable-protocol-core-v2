@@ -1,7 +1,6 @@
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { BigNumber } from "@ethersproject/bignumber";
-import { MocQueue } from "../typechain";
 export declare const CONSTANTS: {
     ZERO_ADDRESS: string;
     MAX_UINT256: BigNumber;
@@ -29,4 +28,3 @@ export declare const deployVendors: (artifactBaseName: string) => (hre: HardhatR
 export declare const getNetworkDeployParams: (hre: HardhatRuntimeEnvironment) => import("./types").DeployParameters;
 export declare const addPeggedTokensAndChangeGovernor: (hre: HardhatRuntimeEnvironment, governorAddress: string, mocCore: any, tpParams: any) => Promise<void>;
 export declare const deployCARC20: (hre: HardhatRuntimeEnvironment, mocCARC20Variant: string, ctVariant: string, extraInitParams?: {}) => Promise<import("hardhat-deploy/dist/types").DeployResult>;
-export declare const deployMocQueue: (hre: HardhatRuntimeEnvironment, contractName: "MocQueueMock" | "MocQueue") => Promise<MocQueue>;
