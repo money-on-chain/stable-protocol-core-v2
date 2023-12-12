@@ -5,13 +5,14 @@ Money On Chain is a decentralized protocol that balances economic forces to prov
 The main components of the Money On Chain (MoC) protocol can be summarized as follows:
 
 - *Price Provider*: MoC relies on off-chain oracles to provide asset prices. Although not part of this repository, Oracles are an sciential part of this system, see more of Moc Oracle solution in [Amphiraos-Oracle](https://github.com/money-on-chain/Amphiraos-Oracle) and [OMoC Decentralized Oracle](https://github.com/money-on-chain/OMoC-Decentralized-Oracle).
-- *Core*: A set of contracts that maintain the system state, enforce business rules, and enable users to interact with the protocol.
-- *Token Pegged (TP)*: TP contracts are RC20 tokens that track the value of certain external assets. They are "pegged" to the value of the underlying asset. There can be multiple TP contracts within a single MoC solution.
-- *Token Collateral (TC)*: TC is also an RC20 contract that represents the collateral of the system. It absorbs fluctuations in the exchange rate between the collateral asset and the pegged asset.
+- *Core*: A set of contracts chained heritage that maintain the system state, enforce business rules, and enable users to interact with the protocol. In addition to an external contract *MocCoreExpansion* to which delegates calls are forwarded to overcome the 24kb contract size limit.
+- *Token Pegged (TP)*: TP contracts are RC20 tokens that track the value of certain external assets. They are "pegged" to the value of the underlying asset. There can be multiple TP contracts within a single MoC Core solution.
+- *Token Collateral (TC)*: TC is also an RC20 contract that represents the collateral of the system. It absorbs fluctuations in the exchange rate between the collateral asset itself and the pegged assets.
+- *Moc Queue*: Moc Queue is a deferring mechanism that imposes a block based delay on each Operation, getting them queued to later on be executed on batches following FIFO order.
 
 ## Basic architecture
 
-![basic architecture](./resources/basic-arquitecture.png?raw=true "basic architecture")
+![basic architecture](./resources/basic-architecture.png?raw=true "basic architecture")
 
 Moc main protocol allows two different implementation options depending on the collateral asset/s (CA) you choose:
 
@@ -30,7 +31,7 @@ Let's explore this last two in more detail.
 
 ### User actions
 
-Users can mint and redeem their desire tokens with a verity of methods and combinations, depending on system state.
+Users can mint and redeem their desire tokens with a verity of methods and combinations, depending on system state. Besides network fees, they'll need to cover both the platform and execution fee.
 
 System state is ruled by the global Coverage value, and it's relation with the Target Coverage (Cobj) of each Pegged Token.
 
@@ -57,7 +58,29 @@ System state is ruled by the global Coverage value, and it's relation with the T
 
 (*) depends if you are swapping from a high coverage TP to a "weaker" one, if that's the case, ctargCA is evaluated.
 
+#### Operation Sequence
+
+Let's explore a mint TP Operation, as reference of the protocol mechanics and interactions:
+
+![mint tp sequence](./resources/sequence-mint-tp.png?raw=true "mint tp sequence")
+
+1. Bob wants to mint TP using his collateral asset holdings.
+2. Bob sends an approval for CA TOken to MocCore, with the amount he pretends to spend.
+3. Bob registers a mintTP operation on MocCore, asking for 10 TP, he also sends the corresponding coinbase amount to cover the execution fee.
+4. MocCore executes a transferFrom of Bob's CA to itself, locking the qACmax funds.
+5. MocCore queues the Operation on MocQueue, which will emit an *OperationQueued* event with the assigned OperationId.
+6. After *minOperWaitingBlk* blocks, a whitelisted executor executes the queue.
+7. MocQueue loops thought all the Operations, calling MocCore with the corresponding params for each one.
+8. Bobs mintTP is processed by MocCore, it emits *TPMinted* event with the operation results. And the 10 TP are minted to him.
+9. MocQueue emits an *OperationExecuted* event with the *OperationId*.
+10. Alter loop ends, the sum of all execution fees is transferred to the executor provided account.
+
 ### Process actions
+
+#### Queue execution
+
+Whitelisted accounts, can execute the queue at any time, if there are Orders ready to be processed (*minOperWaitingBlk* condition met) it will execute them sequentially, and collect the execution fee reserved by each one.
+There are two possible outcomes for each Operation, that will yield the corresponding events, either the Order is valid and will emit the corresponding Operation Type event (for example, a *mintTC*, will generate a *TCMinted* event), or the execution fails, emitting *OperationError*  or *UnhandledError*. Note that a failed Operation, won't block the queue nor revert the transaction, but the users funds will be unlocked and returned to the user.
 
 #### Settlement
 

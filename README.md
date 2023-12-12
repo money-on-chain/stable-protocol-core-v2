@@ -1,6 +1,6 @@
-# MOC Smart Contract main Protocol
+# MOC V2 Smart Contract main Protocol
 
-This repository defines the smart contracts solution that build up the Money on Chain decentralized Protocol. For more information, please refer to the [documentation section](./docs/README.md).
+This repository defines the smart contracts solution that build up the Money on Chain V2 decentralized Protocol. For more information, please refer to the [documentation section](./docs/README.md).
 
 ## Getting Started
 

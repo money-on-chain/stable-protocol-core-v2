@@ -1,9 +1,9 @@
 {
-  "name": "main-sc-protocol",
-  "version": "0.2.0",
+  "name": "main-sc-protocol-v2",
+  "version": "1.0.0",
   "private": true,
   "homepage": "https://www.moneyonchain.com",
-  "description": "Money on Chain main smart contract protocol",
+  "description": "Money on Chain V2 main smart contract protocol",
   "author": "MOC Investments Corp. 2020",
   "license": "AGPL-3.0",
   "dependencies": {
