@@ -588,9 +588,7 @@ abstract contract MocOperations is MocCore {
     function execRedeemTC(
         RedeemTCParams calldata params_
     ) external onlyMocQueue returns (uint256 qACtoRedeem, uint256 qFeeTokenTotalNeeded, FeeCalcs memory feeCalcs) {
-        RedeemTCParams memory params = params_;
-        // Override sender, as funds are now locked here
-        return _redeemTCto(params);
+        return _redeemTCto(params_);
     }
 
     /**
