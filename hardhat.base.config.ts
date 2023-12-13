@@ -211,7 +211,7 @@ const config: HardhatUserConfig = {
   },
   docgen: {
     path: "./docs",
-    clear: true,
+    clear: false,
     runOnCompile: false,
     except: ["^contracts/echidna/", "^contracts/mocks/"],
   },
@@ -219,6 +219,7 @@ const config: HardhatUserConfig = {
     alphaSort: true,
     runOnCompile: true,
     disambiguatePaths: false,
+    except: ["^contracts/echidna/", "^contracts/mocks/"],
   },
   mocha: {
     timeout: 100000,

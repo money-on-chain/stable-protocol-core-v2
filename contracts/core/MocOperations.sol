@@ -27,6 +27,7 @@ abstract contract MocOperations is MocCore {
      * @return qACmaxSent amount of coinbase sent
      * @return execFeeSent amount of coinbase sent
      */
+    /* solhint-disable-next-line no-empty-blocks */
     function _getExecFeeSent(
         uint256 qACmax_,
         MocQueueExecFees.OperType operType_
