@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { MocCore } from "../../core/MocCore.sol";
 import { MocOperations } from "../../core/MocOperations.sol";
+import { MocBaseBucket } from "../../core/MocBaseBucket.sol";
 import { MocQueueExecFees } from "../../queue/MocQueueExecFees.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -571,10 +572,19 @@ contract MocCARC20 is MocOperations {
      * @notice Refreshes the AC holdings for the Bucket
      * @dev Intended to be use as notification after an RC20 AC transfer to this contract
      */
-    function refreshACBalance() external {
+    function refreshACBalance() public {
         uint256 unaccountedAcBalance = acBalanceOf(address(this)) - nACcb - qACLockedInPending;
         // On this implementation, AC token balance is nACcb plus AC locked on pending operations
         if (unaccountedAcBalance > 0) _depositAC(unaccountedAcBalance);
+    }
+
+    /**
+     * @inheritdoc MocBaseBucket
+     */
+    function evalLiquidation() public virtual override {
+        // Before evaluating Liquidation, we need to make sure injected collateral is accounted
+        refreshACBalance();
+        super.evalLiquidation();
     }
 
     /**
