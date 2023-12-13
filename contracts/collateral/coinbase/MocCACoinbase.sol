@@ -111,11 +111,13 @@ contract MocCACoinbase is MocOperations {
      * @inheritdoc MocOperations
      */
     function _getExecFeeSent(
-        uint256 qACmax_,
+        uint256 qACTotal_,
         MocQueueExecFees.OperType operType_
-    ) internal view override returns (uint256 qACmaxSent, uint256 execFeeSent) {
-        uint256 execFee = MocQueue(mocQueue).getAndVerifyExecFee(operType_, qACmax_);
-        return (qACmax_ - execFee, execFee);
+    ) internal view override returns (uint256 qACmax, uint256 execFee) {
+        execFee = MocQueue(mocQueue).getAndVerifyExecFee(operType_, qACTotal_);
+        unchecked {
+            return (qACTotal_ - execFee, execFee);
+        }
     }
 
     // ------- External Functions -------

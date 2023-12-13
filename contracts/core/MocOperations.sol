@@ -24,14 +24,18 @@ abstract contract MocOperations is MocCore {
     /**
      * @notice get the amount of coinbase sent to be used as execution fee
      * @dev this function must be overridden by the AC implementation
-     * @return qACmaxSent amount of coinbase sent
-     * @return execFeeSent amount of coinbase sent
+     * @param qACTotal_ provided Collateral Asset amount
+     * @param operType_ Operation Type
+     * @return qACmax maximum amount of Collateral Asset that can be spent on the Operation
+     * @return execFee amount of coinbase to be payed as execution Fee
      */
-    /* solhint-disable-next-line no-empty-blocks */
+    /* solhint-disable no-empty-blocks */
     function _getExecFeeSent(
-        uint256 qACmax_,
+        uint256 qACTotal_,
         MocQueueExecFees.OperType operType_
-    ) internal virtual returns (uint256 qACmaxSent, uint256 execFeeSent) {}
+    ) internal virtual returns (uint256 qACmax, uint256 execFee) {}
+
+    /* solhint-enable no-empty-blocks */
 
     /**
      * @notice while registering a pending Operation, we need to lock user's funds until it's executed

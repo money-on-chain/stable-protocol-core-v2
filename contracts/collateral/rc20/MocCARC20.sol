@@ -107,7 +107,8 @@ contract MocCARC20 is MocOperations {
     function _getExecFeeSent(
         uint256 qACmax_,
         MocQueueExecFees.OperType /*operType_*/
-    ) internal override returns (uint256 qACmaxSent, uint256 execFeeSent) {
+    ) internal override returns (uint256 qACmax, uint256 execFee) {
+        // For RC20 solutions, msg.value should match exactly the execution Fee of the OperType
         return (qACmax_, msg.value);
     }
 
