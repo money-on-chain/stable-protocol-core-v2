@@ -65,7 +65,7 @@ Let's explore a mint TP Operation, as reference of the protocol mechanics and in
 ![mint tp sequence](./resources/sequence-mint-tp.png?raw=true "mint tp sequence")
 
 1. Bob wants to mint TP using his collateral asset holdings.
-2. Bob sends an approval for CA TOken to MocCore, with the amount he pretends to spend.
+2. Bob sends an approval for CA Token to MocCore, with the amount he pretends to spend.
 3. Bob registers a mintTP operation on MocCore, asking for 10 TP, he also sends the corresponding coinbase amount to cover the execution fee.
 4. MocCore executes a transferFrom of Bob's CA to itself, locking the qACmax funds.
 5. MocCore queues the Operation on MocQueue, which will emit an *OperationQueued* event with the assigned OperationId.
@@ -74,6 +74,12 @@ Let's explore a mint TP Operation, as reference of the protocol mechanics and in
 8. Bobs mintTP is processed by MocCore, it emits *TPMinted* event with the operation results. And the 10 TP are minted to him.
 9. MocQueue emits an *OperationExecuted* event with the *OperationId*.
 10. Alter loop ends, the sum of all execution fees is transferred to the executor provided account.
+
+#### Moc Vendors
+
+Another way that users can interact with the protocol is through *Vendors*, each operation type has a duplicate methods that accepts a vendor address, indicating he is operating the protocol though him.
+Vendors, can pre-defined a markup that will be applied on top of the platform fee using *MocVendors* contract.
+This way, integrators have a way to earn a profit while boosting and enhancing dapp user experience; and users can freely choose to use either use the protocol directly or pay an this extra markup for the services the different Vendors provide.
 
 ### Process actions
 
