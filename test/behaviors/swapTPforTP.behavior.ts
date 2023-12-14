@@ -134,7 +134,9 @@ const swapTPforTPBehavior = function () {
       });
       describe("WHEN alice tries to swap 23501 TP 0", function () {
         it("THEN tx reverts because she has not balance", async function () {
-          await expect(mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23501 })).to.be.reverted;
+          await expect(
+            mocFunctions.swapTPforTP({ iFrom: TP_0, iTo: TP_1, from: alice, qTP: 23501 }),
+          ).to.be.revertedWith(ERRORS.ERC20_TRANF_EXCEEDS_BALANCE);
         });
       });
       describe("WHEN alice swap 23500 TP 0 sending 0.99 Asset for fees", function () {
