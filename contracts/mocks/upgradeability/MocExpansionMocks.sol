@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 /* solhint-disable-next-line max-line-length */
 import { UUPSUpgradeable, UpgraderUUPSChangerTemplate } from "../../governance/changerTemplates/UpgraderUUPSChangerTemplate.sol";
 import { MocCore, MocCommons, MocCoreExpansion, Address } from "../../core/MocCore.sol";
+import { MocBaseBucket } from "../../core/MocBaseBucket.sol";
 import { MocCACoinbase } from "../../collateral/coinbase/MocCACoinbase.sol";
 import { MocCARC20 } from "../../collateral/rc20/MocCARC20.sol";
 
@@ -55,6 +56,10 @@ contract MocCARC20WithExpansionMock is UpgradableMock, MocCARC20 {
         bytes memory payload = abi.encodeCall(MocCoreExpansionMock(mocCoreExpansion).getExpansionCustomMockValue, ());
         uint256 newVariable_ = abi.decode(Address.functionDelegateCall(mocCoreExpansion, payload), (uint256));
         return newVariable_ + (protThrld / PRECISION);
+    }
+
+    function evalLiquidation() public override(MocBaseBucket, MocCARC20) {
+        MocCARC20.evalLiquidation();
     }
 }
 

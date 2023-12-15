@@ -45,6 +45,18 @@ const shouldBehaveLikeLiquidable = function () {
           );
         });
       });
+      describe("WHEN someone injects collateral and re-evaluates", function () {
+        it("THEN Liquidation is not longer Reached", async function () {
+          await this.mocFunctions.acTransfer({
+            from: alice,
+            to: mocImpl.address,
+            amount: 1000,
+          });
+          await mocImpl.evalLiquidation();
+          expect(await mocImpl.liquidated()).to.be.false;
+          expect(await mocImpl.isLiquidationReached()).to.be.false;
+        });
+      });
       describe("WHEN liquidation is enabled, and then evaluated", function () {
         let tx: ContractTransaction;
         beforeEach(async function () {
