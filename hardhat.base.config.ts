@@ -1,6 +1,5 @@
-import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-solhint";
-import "@nomicfoundation/hardhat-chai-matchers";
+import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import { resolve } from "path";
@@ -211,7 +210,7 @@ const config: HardhatUserConfig = {
   },
   docgen: {
     path: "./docs",
-    clear: true,
+    clear: false,
     runOnCompile: false,
     except: ["^contracts/echidna/", "^contracts/mocks/"],
   },
@@ -219,6 +218,7 @@ const config: HardhatUserConfig = {
     alphaSort: true,
     runOnCompile: true,
     disambiguatePaths: false,
+    except: ["^contracts/echidna/", "^contracts/mocks/"],
   },
   mocha: {
     timeout: 100000,

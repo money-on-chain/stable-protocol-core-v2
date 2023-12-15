@@ -220,7 +220,6 @@ abstract contract MocCommons is MocEma {
             if (hasFeeTokenPrice) {
                 // calculates Fee Token to be charged as fee
                 // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
-                // TODO: define if will not be necessary a feeTokenPct for each operation
                 feeCalcs.qFeeToken = _mulPrec(qAC_ * qACFeePct_, feeTokenPct) / feeTokenPrice;
                 if (qACmarked > 0) {
                     // [N] = [N] * [PREC] / [PREC]
@@ -230,7 +229,6 @@ abstract contract MocCommons is MocEma {
                 } else {
                     qFeeTokenTotalNeeded = feeCalcs.qFeeToken;
                 }
-                // TODO: if feeTokenPct == 0 should use qAC too?
                 if (senderAllowance < qFeeTokenTotalNeeded || feeToken.balanceOf(sender_) < qFeeTokenTotalNeeded) {
                     feeCalcs.qFeeToken = 0;
                     feeCalcs.qFeeTokenVendorMarkup = 0;

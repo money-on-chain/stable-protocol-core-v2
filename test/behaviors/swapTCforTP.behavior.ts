@@ -286,8 +286,9 @@ const swapTCforTPBehavior = function () {
         });
         describe("WHEN alice tries to swap 3000.1 TC", function () {
           it("THEN tx reverts because alice doesn't have that much TC", async function () {
-            // FIXME: generic revert because in collateral bag implementation fails before trying to transfer the tokens
-            await expect(mocFunctions.swapTCforTP({ from: alice, qTC: "3000.000000000000000001" })).to.be.reverted;
+            await expect(mocFunctions.swapTCforTP({ from: alice, qTC: "3000.000000000000000001" })).to.be.revertedWith(
+              ERRORS.ERC20_TRANF_EXCEEDS_BALANCE,
+            );
           });
         });
         describe("WHEN alice swaps 3000(all balance) TC for 705000 TP 0", function () {

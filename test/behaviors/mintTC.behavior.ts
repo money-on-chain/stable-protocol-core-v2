@@ -53,7 +53,7 @@ const mintTCBehavior = function () {
     describe("WHEN alice sends 100 Asset to mint 100 TC to the zero address", function () {
       it("THEN tx reverts because recipient is the zero address", async function () {
         await expect(mocFunctions.mintTC({ from: alice, to: CONSTANTS.ZERO_ADDRESS, qTC: 100 })).to.be.revertedWith(
-          ERRORS.MINT_TO_ZERO_ADDRESS,
+          ERRORS.ERC20_MINT_TO_ZERO_ADDRESS,
         );
       });
     });

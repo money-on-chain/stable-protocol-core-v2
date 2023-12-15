@@ -142,7 +142,6 @@ contract MocCoreExpansion is MocCommons {
         if (mocACBalance < qACRedeemed) qACRedeemed = mocACBalance;
         // in liquidation doesn't pay fees or markup
         // qACfee, qFeeToken, qACVendorMarkup, qFeeTokenVendorMarkup  = (0, 0, 0, 0)
-        // TODO use a function instead
         emit LiqTPRedeemed(tp_, sender_, recipient_, qTP, qACRedeemed);
         // burn qTP from the sender
         tpTokens[i].burn(sender_, qTP);

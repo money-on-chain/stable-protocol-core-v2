@@ -164,7 +164,10 @@ const mintTCQueueBehavior = function () {
     });
     describe("WHEN alice registers a mint 10 TC to the zero address", function () {
       const functionSelector = ethers.utils.id("Error(string)").slice(0, 10);
-      const encodedMintToZeroMessage = ethers.utils.defaultAbiCoder.encode(["string"], [ERRORS.MINT_TO_ZERO_ADDRESS]);
+      const encodedMintToZeroMessage = ethers.utils.defaultAbiCoder.encode(
+        ["string"],
+        [ERRORS.ERC20_MINT_TO_ZERO_ADDRESS],
+      );
       // Concatenate function selector and encoded message
       const encodedMintToZeroAddressError = functionSelector + encodedMintToZeroMessage.slice(2);
 

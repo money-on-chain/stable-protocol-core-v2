@@ -227,7 +227,8 @@ export type OperId = BigNumber;
 export const ethersGetBalance = (account: Address) => ethers.provider.getBalance(account);
 
 export const ERRORS = {
-  BURN_EXCEEDS_BALANCE: "ERC20: burn amount exceeds balance",
+  ERC20_TRANF_EXCEEDS_BALANCE: "ERC20: transfer amount exceeds balance",
+  ERC20_MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   CONTRACT_INITIALIZED: "Initializable: contract is already initialized",
   INVALID_ADDRESS: "InvalidAddress",
   INVALID_VALUE: "InvalidValue",
@@ -241,7 +242,6 @@ export const ERRORS = {
   LIQUIDATED: "Liquidated",
   ONLY_LIQUIDATED: "OnlyWhenLiquidated",
   LOW_COVERAGE: "LowCoverage",
-  MINT_TO_ZERO_ADDRESS: "ERC20: mint to the zero address",
   MISSING_PROVIDER_PRICE: "MissingProviderPrice",
   NOT_WHEN_PAUSED: "NotWhenPaused",
   NOT_AUTH_CHANGER: "NotAuthorizedChanger",
