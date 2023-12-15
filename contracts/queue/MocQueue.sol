@@ -490,7 +490,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocOperations.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsMintTC[operId_];
         return true;
     }
@@ -525,7 +525,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocOperations.unlockTCInPending(params.sender, params.qTC);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsRedeemTC[operId_];
         return true;
     }
@@ -565,7 +565,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocOperations.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsMintTP[operId_];
         return true;
     }
@@ -603,7 +603,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocOperations.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsRedeemTP[operId_];
         return true;
     }
@@ -642,7 +642,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             // On a failed Operation, we unlock user funds
             mocOperations.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsMintTCandTP[operId_];
         return true;
     }
@@ -684,7 +684,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocOperations.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
             mocOperations.unlockTCInPending(params.sender, params.qTC);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsRedeemTCandTP[operId_];
         return true;
     }
@@ -726,7 +726,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocOperations.unlockTCInPending(params.sender, params.qTC);
             mocOperations.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsSwapTCforTP[operId_];
         return true;
     }
@@ -768,7 +768,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocOperations.unlockTPInPending(params.sender, IERC20Upgradeable(params.tp), params.qTP);
             mocOperations.unlockACInPending(params.sender, params.qACmax);
         }
-        // Independently from the result, we delete the operation params
+        // we delete the operation params when executed
         delete operationsSwapTPforTC[operId_];
         return true;
     }
@@ -782,8 +782,6 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
      */
     function _executeSwapTPforTP(uint256 operId_) internal virtual returns (bool executed) {
         MocCore.SwapTPforTPParams memory params = operationsSwapTPforTP[operId_];
-        // Independently from the result, we delete the operation params
-        delete operationsSwapTPforTP[operId_];
         try mocOperations.execSwapTPforTP(params) returns (
             uint256,
             uint256 qTPMinted,
@@ -807,6 +805,8 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
             mocOperations.unlockTPInPending(params.sender, IERC20Upgradeable(params.tpFrom), params.qTP);
             mocOperations.unlockACInPending(params.sender, params.qACmax);
         }
+        // we delete the operation params when executed
+        delete operationsSwapTPforTP[operId_];
         return true;
     }
 
