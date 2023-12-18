@@ -186,6 +186,11 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // gas restricted batch size to guarantee no gas limit failure
     uint128 public maxOperPerBatch;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ------- Initializer -------
 
     function initialize(
