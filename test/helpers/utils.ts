@@ -82,18 +82,20 @@ export async function deployAndInitTC({
 }
 
 export const deployMocQueue = async (contractName: "MocQueueMock" | "MocQueue"): Promise<MocQueue> => {
-  const mocQueueMockFactory = await ethers.getContractFactory(contractName);
-  const mocQueueMock = await mocQueueMockFactory.deploy();
-  const mocQueue = MocQueue__factory.connect(mocQueueMock.address, ethers.provider.getSigner());
+  const mocQueueFactory = await ethers.getContractFactory(contractName);
+  const mocQueueImpl = await mocQueueFactory.deploy();
+  const erc1967ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+  const erc1967Proxy = await erc1967ProxyFactory.deploy(mocQueueImpl.address, "0x");
+  const mocQueueProxy = MocQueue__factory.connect(erc1967Proxy.address, ethers.provider.getSigner());
   const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
-  await mocQueue.initialize(
+  await mocQueueProxy.initialize(
     await getGovernorAddresses(hre),
     mocAddresses.pauserAddress,
     queueParams.minOperWaitingBlk,
     queueParams.maxOperPerBatch,
     queueParams.execFeeParams,
   );
-  return mocQueue;
+  return mocQueueProxy;
 };
 
 export const tpParamsDefault = {
