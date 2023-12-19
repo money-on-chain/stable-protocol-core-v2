@@ -55,7 +55,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
         uint256 operId_
     );
     event TPMinted(
-        address indexed tp,
+        address indexed tp_,
         address indexed sender_,
         address indexed recipient_,
         uint256 qTP_,
