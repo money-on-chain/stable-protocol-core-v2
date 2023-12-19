@@ -1,15 +1,9 @@
 import { expect } from "chai";
 import { ethers, getNamedAccounts } from "hardhat";
-import { BigNumberish, Contract } from "ethers";
+import { BigNumberish, Contract, ContractFactory, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
-import {
-  AddPeggedTokenChangerTemplate__factory,
-  IChangeContract__factory,
-  MocCACoinbase,
-  MocCore,
-  MocRC20,
-} from "../../../typechain";
+import { IChangeContract__factory, MocCACoinbase, MocCore, MocRC20 } from "../../../typechain";
 import {
   BURNER_ROLE,
   DEFAULT_ADMIN_ROLE,
@@ -23,6 +17,7 @@ import {
   tpParams,
   deployAeropagusGovernor,
 } from "../../helpers/utils";
+import { assertPrec } from "../../helpers/assertHelper";
 
 export function deployChangerClosure(mocProxy: MocCore) {
   return async () => {
@@ -115,7 +110,7 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
   });
   describe("GIVEN a new Pegged Token with roles assigned to the deployer", () => {
     let fakePeggedToken: MocRC20;
-    let changer: AddPeggedTokenChangerTemplate__factory;
+    let changer: ContractFactory;
     let transferRole: (role: string) => Promise<void>;
     beforeEach(async () => {
       fakePeggedToken = await deployPeggedToken({
@@ -220,8 +215,12 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
       });
     });
     describe("WHEN a the governor executes the changer contract", () => {
+      let execTx: ContractTransaction;
+      before(async () => {
+        execTx = await governor.executeChange(changeContract.address);
+      });
       it("THEN the new Pegged Token is added", async function () {
-        await expect(governor.executeChange(changeContract.address))
+        await expect(execTx)
           .to.emit(mocProxy, "PeggedTokenChange")
           .withArgs(tpParams.length, [
             mocPeggedToken.address,
@@ -232,6 +231,9 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
             tpParamsDefault.initialEma,
             tpParamsDefault.smoothingFactor,
           ]);
+      });
+      it("THEN we can access getPACtp", async function () {
+        assertPrec(1, await mocProxy.getPACtp(mocPeggedToken.address));
       });
     });
   });

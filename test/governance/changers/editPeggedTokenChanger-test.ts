@@ -1,7 +1,8 @@
 import { expect } from "chai";
 import { ethers, getNamedAccounts } from "hardhat";
-import { Contract } from "ethers";
+import { Contract, ContractTransaction } from "ethers";
 import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
+import { assertPrec } from "../../helpers/assertHelper";
 import {
   EditPeggedTokenChangerTemplate,
   EditPeggedTokenChangerTemplate__factory,
@@ -81,7 +82,7 @@ describe("Feature: Governance protected Pegged Token edition ", () => {
     });
     describe("GIVEN a new PriceProvider is set on the changer", () => {
       beforeEach(async () => {
-        newPriceProvider = await deployPriceProvider(pEth(1));
+        newPriceProvider = await deployPriceProvider(pEth(42));
         await changeContract.setPriceProvider(newPriceProvider.address);
       });
       describe("WHEN deployer tries to set it again", () => {
@@ -99,23 +100,23 @@ describe("Feature: Governance protected Pegged Token edition ", () => {
         });
       });
       describe("WHEN a the governor executes the changer contract", () => {
-        it("THEN only the Pegged Token Price Provider is changed", async function () {
-          await expect(governor.executeChange(changeContract.address))
-            .to.emit(mocProxy, "PeggedTokenChange")
-            .withArgs(tpParams.length, [
-              mocPeggedToken.address,
-              newPriceProvider.address, // <---- New Price Provider
-              tpParamsDefault.ctarg,
-              tpParamsDefault.mintFee,
-              tpParamsDefault.redeemFee,
-              0, // Initial Emma is not set
-              tpParamsDefault.smoothingFactor,
-            ]);
-        });
-      });
-      describe("WHEN a the the changer has already been executed", () => {
+        let execTx: ContractTransaction;
         beforeEach(async function () {
-          await governor.executeChange(changeContract.address);
+          execTx = await governor.executeChange(changeContract.address);
+        });
+        it("THEN only the Pegged Token Price Provider is changed", async function () {
+          await expect(execTx).to.emit(mocProxy, "PeggedTokenChange").withArgs(tpParams.length, [
+            mocPeggedToken.address,
+            newPriceProvider.address, // <---- New Price Provider
+            tpParamsDefault.ctarg,
+            tpParamsDefault.mintFee,
+            tpParamsDefault.redeemFee,
+            0, // Initial Emma is not set
+            tpParamsDefault.smoothingFactor,
+          ]);
+        });
+        it("THEN getPACtp returns the new price", async function () {
+          assertPrec(42, await mocProxy.getPACtp(mocPeggedToken.address));
         });
         describe("AND the governor tries to execute it again", () => {
           it("THEN it fails", async function () {
