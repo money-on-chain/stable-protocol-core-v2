@@ -1,8 +1,9 @@
-import hre, { ethers, getNamedAccounts } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
-import { GovernorMock, MocQueue } from "../../typechain";
-import { DEFAULT_ADMIN_ROLE, ERRORS, MINTER_ROLE, getNetworkDeployParams } from "../helpers/utils";
+import { GovernorMock, GovernorMock__factory, MocQueue } from "../../typechain";
+import { DEFAULT_ADMIN_ROLE, ERRORS, MINTER_ROLE } from "../helpers/utils";
+import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 
 describe("Feature: Moc Queue Role Access restrictions", () => {
   let mocQueue: MocQueue;
@@ -12,21 +13,9 @@ describe("Feature: Moc Queue Role Access restrictions", () => {
   describe("GIVEN there is a MocQueue", () => {
     before(async () => {
       ({ otherUser } = await getNamedAccounts());
+      ({ mocQueue } = await fixtureDeployedMocRC20(0, undefined, false)());
       signer = await ethers.getSigner(otherUser);
-      const governorMockFactory = await ethers.getContractFactory("GovernorMock");
-      const mocQueueFactory = await ethers.getContractFactory("MocQueue");
-      governorMock = await governorMockFactory.deploy();
-      mocQueue = await mocQueueFactory.deploy();
-      const {
-        queueParams: { minOperWaitingBlk, maxOperPerBatch, execFeeParams },
-      } = getNetworkDeployParams(hre);
-      await mocQueue.initialize(
-        governorMock.address, // governor
-        governorMock.address, // pauser
-        minOperWaitingBlk,
-        maxOperPerBatch,
-        execFeeParams,
-      );
+      governorMock = GovernorMock__factory.connect(await mocQueue.governor(), ethers.provider.getSigner());
     });
     describe("WHEN a none ADMIN nor authorized account invokes grantRole ADMIN", () => {
       it("THEN it fails as it is not the roleAdmin", async () => {
