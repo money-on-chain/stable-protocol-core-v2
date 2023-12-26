@@ -4,6 +4,15 @@ on: [workflow_dispatch]
 env:
   INFURA_API_KEY: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
   MNEMONIC: "here is where your twelve words mnemonic should be put my friend"
+  TP_AMOUNT: 5
+  GAS_PRICE: 65800000
+  BLOCK_GAS_LIMIT: 6800000
+  BTCUSD_PRICE: 43000
+  EXEC_FEE_ITER : 20
+  EXEC_FEE_AVG_OPER_PER_BATCH: 1
+  EXEC_FEE_TP_AMOUNT: 1
+  BATCH_SIZE_TP_AMOUNT: 1
+  BATCH_SIZE_OPER_PER_BATCH: 65
 jobs:
   build:
     name: Run Gas Estimations

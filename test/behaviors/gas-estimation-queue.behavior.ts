@@ -2,26 +2,29 @@
 import { getNamedAccounts } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
-import { mineUpTo } from "../helpers/utils";
+import { mineUpTo, simParams } from "../helpers/utils";
 
 const gasEstimationBehavior = function () {
   let mocContracts: any;
   let mocFunctions: any;
   let deployer: Address;
   let gasSummaries = {};
-  const gasPrice = 65164000;
-  const blockGasLimit = 6800000;
+  const { gasPrice, blockGasLimit, btcUsdPrice } = simParams();
   const TP_0 = 0;
   const TP_1 = 1;
 
-  const gasData = (estimatedGas: number) => ({
-    blockGasLimit,
-    estimatedGas: estimatedGas,
-    gasLeftPct: (((blockGasLimit - estimatedGas) / blockGasLimit) * 100).toFixed(2) + "%",
-    gasPrice,
-    gasFee: (estimatedGas * gasPrice) / 1e18,
-    "fee (USD at 30k)": ((estimatedGas * gasPrice * 30000) / 1e18).toFixed(2),
-  });
+  const gasData = (estimatedGas: number) => {
+    const usdKey = `~USD fee (BTC/USD: ${(Number(btcUsdPrice) / 1e3).toFixed(1)}k)`;
+    const gasKey = `fee (gasPrice: ${(Number(gasPrice) / 1e6).toFixed(1)}m)`;
+    const result = {
+      blockGasLimit,
+      estimatedGas: estimatedGas,
+      gasLeftPct: (((blockGasLimit - estimatedGas) / blockGasLimit) * 100).toFixed(2) + "%",
+    };
+    result[gasKey] = estimatedGas * gasPrice;
+    result[usdKey] = ((result[gasKey] * btcUsdPrice) / 1e18).toFixed(2);
+    return result;
+  };
 
   const setGasUsed = async (op, tx) => {
     const gasUsed = (await tx.wait()).gasUsed.toNumber();
