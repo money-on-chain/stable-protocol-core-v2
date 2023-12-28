@@ -451,25 +451,6 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
-     * @notice get signed amount of Collateral Token available to redeem
-     * @dev negative value is needed for multi collateral implementation
-     * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
-     * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
-     * @param nACgain_ amount of collateral asset to be distributed during settlement [N]
-     * @return tcAvailableToRedeem [N]
-     */
-    function _getTCAvailableToRedeemSigned(
-        uint256 ctargemaCA_,
-        uint256 lckAC_,
-        uint256 nACgain_
-    ) internal view returns (int256 tcAvailableToRedeem) {
-        // [PREC]
-        int256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
-        // [N] = [PREC] / [PREC]
-        return lckACemaAdjusted / int256(_getPTCac(lckAC_, nACgain_));
-    }
-
-    /**
      * @notice get amount of Collateral Token available to redeem
      * @param ctargemaCA_ target coverage adjusted by the moving average of the value of the Collateral Asset [PREC]
      * @param lckAC_ amount of Collateral Asset locked by Pegged Token [N]
@@ -481,10 +462,11 @@ abstract contract MocBaseBucket is MocUpgradable {
         uint256 lckAC_,
         uint256 nACgain_
     ) internal view virtual returns (uint256 tcAvailableToRedeem) {
-        int256 tcAvailableToRedeemSigned = _getTCAvailableToRedeemSigned(ctargemaCA_, lckAC_, nACgain_);
-        // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
-        if (tcAvailableToRedeemSigned < 0 || _getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
-        return uint256(tcAvailableToRedeemSigned);
+        // [PREC]
+        int256 lckACemaAdjusted = _getLckACemaAdjusted(ctargemaCA_, lckAC_, nACgain_);
+        if (lckACemaAdjusted <= 0) return 0;
+        // [N] = [PREC] / [PREC]
+        return uint256(lckACemaAdjusted) / _getPTCac(lckAC_, nACgain_);
     }
 
     /**
@@ -532,8 +514,7 @@ abstract contract MocBaseBucket is MocUpgradable {
             lckAC_,
             nACgain_
         );
-        // if coverage <= ctargemaCA, we force that there be 0 AC available due to possible rounding errors
-        if (tpAvailableToMintSigned < 0 || _getCglb(lckAC_, nACgain_) <= ctargemaCA_) return 0;
+        if (tpAvailableToMintSigned < 0) return 0;
         return uint256(tpAvailableToMintSigned);
     }
 

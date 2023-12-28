@@ -792,10 +792,10 @@ abstract contract MocCore is MocCommons {
      *  of TC available to redeem. Consider it an approximation.
      * @return tcAvailableToRedeem [N]
      */
-    function getTCAvailableToRedeem() external view returns (int256 tcAvailableToRedeem) {
+    function getTCAvailableToRedeem() external view returns (uint256 tcAvailableToRedeem) {
         (uint256 ctargemaCA, uint256[] memory pACtps) = _calcCtargemaCA();
         (uint256 lckAC, uint256 nACgain) = _calcLckACandACgain(pACtps);
-        return _getTCAvailableToRedeemSigned(ctargemaCA, lckAC, nACgain);
+        return _getTCAvailableToRedeem(ctargemaCA, lckAC, nACgain);
     }
 
     /**
