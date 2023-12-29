@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { getNamedAccounts, ethers } from "hardhat";
 import { Address } from "hardhat-deploy/dist/types";
-import { mineNBlocks, pEth } from "../helpers/utils";
+import { mineNBlocks, pEth, simParams } from "../helpers/utils";
 
 const gasEstimationExecBehavior = function (tpAmount: number, iterations: number, avgQueueSize: number) {
   let mocContracts: any;
@@ -11,7 +11,7 @@ const gasEstimationExecBehavior = function (tpAmount: number, iterations: number
   let charlie: Address;
   let vendor: Address;
   let gasSummaries = {};
-  const gasPrice = 65164000;
+  const { gasPrice, btcUsdPrice } = simParams();
 
   const gasData = (currStats, gasUsed: number) => ({
     count: currStats.count + 1,
@@ -114,7 +114,7 @@ const gasEstimationExecBehavior = function (tpAmount: number, iterations: number
         gasSummaries[op].avg = (gasSummaries[op].avg / gasSummaries[op].count).toFixed(0);
         gasSummaries[op].min = gasSummaries[op].min.toFixed(0);
         gasSummaries[op].max = gasSummaries[op].max.toFixed(0);
-        gasSummaries[op]["~fee USD"] = ((gasSummaries[op].avg * gasPrice * 30000) / 1e18).toFixed(2);
+        gasSummaries[op]["~fee USD"] = ((gasSummaries[op].avg * gasPrice * btcUsdPrice) / 1e18).toFixed(2);
       }
       console.table(gasSummaries);
     }).timeout(10e6);

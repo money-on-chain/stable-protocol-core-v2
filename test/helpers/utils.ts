@@ -327,4 +327,23 @@ export function expectEventFor(mocContracts: any, eventName: string): any {
   };
 }
 
+// Simulation params, that can be picked up from ENV variables
+export const simParams = () => {
+  return {
+    tpAmount: process.env.TP_AMOUNT ? Math.max(Number(process.env.TP_AMOUNT), 2) : 5,
+    gasPrice: process.env.GAS_PRICE || 65800000,
+    blockGasLimit: process.env.BLOCK_GAS_LIMIT || 6800000,
+    btcUsdPrice: process.env.BTCUSD_PRICE || 43000,
+    execFee: {
+      iter: process.env.EXEC_FEE_ITER ? Number(process.env.EXEC_FEE_ITER) : 10,
+      avgOperPerBatch: process.env.EXEC_FEE_AVG_OPER_PER_BATCH ? Number(process.env.EXEC_FEE_AVG_OPER_PER_BATCH) : 1,
+      tpAmount: process.env.EXEC_FEE_TP_AMOUNT ? Number(process.env.EXEC_FEE_TP_AMOUNT) : 1,
+    },
+    batchSize: {
+      tpAmount: process.env.BATCH_SIZE_TP_AMOUNT ? Number(process.env.BATCH_SIZE_TP_AMOUNT) : 1,
+      operPerBatch: process.env.BATCH_SIZE_OPER_PER_BATCH ? Number(process.env.BATCH_SIZE_OPER_PER_BATCH) : 1,
+    },
+  };
+};
+
 export { mineUpTo };
