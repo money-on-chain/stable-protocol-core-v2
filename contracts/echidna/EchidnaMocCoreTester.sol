@@ -212,7 +212,7 @@ contract EchidnaMocCoreTester {
             // we don't want to revert if echidna tries to redeem qTC that don´t have
             qTC_ = (qTC_ % tcDataBefore.tcBalanceSender) + 1;
             bool shouldRevert = tcDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
-                int256(qTC_) > mocCARC20.getTCAvailableToRedeem();
+                qTC_ > mocCARC20.getTCAvailableToRedeem();
             bool reverted;
             // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
             try mocCARC20.redeemTC(qTC_, 0) returns (uint256 qACRedeemed, uint256, MocCommons.FeeCalcs memory) {

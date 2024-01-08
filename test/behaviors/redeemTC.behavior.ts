@@ -239,8 +239,8 @@ const redeemTCBehavior = function () {
           it("THEN the coverage is 5", async function () {
             assertPrec("4.999574468085106383", await mocImpl.getCglb());
           });
-          it("THEN the are -0.0319 TC available to redeem", async function () {
-            assertPrec("-0.031918289179699965", await mocImpl.getTCAvailableToRedeem());
+          it("THEN the are 0 TC available to redeem", async function () {
+            assertPrec(0, await mocImpl.getTCAvailableToRedeem());
           });
           describe("WHEN Alice tries to redeem 1 TC", function () {
             it("THEN tx reverts because coverage is below the target coverage adjusted by the moving average", async function () {
