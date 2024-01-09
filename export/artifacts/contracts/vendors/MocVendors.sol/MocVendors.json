@@ -530,7 +530,7 @@
         },
         "fun_setMarkup": {
           "entryPoint": 3790,
-          "id": 29971,
+          "id": 29958,
           "parameterSlots": 2,
           "returnSlots": 0
         },
@@ -675,7 +675,7 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 29897,
+        "astId": 29884,
         "contract": "contracts/vendors/MocVendors.sol:MocVendors",
         "label": "__gap",
         "offset": 0,
@@ -739,7 +739,7 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 29917,
+        "astId": 29904,
         "contract": "contracts/vendors/MocVendors.sol:MocVendors",
         "label": "vendorsGuardianAddress",
         "offset": 0,
@@ -747,7 +747,7 @@
         "type": "t_address"
       },
       {
-        "astId": 29921,
+        "astId": 29908,
         "contract": "contracts/vendors/MocVendors.sol:MocVendors",
         "label": "vendorMarkup",
         "offset": 0,
@@ -755,7 +755,7 @@
         "type": "t_mapping(t_address,t_uint256)"
       },
       {
-        "astId": 30026,
+        "astId": 30013,
         "contract": "contracts/vendors/MocVendors.sol:MocVendors",
         "label": "__gap",
         "offset": 0,

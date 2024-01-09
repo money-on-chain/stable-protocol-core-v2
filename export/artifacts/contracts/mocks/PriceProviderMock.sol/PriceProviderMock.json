@@ -141,7 +141,7 @@
   "storageLayout": {
     "storage": [
       {
-        "astId": 25641,
+        "astId": 25628,
         "contract": "contracts/mocks/PriceProviderMock.sol:PriceProviderMock",
         "label": "mocPrice",
         "offset": 0,
@@ -149,7 +149,7 @@
         "type": "t_bytes32"
       },
       {
-        "astId": 25643,
+        "astId": 25630,
         "contract": "contracts/mocks/PriceProviderMock.sol:PriceProviderMock",
         "label": "has",
         "offset": 0,
