@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers, getNamedAccounts } from "hardhat";
-import { BigNumberish, Contract, ContractFactory, ContractTransaction } from "ethers";
+import { BigNumberish, BigNumber, Contract, ContractFactory, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
 import { IChangeContract__factory, MocCACoinbase, MocCore, MocRC20 } from "../../../typechain";
@@ -216,7 +216,9 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
     });
     describe("WHEN a the governor executes the changer contract", () => {
       let execTx: ContractTransaction;
+      let prevTpAmount: BigNumber;
       before(async () => {
+        prevTpAmount = await mocProxy.getTpAmount();
         execTx = await governor.executeChange(changeContract.address);
       });
       it("THEN the new Pegged Token is added", async function () {
@@ -234,6 +236,9 @@ describe("Feature: Governance protected Pegged Token addition ", () => {
       });
       it("THEN we can access getPACtp", async function () {
         assertPrec(1, await mocProxy.getPACtp(mocPeggedToken.address));
+      });
+      it("THEN getTPAmount returns is increased", async function () {
+        expect(prevTpAmount.add(1)).to.be.equal(await mocProxy.getTpAmount());
       });
     });
   });

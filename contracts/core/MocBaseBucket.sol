@@ -704,6 +704,13 @@ abstract contract MocBaseBucket is MocUpgradable {
     }
 
     /**
+     * @notice return current amount of Tps
+     */
+    function getTpAmount() external view returns (uint256) {
+        return tpTokens.length;
+    }
+
+    /**
      * @notice evaluates if liquidation threshold has been reached and liq is Enabled.
      * If so forces contracts liquidation, blocking all mint & redeem operations.
      *
