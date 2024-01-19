@@ -58,12 +58,12 @@ describe("Feature: MocCoinbase redeem TC and TP", function () {
           let data = mocCollateralToken.interface.encodeFunctionData("approve", [mocImpl.address, pEth(1)]);
           await nonPayable.forward(mocCollateralToken.address, data);
           // non payable contract sends TP approval to Moc
-          data = tp.interface.encodeFunctionData("approve", [mocImpl.address, pEth(1)]);
+          data = tp.interface.encodeFunctionData("approve", [mocImpl.address, pEth(100)]);
           await nonPayable.forward(tp.address, data);
 
           operId = await mocQueue.operIdCount();
           // non payable contract registers redeemTCandTP operation
-          data = mocImpl.interface.encodeFunctionData("redeemTCandTP", [tp.address, pEth(1), pEth(1), 0]);
+          data = mocImpl.interface.encodeFunctionData("redeemTCandTP", [tp.address, pEth(1), pEth(100), 0]);
           await nonPayable.forward(mocImpl.address, data, { value: await mocQueue.execFee(OperType.redeemTCandTP) });
         });
         describe("AND execution is evaluated", () => {
@@ -82,7 +82,7 @@ describe("Feature: MocCoinbase redeem TC and TP", function () {
             assertPrec(prevTCBalance.add(pEth(1)), await mocFunctions.tcBalanceOf(nonPayable.address));
           });
           it("THEN TP is returned", async () => {
-            assertPrec(prevTPBalance.add(pEth(1)), await mocFunctions.tpBalanceOf(0, nonPayable.address));
+            assertPrec(prevTPBalance.add(pEth(100)), await mocFunctions.tpBalanceOf(0, nonPayable.address));
           });
         });
       });

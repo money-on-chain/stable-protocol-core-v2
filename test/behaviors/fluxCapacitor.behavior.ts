@@ -111,16 +111,14 @@ const fluxCapacitorBehavior = function () {
     describe("WHEN 10001 AC are used to redeem TC and TP0", function () {
       it("THEN fails because max absolute operation was reached", async function () {
         await expect(
-          opOneBlock(() =>
-            mocFunctions.redeemTCandTP({ from: alice, qTC: "11766024.902394024462492535", qTP: 2350235 }),
-          ),
+          opOneBlock(() => mocFunctions.redeemTCandTP({ from: alice, qTC: "38351.691851690388188000", qTP: 2350235 })),
         ).to.be.revertedWithCustomError(mocImpl, ERRORS.INVALID_FLUX_CAPACITOR_OPERATION);
       });
     });
     describe("WHEN 10000 AC are used to redeem TC and TP0", function () {
       beforeEach(async function () {
         await opOneBlock(() =>
-          mocFunctions.redeemTCandTP({ from: alice, qTC: "11764848.417552269235568980", qTP: 2350000 }),
+          mocFunctions.redeemTCandTP({ from: alice, qTC: "38347.857065983789810000", qTP: 2350000 }),
         );
       });
       it("THEN absolute and differential accumulators are in 10000", async function () {

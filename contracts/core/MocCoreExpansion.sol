@@ -5,6 +5,7 @@ import { MocCommons, PeggedTokenParams } from "./MocCommons.sol";
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 import { IDataProvider } from "../interfaces/IDataProvider.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title MocCoreExpansion
@@ -240,17 +241,12 @@ contract MocCoreExpansion is MocCommons {
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
-        // calculate how many TP are needed to redeem TC and not change coverage
-        // qTPtoRedeem = (qTC * pACtp * pTCac)(ctargemaCA - 1) / (cglb - 1)(ctargemaTP - 1)
-        // pTCac = (totalACavailable - lckAC) / nTCcb
-        // cglb = totalACavailable / lckAC => cglb - 1 = (totalACavailable - lckAC) / lckAC
-        // qTPtoRedeem = (qTC * pACtp * (totalACavailable - lckAC)(ctargemaCA - 1) / nTCcb) / ...
-        // ...((totalACavailable - lckAC) / lckAC)(ctargemaTP - 1)
-        // So, we can simplify (totalACavailable - lckAC)
-        // [PREC] = [PREC] * [PREC] / [PREC]
-        uint256 aux = (pACtp * (ctargemaCA - ONE)) / (_getCtargemaTP(i, pACtp) - ONE);
-        // [N] = ([N] * [N] * [PREC] / [N]) / [PREC]
-        qTPtoRedeem = ((params_.qTC * lckAC * aux) / nTCcb) / PRECISION;
+        // ctargemaCA and ctargemaTP never should be less than ONE
+        // [PREC]
+        uint256 redeemProportion = Math.min(Math.min(_getCglb(lckAC, nACgain), ctargemaCA), _getCtargemaTP(i, pACtp));
+        // calculate how many TP are needed to redeem TC and not compromise the coverage
+        // [N] = [N] * [PREC] * [PREC] / [PREC] * ([PREC] - [PREC])
+        qTPtoRedeem = _divPrec(params_.qTC * pACtp, _getPTCac(lckAC, nACgain) * (redeemProportion - ONE));
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
         // if qTC == 0 => qTPtoRedeem == 0 and will revert because QacNeededMustBeGreaterThanZero
         (uint256 qACtotalToRedeem, uint256 qACtoRedeemTP) = _calcQACforRedeemTCandTP(
