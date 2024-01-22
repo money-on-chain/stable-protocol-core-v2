@@ -186,13 +186,13 @@
         },
         "fun_forward": {
           "entryPoint": 1105,
-          "id": 25797,
+          "id": 25794,
           "parameterSlots": 2,
           "returnSlots": 0
         },
         "fun_tokensReceived": {
           "entryPoint": 739,
-          "id": 25747,
+          "id": 25744,
           "parameterSlots": 0,
           "returnSlots": 0
         },
@@ -231,7 +231,7 @@
   "storageLayout": {
     "storage": [
       {
-        "astId": 25705,
+        "astId": 25702,
         "contract": "contracts/mocks/ReentrancyAttackerERC777Mock.sol:ReentrancyAttackerERC777Mock",
         "label": "dest",
         "offset": 0,
@@ -239,7 +239,7 @@
         "type": "t_address"
       },
       {
-        "astId": 25707,
+        "astId": 25704,
         "contract": "contracts/mocks/ReentrancyAttackerERC777Mock.sol:ReentrancyAttackerERC777Mock",
         "label": "data",
         "offset": 0,
