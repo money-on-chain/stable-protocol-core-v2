@@ -6,7 +6,7 @@ import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechai
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { redeemTPBehavior } from "../behaviors/redeemTP.behavior";
 import { redeemTPQueueBehavior } from "../behaviors/queue/redeemTPQueue.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
@@ -54,12 +54,18 @@ describe("Feature: MocCoinbase redeem TP", function () {
           // mint TP to non payable contract
           await mocFunctions.mintTP({ from: deployer, to: nonPayable.address, qTP: 100 });
           // non payable contract sends TP approval to Moc
-          let data = tp.interface.encodeFunctionData("approve", [mocImpl.address, pEth(1)]);
+          let data = tp.interface.encodeFunctionData("approve", [mocImpl.address, pEth(10)]);
           await nonPayable.forward(tp.address, data);
 
           operId = await mocQueue.operIdCount();
           // non payable contract registers redeemTP operation
-          data = mocImpl.interface.encodeFunctionData("redeemTP", [tp.address, pEth(1), 0]);
+          data = mocImpl.interface.encodeFunctionData("redeemTP", [
+            tp.address,
+            pEth(1),
+            0,
+            nonPayable.address,
+            noVendor,
+          ]);
           await nonPayable.forward(mocImpl.address, data, { value: await mocQueue.execFee(OperType.redeemTP) });
         });
         describe("AND execution is evaluated", () => {

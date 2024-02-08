@@ -4,7 +4,7 @@ import { Contract } from "ethers";
 
 import { MocCACoinbase, MocQueue, MocRC20, MocTcMock, MocTcMock__factory } from "../../../../typechain";
 import { fixtureDeployedMocCoinbase } from "../../../coinbase/fixture";
-import { deployAeropagusGovernor, ERRORS, tpParams } from "../../../helpers/utils";
+import { deployAeropagusGovernor, ERRORS, noVendor, tpParams } from "../../../helpers/utils";
 
 describe("Feature: MocRC20 Upgradeability UUPS", () => {
   let mocTCProxy: MocRC20;
@@ -40,7 +40,7 @@ describe("Feature: MocRC20 Upgradeability UUPS", () => {
 
     // mint 10 TC
     const execFee = await mocQueue.execFee(1); // mintTC execution fee
-    await mocImpl.mintTC(10, { value: execFee.add(100) });
+    await mocImpl.mintTC(10, deployer, noVendor, { value: execFee.add(100) });
     await mocQueue.execute(deployer);
   });
 

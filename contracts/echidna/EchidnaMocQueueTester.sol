@@ -147,12 +147,12 @@ contract EchidnaMocQueueTester {
 
         // mint TC tokens to echidna
         acToken.approve(address(mocCARC20), 30000 ether);
-        mocCARC20.mintTC{ value: EXEC_FEE }(3000 ether, 30000 ether);
+        mocCARC20.mintTC{ value: EXEC_FEE }(3000 ether, 30000 ether, address(this), address(0));
 
         // mint TP 0 tokens to echidna
         acToken.approve(address(mocCARC20), 1000 ether);
         address tp0 = address(mocCARC20.tpTokens(0));
-        mocCARC20.mintTP{ value: EXEC_FEE }(tp0, 23500 ether, 1000 ether);
+        mocCARC20.mintTP{ value: EXEC_FEE }(tp0, 23500 ether, 1000 ether, address(this), address(0));
     }
 
     function _addPeggedToken(PeggedTokenParams memory peggedTokenParams_, uint96 price_) internal {
@@ -176,21 +176,21 @@ contract EchidnaMocQueueTester {
     }
 
     function mintTC(uint256 qTC_, uint256 qACmax_) public virtual {
-        mocCARC20.mintTC{ value: EXEC_FEE }(qTC_, qACmax_);
+        mocCARC20.mintTC{ value: EXEC_FEE }(qTC_, qACmax_, address(this), address(0));
     }
 
     function redeemTC(uint256 qTC_) public virtual {
-        mocCARC20.redeemTC{ value: EXEC_FEE }(qTC_, 0);
+        mocCARC20.redeemTC{ value: EXEC_FEE }(qTC_, 0, address(this), address(0));
     }
 
     function mintTP(uint256 qTP_, uint256 qACmax_) public {
         address tpi = address(mocCARC20.tpTokens(0));
-        mocCARC20.mintTP{ value: EXEC_FEE }(tpi, qTP_, qACmax_);
+        mocCARC20.mintTP{ value: EXEC_FEE }(tpi, qTP_, qACmax_, address(this), address(0));
     }
 
     function redeemTP(uint256 qTP_) public {
         address tpi = address(mocCARC20.tpTokens(0));
-        mocCARC20.redeemTP{ value: EXEC_FEE }(tpi, qTP_, 0);
+        mocCARC20.redeemTP{ value: EXEC_FEE }(tpi, qTP_, 0, address(this), address(0));
     }
 
     function execute() public {

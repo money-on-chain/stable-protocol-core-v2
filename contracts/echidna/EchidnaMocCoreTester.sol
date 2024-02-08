@@ -129,11 +129,11 @@ contract EchidnaMocCoreTester {
         acToken.mint(address(this), UINT256_MAX - acToken.totalSupply());
         // mint TC tokens to echidna
         acToken.approve(address(mocCARC20), 30000 ether);
-        mocCARC20.mintTC(3000 ether, 30000 ether);
+        mocCARC20.mintTC(3000 ether, 30000 ether, address(this), address(0));
         // mint TP 0 tokens to echidna
         acToken.approve(address(mocCARC20), 1000 ether);
         address tp0 = address(mocCARC20.tpTokens(0));
-        mocCARC20.mintTP(tp0, 23500 ether, 1000 ether);
+        mocCARC20.mintTP(tp0, 23500 ether, 1000 ether, address(this), address(0));
     }
 
     function addPeggedToken(PeggedTokenParams memory peggedTokenParams_, uint96 price_) public {
@@ -172,7 +172,7 @@ contract EchidnaMocCoreTester {
             qTC_ = qTC_ % ((qACmax_ * PRECISION) / tcDataBefore.tcPrice);
             bool shouldRevert = tcDataBefore.coverage < mocCARC20.protThrld();
             bool reverted;
-            try mocCARC20.mintTC(qTC_, qACmaxIncludingFee) returns (
+            try mocCARC20.mintTC(qTC_, qACmaxIncludingFee, address(this), address(0)) returns (
                 uint256 qACspent,
                 uint256,
                 MocCommons.FeeCalcs memory
@@ -215,7 +215,11 @@ contract EchidnaMocCoreTester {
                 qTC_ > mocCARC20.getTCAvailableToRedeem();
             bool reverted;
             // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
-            try mocCARC20.redeemTC(qTC_, 0) returns (uint256 qACRedeemed, uint256, MocCommons.FeeCalcs memory) {
+            try mocCARC20.redeemTC(qTC_, 0, address(this), address(0)) returns (
+                uint256 qACRedeemed,
+                uint256,
+                MocCommons.FeeCalcs memory
+            ) {
                 TCData memory tcDataAfter = _getTCData();
                 uint256 qACTotalRedeemed = (qTC_ * tcDataBefore.tcPrice) / PRECISION;
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tcRedeemFee() * (PRECISION - mocCARC20.feeRetainer())) /
@@ -258,7 +262,7 @@ contract EchidnaMocCoreTester {
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.calcCtargemaCA() ||
                 int256(qTP_) > mocCARC20.getTPAvailableToMint(tpi);
             bool reverted;
-            try mocCARC20.mintTP(tpi, qTP_, qACmaxIncludingFee) returns (
+            try mocCARC20.mintTP(tpi, qTP_, qACmaxIncludingFee, address(this), address(0)) returns (
                 uint256 qACspent,
                 uint256,
                 MocCommons.FeeCalcs memory
@@ -303,7 +307,11 @@ contract EchidnaMocCoreTester {
             bool shouldRevert = tpDataBefore.coverage < mocCARC20.protThrld();
             bool reverted;
             // qACmin_ = 0 because we don't want to revert if echidna asks for more qAC
-            try mocCARC20.redeemTP(tpi, qTP_, 0) returns (uint256 qACRedeemed, uint256, MocCommons.FeeCalcs memory) {
+            try mocCARC20.redeemTP(tpi, qTP_, 0, address(this), address(0)) returns (
+                uint256 qACRedeemed,
+                uint256,
+                MocCommons.FeeCalcs memory
+            ) {
                 TPData memory tpDataAfter = _getTPData(tpi);
                 uint256 qACTotalRedeemed = (qTP_ * PRECISION) / tpDataBefore.tpPrice;
                 uint256 fee = (qACTotalRedeemed * mocCARC20.tpRedeemFees(tpi) * (PRECISION - mocCARC20.feeRetainer())) /
@@ -343,7 +351,7 @@ contract EchidnaMocCoreTester {
         TPData memory tpDataBefore = _getTPData(tpi);
         TCData memory tcDataBefore = _getTCData();
         bool coverageShouldIncrease = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
-        try mocCARC20.mintTCandTP(tpi, qTP_, qACmax) returns (
+        try mocCARC20.mintTCandTP(tpi, qTP_, qACmax, address(this), address(0)) returns (
             uint256 qACspent,
             uint256 qTC,
             uint256,
@@ -393,7 +401,7 @@ contract EchidnaMocCoreTester {
         // we don't want to revert if echidna tries to redeem qTP that don´t have
         qTP_ = (qTP_ % tpDataBefore.tpBalanceSender) + 1;
         bool coverageBelow = tcDataBefore.coverage < mocCARC20.calcCtargemaCA();
-        try mocCARC20.redeemTCandTP(tpi, qTC_, qTP_, 0) returns (
+        try mocCARC20.redeemTCandTP(tpi, qTC_, qTP_, 0, address(this), address(0)) returns (
             uint256 qACRedeemed,
             uint256 qTPRedeemed,
             uint256,
@@ -437,7 +445,7 @@ contract EchidnaMocCoreTester {
         uint256 qACmax = ((qTC_ * tcDataBefore.tcPrice) / PRECISION) - 1;
         acToken.increaseAllowance(address(mocCARC20), qACmax);
         // mintTC with insufficient qAC
-        try mocCARC20.mintTC(qTC_, qACmax) {
+        try mocCARC20.mintTC(qTC_, qACmax, address(this), address(0)) {
             assert(false);
         } catch {
             // assert: tx should revert always
@@ -445,7 +453,7 @@ contract EchidnaMocCoreTester {
         }
         if (tcDataBefore.tcBalanceSender < qTC_) {
             // redeemTC with insufficient qTC
-            try mocCARC20.redeemTC(qTC_, 0) {
+            try mocCARC20.redeemTC(qTC_, 0, address(this), address(0)) {
                 assert(false);
             } catch {
                 // assert: tx should revert always

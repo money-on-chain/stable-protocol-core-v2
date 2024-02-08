@@ -26,6 +26,10 @@ const fluxCapacitorBehavior = function () {
     return tx;
   };
   describe("Feature: flux capacitor", function () {
+    after(async function () {
+      // In case any test left the automine false
+      await network.provider.send("evm_setAutomine", [true]);
+    });
     beforeEach(async function () {
       mocContracts = this.mocContracts;
       mocFunctions = this.mocFunctions;

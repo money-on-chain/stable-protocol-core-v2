@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/dist/types";
 import { assertPrec } from "../../helpers/assertHelper";
-import { Balance, CONSTANTS, ERROR_SELECTOR, OperId, expectEventFor, pEth } from "../../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, expectEventFor, noVendor, pEth } from "../../helpers/utils";
 import { ERC20Mock, MocCACoinbase, MocCARC20, MocQueue, PriceProviderMock } from "../../../typechain";
 
 const feeTokenBehavior = function () {
@@ -20,7 +20,6 @@ const feeTokenBehavior = function () {
   let tx: ContractTransaction;
   let expectTCMinted: any;
   let expectTCRedeemed: any;
-  const noVendor = CONSTANTS.ZERO_ADDRESS;
 
   describe("Feature: Fee Token as fee payment method", function () {
     beforeEach(async function () {

@@ -124,7 +124,7 @@ contract MocCoreExpansion is MocCommons {
      * @param recipient_ address who receives the AC
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
-    function liqRedeemTPTo(
+    function liqRedeemTP(
         address tp_,
         address sender_,
         address recipient_,

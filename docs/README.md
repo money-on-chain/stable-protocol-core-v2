@@ -64,9 +64,9 @@ Let's explore a mint TP Operation, as a reference of the protocol mechanics and 
 
 ![mint tp sequence](./resources/sequence-mint-tp.png?raw=true "mint tp sequence")
 
-1. Bob wants to mint TP using his collateral asset holdings.
-2. Bob sends approval for CA Token to MocCore, with the amount he pretends to spend.
-3. Bob registers a mintTP operation on MocCore, asking for 10 TP, he also sends the corresponding coinbase amount to cover the execution fee.
+1. Bob wants to mint 10 TP using his collateral asset holdings, which cost 10 times less than TP.
+2. Bob sends approval for CA Token to MocCore, with the amount he is willing to spend. In this case he sends 105, the extra 5 is to cover platform fees and to account for any price slippage variation when the operation is processed.
+3. Bob registers a mintTP operation on MocCore, asking for 10 TP, he also sends the corresponding coinbase amount to cover the mint TP execution fee. Vendor address in this case is assumed to be `0x0` to simplify.
 4. MocCore executes a transferFrom of Bob's CA to itself, locking the qACmax funds.
 5. MocCore queues the Operation on MocQueue, which will emit an *OperationQueued* event with the assigned OperationId.
 6. After *minOperWaitingBlk* blocks, a whitelisted executor executes the queue.
@@ -77,8 +77,10 @@ Let's explore a mint TP Operation, as a reference of the protocol mechanics and 
 
 #### Moc Vendors
 
-Another way that users can interact with the protocol is through *Vendors*, each operation type has a duplicate method that accepts a vendor address, indicating he is operating the protocol though him.
+Another way that users can interact with the protocol is through *Vendors*, each operation type has a vendor parameter that accepts a vendor address, indicating he is operating the protocol though it. Using address `0x0` as vendor, indicates no vendor will be used.
+
 Vendors, can pre-defined a markup that will be applied on top of the platform fee using *MocVendors* contract.
+
 This way, integrators have a way to earn a profit while boosting and enhancing dapp user experience; and users can freely choose to use either the protocol directly or pay this extra markup for the services the different Vendors provide.
 
 ### Process actions
@@ -86,6 +88,7 @@ This way, integrators have a way to earn a profit while boosting and enhancing d
 #### Queue execution
 
 Whitelisted accounts, can execute the queue at any time, if there are Orders ready to be processed (*minOperWaitingBlk* condition met) it will execute them sequentially, and collect the execution fee reserved by each one.
+
 There are two possible outcomes for each Operation, that will yield the corresponding events, either the Order is valid and will emit the corresponding Operation Type event (for example, a *mintTC*, will generate a *TCMinted* event), or the execution fails, emitting *OperationError*  or *UnhandledError*. Note that a failed Operation, won't block the queue nor revert the transaction, but the user's funds will be unlocked and returned to the user.
 
 #### Settlement
@@ -101,7 +104,9 @@ The system relies on price moving averages to smooth out any price spike for cov
 #### System Liquidation
 
 If the TP/Collateral price drops drastically, an none of the incentive mechanisms along the coverage dropping prevents it to cross the liquidation threshold (currently: coverage < 1.04) the system will enter the liquidation state and, if liquidation enabled, the liquidation function will be available to be executed.
+
 Although there is an specific method to evaluate liquidation (`evalLiquidation`), to guarantee this process is executed, the same logic is evaluated and, if needed, executed in every MoC state changing method.
+
 Liquidation process will invalidate the TC Token (it cannot be transfer any more) as a precaution measure as it has no more Assets backing it, it has no value. Users can redeem all of their TPs at once, valued at the liquidation price.
 
 #### Collateral injection
