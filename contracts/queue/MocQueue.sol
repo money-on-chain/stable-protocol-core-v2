@@ -892,6 +892,9 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
         // Define new reference to queue beginning
         firstOperId = operId;
         if (totalExecutionFee > 0) {
+            // if execution fees were increased before the execution, the balance could not be enough
+            // to pay the required, so, the recipient will receive everything that the contract has
+            if (totalExecutionFee > address(this).balance) totalExecutionFee = address(this).balance;
             // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = executionFeeRecipient.call{ value: totalExecutionFee }("");
             if (!success) revert ExecutionFeePaymentFailed();
