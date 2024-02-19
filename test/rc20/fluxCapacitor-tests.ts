@@ -136,7 +136,7 @@ describe("Feature: MocCARC20 Flux capacitor", function () {
     describe("WHEN an user registers a redeem TC and TP operation, exceeding the max flux capacitor parameter", function () {
       beforeEach(async function () {
         operId = await mocQueue.operIdCount();
-        await mocFunctions.redeemTCandTP({ from: alice, qTC: 45418, qTP: 2350235, execute: false });
+        await mocFunctions.redeemTCandTP({ from: alice, qTC: 10000001, qTP: 2350235, execute: false });
       });
       describe("AND execution is evaluated", function () {
         beforeEach(async function () {
@@ -150,7 +150,7 @@ describe("Feature: MocCARC20 Flux capacitor", function () {
             .withArgs(operId, ERROR_SELECTOR.INVALID_FLUX_CAPACITOR_OPERATION);
         });
         it("THEN TC and Tps are returned", async function () {
-          assertPrec(prevTCBalance.add(pEth(45418)), await mocFunctions.tcBalanceOf(alice));
+          assertPrec(prevTCBalance.add(pEth(10000001)), await mocFunctions.tcBalanceOf(alice));
           assertPrec(prevTPBalance.add(pEth(2350235)), await mocFunctions.tpBalanceOf(TP_0, alice));
         });
       });

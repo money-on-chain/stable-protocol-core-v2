@@ -5,7 +5,6 @@ import { MocCommons, PeggedTokenParams } from "./MocCommons.sol";
 import { IMocRC20 } from "../interfaces/IMocRC20.sol";
 import { IPriceProvider } from "../interfaces/IPriceProvider.sol";
 import { IDataProvider } from "../interfaces/IDataProvider.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title MocCoreExpansion
@@ -241,19 +240,21 @@ contract MocCoreExpansion is MocCommons {
         // evaluates that the system is not below the liquidation threshold
         // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
         (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
+        uint256 pTCac = _getPTCac(lckAC, nACgain);
         // ctargemaCA and ctargemaTP never should be less than ONE
-        // [PREC]
-        uint256 redeemProportion = Math.min(Math.min(_getCglb(lckAC, nACgain), ctargemaCA), _getCtargemaTP(i, pACtp));
+        // [PREC] = [PREC - PREC] * [PREC - PREC] / [PREC - PREC]
+        uint256 redeemProportion = ((_getCglb(lckAC, nACgain) - ONE) * (_getCtargemaTP(i, pACtp) - ONE)) /
+            (ctargemaCA - ONE);
         // calculate how many TP are needed to redeem TC and not compromise the coverage
-        // [N] = [N] * [PREC] * [PREC] / [PREC] * ([PREC] - [PREC])
-        qTPtoRedeem = _divPrec(params_.qTC * pACtp, _getPTCac(lckAC, nACgain) * (redeemProportion - ONE));
+        // [N] = [N] * [PREC] * [PREC] / [PREC] * [PREC]
+        qTPtoRedeem = (params_.qTC * pACtp * pTCac) / (redeemProportion * PRECISION);
         if (qTPtoRedeem > params_.qTP) revert InsufficientQtpSent(params_.qTP, qTPtoRedeem);
         // if qTC == 0 => qTPtoRedeem == 0 and will revert because QacNeededMustBeGreaterThanZero
         (uint256 qACtotalToRedeem, uint256 qACtoRedeemTP) = _calcQACforRedeemTCandTP(
             params_.qTC,
             qTPtoRedeem,
             pACtp,
-            _getPTCac(lckAC, nACgain)
+            pTCac
         );
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
