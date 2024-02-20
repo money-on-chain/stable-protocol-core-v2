@@ -50,7 +50,7 @@ System state is ruled by the global Coverage value, and it's relation with the T
   | redeemTC |✓|✗|✗|
   | mintTP |✓|✗|✗|
   | redeemTP |✓|✓|✗|
-  | mintTCandTP |✓|✓|✓|
+  | mintTCandTP |✓|✓|✗|
   | redeemTCandTP |✓|✓|✓|
   | swapTPforTP |✓|(*)|✗|
   | swapTPforTC |✓|✓|✗|

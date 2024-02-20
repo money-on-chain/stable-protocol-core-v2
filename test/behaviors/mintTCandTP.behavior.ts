@@ -335,37 +335,11 @@ const mintTCandTPBehavior = function () {
         beforeEach(async function () {
           await mocFunctions.pokePrice(TP_0, 10);
         });
-        describe("WHEN alice mints 23500 TP", function () {
-          /*
-            nAC = 3100
-            lckAC = 2350
-            coverage = 1.319
-            pTCac = 0.25
-            ctargemaCA = 5
-            qTC = 37600 TC
-            qAC = 9400 AC + 2350 AC + 8% for Moc Fee Flow
-            coverage = (3100 + 11750) / 4700  
-          */
-          beforeEach(async function () {
-            tx = await mocFunctions.mintTCandTP({ from: alice, qTP: 23500 });
-          });
-          it("THEN coverage increase to 3.15", async function () {
-            assertPrec("3.159574468085106382", await mocImpl.getCglb());
-          });
-          it("THEN a TCandTPMinted event is emitted", async function () {
-            // i: 0
-            // sender: alice
-            // receiver: alice
-            // qTC: 37600 TC
-            // qTP: 23500 TP
-            // qAC: 9400 AC + 2350 AC + 8% for Moc Fee Flow
-            // qACfee: 8% AC
-            // qFeeToken: 0
-            // qACVendorMarkup: 0
-            // qFeeTokenVendorMarkup: 0
-            const args = [tps[0], alice, alice, pEth(37600), pEth(23500), pEth(12690), pEth(940), 0, 0, 0, noVendor];
-            await expectEvent(tx, args);
-          });
+        it("THEN tx reverts because coverage is below the protected threshold", async function () {
+          await expect(mocFunctions.mintTCandTP({ from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.LOW_COVERAGE,
+          );
         });
       });
       describe("AND TP 0 devaluates to 470 making TC price to rise", function () {
@@ -415,19 +389,6 @@ const mintTCandTPBehavior = function () {
               noVendor,
             ]);
           });
-        });
-      });
-      describe("AND Pegged Token has been revaluated making lckAC bigger than total AC in the protocol", function () {
-        // this test is to check that tx doesn't fail because underflow doing totalACAvailable - lckAC
-        beforeEach(async function () {
-          await mocFunctions.pokePrice(TP_0, "0.00000001");
-        });
-        it("THEN tx reverts because coverage is below the protected threshold", async function () {
-          expect((await mocImpl.getCglb()) < pEth(1)); // check that lckAC > totalACAvailable
-          await expect(mocFunctions.mintTCandTP({ from: alice, qTP: 23500 })).to.be.revertedWithCustomError(
-            mocImpl,
-            ERRORS.LOW_COVERAGE,
-          );
         });
       });
       describe("AND alice has FeeToken to pay fees", function () {

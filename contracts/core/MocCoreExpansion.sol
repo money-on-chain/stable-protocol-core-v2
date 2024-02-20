@@ -179,9 +179,8 @@ contract MocCoreExpansion is MocCommons {
         uint256 i = _tpi(params_.tp);
         uint256 pACtp = pACtps[i];
         _updateTPtracking(i, pACtp);
-        // evaluates that the system is not below the liquidation threshold
-        // one of the reasons is to prevent it from failing due to underflow because the lckAC > totalACavailable
-        (uint256 lckAC, uint256 nACgain) = _evalCoverage(liqThrld, pACtps);
+        // evaluates whether or not the system coverage is healthy, reverts if it's not
+        (uint256 lckAC, uint256 nACgain) = _evalCoverage(protThrld, pACtps);
         (qTCtoMint, qACNeededtoMint, qACtoMintTP) = _calcQACforMintTCandTP(
             params_.qTP,
             pACtp,
