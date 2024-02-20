@@ -51,6 +51,14 @@
     "typescript": "5.0.4",
     "copyfiles": "2.4.1"
   },
+  "overrides": {
+    "eth-gas-reporter": {
+      "axios": "1.6.0"
+    },
+    "axios": {
+      "follow-redirects": "1.15.4"
+    }
+  },
   "comments": {
     "dependencies": "hardhat-solhint and hardhat-prettier includes old versions, that's why specific dependencies are added"
   },
