@@ -50,7 +50,7 @@ abstract contract MocHelper {
      * @param value_ value to check [PREC]
      */
     function _checkLessThanOne(uint256 value_) internal pure {
-        if (value_ > ONE) revert InvalidValue();
+        if (value_ >= ONE) revert InvalidValue();
     }
 
     /**

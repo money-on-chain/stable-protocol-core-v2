@@ -274,7 +274,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
     ) internal onlyInitializing {
-        if (initializeBaseBucketParams_.protThrld < ONE) revert InvalidValue();
+        if (initializeBaseBucketParams_.protThrld <= ONE) revert InvalidValue();
         _checkLessThanOne(initializeBaseBucketParams_.feeRetainer);
         _checkLessThanOne(initializeBaseBucketParams_.tcMintFee);
         _checkLessThanOne(initializeBaseBucketParams_.tcRedeemFee);
