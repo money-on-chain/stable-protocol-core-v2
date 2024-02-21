@@ -513,7 +513,6 @@ contract MocCoreExpansion is MocCommons {
         if (qACtoRedeemTP == 0) revert QacNeededMustBeGreaterThanZero();
         // calculate how many qAC are redeemed because TC
         // [N] = [N] * [PREC] / [PREC]
-        // TODO: rounding error could be avoid replacing here with qTC_ * totalACavailable / nTCcb
         qACtotalToRedeem = qACtoRedeemTP + _mulPrec(qTC_, pTCac_);
         return (qACtotalToRedeem, qACtoRedeemTP);
     }
