@@ -9,7 +9,6 @@ import {
   CONSTANTS,
   ENQUEUER_ROLE,
   ERRORS,
-  EXECUTOR_ROLE,
   OperId,
   OperType,
   ethersGetBalance,
@@ -136,11 +135,6 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
         const mocQueueBalance = await ethersGetBalance(mocQueue.address);
         expect(mocQueueBalance).to.be.equal(execFeeParams.tcMintExecFee.mul(2));
       });
-      it("THEN if an unauthorized user tries to execute the queue, it fails", async function () {
-        await expect(mocFunctions.executeQueue({ from: bob })).to.be.revertedWith(
-          `AccessControl: account ${bob.toLowerCase()} is missing role ${EXECUTOR_ROLE}`,
-        );
-      });
       describe("AND an authorized user tries to receive the execution fee on a non payable contract", () => {
         let nonPayable: NonPayableMock;
         beforeEach(async () => {
@@ -153,7 +147,7 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
           ).to.be.revertedWithCustomError(mocQueue, ERRORS.EXEC_FEE_PAYMENT_FAILED);
         });
       });
-      describe("AND queue is executed by an authorized executor", function () {
+      describe("AND queue is executed", function () {
         beforeEach(async function () {
           executorBalanceBefore = await ethersGetBalance(deployer);
           execTx = await mocFunctions.executeQueue({ from: executor });

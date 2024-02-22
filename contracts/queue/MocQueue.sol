@@ -11,7 +11,6 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 bytes32 constant ENQUEUER_ROLE = keccak256("ENQUEUER_ROLE");
 
 /**
@@ -863,11 +862,11 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
     // ------- External Functions -------
 
     /**
-     * @notice registered executors can process Operations in the queue
+     * @notice Processes Operations in the queue
      * @dev does not revert on Operation failure, throws Process and Error
      * events according to the Oper type and result
      */
-    function execute(address executionFeeRecipient) external notPaused nonReentrant onlyRole(EXECUTOR_ROLE) {
+    function execute(address executionFeeRecipient) external notPaused nonReentrant {
         uint256 operId = firstOperId;
         uint256 lastOperId;
         uint256 limitBlk;
@@ -1074,7 +1073,7 @@ contract MocQueue is MocQueueExecFees, ReentrancyGuardUpgradeable {
 
     /**
      * @notice registers the mocOperations bucket that would operate over this queue
-     * @dev in order to operate, the queue needs to be whitelisted as EXECUTOR on the bucket as well
+     * @dev in order to operate, the queue needs to be whitelisted as ENQUEUER_ROLE on the bucket as well
      * @param bucket_ address of the mocOperations implementation to interact with
      *
      * May emit a {RoleGranted} event for ENQUEUER role

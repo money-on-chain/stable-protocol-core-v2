@@ -18,7 +18,7 @@ import {
   MocCoreExpansion,
   MocCoreExpansion__factory,
 } from "../../typechain";
-import { EXECUTOR_ROLE, deployAndAddPeggedTokens, pEth, deployMocQueue } from "../helpers/utils";
+import { deployAndAddPeggedTokens, pEth, deployMocQueue } from "../helpers/utils";
 
 export const fixtureDeployedMocRC20 = memoizee(
   (
@@ -59,15 +59,11 @@ export const fixtureDeployedMocRC20 = memoizee(
       const collateralAsset: ERC20Mock = ERC20Mock__factory.connect(await mocImpl.acToken(), signer);
       let mocQueue: MocQueue;
 
-      const { deployer, alice, bob, charlie, vendor } = await getNamedAccounts();
+      const { alice, bob, charlie, vendor } = await getNamedAccounts();
 
       if (useMockQueue) {
         mocQueue = await deployMocQueue("MocQueueMock");
-        await Promise.all([
-          mocImpl.setMocQueue(mocQueue.address),
-          mocQueue.registerBucket(mocImpl.address),
-          mocQueue.grantRole(EXECUTOR_ROLE, deployer),
-        ]);
+        await Promise.all([mocImpl.setMocQueue(mocQueue.address), mocQueue.registerBucket(mocImpl.address)]);
       } else {
         mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
       }

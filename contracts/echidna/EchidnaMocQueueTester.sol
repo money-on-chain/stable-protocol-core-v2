@@ -17,7 +17,6 @@ import { DataProviderMock } from "../mocks/DataProviderMock.sol";
 import { IDataProvider } from "../interfaces/IDataProvider.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-bytes32 constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 uint256 constant EXEC_FEE = 100 wei;
 
 contract EchidnaMocQueueTester {
@@ -125,7 +124,6 @@ contract EchidnaMocQueueTester {
             })
         );
         mocQueue.registerBucket(mocCARC20);
-        mocQueue.grantRole(EXECUTOR_ROLE, address(this));
 
         // transfer roles to mocCARC20
         tcToken.transferAllRoles(address(mocCARC20));
