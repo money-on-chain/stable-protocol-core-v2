@@ -12,7 +12,6 @@ export declare const DEFAULT_ADMIN_ROLE = "0x00000000000000000000000000000000000
 export declare const MINTER_ROLE: string;
 export declare const BURNER_ROLE: string;
 export declare const PAUSER_ROLE: string;
-export declare const EXECUTOR_ROLE: string;
 export declare const ENQUEUER_ROLE: string;
 export declare const waitForTxConfirmation: (tx: Promise<ContractTransaction>, confirmations?: number) => Promise<ContractReceipt>;
 export declare const deployUUPSArtifact: ({ hre, artifactBaseName, contract, initializeArgs, }: {

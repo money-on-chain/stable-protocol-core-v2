@@ -16,7 +16,7 @@ import {
   MocQueue,
   MocQueue__factory,
 } from "../../typechain";
-import { deployAndAddPeggedTokens, EXECUTOR_ROLE, pEth, deployMocQueue } from "../helpers/utils";
+import { deployAndAddPeggedTokens, pEth, deployMocQueue } from "../helpers/utils";
 
 export const fixtureDeployedMocCoinbase = memoizee(
   (
@@ -59,16 +59,12 @@ export const fixtureDeployedMocCoinbase = memoizee(
       const mocVendors: MocVendors = MocVendors__factory.connect(deployedMocVendors.address, signer);
 
       // initialize vendor with 10% markup
-      const { deployer, vendor } = await getNamedAccounts();
+      const { vendor } = await getNamedAccounts();
 
       let mocQueue: MocQueue;
       if (useMockQueue) {
         mocQueue = await deployMocQueue("MocQueueMock");
-        await Promise.all([
-          mocImpl.setMocQueue(mocQueue.address),
-          mocQueue.registerBucket(mocImpl.address),
-          mocQueue.grantRole(EXECUTOR_ROLE, deployer),
-        ]);
+        await Promise.all([mocImpl.setMocQueue(mocQueue.address), mocQueue.registerBucket(mocImpl.address)]);
       } else {
         mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
       }

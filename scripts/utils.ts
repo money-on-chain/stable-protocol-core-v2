@@ -15,7 +15,6 @@ export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000
 export const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
 export const BURNER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BURNER_ROLE"));
 export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
-export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
 export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
 export const noVendor = CONSTANTS.ZERO_ADDRESS;
@@ -90,12 +89,9 @@ export const deployCollateralToken = (artifactBaseName: string) => async (hre: H
 };
 
 export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts } = hre;
-  const { deployer } = await getNamedAccounts();
   const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
   const governorAddress = getGovernorAddresses(hre);
-  const signer = ethers.provider.getSigner();
-  const mocQueue = await deployUUPSArtifact({
+  await deployUUPSArtifact({
     hre,
     artifactBaseName,
     contract: "MocQueue",
@@ -107,12 +103,6 @@ export const deployQueue = (artifactBaseName: string) => async (hre: HardhatRunt
       queueParams.execFeeParams,
     ],
   });
-
-  if (hre.network.tags.local || hre.network.tags.testnet) {
-    console.log(`[ONLY TESTING] Whitelisting deployer: ${deployer} as executor`);
-    const mocQueueProxy = await ethers.getContractAt("MocQueue", mocQueue.address, signer);
-    await mocQueueProxy.grantRole(EXECUTOR_ROLE, deployer);
-  }
 
   return hre.network.live; // prevents re execution on live networks
 };

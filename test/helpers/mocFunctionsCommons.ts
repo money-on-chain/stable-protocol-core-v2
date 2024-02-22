@@ -107,7 +107,6 @@ const executeQueue =
   async ({ from, recipient } = {}) => {
     let signer;
     if (!from) {
-      // deployer is a whitelisted executor
       from = (await getNamedAccounts()).deployer;
     }
     if (!recipient) {

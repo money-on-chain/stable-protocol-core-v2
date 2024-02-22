@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { expect } from "chai";
 import { Address } from "hardhat-deploy/types";
 import { MocQueue, ReentrancyAttackerMock } from "../../typechain";
-import { ERRORS, EXECUTOR_ROLE, tpParams } from "../helpers/utils";
+import { ERRORS, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 
@@ -24,8 +24,6 @@ describe("Feature: MocQueue reentrance tests", () => {
       ({ mocQueue } = mocContracts);
       const factory = await ethers.getContractFactory("ReentrancyAttackerMock");
       reentrancyAttacker = await factory.deploy();
-      // The attacker needs to be an executor
-      await mocQueue.grantRole(EXECUTOR_ROLE, reentrancyAttacker.address);
       reentracyAttack = (op: string) => reentrancyAttacker.forward(mocQueue.address, op, false);
     });
 
