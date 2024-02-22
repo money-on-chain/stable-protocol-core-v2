@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import hre, { getNamedAccounts, ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/types";
 import { mocFunctionsRC20 } from "../helpers/mocFunctionsRC20";
 import {
@@ -133,21 +134,12 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
       });
       it("THEN mocQueue receives coinbase for those two operations", async function () {
         const mocQueueBalance = await ethersGetBalance(mocQueue.address);
-        await expect(mocQueueBalance).to.be.equal(execFeeParams.tcMintExecFee.mul(2));
+        expect(mocQueueBalance).to.be.equal(execFeeParams.tcMintExecFee.mul(2));
       });
       it("THEN if an unauthorized user tries to execute the queue, it fails", async function () {
         await expect(mocFunctions.executeQueue({ from: bob })).to.be.revertedWith(
           `AccessControl: account ${bob.toLowerCase()} is missing role ${EXECUTOR_ROLE}`,
         );
-      });
-      describe(`AND updateExecutionFees is invoked`, () => {
-        it(`THEN it fails with none empty queue Error`, async function () {
-          const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: 42 });
-          await expect(mocQueue.updateExecutionFees(execFeeParamsToUpdate)).to.be.revertedWithCustomError(
-            mocQueue,
-            ERRORS.NOT_ALLOW_ON_EMPTY_QUEUE,
-          );
-        });
       });
       describe("AND an authorized user tries to receive the execution fee on a non payable contract", () => {
         let nonPayable: NonPayableMock;
@@ -172,19 +164,80 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
         });
         it("THEN execution Fees are delivered", async function () {
           const mocQueueBalance = await ethersGetBalance(mocQueue.address);
-          await expect(mocQueueBalance).to.be.equal(0);
+          expect(mocQueueBalance).to.be.equal(0);
           const executorBalanceAfter = await ethersGetBalance(deployer);
-          await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
+          expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
         });
         it("THEN readyToExecute return false", async function () {
           expect(await mocQueue.readyToExecute()).to.be.false;
         });
-        describe(`WHEN updateExecutionFees is invoked now that the queue is empty`, () => {
-          it(`THEN exec fee gets updated`, async function () {
-            const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: 42 });
-            await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
-            const actualTcMintExecFee = await mocQueue.execFee(OperType.mintTC);
-            await expect(42, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
+      });
+      describe("WHEN updateExecutionFees is invoked increasing the fee", () => {
+        let newTcMintExecFee: BigNumber;
+        beforeEach(async function () {
+          newTcMintExecFee = (await mocQueue.execFee(OperType.mintTC)).add(1000);
+          const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: newTcMintExecFee });
+          await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
+        });
+        it("THEN exec fee gets updated", async function () {
+          const actualTcMintExecFee = await mocQueue.execFee(OperType.mintTC);
+          expect(newTcMintExecFee, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
+        });
+        describe("AND queue is executed", function () {
+          beforeEach(async function () {
+            executorBalanceBefore = await ethersGetBalance(deployer);
+            await mocFunctions.executeQueue({ from: executor });
+          });
+          it("THEN old execution fees are delivered and mocQueue balance is 0", async function () {
+            const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+            expect(mocQueueBalance).to.be.equal(0);
+            const executorBalanceAfter = await ethersGetBalance(deployer);
+            expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
+          });
+        });
+        describe("AND funds are sent to mocQueue to to cover the fees difference", () => {
+          beforeEach(async function () {
+            const [deployer] = await ethers.getSigners();
+            await deployer.sendTransaction({
+              to: mocQueue.address,
+              value: 2000,
+            });
+          });
+          describe("AND queue is executed", function () {
+            beforeEach(async function () {
+              executorBalanceBefore = await ethersGetBalance(deployer);
+              await mocFunctions.executeQueue({ from: executor });
+            });
+            it("THEN new execution fees are delivered and mocQueue balance is 0", async function () {
+              const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+              expect(mocQueueBalance).to.be.equal(0);
+              const executorBalanceAfter = await ethersGetBalance(deployer);
+              expect(executorBalanceAfter).to.be.equal(newTcMintExecFee.mul(2).add(executorBalanceBefore));
+            });
+          });
+        });
+      });
+      describe("WHEN updateExecutionFees is invoked decreasing the fee", () => {
+        let newTcMintExecFee: BigNumber;
+        beforeEach(async function () {
+          newTcMintExecFee = (await mocQueue.execFee(OperType.mintTC)).sub(1000);
+          const execFeeParamsToUpdate = Object.assign({}, execFeeParams, { tcMintExecFee: newTcMintExecFee });
+          await mocQueue.updateExecutionFees(execFeeParamsToUpdate);
+        });
+        it("THEN exec fee gets updated", async function () {
+          const actualTcMintExecFee = await mocQueue.execFee(OperType.mintTC);
+          expect(newTcMintExecFee, "tcMintExecFee").to.be.equal(actualTcMintExecFee);
+        });
+        describe("AND queue is executed", function () {
+          beforeEach(async function () {
+            executorBalanceBefore = await ethersGetBalance(deployer);
+            await mocFunctions.executeQueue({ from: executor });
+          });
+          it("THEN old execution fees are delivered and the difference remains in the mocQueue", async function () {
+            const mocQueueBalance = await ethersGetBalance(mocQueue.address);
+            expect(mocQueueBalance).to.be.equal(execFeeParams.tcMintExecFee.sub(newTcMintExecFee).mul(2));
+            const executorBalanceAfter = await ethersGetBalance(deployer);
+            expect(executorBalanceAfter).to.be.equal(newTcMintExecFee.mul(2).add(executorBalanceBefore));
           });
         });
       });
@@ -229,9 +282,9 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
         });
         it("THEN execution Fees are delivered the same", async function () {
           const mocQueueBalance = await ethersGetBalance(mocQueue.address);
-          await expect(mocQueueBalance).to.be.equal(0);
+          expect(mocQueueBalance).to.be.equal(0);
           const executorBalanceAfter = await ethersGetBalance(deployer);
-          await expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
+          expect(executorBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.mul(2).add(executorBalanceBefore));
         });
       });
     });
@@ -257,7 +310,7 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
           await expect(execTx)
             .to.emit(mocQueue, "OperationExecuted")
             .withArgs(executor, operId.add(maxSize - 1));
-          await expect(await mocQueue.firstOperId()).to.be.equal(operId.add(maxSize));
+          expect(await mocQueue.firstOperId()).to.be.equal(operId.add(maxSize));
         });
         describe("AND if queue is executed again", function () {
           let receiverBalanceBefore: Balance;
@@ -267,11 +320,11 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
           });
           it("THEN the remaining operations are executed", async function () {
             await expect(execTx).to.emit(mocQueue, "OperationExecuted").withArgs(executor, operId.add(maxSize));
-            await expect(await mocQueue.firstOperId()).to.be.equal(operId.add(maxSize + 1));
+            expect(await mocQueue.firstOperId()).to.be.equal(operId.add(maxSize + 1));
           });
           it("THEN execution Fees are delivered to the receiver account", async function () {
             const receiverBalanceAfter = await ethersGetBalance(alice);
-            await expect(receiverBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.add(receiverBalanceBefore));
+            expect(receiverBalanceAfter).to.be.equal(execFeeParams.tcMintExecFee.add(receiverBalanceBefore));
           });
         });
       });

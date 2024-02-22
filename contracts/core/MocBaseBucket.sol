@@ -39,7 +39,7 @@ abstract contract MocBaseBucket is MocUpgradable {
 
     struct InitializeBaseBucketParams {
         // MocQueue contract address
-        address mocQueueAddress;
+        address payable mocQueueAddress;
         // Fee Token contract address
         address feeTokenAddress;
         // Fee Token price provider address
@@ -190,7 +190,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // amount of AC locked on MocQueue for pending operations
     uint256 public qACLockedInPending;
     // address for MocQueue contract
-    address public mocQueue; // cannot used MocQueue, import failed due circular reference
+    address payable public mocQueue; // cannot used MocQueue, import failed due circular reference
 
     // ------- Storage Success Fee Tracking -------
 
@@ -1008,7 +1008,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @dev sets Moc Queue contract address
      * @param mocQueueAddress_ moc queue new contract address
      */
-    function setMocQueue(address mocQueueAddress_) external onlyAuthorizedChanger {
+    function setMocQueue(address payable mocQueueAddress_) external onlyAuthorizedChanger {
         // slither-disable-next-line missing-zero-check
         mocQueue = mocQueueAddress_;
     }

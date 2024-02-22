@@ -54,7 +54,7 @@ contract EchidnaMocQueueTester {
         mocCARC20 = MocCARC20(_deployProxy(address(new MocCARC20())));
         mocCoreExpansion = address(new MocCoreExpansion());
         mocVendors = MocVendors(_deployProxy(address(new MocVendors())));
-        mocQueue = MocQueue(_deployProxy(address(new MocQueue())));
+        mocQueue = MocQueue(payable(_deployProxy(address(new MocQueue()))));
 
         // initialize Vendors
         mocVendors.initialize(/*vendorGuardian */ msg.sender, address(governor), /*pauserAddress*/ msg.sender);
@@ -65,7 +65,7 @@ contract EchidnaMocQueueTester {
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
-                mocQueueAddress: address(mocQueue),
+                mocQueueAddress: payable(mocQueue),
                 feeTokenAddress: address(feeToken),
                 feeTokenPriceProviderAddress: address(feeTokenPriceProvider),
                 tcTokenAddress: address(tcToken),

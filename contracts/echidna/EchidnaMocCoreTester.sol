@@ -72,7 +72,7 @@ contract EchidnaMocCoreTester {
         // initialize mocCore
         MocBaseBucket.InitializeBaseBucketParams memory initializeBaseBucketParams = MocBaseBucket
             .InitializeBaseBucketParams({
-                mocQueueAddress: address(0),
+                mocQueueAddress: payable(0),
                 feeTokenAddress: address(feeToken),
                 feeTokenPriceProviderAddress: address(feeTokenPriceProvider),
                 tcTokenAddress: address(tcToken),

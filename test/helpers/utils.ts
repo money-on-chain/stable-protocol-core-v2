@@ -262,7 +262,6 @@ export const ERRORS = {
   MISSING_BLOCKS_TO_SETTLEMENT: "MissingBlocksToSettlement",
   MISSING_BLOCKS_TO_TC_INTEREST_PAYMENT: "MissingBlocksToTCInterestPayment",
   EXEC_FEE_PAYMENT_FAILED: "ExecutionFeePaymentFailed",
-  NOT_ALLOW_ON_EMPTY_QUEUE: "NotAllowOnNoneEmptyQueue",
   WRONG_EXEC_FEES: "WrongExecutionFee",
   MAX_FLUX_CAPACITOR_REACHED: "MaxFluxCapacitorOperationReached",
   INVALID_FLUX_CAPACITOR_OPERATION: "InvalidFluxCapacitorOperation",

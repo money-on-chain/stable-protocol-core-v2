@@ -27,8 +27,6 @@ abstract contract MocQueueExecFees is MocAccessControlled {
     error WrongExecutionFee(uint256 expectedValue);
     // Failure on Executor payment address coinbase transfer
     error ExecutionFeePaymentFailed();
-    // Action not allow when queue is not empty
-    error NotAllowOnNoneEmptyQueue();
 
     // ------- Structs -------
 
@@ -96,13 +94,6 @@ abstract contract MocQueueExecFees is MocAccessControlled {
         execFee[OperType.mintTCandTP] = mocQueueExecFeesParams_.mintTCandTPExecFee;
     }
 
-    /**
-     * @notice verifies if the queue is empty, reverts if not
-     */
-    function _verifyEmptyQueue() internal view {
-        if (!isEmpty()) revert NotAllowOnNoneEmptyQueue();
-    }
-
     // ------- External Functions -------
 
     /**
@@ -120,12 +111,25 @@ abstract contract MocQueueExecFees is MocAccessControlled {
 
     // ------- Only Authorized Changer Functions -------
 
+    /**
+     * @notice Updates executions fees with absolute values for each operation type
+     * @dev When the changer is executed there could be pending operations on the queue, thats means that
+     *  users have already paid for those operations, so, two situations could occur:
+     *  1. If execution fees are decreased, the executor will receive all the new fees and the
+     *       remaining funds will stay in this contract
+     *  2. If execution fees are increased, the executor will receive less fees, unless this contract has funds
+     *       remaining from another execution fee update (1.) or previously sent by another address
+     * @param mocQueueExecFeesParams_ new execution fees
+     */
     function updateExecutionFees(
         InitializeMocQueueExecFeesParams calldata mocQueueExecFeesParams_
     ) external onlyAuthorizedChanger {
-        _verifyEmptyQueue();
         _setExecutionFees(mocQueueExecFeesParams_);
     }
+
+    // @notice used to receive extra executions fee payment
+    /* solhint-disable-next-line no-empty-blocks */
+    receive() external payable {}
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
