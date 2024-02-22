@@ -89,8 +89,8 @@ contract Stoppable is Governed {
     }
 
     /**
-     * @notice Switches OFF the stoppability of the contract; if the contract was paused
-     * it will no longer be so
+     * @notice Switches OFF the stoppability of the contract. It cannot be paused or unpaused
+     * Doesn't change the pause state, if the contract was already paused it cannot be operated
      * @dev Should be called through governance
      */
     function makeUnstoppable() external onlyAuthorizedChanger {
@@ -98,8 +98,8 @@ contract Stoppable is Governed {
     }
 
     /**
-     * @notice Switches ON the stoppability of the contract; if the contract was paused
-     * before making it unstoppable it will be paused again after calling this function
+     * @notice Switches ON the stoppability of the contract. It can be paused or unpaused
+     *  Doesn't change the pause state, if the contract was already paused it cannot be operated
      * @dev Should be called through governance
      */
     function makeStoppable() external onlyAuthorizedChanger {
