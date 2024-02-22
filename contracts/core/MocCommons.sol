@@ -222,7 +222,7 @@ abstract contract MocCommons is MocEma {
                 // [N] = ([N] * [PREC] * [PREC] / [PREC]) / [PREC]
                 feeCalcs.qFeeToken = _mulPrec(qAC_ * qACFeePct_, feeTokenPct) / feeTokenPrice;
                 if (qACmarked > 0) {
-                    // [N] = [N] * [PREC] / [PREC]
+                    // [N] = [PREC] / [PREC]
                     feeCalcs.qFeeTokenVendorMarkup = qACmarked / feeTokenPrice;
                     // [N] = [N] + [N]
                     qFeeTokenTotalNeeded = feeCalcs.qFeeToken + feeCalcs.qFeeTokenVendorMarkup;
