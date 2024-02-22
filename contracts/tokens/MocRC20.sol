@@ -34,12 +34,10 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
         IGovernor governor_
     ) external virtual initializer {
         __MocRC20_init(name_, symbol_, admin_, governor_);
-        _grantRole(MINTER_ROLE, admin_);
-        _grantRole(BURNER_ROLE, admin_);
     }
 
     /**
-     * @dev Grants `DEFAULT_ADMIN_ROLE` to `admin` address.
+     * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` and `BURNER_ROLE` to `admin` address.
      *
      * See {ERC20_init}.
      */
@@ -54,6 +52,8 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
         __UUPSUpgradeable_init();
         __Governed_init(address(governor_));
         _grantRole(DEFAULT_ADMIN_ROLE, admin_);
+        _grantRole(MINTER_ROLE, admin_);
+        _grantRole(BURNER_ROLE, admin_);
     }
 
     /**
@@ -103,15 +103,15 @@ contract MocRC20 is IMocRC20, AccessControlEnumerableUpgradeable, ERC20Upgradeab
      * May emit a {RoleGranted x3, RoleRevoked x3} event.
      */
     function transferAllRoles(address account) public virtual onlyRole(getRoleAdmin(DEFAULT_ADMIN_ROLE)) {
+        // One the new admin account has roles
+        if (getRoleMemberCount(DEFAULT_ADMIN_ROLE) != 1) revert NotUniqueRole(DEFAULT_ADMIN_ROLE);
+        if (getRoleMemberCount(MINTER_ROLE) != 1) revert NotUniqueRole(MINTER_ROLE);
+        if (getRoleMemberCount(BURNER_ROLE) != 1) revert NotUniqueRole(BURNER_ROLE);
         _grantRole(DEFAULT_ADMIN_ROLE, account);
         _grantRole(MINTER_ROLE, account);
         _grantRole(BURNER_ROLE, account);
         _revokeRole(MINTER_ROLE, msg.sender);
         _revokeRole(BURNER_ROLE, msg.sender);
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        // One the new admin account has roles
-        if (getRoleMemberCount(DEFAULT_ADMIN_ROLE) != 1) revert NotUniqueRole(DEFAULT_ADMIN_ROLE);
-        if (getRoleMemberCount(MINTER_ROLE) != 1) revert NotUniqueRole(MINTER_ROLE);
-        if (getRoleMemberCount(BURNER_ROLE) != 1) revert NotUniqueRole(BURNER_ROLE);
     }
 }
