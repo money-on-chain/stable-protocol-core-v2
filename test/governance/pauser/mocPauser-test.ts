@@ -42,7 +42,7 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
         pauseTx = await mocImpl.pause();
       });
       it("THEN it is paused", async function () {
-        await expect(await mocImpl.paused()).to.be.true;
+        expect(await mocImpl.paused()).to.be.true;
       });
       it("THEN a pause event is emitted", async function () {
         await expect(pauseTx).to.emit(mocImpl, "Paused").withArgs(pauser);
@@ -96,10 +96,22 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
       });
     });
   });
-
   describe("GIVEN the Pauser, pauses the system", () => {
     before(async () => {
       await mocImpl.pause();
+    });
+    describe("AND the system is unstoppable", () => {
+      before(async () => {
+        await mocImpl.makeUnstoppable();
+      });
+      after(async () => {
+        await mocImpl.makeStoppable();
+      });
+      describe(`WHEN the Pauser tries to unpause`, () => {
+        it("THEN it fails, as while unstoppable, even the pauser can't", async function () {
+          await expect(mocImpl.unpause()).to.be.revertedWithCustomError(mocImpl, ERRORS.UNSTOPPABLE);
+        });
+      });
     });
     describe(`AND liquidation conditions are met`, () => {
       before(async () => {
