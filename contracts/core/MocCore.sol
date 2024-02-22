@@ -315,6 +315,9 @@ abstract contract MocCore is MocCommons {
         // calculate how many total qAC are redeemed
         // [N] = [N] * [PREC] / [PREC]
         uint256 qACtotalToRedeem = _divPrec(params_.qTP, pACtp);
+        // if is 0 reverts because it is trying to redeem an amount below precision
+        // slither-disable-next-line incorrect-equality
+        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         uint256 qACSurcharges;
         (qACSurcharges, qFeeTokenTotalNeeded, feeCalcs) = _calcFees(
             params_.sender,
@@ -323,9 +326,6 @@ abstract contract MocCore is MocCommons {
             tpRedeemFees[params_.tp]
         );
         qACtoRedeem = qACtotalToRedeem - qACSurcharges;
-        // if is 0 reverts because it is trying to redeem an amount below precision
-        // slither-disable-next-line incorrect-equality
-        if (qACtotalToRedeem == 0) revert QacNeededMustBeGreaterThanZero();
         if (qACtoRedeem < params_.qACmin) revert QacBelowMinimumRequired(params_.qACmin, qACtoRedeem);
         // update flux capacitor and reverts if not allowed by accumulators
         _updateAccumulatorsOnRedeemTP(qACtoRedeem);
