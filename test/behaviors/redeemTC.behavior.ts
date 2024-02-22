@@ -3,7 +3,16 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, expectEventFor, mineUpTo, pEth, getNetworkDeployParams } from "../helpers/utils";
+import {
+  Balance,
+  CONSTANTS,
+  ERRORS,
+  expectEventFor,
+  mineUpTo,
+  pEth,
+  getNetworkDeployParams,
+  noVendor,
+} from "../helpers/utils";
 import { MocCACoinbase, MocCARC20 } from "../../typechain";
 
 const redeemTCBehavior = function () {
@@ -15,7 +24,6 @@ const redeemTCBehavior = function () {
   let vendor: Address;
   let expectEvent: any;
   let assertACResult: any;
-  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const TP_1 = 1;
   const {

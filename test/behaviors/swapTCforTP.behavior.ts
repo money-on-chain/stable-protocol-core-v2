@@ -3,7 +3,7 @@ import { ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, CONSTANTS, ERRORS, expectEventFor, pEth, getNetworkDeployParams } from "../helpers/utils";
+import { Balance, CONSTANTS, ERRORS, expectEventFor, pEth, getNetworkDeployParams, noVendor } from "../helpers/utils";
 import { MocCACoinbase, MocCARC20, MocRC20 } from "../../typechain";
 
 const swapTCforTPBehavior = function () {
@@ -18,7 +18,6 @@ const swapTCforTPBehavior = function () {
   let expectEvent: any;
   let assertACResult: any;
   let tp0: Address;
-  const noVendor = CONSTANTS.ZERO_ADDRESS;
   const TP_0 = 0;
   const {
     mocAddresses: { mocFeeFlowAddress },

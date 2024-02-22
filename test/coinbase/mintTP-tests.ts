@@ -7,7 +7,7 @@ import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTPBehavior } from "../behaviors/mintTP.behavior";
 import { mintTPQueueBehavior } from "../behaviors/queue/mintTPQueue.behavior";
 import { assertPrec } from "../helpers/assertHelper";
-import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams } from "../helpers/utils";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
 describe("Feature: MocCoinbase mint TP", function () {
@@ -53,7 +53,7 @@ describe("Feature: MocCoinbase mint TP", function () {
         beforeEach(async () => {
           operId = await mocQueue.operIdCount();
           // non payable contract registers mintTP operation
-          const data = mocImpl.interface.encodeFunctionData("mintTP", [tp.address, pEth(1)]);
+          const data = mocImpl.interface.encodeFunctionData("mintTP", [tp.address, pEth(1), deployer, noVendor]);
           await nonPayable.forward(mocImpl.address, data, {
             value: (await mocQueue.execFee(OperType.mintTP)).add(qACSent),
           });
@@ -86,7 +86,7 @@ describe("Feature: MocCoinbase mint TP", function () {
 
           operId = await mocQueue.operIdCount();
           // non payable contract registers mintTP operation
-          const data = mocImpl.interface.encodeFunctionData("mintTP", [tp.address, pEth(1)]);
+          const data = mocImpl.interface.encodeFunctionData("mintTP", [tp.address, pEth(1), deployer, noVendor]);
           await nonPayable.forward(mocImpl.address, data, {
             value: (await mocQueue.execFee(OperType.mintTP)).add(qACSent),
           });
@@ -102,7 +102,7 @@ describe("Feature: MocCoinbase mint TP", function () {
             prevFallbackACBalance = await mocFunctions.assetBalanceOf(failedTransferFallback);
             execTx = await mocQueue.execute(feeRecipient);
           });
-          it("THEN Operations fails with Unhandled Error because non payable contract cannot receive the surplus AC", async () => {
+          it("THEN Operations fails with Unhandled Error as non payable contract cannot receive the surplus AC", async () => {
             await expect(execTx).to.emit(mocQueue, "UnhandledError").withArgs(operId, ERROR_SELECTOR.TRANSFER_FAILED);
           });
           it("THEN AC cannot be returned", async () => {

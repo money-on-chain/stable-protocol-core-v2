@@ -5,7 +5,7 @@ import { Address } from "hardhat-deploy/types";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { swapTPforTPBehavior } from "../behaviors/swapTPforTP.behavior";
 import { swapTPforTPQueueBehavior } from "../behaviors/queue/swapTPforTPQueue.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams } from "../helpers/utils";
 import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCoinbase } from "./fixture";
@@ -62,7 +62,14 @@ describe("Feature: MocCoinbase swap TP for TP", function () {
 
           operId = await mocQueue.operIdCount();
           // non payable contract registers swapTPforTP operation
-          data = mocImpl.interface.encodeFunctionData("swapTPforTP", [tp0.address, tp1.address, pEth(1), 0]);
+          data = mocImpl.interface.encodeFunctionData("swapTPforTP", [
+            tp0.address,
+            tp1.address,
+            pEth(1),
+            0,
+            deployer,
+            noVendor,
+          ]);
           await nonPayable.forward(mocImpl.address, data, {
             value: (await mocQueue.execFee(OperType.swapTPforTP)).add(qACSent),
           });
@@ -76,7 +83,7 @@ describe("Feature: MocCoinbase swap TP for TP", function () {
             prevACBalance = await mocFunctions.assetBalanceOf(deployer);
             execTx = await mocQueue.execute(feeRecipient);
           });
-          it("THEN Operations fails with Unhandled Error because non payable contract cannot receive the surplus AC", async () => {
+          it("THEN Operations fails with Unhandled Error as non payable contract cannot receive the surplus AC", async () => {
             await expect(execTx).to.emit(mocQueue, "UnhandledError").withArgs(operId, ERROR_SELECTOR.TRANSFER_FAILED);
           });
           it("THEN TP is returned", async () => {

@@ -5,7 +5,7 @@ import { Address } from "hardhat-deploy/types";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTCandTPBehavior } from "../behaviors/mintTCandTP.behavior";
 import { mintTCandTPQueueBehavior } from "../behaviors/queue/mintTCandTPQueue.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams } from "../helpers/utils";
 import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCoinbase } from "./fixture";
@@ -53,7 +53,7 @@ describe("Feature: MocCoinbase mint TC and TP", function () {
         beforeEach(async () => {
           operId = await mocQueue.operIdCount();
           // non payable contract registers mintTCandTP operation
-          const data = mocImpl.interface.encodeFunctionData("mintTCandTP", [tp.address, pEth(1)]);
+          const data = mocImpl.interface.encodeFunctionData("mintTCandTP", [tp.address, pEth(1), deployer, noVendor]);
           await nonPayable.forward(mocImpl.address, data, {
             value: (await mocQueue.execFee(OperType.mintTCandTP)).add(qACSent),
           });
@@ -65,7 +65,7 @@ describe("Feature: MocCoinbase mint TC and TP", function () {
             prevACBalance = await mocFunctions.assetBalanceOf(deployer);
             execTx = await mocQueue.execute(feeRecipient);
           });
-          it("THEN Operations fails with Unhandled Error because non payable contract cannot receive the surplus AC", async () => {
+          it("THEN Operations fails with Unhandled Error as non payable contract cannot receive the surplus AC", async () => {
             await expect(execTx).to.emit(mocQueue, "UnhandledError").withArgs(operId, ERROR_SELECTOR.TRANSFER_FAILED);
           });
           it("THEN AC cannot be returned", async () => {

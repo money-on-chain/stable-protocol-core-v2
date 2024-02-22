@@ -18,6 +18,8 @@ export const PAUSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PAUS
 export const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
 export const ENQUEUER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
 
+export const noVendor = CONSTANTS.ZERO_ADDRESS;
+
 export const waitForTxConfirmation = async (
   tx: Promise<ContractTransaction>,
   confirmations: number = 1,

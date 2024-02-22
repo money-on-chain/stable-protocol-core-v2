@@ -1,23 +1,17 @@
 // @ts-nocheck
 import { ethers, getNamedAccounts } from "hardhat";
-import { pEth } from "./utils";
+import { noVendor, pEth } from "./utils";
 
 const redeemTC =
   (mocImpl, mocCollateralToken) =>
-  async ({ from, to, qTC, qACmin = 0, vendor = undefined, netParams = { gasPrice: 0 }, applyPrecision = true }) => {
+  async ({ from, to, qTC, qACmin = 0, vendor = noVendor, netParams = { gasPrice: 0 }, applyPrecision = true }) => {
     const signer = await ethers.getSigner(from);
     if (applyPrecision) {
       qTC = pEth(qTC);
       qACmin = pEth(qACmin);
     }
     await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
-    if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTCto(qTC, qACmin, to, netParams);
-      return mocImpl.connect(signer).redeemTCtoViaVendor(qTC, qACmin, to, vendor, netParams);
-    } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTC(qTC, qACmin, netParams);
-      return mocImpl.connect(signer).redeemTCViaVendor(qTC, qACmin, vendor, netParams);
-    }
+    return mocImpl.connect(signer).redeemTC(qTC, qACmin, to || from, vendor, netParams);
   };
 
 const redeemTP =
@@ -29,7 +23,7 @@ const redeemTP =
     to,
     qTP,
     qACmin = 0,
-    vendor = undefined,
+    vendor = noVendor,
     netParams = { gasPrice: 0 },
     applyPrecision = true,
   }) => {
@@ -40,13 +34,7 @@ const redeemTP =
     }
     tp = tp || mocPeggedTokens[i];
     await tp.connect(signer).increaseAllowance(mocImpl.address, qTP);
-    if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTPto(tp.address, qTP, qACmin, to, netParams);
-      return mocImpl.connect(signer).redeemTPtoViaVendor(tp.address, qTP, qACmin, to, vendor, netParams);
-    } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTP(tp.address, qTP, qACmin, netParams);
-      return mocImpl.connect(signer).redeemTPViaVendor(tp.address, qTP, qACmin, vendor, netParams);
-    }
+    return mocImpl.connect(signer).redeemTP(tp.address, qTP, qACmin, to || from, vendor, netParams);
   };
 
 const redeemTCandTP =
@@ -59,7 +47,7 @@ const redeemTCandTP =
     qTC,
     qTP,
     qACmin = 0,
-    vendor = undefined,
+    vendor = noVendor,
     netParams = { gasPrice: 0 },
     applyPrecision = true,
   }) => {
@@ -72,13 +60,7 @@ const redeemTCandTP =
     tp = tp || mocPeggedTokens[i];
     await tp.connect(signer).increaseAllowance(mocImpl.address, qTP);
     await mocCollateralToken.connect(signer).increaseAllowance(mocImpl.address, qTC);
-    if (to) {
-      if (!vendor) return mocImpl.connect(signer).redeemTCandTPto(tp.address, qTC, qTP, qACmin, to, netParams);
-      return mocImpl.connect(signer).redeemTCandTPtoViaVendor(tp.address, qTC, qTP, qACmin, to, vendor, netParams);
-    } else {
-      if (!vendor) return mocImpl.connect(signer).redeemTCandTP(tp.address, qTC, qTP, qACmin, netParams);
-      return mocImpl.connect(signer).redeemTCandTPViaVendor(tp.address, qTC, qTP, qACmin, vendor, netParams);
-    }
+    return mocImpl.connect(signer).redeemTCandTP(tp.address, qTC, qTP, qACmin, to || from, vendor, netParams);
   };
 
 const liqRedeemTP =
@@ -86,8 +68,7 @@ const liqRedeemTP =
   async ({ i = 0, tp, from, to }) => {
     const signer = await ethers.getSigner(from);
     tp = tp || mocPeggedTokens[i].address;
-    if (to) return mocImpl.connect(signer).liqRedeemTPto(tp, to, { gasPrice: 0 });
-    else return mocImpl.connect(signer).liqRedeemTP(tp, { gasPrice: 0 });
+    return mocImpl.connect(signer).liqRedeemTP(tp, to || from, { gasPrice: 0 });
   };
 
 export const tBalanceOf = token => async account => token.balanceOf(account);

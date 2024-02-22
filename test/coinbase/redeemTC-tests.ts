@@ -6,7 +6,7 @@ import { MocCACoinbase, MocQueue, MocRC20, NonPayableMock } from "../../typechai
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { redeemTCBehavior } from "../behaviors/redeemTC.behavior";
 import { redeemTCQueueBehavior } from "../behaviors/queue/redeemTCQueue.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
@@ -53,7 +53,7 @@ describe("Feature: MocCoinbase redeem TC", function () {
 
           operId = await mocQueue.operIdCount();
           // non payable contract registers redeemTC operation
-          data = mocImpl.interface.encodeFunctionData("redeemTC", [pEth(1), 0]);
+          data = mocImpl.interface.encodeFunctionData("redeemTC", [pEth(1), 0, nonPayable.address, noVendor]);
           await nonPayable.forward(mocImpl.address, data, { value: await mocQueue.execFee(OperType.redeemTC) });
         });
         describe("AND execution is evaluated", () => {
@@ -63,7 +63,7 @@ describe("Feature: MocCoinbase redeem TC", function () {
             prevTCBalance = await mocFunctions.tcBalanceOf(nonPayable.address);
             execTx = await mocQueue.execute(deployer);
           });
-          it("THEN Operations fails with Unhandled Error", async () => {
+          it("THEN Operations fails with Unhandled Error as non payable contract cannot receive coinbase", async () => {
             await expect(execTx).to.emit(mocQueue, "UnhandledError").withArgs(operId, ERROR_SELECTOR.TRANSFER_FAILED);
           });
           it("THEN TC is returned", async () => {

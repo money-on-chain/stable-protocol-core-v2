@@ -532,7 +532,7 @@ abstract contract MocCore is MocCommons {
         address recipient_
     ) internal notPaused returns (uint256 qACRedeemed) {
         bytes memory payload = abi.encodeCall(
-            MocCoreExpansion(mocCoreExpansion).liqRedeemTPTo,
+            MocCoreExpansion(mocCoreExpansion).liqRedeemTP,
             (tp_, sender_, recipient_, acBalanceOf(address(this)))
         );
         qACRedeemed = abi.decode(Address.functionDelegateCall(mocCoreExpansion, payload), (uint256));
@@ -600,20 +600,10 @@ abstract contract MocCore is MocCommons {
      * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
      * the equivalent AC given the liquidation frozen price.
      * @param tp_ Pegged Token address
-     * @return qACRedeemed amount of AC sent to sender
-     */
-    function liqRedeemTP(address tp_) external returns (uint256 qACRedeemed) {
-        return _liqRedeemTPTo(tp_, msg.sender, msg.sender);
-    }
-
-    /**
-     * @notice Allow redeem on liquidation state, user Peg balance gets burned and he receives
-     * the equivalent AC given the liquidation frozen price.
-     * @param tp_ Pegged Token address
      * @param recipient_ address who receives the AC
      * @return qACRedeemed amount of AC sent to `recipient_`
      */
-    function liqRedeemTPto(address tp_, address recipient_) external returns (uint256 qACRedeemed) {
+    function liqRedeemTP(address tp_, address recipient_) external returns (uint256 qACRedeemed) {
         return _liqRedeemTPTo(tp_, msg.sender, recipient_);
     }
 
