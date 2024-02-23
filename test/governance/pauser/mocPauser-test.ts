@@ -31,6 +31,7 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     await governorMock.setIsAuthorized(true);
     await mocImpl.setPauser(pauser);
     await mocImpl.makeStoppable();
+    await governorMock.setIsAuthorized(false);
     await mocFunctions.mintTC({ from: alice, qTC: 10 });
     await mocFunctions.mintTP({ from: alice, qTP: 3 });
   });
@@ -60,6 +61,16 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
           );
         });
       });
+      describe(`WHEN a governor authorized user unpaused it`, () => {
+        it("THEN it gets unpaused", async function () {
+          await governorMock.setIsAuthorized(true);
+          unPauseTx = await mocImpl.connect(await ethers.getSigner(alice)).unpause();
+          // Pause it again for following tests
+          await mocImpl.pause();
+          await governorMock.setIsAuthorized(false);
+          await expect(unPauseTx).to.emit(mocImpl, "Unpaused").withArgs(alice);
+        });
+      });
       describe(`WHEN the pauser unpause it`, () => {
         before(async () => {
           unPauseTx = await mocImpl.unpause();
@@ -85,10 +96,12 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
   });
   describe("GIVEN the system is unstoppable", () => {
     before(async () => {
+      await governorMock.setIsAuthorized(true);
       await mocImpl.makeUnstoppable();
     });
     after(async () => {
       await mocImpl.makeStoppable();
+      await governorMock.setIsAuthorized(false);
     });
     describe(`WHEN the Pauser tries to pause`, () => {
       it("THEN it fails, as while unstoppable, even the pauser can't", async function () {
@@ -102,10 +115,12 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     });
     describe("AND the system is unstoppable", () => {
       before(async () => {
+        await governorMock.setIsAuthorized(true);
         await mocImpl.makeUnstoppable();
       });
       after(async () => {
         await mocImpl.makeStoppable();
+        await governorMock.setIsAuthorized(false);
       });
       describe(`WHEN the Pauser tries to unpause`, () => {
         it("THEN it fails, as while unstoppable, even the pauser can't", async function () {
@@ -115,6 +130,7 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     });
     describe(`AND liquidation conditions are met`, () => {
       before(async () => {
+        await governorMock.setIsAuthorized(true);
         await mocImpl.setLiqEnabled(true);
         await mocContracts.priceProviders[0].poke(pEth(0.1));
       });
