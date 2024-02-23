@@ -47,7 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deployCARC20 = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployVendors = exports.getGovernorAddresses = exports.deployQueue = exports.deployCollateralToken = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.ENQUEUER_ROLE = exports.EXECUTOR_ROLE = exports.PAUSER_ROLE = exports.BURNER_ROLE = exports.MINTER_ROLE = exports.DEFAULT_ADMIN_ROLE = exports.CONSTANTS = void 0;
+exports.deployCARC20 = exports.addPeggedTokensAndChangeGovernor = exports.getNetworkDeployParams = exports.deployVendors = exports.getGovernorAddresses = exports.deployQueue = exports.deployCollateralToken = exports.deployUUPSArtifact = exports.waitForTxConfirmation = exports.noVendor = exports.ENQUEUER_ROLE = exports.PAUSER_ROLE = exports.BURNER_ROLE = exports.MINTER_ROLE = exports.DEFAULT_ADMIN_ROLE = exports.CONSTANTS = void 0;
 var hardhat_1 = require("hardhat");
 var bignumber_1 = require("@ethersproject/bignumber");
 exports.CONSTANTS = {
@@ -61,8 +61,8 @@ exports.DEFAULT_ADMIN_ROLE = "0x000000000000000000000000000000000000000000000000
 exports.MINTER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("MINTER_ROLE"));
 exports.BURNER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("BURNER_ROLE"));
 exports.PAUSER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("PAUSER_ROLE"));
-exports.EXECUTOR_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
 exports.ENQUEUER_ROLE = hardhat_1.ethers.utils.keccak256(hardhat_1.ethers.utils.toUtf8Bytes("ENQUEUER_ROLE"));
+exports.noVendor = exports.CONSTANTS.ZERO_ADDRESS;
 var waitForTxConfirmation = function (tx, confirmations) {
     if (confirmations === void 0) { confirmations = 1; }
     return __awaiter(void 0, void 0, void 0, function () {
@@ -147,17 +147,12 @@ var deployCollateralToken = function (artifactBaseName) { return function (hre) 
 }); }; };
 exports.deployCollateralToken = deployCollateralToken;
 var deployQueue = function (artifactBaseName) { return function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var getNamedAccounts, deployer, _a, queueParams, mocAddresses, governorAddress, signer, mocQueue, mocQueueProxy;
+    var _a, queueParams, mocAddresses, governorAddress;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                getNamedAccounts = hre.getNamedAccounts;
-                return [4 /*yield*/, getNamedAccounts()];
-            case 1:
-                deployer = (_b.sent()).deployer;
                 _a = (0, exports.getNetworkDeployParams)(hre), queueParams = _a.queueParams, mocAddresses = _a.mocAddresses;
                 governorAddress = (0, exports.getGovernorAddresses)(hre);
-                signer = hardhat_1.ethers.provider.getSigner();
                 return [4 /*yield*/, (0, exports.deployUUPSArtifact)({
                         hre: hre,
                         artifactBaseName: artifactBaseName,
@@ -170,18 +165,9 @@ var deployQueue = function (artifactBaseName) { return function (hre) { return _
                             queueParams.execFeeParams,
                         ],
                     })];
-            case 2:
-                mocQueue = _b.sent();
-                if (!(hre.network.tags.local || hre.network.tags.testnet)) return [3 /*break*/, 5];
-                console.log("[ONLY TESTING] Whitelisting deployer: ".concat(deployer, " as executor"));
-                return [4 /*yield*/, hardhat_1.ethers.getContractAt("MocQueue", mocQueue.address, signer)];
-            case 3:
-                mocQueueProxy = _b.sent();
-                return [4 /*yield*/, mocQueueProxy.grantRole(exports.EXECUTOR_ROLE, deployer)];
-            case 4:
+            case 1:
                 _b.sent();
-                _b.label = 5;
-            case 5: return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
+                return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });
 }); }; };
