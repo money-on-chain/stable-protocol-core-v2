@@ -20,6 +20,7 @@
     "@openzeppelin/contracts": "4.9.3",
     "@openzeppelin/contracts-upgradeable": "4.9.3",
     "@openzeppelin/hardhat-upgrades": "1.27.0",
+    "@openzeppelin/upgrades-core": "1.31.1",
     "@typechain/ethers-v5": "10.2.1",
     "@types/chai": "4.3.5",
     "@types/fs-extra": "11.0.1",
@@ -60,7 +61,8 @@
     }
   },
   "comments": {
-    "dependencies": "hardhat-solhint and hardhat-prettier includes old versions, that's why specific dependencies are added"
+    "dependencies": "hardhat-solhint and hardhat-prettier includes old versions, that's why specific dependencies are added",
+    "upgrades-core": "TODO: this dep is fixed to v1.31.1 because of a TSC issue, follow https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/976"
   },
   "types": "types/index.d.ts",
   "files": [
