@@ -82,7 +82,7 @@ contract Stoppable is Governed {
      * @dev Should only be called by the pauser and when it is stoppable
      */
     function unpause() external onlyPaused {
-        if (msg.sender != pauser) revert OnlyPauser();
+        if (msg.sender != pauser && !governor.isAuthorizedChanger(msg.sender)) revert OnlyPauser();
         if (!stoppable) revert Unstoppable();
         _paused = false;
         emit Unpaused(msg.sender);
