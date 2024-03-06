@@ -10,6 +10,8 @@ import {
   ethersGetBalance,
   OperId,
   OperType,
+  ERRORS,
+  noVendor,
 } from "../../helpers/utils";
 import { MocCACoinbase, MocCARC20, MocQueue } from "../../../typechain";
 
@@ -35,6 +37,18 @@ const redeemTCQueueBehavior = function () {
     describe("GIVEN Alice has 20 TC", function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: alice, qTC: 20 });
+      });
+      describe("WHEN an user tries to execute a redeem TC operation without the queue", function () {
+        it("THEN tx reverts only MocQueue can execute operations", async function () {
+          const redeemTCParams = {
+            qTC: 1,
+            qACmin: 1,
+            sender: deployer,
+            recipient: deployer,
+            vendor: noVendor,
+          };
+          await expect(mocImpl.execRedeemTC(redeemTCParams)).to.be.revertedWithCustomError(mocImpl, ERRORS.ONLY_QUEUE);
+        });
       });
       describe("WHEN alice registers a redeems 20 TC Operation, expecting at least 21 AC", function () {
         beforeEach(async function () {

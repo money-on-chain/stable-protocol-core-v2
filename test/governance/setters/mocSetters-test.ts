@@ -182,6 +182,18 @@ describe("Feature: Verify all MocCore config settings are protected by governanc
         expect(await mocProxy.decayBlockSpan()).to.be.equal(53);
       });
     });
+    describe(`WHEN setTransferMaxGas is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setTransferMaxGas(54);
+        expect(await mocProxy.transferMaxGas()).to.be.equal(54);
+      });
+    });
+    describe(`WHEN setMocQueue is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        await mocProxy.setMocQueue(mockAddress);
+        expect(await mocProxy.mocQueue()).to.be.equal(mockAddress);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -342,6 +354,16 @@ describe("Feature: Verify all MocCore config settings are protected by governanc
     describe("WHEN setDecayBlockSpan is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setDecayBlockSpan(42));
+      });
+    });
+    describe("WHEN setTransferMaxGas is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setTransferMaxGas(42));
+      });
+    });
+    describe("WHEN setMocQueue is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setMocQueue(mockAddress));
       });
     });
   });

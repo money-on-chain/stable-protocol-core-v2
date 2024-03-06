@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { deployments, ethers } from "hardhat";
+import hre, { deployments, ethers } from "hardhat";
 import {
   MocCARC20,
   MocCoreExpansion,
@@ -9,18 +9,21 @@ import {
   ERC20Mock,
   MocQueue,
 } from "../../typechain";
-import { CONSTANTS, ERRORS, deployAndInitTC } from "../helpers/utils";
+import { fixtureDeployedMocCoinbase } from "../coinbase/fixture";
+import { CONSTANTS, ERRORS, deployAndInitTC, getNetworkDeployParams } from "../helpers/utils";
 import { fixtureDeployedMocRC20 } from "../rc20/fixture";
 import { mocInitialize } from "./initializers";
 
-describe("Feature: MocCARC20 initialization", function () {
+describe("Feature: Moc initializations", function () {
   let mocProxy: MocCARC20;
   let collateralAsset: ERC20Mock;
   let mocCollateralToken: MocRC20;
+  let mocPeggedTokens: MocRC20[];
   let mocInit: any;
   let mocCoreExpansion: MocCoreExpansion;
   let mocVendors: MocVendors;
   let mocQueue: MocQueue;
+  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
   before(async () => {
     ({
       mocImpl: mocProxy,
@@ -29,14 +32,15 @@ describe("Feature: MocCARC20 initialization", function () {
       collateralAsset,
       mocVendors,
       mocQueue,
-    } = await fixtureDeployedMocRC20(0)());
+      mocPeggedTokens,
+    } = await fixtureDeployedMocRC20(1)());
     mocInit = mocInitialize(
       mocProxy,
-      collateralAsset.address,
       mocCollateralToken.address,
       mocCoreExpansion.address,
       mocVendors.address,
       mocQueue.address,
+      { acTokenAddress: collateralAsset.address },
     );
   });
   describe("GIVEN a MocCARC20 implementation deployed", () => {
@@ -55,13 +59,64 @@ describe("Feature: MocCARC20 initialization", function () {
         await expect(
           mocInitialize(
             mocImplementation,
-            collateralAsset.address,
             mocCollateralToken.address,
             mocCoreExpansion.address,
             mocVendors.address,
             mocQueue.address,
+            { acTokenAddress: collateralAsset.address },
           )(),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+    describe("WHEN initialize mocVendorsProxy again", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
+        await expect(
+          mocVendors.initialize(mocProxy.address, mocAddresses.governorAddress, mocAddresses.pauserAddress),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+    describe("WHEN initialize mocQueueProxy again", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
+        await expect(
+          mocQueue.initialize(
+            mocAddresses.governorAddress,
+            mocAddresses.pauserAddress,
+            queueParams.minOperWaitingBlk,
+            queueParams.maxOperPerBatch,
+            queueParams.execFeeParams,
+          ),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+    describe("WHEN initialize mocTC again", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
+        await expect(
+          mocCollateralToken.initialize("TC", "TC", mocAddresses.governorAddress, mocAddresses.governorAddress),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+    describe("WHEN initialize mocRC20 again", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
+        await expect(
+          mocPeggedTokens[0].initialize("TP", "TP", mocAddresses.governorAddress, mocAddresses.governorAddress),
+        ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
+      });
+    });
+  });
+
+  describe("GIVEN a MocCACoinbase implementation deployed", () => {
+    describe("WHEN initialize mocProxy again", async () => {
+      it("THEN tx fails because contract is already initialized", async () => {
+        const { mocImpl: mocProxy } = await fixtureDeployedMocCoinbase(0)();
+        const mocInit = mocInitialize(
+          mocProxy,
+          mocCollateralToken.address,
+          mocCoreExpansion.address,
+          mocVendors.address,
+          mocQueue.address,
+          { transferMaxGas: 0, coinbaseFailedTransferFallback: mocVendors.address },
+        );
+        await expect(mocInit()).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
   });
@@ -83,11 +138,11 @@ describe("Feature: MocCARC20 initialization", function () {
       });
       newMocInit = mocInitialize(
         newMocImpl,
-        collateralAsset.address,
         newMocTC.address,
         mocCoreExpansion.address,
         mocVendors.address,
         mocQueue.address,
+        { acTokenAddress: collateralAsset.address },
       );
     });
     describe("WHEN it is initialized with invalid protThrld value", () => {

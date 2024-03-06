@@ -10,12 +10,15 @@ import {
   ethersGetBalance,
   OperId,
   OperType,
+  ERRORS,
+  noVendor,
 } from "../../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocQueue } from "../../../typechain";
+import { MocCACoinbase, MocCARC20, MocQueue, MocRC20 } from "../../../typechain";
 
 const mintTPQueueBehavior = function () {
   let mocFunctions: any;
   let mocImpl: MocCACoinbase | MocCARC20;
+  let tps: MocRC20[];
   let mocQueue: MocQueue;
   let operId: OperId;
   let deployer: Address;
@@ -30,9 +33,22 @@ const mintTPQueueBehavior = function () {
   describe("Feature: mint Pegged Token", function () {
     beforeEach(async function () {
       mocFunctions = this.mocFunctions;
-      ({ mocImpl, mocQueue } = this.mocContracts);
+      ({ mocImpl, mocQueue, mocPeggedTokens: tps } = this.mocContracts);
       ({ deployer, alice } = await getNamedAccounts());
       assertACResult = mocFunctions.assertACResult(-tpMintExecFee);
+    });
+    describe("WHEN an user tries to execute a mint TP operation without the queue", function () {
+      it("THEN tx reverts only MocQueue can execute operations", async function () {
+        const mintTPParams = {
+          tp: tps[0].address,
+          qTP: 1,
+          qACmax: 1,
+          sender: deployer,
+          recipient: deployer,
+          vendor: noVendor,
+        };
+        await expect(mocImpl.execMintTP(mintTPParams)).to.be.revertedWithCustomError(mocImpl, ERRORS.ONLY_QUEUE);
+      });
     });
     describe("WHEN alice sends 100 Asset to mint 100 TP but there is not collateral in the protocol", function () {
       beforeEach(async function () {

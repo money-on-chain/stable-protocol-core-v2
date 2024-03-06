@@ -6,7 +6,7 @@ import { MocCACoinbase, MocQueue, NonPayableMock } from "../../typechain";
 import { mocFunctionsCoinbase } from "../helpers/mocFunctionsCoinbase";
 import { mintTCBehavior } from "../behaviors/mintTC.behavior";
 import { mintTCQueueBehavior } from "../behaviors/queue/mintTCQueue.behavior";
-import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams } from "../helpers/utils";
+import { Balance, ERROR_SELECTOR, OperId, OperType, noVendor, pEth, tpParams, ERRORS } from "../helpers/utils";
 import { assertPrec } from "../helpers/assertHelper";
 import { fixtureDeployedMocCoinbase } from "./fixture";
 
@@ -35,6 +35,23 @@ describe("Feature: MocCoinbase mint TC", function () {
       ({ mocImpl, mocQueue } = this.mocContracts);
     });
     mintTCQueueBehavior();
+
+    describe("WHEN an user tries to register an operation, sending less execution fees than expected", function () {
+      let queueTx: ContractTransaction;
+      beforeEach(async function () {
+        queueTx = mocFunctions.mintTC({
+          from: deployer,
+          qTC: 10,
+          qACmax: 1,
+          execute: false,
+          applyPrecision: false,
+          execFee: 0,
+        });
+      });
+      it("THEN Tx fails with wrong execution fee", async function () {
+        await expect(queueTx).to.be.revertedWithCustomError(mocQueue, ERRORS.WRONG_EXEC_FEES);
+      });
+    });
 
     describe("AND a non payable contract", () => {
       let nonPayable: NonPayableMock;

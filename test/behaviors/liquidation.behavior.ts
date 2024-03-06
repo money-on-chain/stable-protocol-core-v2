@@ -1,13 +1,15 @@
 import { ethers, getNamedAccounts } from "hardhat";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { Address } from "hardhat-deploy/dist/types";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
-import { Balance, ERRORS, pEth } from "../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocRC20, PriceProviderMock } from "../../typechain";
+import { Balance, ERRORS, ERROR_SELECTOR, pEth } from "../helpers/utils";
+import { MocCACoinbase, MocCARC20, MocQueue, MocRC20, PriceProviderMock } from "../../typechain";
 import { assertPrec } from "../helpers/assertHelper";
 
 const shouldBehaveLikeLiquidable = function () {
   let mocImpl: MocCACoinbase | MocCARC20;
+  let mocQueue: MocQueue;
   let mocCollateralToken: MocRC20;
   let priceProviders: PriceProviderMock[];
   let alice: Address, bob: Address, charlie: Address, otherUser: Address;
@@ -19,7 +21,7 @@ const shouldBehaveLikeLiquidable = function () {
       await this.mocFunctions.mintTC({ from: alice, qTC: 100 });
       await this.mocFunctions.mintTP({ i: 0, from: bob, qTP: 20 });
       await this.mocFunctions.mintTP({ i: 1, from: charlie, qTP: 10 });
-      ({ mocImpl, mocCollateralToken, priceProviders } = this.mocContracts);
+      ({ mocImpl, mocCollateralToken, priceProviders, mocQueue } = this.mocContracts);
       tp1 = this.mocContracts.mocPeggedTokens[1].address;
     });
     describe("WHEN AC prices falls, and makes the coverage go under liquidation threshold", function () {
@@ -182,6 +184,174 @@ const shouldBehaveLikeLiquidable = function () {
         describe("WHEN otherUser tries to redeem TPs by liquidation redeem", async function () {
           it("THEN it fails", async function () {
             await expect(this.mocFunctions.liqRedeemTP({ i: 1, from: otherUser })).to.be.reverted;
+          });
+        });
+      });
+    });
+    const liquidateProtocol = async function () {
+      await priceProviders[0].poke(pEth(0.1));
+      await priceProviders[1].poke(pEth(0.1));
+      await mocImpl.setLiqEnabled(true);
+      await mocImpl.evalLiquidation();
+    };
+    const expectLiquidatedEvent = async (result: any) =>
+      expect(result).to.emit(mocQueue, "UnhandledError").withArgs(anyValue, ERROR_SELECTOR.LIQUIDATED); // operID is not relevant here
+
+    describe("WHEN alice enqueue a mintTC operation", function () {
+      beforeEach(async function () {
+        await this.mocFunctions.mintTC({ from: alice, qTC: 1, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await mocImpl.qACLockedInPending(), 0);
+          });
+        });
+      });
+    });
+    describe.skip("WHEN alice enqueue a redeemTC operation", function () {
+      // TODO: operation reverts because TC is paused and cannot be returned
+      beforeEach(async function () {
+        await this.mocFunctions.redeemTC({ from: alice, qTC: 1, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await this.mocFunctions.tcBalanceOf(mocImpl.address), 0);
+          });
+        });
+      });
+    });
+    describe("WHEN alice enqueue a mintTP operation", function () {
+      beforeEach(async function () {
+        await this.mocFunctions.mintTP({ from: alice, qTP: 1, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await mocImpl.qACLockedInPending(), 0);
+          });
+        });
+      });
+    });
+    describe("WHEN bob enqueue a redeemTP operation", function () {
+      beforeEach(async function () {
+        await this.mocFunctions.redeemTP({ from: bob, qTP: 3, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await this.mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+          });
+        });
+      });
+    });
+    describe("WHEN bob enqueue a swapTPforTP operation", function () {
+      beforeEach(async function () {
+        await this.mocFunctions.swapTPforTP({ iFrom: 0, iTo: 1, from: bob, qTP: 3, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await this.mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+          });
+        });
+      });
+    });
+    describe("WHEN bob enqueue a swapTPforTC operation", function () {
+      beforeEach(async function () {
+        await this.mocFunctions.swapTPforTC({ from: bob, qTP: 3, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await this.mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+          });
+        });
+      });
+    });
+    describe.skip("WHEN alice enqueue a swapTCforTP operation", function () {
+      // TODO: operation reverts because TC is paused and cannot be returned
+      beforeEach(async function () {
+        await this.mocFunctions.swapTCforTP({ from: alice, qTC: 10, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await this.mocFunctions.tcBalanceOf(mocImpl.address), 0);
+          });
+        });
+      });
+    });
+    describe.skip("WHEN alice enqueue a redeemTCandTP operation", function () {
+      // TODO: operation reverts because TC is paused and cannot be returned
+      beforeEach(async function () {
+        await this.mocFunctions.redeemTCandTP({ from: alice, qTC: 10, qTP: 1, execute: false });
+      });
+      describe("AND protocol is paused", function () {
+        describe("AND protocol is liquidated", function () {
+          beforeEach(async function () {
+            await liquidateProtocol();
+          });
+          describe("WHEN queue is executed", function () {
+            it("THEN Operations fails with Unhandled Error", async function () {
+              await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+              // tokens are returned
+              assertPrec(await this.mocFunctions.tcBalanceOf(mocImpl.address), 0);
+              assertPrec(await this.mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+            });
+          });
+        });
+      });
+    });
+    describe("WHEN alice enqueue a mintTCandTP operation", function () {
+      beforeEach(async function () {
+        await this.mocFunctions.mintTCandTP({ from: alice, qTP: 3, execute: false });
+      });
+      describe("AND protocol is liquidated", function () {
+        beforeEach(async function () {
+          await liquidateProtocol();
+        });
+        describe("WHEN queue is executed", function () {
+          it("THEN Operations fails with Unhandled Error", async function () {
+            await expectLiquidatedEvent(this.mocFunctions.executeQueue());
+            // tokens are returned
+            assertPrec(await mocImpl.qACLockedInPending(), 0);
           });
         });
       });

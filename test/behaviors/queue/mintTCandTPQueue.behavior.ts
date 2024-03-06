@@ -10,13 +10,16 @@ import {
   ethersGetBalance,
   OperId,
   OperType,
+  ERRORS,
+  noVendor,
 } from "../../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocQueue } from "../../../typechain";
+import { MocCACoinbase, MocCARC20, MocQueue, MocRC20 } from "../../../typechain";
 
 const mintTCandTPQueueBehavior = function () {
   let mocFunctions: any;
   let mocImpl: MocCACoinbase | MocCARC20;
   let mocQueue: MocQueue;
+  let tps: MocRC20[];
   let operId: OperId;
   let deployer: Address;
   let alice: Address;
@@ -31,9 +34,25 @@ const mintTCandTPQueueBehavior = function () {
   describe("Feature: joint Mint TC and TP operation", function () {
     beforeEach(async function () {
       mocFunctions = this.mocFunctions;
-      ({ mocImpl, mocQueue } = this.mocContracts);
+      ({ mocImpl, mocQueue, mocPeggedTokens: tps } = this.mocContracts);
       ({ alice, bob, deployer } = await getNamedAccounts());
       assertACResult = mocFunctions.assertACResult(-mintTCandTPExecFee);
+    });
+    describe("WHEN an user tries to execute a mint TC and TP operation without the queue", function () {
+      it("THEN tx reverts only MocQueue can execute operations", async function () {
+        const mintTCandTPParams = {
+          tp: tps[0].address,
+          qTP: 1,
+          qACmax: 1,
+          sender: deployer,
+          recipient: deployer,
+          vendor: noVendor,
+        };
+        await expect(mocImpl.execMintTCandTP(mintTCandTPParams)).to.be.revertedWithCustomError(
+          mocImpl,
+          ERRORS.ONLY_QUEUE,
+        );
+      });
     });
     describe("WHEN Alice registers a mint 10 TC and 100 TP operation, sending only 1 AC", function () {
       beforeEach(async function () {

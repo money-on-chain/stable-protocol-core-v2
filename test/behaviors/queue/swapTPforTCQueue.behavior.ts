@@ -10,12 +10,15 @@ import {
   ethersGetBalance,
   OperId,
   OperType,
+  ERRORS,
+  noVendor,
 } from "../../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocQueue } from "../../../typechain";
+import { MocCACoinbase, MocCARC20, MocQueue, MocRC20 } from "../../../typechain";
 
 const swapTPforTCQueueBehavior = function () {
   let mocFunctions: any;
   let mocImpl: MocCACoinbase | MocCARC20;
+  let tps: MocRC20[];
   let mocQueue: MocQueue;
   let operId: OperId;
   let executor: Address;
@@ -31,7 +34,7 @@ const swapTPforTCQueueBehavior = function () {
   describe("Feature: swap Pegged Token for Collateral Token", function () {
     beforeEach(async function () {
       mocFunctions = this.mocFunctions;
-      ({ mocImpl, mocQueue } = this.mocContracts);
+      ({ mocImpl, mocQueue, mocPeggedTokens: tps } = this.mocContracts);
       ({ alice, deployer: executor } = await getNamedAccounts());
       assertACResult = mocFunctions.assertACResult(-swapTPforTCExecFee);
     });
@@ -40,6 +43,23 @@ const swapTPforTCQueueBehavior = function () {
       beforeEach(async function () {
         await mocFunctions.mintTC({ from: alice, qTC: 100 });
         await mocFunctions.mintTP({ from: alice, qTP: 20 });
+      });
+      describe("WHEN an user tries to execute a swap TP for TC operation without the queue", function () {
+        it("THEN tx reverts only MocQueue can execute operations", async function () {
+          const swapTPforTCParams = {
+            tp: tps[0].address,
+            qTP: 1,
+            qTCmin: 1,
+            qACmax: 1,
+            sender: alice,
+            recipient: alice,
+            vendor: noVendor,
+          };
+          await expect(mocImpl.execSwapTPforTC(swapTPforTCParams)).to.be.revertedWithCustomError(
+            mocImpl,
+            ERRORS.ONLY_QUEUE,
+          );
+        });
       });
       describe("WHEN she registers an Operation to swap 12 TP for TC paying max 10 AC", function () {
         beforeEach(async function () {
