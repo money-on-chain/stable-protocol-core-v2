@@ -732,10 +732,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return price [PREC]
      */
     function getPACtp(address tp_) public view virtual returns (uint256) {
-        IPriceProvider priceProvider = pegContainer[_tpi(tp_)].priceProvider;
-        (uint256 price, bool has) = _peekPrice(priceProvider);
-        if (!has) revert MissingProviderPrice(address(priceProvider));
-        return price;
+        return _getPACtp(_tpi(tp_));
     }
 
     // ------- Internal Functions -------
