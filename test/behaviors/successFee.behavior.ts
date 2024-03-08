@@ -248,6 +248,61 @@ const successFeeBehavior = function () {
             });
           });
         });
+        describe("AND success fee and appreciation factor are set to 0%, disabling the feature", function () {
+          /*
+          nAC = 1000 + 100 + 20 + 10
+          lckAC = 50 + 13.33 + 13.33
+          nACgain = 0
+          pTCac = 1130 - 76.66 / 1000 = 1.053
+          coverage = 1130 / 76.66 = 14.73
+          */
+          beforeEach(async function () {
+            await mocImpl.setSuccessFee(0);
+            await mocImpl.setAppreciationFactor(0);
+          });
+          it("THEN TC price is 1.053", async function () {
+            assertPrec("1.053333333333333333", await mocImpl.getPTCac());
+          });
+          it("THEN coverage is 14.73", async function () {
+            assertPrec("14.739130434782608695", await mocImpl.getCglb());
+          });
+          describe("AND settlement is executed having one TP price variations", function () {
+            let tx: ContractTransaction;
+            beforeEach(async function () {
+              await initializeBeforeBalances();
+              nextBlockSettlement = await mocImpl.bns();
+              await mineUpTo(nextBlockSettlement);
+              tx = await mocImpl.execSettlement();
+            });
+            it("THEN Moc balance AC balance didn't change", async function () {
+              const mocActualACBalance = await mocFunctions.acBalanceOf(mocImpl.address);
+              const diff = mocActualACBalance.sub(mocPrevACBalance);
+              assertPrec(0, diff);
+            });
+            it("THEN Moc appreciation beneficiary TP balance didn't change", async function () {
+              const mocApprecBenefActualTPsBalance = await Promise.all(
+                [TP_0, TP_1, TP_2].map(i => mocFunctions.tpBalanceOf(i, mocAppreciationBeneficiaryAddress)),
+              );
+              mocApprecBenefActualTPsBalance.forEach((value, i) => {
+                const diff = value.sub(mocApprecBenefPrevTPsBalance[i]);
+                assertPrec(0, diff);
+              });
+            });
+            it("THEN Moc Fee Flow AC balance didn't change", async function () {
+              const mocFeeFlowActualACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
+              const diff = mocFeeFlowActualACBalance.sub(mocFeeFlowPrevACBalance);
+              assertPrec(0, diff);
+            });
+            it("THEN SuccessFeeDistributed event is emitted", async function () {
+              // mocGain: 0
+              // tpGain[0]: 0
+              // tpGain[1]: 0
+              // tpGain[2]: 0
+              // tpGain[3]: 0
+              await expect(tx).to.emit(mocImpl, "SuccessFeeDistributed").withArgs(0, [0, 0, 0, 0]);
+            });
+          });
+        });
       });
     });
   });
