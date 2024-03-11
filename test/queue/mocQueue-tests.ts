@@ -237,11 +237,8 @@ describe("Feature: MocQueue with a MocCARC20 bucket", function () {
       });
     });
     describe("WHEN Bob tries to register an operation, sending less execution fees than expected", function () {
-      let queueTx: ContractTransaction;
-      beforeEach(async function () {
-        queueTx = mocFunctions.mintTC({ from: bob, qTC: 10, qACmax: 1, execute: false, netParams: { value: 1 } });
-      });
       it("THEN Tx fails with wrong execution fee", async function () {
+        const queueTx = mocFunctions.mintTC({ from: bob, qTC: 10, qACmax: 1, execute: false, netParams: { value: 1 } });
         await expect(queueTx).to.be.revertedWithCustomError(mocQueue, ERRORS.WRONG_EXEC_FEES);
       });
     });

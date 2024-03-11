@@ -1,25 +1,23 @@
 import hre from "hardhat";
 import { Address } from "hardhat-deploy/types";
 import { BigNumberish } from "ethers";
-import { MocCARC20 } from "../../typechain";
 import { getNetworkDeployParams } from "../helpers/utils";
 
 const { coreParams, feeParams, settlementParams, mocAddresses } = getNetworkDeployParams(hre);
 
 export function mocInitialize(
-  mocCARC20: MocCARC20,
-  acToken: Address,
+  mocCARC20: any,
   mocTC: Address,
   mocCoreExpansion: Address,
   mocVendors: Address,
   mocQueue: Address,
+  extraArgs: {},
 ) {
   return ({
     mocGovernorAddress = mocAddresses.governorAddress,
     mocPauserAddress = mocAddresses.pauserAddress,
     feeTokenAddress = mocAddresses.feeTokenAddress,
     feeTokenPriceProviderAddress = mocAddresses.feeTokenPriceProviderAddress,
-    acTokenAddress = acToken,
     mocTCAddress = mocTC,
     mocCoreExpansionAddress = mocCoreExpansion,
     feeFlowAddress = mocAddresses.mocFeeFlowAddress,
@@ -52,7 +50,6 @@ export function mocInitialize(
     mocPauserAddress?: Address;
     feeTokenAddress?: Address;
     feeTokenPriceProviderAddress?: Address;
-    acTokenAddress?: Address;
     mocTCAddress?: Address;
     mocCoreExpansionAddress?: Address;
     feeFlowAddress?: Address;
@@ -117,7 +114,7 @@ export function mocInitialize(
         emaCalculationBlockSpan,
         mocVendors: mocVendorsAddress,
       },
-      acTokenAddress,
+      ...extraArgs,
     });
   };
 }

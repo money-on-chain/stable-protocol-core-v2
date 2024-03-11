@@ -1,11 +1,13 @@
 import { expect } from "chai";
 import { ethers, getNamedAccounts } from "hardhat";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { Address } from "hardhat-deploy/types";
 import { ContractTransaction } from "ethers";
 import { fixtureDeployedMocCoinbase } from "../../coinbase/fixture";
-import { GovernorMock, MocCACoinbase, GovernorMock__factory } from "../../../typechain";
-import { ERRORS, pEth } from "../../helpers/utils";
+import { GovernorMock, MocCACoinbase, GovernorMock__factory, MocQueue } from "../../../typechain";
+import { ERRORS, ERROR_SELECTOR, pEth } from "../../helpers/utils";
 import { mocFunctionsCoinbase } from "../../helpers/mocFunctionsCoinbase";
+import { assertPrec } from "../../helpers/assertHelper";
 
 const fixtureDeploy = fixtureDeployedMocCoinbase(2);
 
@@ -13,16 +15,19 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
   let mocContracts: any;
   let mocFunctions: any;
   let mocImpl: MocCACoinbase;
+  let mocQueue: MocQueue;
   let governorMock: GovernorMock;
   let pauser: Address;
   let alice: Address;
 
   const expectPauseRevert = async (result: any) =>
     expect(result).to.be.revertedWithCustomError(mocImpl, ERRORS.NOT_WHEN_PAUSED);
+  const expectPauseEvent = async (result: any) =>
+    expect(result).to.emit(mocQueue, "UnhandledError").withArgs(anyValue, ERROR_SELECTOR.PAUSED); // operID is not relevant here
 
   before(async () => {
     mocContracts = await fixtureDeploy();
-    ({ mocImpl } = mocContracts);
+    ({ mocImpl, mocQueue } = mocContracts);
     mocFunctions = await mocFunctionsCoinbase(mocContracts);
 
     ({ deployer: pauser, alice } = await getNamedAccounts());
@@ -112,6 +117,9 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
   describe("GIVEN the Pauser, pauses the system", () => {
     before(async () => {
       await mocImpl.pause();
+    });
+    after(async () => {
+      await mocImpl.unpause();
     });
     describe("AND the system is unstoppable", () => {
       before(async () => {
@@ -208,6 +216,187 @@ describe("Feature: Verify pausing mechanism and restrictions", () => {
     describe(`WHEN someone tries to execute tcHoldersInterestPayment`, () => {
       it("THEN it fails, as the system is paused", async function () {
         await expectPauseRevert(mocImpl.tcHoldersInterestPayment());
+      });
+    });
+  });
+  describe("WHEN alice enqueue a mintTC operation", function () {
+    before(async function () {
+      await mocFunctions.mintTC({ from: alice, qTC: 1, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocImpl.qACLockedInPending(), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a redeemTC operation", function () {
+    before(async function () {
+      await mocFunctions.redeemTC({ from: alice, qTC: 10, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocFunctions.tcBalanceOf(mocImpl.address), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a mintTP operation", function () {
+    before(async function () {
+      await mocFunctions.mintTP({ from: alice, qTP: 1, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocImpl.qACLockedInPending(), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a redeemTP operation", function () {
+    before(async function () {
+      await mocFunctions.redeemTP({ from: alice, qTP: 3, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a swapTPforTP operation", function () {
+    before(async function () {
+      await mocFunctions.swapTPforTP({ iFrom: 0, iTo: 1, from: alice, qTP: 3, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a swapTPforTC operation", function () {
+    before(async function () {
+      await mocFunctions.swapTPforTC({ from: alice, qTP: 3, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a swapTCforTP operation", function () {
+    before(async function () {
+      await mocFunctions.swapTCforTP({ from: alice, qTC: 10, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocFunctions.tcBalanceOf(mocImpl.address), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a redeemTCandTP operation", function () {
+    before(async function () {
+      await mocFunctions.redeemTCandTP({ from: alice, qTC: 10, qTP: 1, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocFunctions.tcBalanceOf(mocImpl.address), 0);
+          assertPrec(await mocFunctions.tpBalanceOf(0, mocImpl.address), 0);
+        });
+      });
+    });
+  });
+  describe("WHEN alice enqueue a mintTCandTP operation", function () {
+    before(async function () {
+      await mocFunctions.mintTCandTP({ from: alice, qTP: 3, execute: false });
+    });
+    describe("AND protocol is paused", function () {
+      before(async function () {
+        await mocImpl.pause();
+      });
+      after(async function () {
+        await mocImpl.unpause();
+      });
+      describe("WHEN queue is executed", function () {
+        it("THEN Operations fails with Unhandled Error", async function () {
+          await expectPauseEvent(mocFunctions.executeQueue());
+          // tokens are returned
+          assertPrec(await mocImpl.qACLockedInPending(), 0);
+        });
       });
     });
   });

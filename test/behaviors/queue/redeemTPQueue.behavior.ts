@@ -10,12 +10,15 @@ import {
   ethersGetBalance,
   OperId,
   OperType,
+  noVendor,
+  ERRORS,
 } from "../../helpers/utils";
-import { MocCACoinbase, MocCARC20, MocQueue } from "../../../typechain";
+import { MocCACoinbase, MocCARC20, MocQueue, MocRC20 } from "../../../typechain";
 
 const redeemTPQueueBehavior = function () {
   let mocFunctions: any;
   let mocImpl: MocCACoinbase | MocCARC20;
+  let tps: MocRC20[];
   let mocQueue: MocQueue;
   let operId: OperId;
   let executor: Address;
@@ -30,7 +33,7 @@ const redeemTPQueueBehavior = function () {
   describe("Feature: redeem Pegged Token", function () {
     beforeEach(async function () {
       mocFunctions = this.mocFunctions;
-      ({ mocImpl, mocQueue } = this.mocContracts);
+      ({ mocImpl, mocQueue, mocPeggedTokens: tps } = this.mocContracts);
       ({ alice, bob, deployer: executor } = await getNamedAccounts());
     });
     describe("GIVEN there are 100 TC and Alice has 20 TP", function () {
@@ -39,7 +42,19 @@ const redeemTPQueueBehavior = function () {
         await mocFunctions.mintTC({ from: bob, qTC: 100 });
         await mocFunctions.mintTP({ from: alice, qTP: 20 });
       });
-
+      describe("WHEN an user tries to execute a redeem TP operation without the queue", function () {
+        it("THEN tx reverts only MocQueue can execute operations", async function () {
+          const redeemTPParams = {
+            tp: tps[0].address,
+            qTP: 1,
+            qACmin: 1,
+            sender: alice,
+            recipient: alice,
+            vendor: noVendor,
+          };
+          await expect(mocImpl.execRedeemTP(redeemTPParams)).to.be.revertedWithCustomError(mocImpl, ERRORS.ONLY_QUEUE);
+        });
+      });
       describe("WHEN alice registers a redeems 20 TP Operation, expecting at least 21 AC", function () {
         beforeEach(async function () {
           operId = await mocQueue.operIdCount();

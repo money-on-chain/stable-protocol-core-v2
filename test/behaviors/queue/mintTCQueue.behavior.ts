@@ -13,6 +13,7 @@ import {
   ethersGetBalance,
   OperId,
   OperType,
+  noVendor,
 } from "../../helpers/utils";
 import { MocCACoinbase, MocCARC20, MocQueue } from "../../../typechain";
 
@@ -36,6 +37,18 @@ const mintTCQueueBehavior = function () {
       ({ mocImpl, mocQueue } = this.mocContracts);
       ({ deployer, alice } = await getNamedAccounts());
       assertACResult = mocFunctions.assertACResult(-tcMintExecFee);
+    });
+    describe("WHEN an user tries to execute a mint TC operation without the queue", function () {
+      it("THEN tx reverts only MocQueue can execute operations", async function () {
+        const mintTCParams = {
+          qTC: 1,
+          qACmax: 1,
+          sender: deployer,
+          recipient: deployer,
+          vendor: noVendor,
+        };
+        await expect(mocImpl.execMintTC(mintTCParams)).to.be.revertedWithCustomError(mocImpl, ERRORS.ONLY_QUEUE);
+      });
     });
     describe("WHEN an user registers a mint 10 TC operation, sending 100 AC", function () {
       let queueTx: ContractTransaction;

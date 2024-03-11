@@ -267,6 +267,7 @@ export const ERRORS = {
   INVALID_FLUX_CAPACITOR_OPERATION: "InvalidFluxCapacitorOperation",
   MISSING_PROVIDER_DATA: "MissingProviderData",
   BUCKET_ALREADY_REGISTERED: "BucketAlreadyRegistered",
+  ONLY_QUEUE: "OnlyQueue",
 };
 
 const getSelectorFor = (error: string) => ethers.utils.hexDataSlice(ethers.utils.id(error), 0, 4);
@@ -284,6 +285,8 @@ export const ERROR_SELECTOR = {
   QTC_BELOW_MINIMUM: getSelectorFor(ERRORS.QTC_BELOW_MINIMUM + "(uint256,uint256)"),
   INVALID_FLUX_CAPACITOR_OPERATION: getSelectorFor(ERRORS.INVALID_FLUX_CAPACITOR_OPERATION + "()"),
   TRANSFER_FAILED: getSelectorFor(ERRORS.TRANSFER_FAIL + "()"),
+  LIQUIDATED: getSelectorFor(ERRORS.LIQUIDATED + "()"),
+  PAUSED: getSelectorFor(ERRORS.NOT_WHEN_PAUSED + "()"),
 };
 
 export function mineNBlocks(blocks: number, secondsPerBlock: number = 1): Promise<any> {

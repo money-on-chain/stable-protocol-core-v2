@@ -249,7 +249,7 @@ contract MocCACoinbase is MocOperations {
      * @notice sets max amount of gas forwarded on AC transfer
      * @param transferMaxGas_ new max amount of gas forwarded on AC transfer
      */
-    function setTransferMAxGas(uint256 transferMaxGas_) external onlyAuthorizedChanger {
+    function setTransferMaxGas(uint256 transferMaxGas_) external onlyAuthorizedChanger {
         transferMaxGas = transferMaxGas_;
     }
 
