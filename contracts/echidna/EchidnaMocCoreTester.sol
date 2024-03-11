@@ -97,7 +97,8 @@ contract EchidnaMocCoreTester {
                 tcInterestPaymentBlockSpan: 7 days,
                 maxAbsoluteOpProviderAddress: address(fluxCapacitorProvider),
                 maxOpDiffProviderAddress: address(fluxCapacitorProvider),
-                decayBlockSpan: 720
+                decayBlockSpan: 720,
+                allowDifferentRecipient: true
             });
         MocCore.InitializeCoreParams memory initializeCoreParams = MocCore.InitializeCoreParams({
             initializeBaseBucketParams: initializeBaseBucketParams,

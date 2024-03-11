@@ -76,7 +76,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.mintTC);
         MintTCParams memory params = MintTCParams({
             qTC: qTC_,
@@ -103,7 +103,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         RedeemTCParams memory params = RedeemTCParams({
             qTC: qTC_,
             qACmin: qACmin_,
@@ -132,7 +132,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.mintTP);
         MintTPParams memory params = MintTPParams({
             tp: tp_,
@@ -162,7 +162,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         RedeemTPParams memory params = RedeemTPParams({
             tp: tp_,
             qTP: qTP_,
@@ -196,7 +196,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.mintTCandTP);
         MintTCandTPParams memory params = MintTCandTPParams({
             tp: tp_,
@@ -232,7 +232,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmin_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         RedeemTCandTPParams memory params = RedeemTCandTPParams({
             tp: tp_,
             qTC: qTC_,
@@ -267,7 +267,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.swapTPforTP);
         SwapTPforTPParams memory params = SwapTPforTPParams({
             tpFrom: tpFrom_,
@@ -302,7 +302,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.swapTPforTC);
         SwapTPforTCParams memory params = SwapTPforTCParams({
             tp: tp_,
@@ -336,7 +336,7 @@ abstract contract MocOperations is MocCore {
         uint256 qACmax_,
         address recipient_,
         address vendor_
-    ) internal notLiquidated notPaused returns (uint256 operId) {
+    ) internal notLiquidated notPaused checkRecipient(msg.sender, recipient_) returns (uint256 operId) {
         (uint256 qACmax, uint256 execFee) = _getExecFeeSent(qACmax_, MocQueueExecFees.OperType.swapTCforTP);
         SwapTCforTPParams memory params = SwapTCforTPParams({
             tp: tp_,

@@ -21,6 +21,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     error MissingProviderPrice(address priceProviderAddress_);
     error Liquidated();
     error LowCoverage(uint256 cglb_, uint256 covThrld_);
+    error RecipientMustBeSender();
 
     // ------- Structs -------
     struct PegContainerItem {
@@ -97,6 +98,8 @@ abstract contract MocBaseBucket is MocUpgradable {
         address maxOpDiffProviderAddress;
         // number of blocks that have to elapse for the linear decay factor to be 0
         uint256 decayBlockSpan;
+        // flag to allow users operate using another address as the recipient of the tokens
+        bool allowDifferentRecipient;
     }
 
     // ------- Storage -------
@@ -177,6 +180,8 @@ abstract contract MocBaseBucket is MocUpgradable {
     bool public liqEnabled;
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
+    // flag to allow users operate using another address as the recipient of the tokens
+    bool internal allowDifferentRecipient;
 
     // ------- Storage Settlement -------
 
@@ -237,6 +242,12 @@ abstract contract MocBaseBucket is MocUpgradable {
         _;
     }
 
+    /// @notice functions with this modifier reverts if recipient is another address and is not allowed
+    modifier checkRecipient(address sender_, address recipient_) {
+        _checkRecipient(sender_, recipient_);
+        _;
+    }
+
     // ------- Initializer -------
     /**
      * @notice contract initializer
@@ -270,6 +281,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      *        maxAbsoluteOpProviderAddress max absolute operation provider address
      *        maxOpDiffProviderAddress max operation difference provider address
      *        decayBlockSpan number of blocks that have to elapse for the linear decay factor to be 0
+     *        allowDifferentRecipient flag to allow users operate using another address as the recipient of the tokens
      */
     function __MocBaseBucket_init_unchained(
         InitializeBaseBucketParams calldata initializeBaseBucketParams_
@@ -318,6 +330,7 @@ abstract contract MocBaseBucket is MocUpgradable {
         }
         liquidated = false;
         liqEnabled = false;
+        allowDifferentRecipient = initializeBaseBucketParams_.allowDifferentRecipient;
     }
 
     // ------- Internal Functions -------
@@ -327,6 +340,13 @@ abstract contract MocBaseBucket is MocUpgradable {
      */
     function _checkLiquidated() internal view {
         if (liquidated) revert Liquidated();
+    }
+
+    /**
+     * reverts if recipient is another address and is not allowed
+     */
+    function _checkRecipient(address sender_, address recipient_) internal view {
+        if (!allowDifferentRecipient && sender_ != recipient_) revert RecipientMustBeSender();
     }
 
     /**
@@ -732,10 +752,7 @@ abstract contract MocBaseBucket is MocUpgradable {
      * @return price [PREC]
      */
     function getPACtp(address tp_) public view virtual returns (uint256) {
-        IPriceProvider priceProvider = pegContainer[_tpi(tp_)].priceProvider;
-        (uint256 price, bool has) = _peekPrice(priceProvider);
-        if (!has) revert MissingProviderPrice(address(priceProvider));
-        return price;
+        return _getPACtp(_tpi(tp_));
     }
 
     // ------- Internal Functions -------
