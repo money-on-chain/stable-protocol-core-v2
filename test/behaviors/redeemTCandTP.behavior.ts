@@ -152,6 +152,11 @@ const redeemTCandTPBehavior = function () {
         it("THEN TC leverage did not change", async function () {
           assertPrec(tcLeverageBefore, await mocImpl.getLeverageTC());
         });
+        it("THEN nACcb, nTCcb and nTP matches with AC balance and total supplies", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec(await mocImpl.nTCcb(), await mocContracts.mocCollateralToken.totalSupply());
+          assertPrec((await mocImpl.pegContainer(TP_0))[0], await mocContracts.mocPeggedTokens[TP_0].totalSupply());
+        });
         it("THEN alice TC balance decrease 100 TC", async function () {
           const aliceActualTCBalance = await mocFunctions.tcBalanceOf(alice);
           const diff = alicePrevTCBalance.sub(aliceActualTCBalance);

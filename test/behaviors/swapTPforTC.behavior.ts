@@ -115,6 +115,11 @@ const swapTPforTCBehavior = function () {
         it("THEN alice TP 0 balance is 0", async function () {
           assertPrec(0, await mocFunctions.tpBalanceOf(TP_0, alice));
         });
+        it("THEN nACcb, nTCcb and nTP matches with AC balance and total supplies", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec(await mocImpl.nTCcb(), await mocContracts.mocCollateralToken.totalSupply());
+          assertPrec((await mocImpl.pegContainer(TP_0))[0], await mocContracts.mocPeggedTokens[TP_0].totalSupply());
+        });
         it("THEN alice TC balance is 100", async function () {
           assertPrec(100, await mocFunctions.tcBalanceOf(alice));
         });

@@ -125,6 +125,10 @@ const redeemTPBehavior = function () {
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.redeemTP({ from: alice, qTP: 23500 });
         });
+        it("THEN nACcb and nTP matches with AC balance and total supply", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec((await mocImpl.pegContainer(TP_0))[0], await mocContracts.mocPeggedTokens[TP_0].totalSupply());
+        });
         it("THEN alice has 0 TP", async function () {
           assertPrec(0, await mocFunctions.tpBalanceOf(TP_0, alice));
         });

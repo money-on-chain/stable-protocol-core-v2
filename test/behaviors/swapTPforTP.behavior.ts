@@ -181,6 +181,11 @@ const swapTPforTPBehavior = function () {
         it("THEN coverage didn't change", async function () {
           assertPrec(coverageBefore, await mocImpl.getCglb());
         });
+        it("THEN nACcb and nTPs matches with AC balance and total supplies", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec((await mocImpl.pegContainer(TP_0))[0], await mocContracts.mocPeggedTokens[TP_0].totalSupply());
+          assertPrec((await mocImpl.pegContainer(TP_1))[0], await mocContracts.mocPeggedTokens[TP_1].totalSupply());
+        });
         it("THEN alice TP 0 balances is 0", async function () {
           assertPrec(0, await mocFunctions.tpBalanceOf(TP_0, alice));
         });

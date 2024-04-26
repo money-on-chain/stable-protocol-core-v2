@@ -671,6 +671,8 @@ abstract contract MocCore is MocCommons {
         // [N] = [N] * [PREC] / [PREC]
         uint256 interestAmount = _mulPrec(nACcb, tcInterestRate);
         emit TCInterestPayment(interestAmount);
+        // sub interests from the Bucket
+        nACcb -= interestAmount;
         // transfer interests to the interest collector address, reverts if fail
         acTransfer(tcInterestCollectorAddress, interestAmount);
     }

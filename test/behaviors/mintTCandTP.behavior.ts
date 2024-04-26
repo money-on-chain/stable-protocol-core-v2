@@ -146,6 +146,11 @@ const mintTCandTPBehavior = function () {
         it("THEN TC price did not change", async function () {
           assertPrec(tcPriceBefore, await mocImpl.getPTCac());
         });
+        it("THEN nACcb, nTCcb and nTP matches with AC balance and total supplies", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec(await mocImpl.nTCcb(), await mocContracts.mocCollateralToken.totalSupply());
+          assertPrec((await mocImpl.pegContainer(TP_0))[0], await mocContracts.mocPeggedTokens[TP_0].totalSupply());
+        });
         it("THEN alice TC balance increase 45.41 TC", async function () {
           const aliceActualTCBalance = await mocFunctions.tcBalanceOf(alice);
           const diff = aliceActualTCBalance.sub(alicePrevTCBalance);

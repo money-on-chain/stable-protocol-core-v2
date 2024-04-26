@@ -69,6 +69,10 @@ const mintTCBehavior = function () {
       it("THEN Moc balance increase 100 AC", async function () {
         assertPrec(100, await mocFunctions.acBalanceOf(mocImpl.address));
       });
+      it("THEN nACcb and nTCcb matches with AC balance and total supply", async function () {
+        assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+        assertPrec(await mocImpl.nTCcb(), await mocContracts.mocCollateralToken.totalSupply());
+      });
       it("THEN Moc Fee Flow balance increase 5% of 100 AC", async function () {
         assertPrec(100 * 0.05, await mocFunctions.acBalanceOf(mocFeeFlowAddress));
       });
