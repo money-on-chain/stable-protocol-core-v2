@@ -40,6 +40,8 @@ export type DeployParameters = {
     decayBlockSpan: number;
     // max amount of gas forwarded on AC transfer(only for coinbase flavor)
     transferMaxGas?: number;
+    // RC20 only. If false, operation's recipient field must be msg.sender or the tx will revert
+    allowDifferentRecipient?: boolean;
   };
   settlementParams: {
     // number of blocks between settlements

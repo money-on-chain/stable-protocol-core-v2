@@ -87,6 +87,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
             maxAbsoluteOpProviderAddress,
             maxOpDiffProviderAddress,
             decayBlockSpan: coreParams.decayBlockSpan,
+            allowDifferentRecipient: coreParams.allowDifferentRecipient,
           },
           governorAddress,
           pauserAddress,

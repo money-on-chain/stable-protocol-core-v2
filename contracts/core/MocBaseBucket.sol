@@ -181,7 +181,7 @@ abstract contract MocBaseBucket is MocUpgradable {
     // Irreversible state, peg lost, contract is terminated and all funds can be withdrawn
     bool public liquidated;
     // flag to allow users operate using another address as the recipient of the tokens
-    bool internal allowDifferentRecipient;
+    bool public allowDifferentRecipient;
 
     // ------- Storage Settlement -------
 
@@ -1028,6 +1028,14 @@ abstract contract MocBaseBucket is MocUpgradable {
     function setMocQueue(address payable mocQueueAddress_) external onlyAuthorizedChanger {
         // slither-disable-next-line missing-zero-check
         mocQueue = mocQueueAddress_;
+    }
+
+    /**
+     * @dev sets allowDifferentRecipient param
+     * @param allowDifferentRecipient_ allows users operate using another address as the recipient of the tokens
+     */
+    function setAllowDifferentRecipient(bool allowDifferentRecipient_) external onlyAuthorizedChanger {
+        allowDifferentRecipient = allowDifferentRecipient_;
     }
 
     /**

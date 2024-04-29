@@ -109,6 +109,7 @@ const config: HardhatUserConfig = {
           tcInterestPaymentBlockSpan: WEEK_BLOCK_SPAN,
           decayBlockSpan: DAY_BLOCK_SPAN,
           transferMaxGas: 3000,
+          allowDifferentRecipient: true,
         },
         settlementParams: {
           bes: MONTH_BLOCK_SPAN,

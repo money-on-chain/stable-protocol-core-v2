@@ -256,6 +256,7 @@ export const ERRORS = {
   QTP_TP_MINT_MUST_BE_GREATER_ZERO: "QTPtoMintMustBeGreaterThanZero",
   QTP_BELOW_MINIMUM: "QtpBelowMinimumRequired",
   QTC_BELOW_MINIMUM: "QtcBelowMinimumRequired",
+  RECIPIENT_MUST_BE_SENDER: "RecipientMustBeSender",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   TRANSFER_FAIL: "TransferFailed",
   UNSTOPPABLE: "Unstoppable",
