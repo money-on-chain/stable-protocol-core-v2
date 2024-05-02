@@ -129,6 +129,7 @@ var deployFunc = function (hre) { return __awaiter(void 0, void 0, void 0, funct
                                     maxAbsoluteOpProviderAddress: maxAbsoluteOpProviderAddress,
                                     maxOpDiffProviderAddress: maxOpDiffProviderAddress,
                                     decayBlockSpan: coreParams.decayBlockSpan,
+                                    allowDifferentRecipient: coreParams.allowDifferentRecipient,
                                 },
                                 governorAddress: governorAddress,
                                 pauserAddress: pauserAddress,

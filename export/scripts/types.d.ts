@@ -21,6 +21,7 @@ export type DeployParameters = {
         tcInterestPaymentBlockSpan: number;
         decayBlockSpan: number;
         transferMaxGas?: number;
+        allowDifferentRecipient?: boolean;
     };
     settlementParams: {
         bes: number;
