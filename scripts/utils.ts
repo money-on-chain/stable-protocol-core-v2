@@ -301,6 +301,7 @@ export const deployCARC20 = async (
             maxAbsoluteOpProviderAddress,
             maxOpDiffProviderAddress,
             decayBlockSpan: coreParams.decayBlockSpan,
+            allowDifferentRecipient: coreParams.allowDifferentRecipient,
           },
           governorAddress,
           pauserAddress,

@@ -530,7 +530,7 @@ abstract contract MocCore is MocCommons {
         address tp_,
         address sender_,
         address recipient_
-    ) internal notPaused returns (uint256 qACRedeemed) {
+    ) internal notPaused checkRecipient(sender_, recipient_) returns (uint256 qACRedeemed) {
         bytes memory payload = abi.encodeCall(
             MocCoreExpansion(mocCoreExpansion).liqRedeemTP,
             (tp_, sender_, recipient_, acBalanceOf(address(this)))
@@ -671,6 +671,8 @@ abstract contract MocCore is MocCommons {
         // [N] = [N] * [PREC] / [PREC]
         uint256 interestAmount = _mulPrec(nACcb, tcInterestRate);
         emit TCInterestPayment(interestAmount);
+        // sub interests from the Bucket
+        nACcb -= interestAmount;
         // transfer interests to the interest collector address, reverts if fail
         acTransfer(tcInterestCollectorAddress, interestAmount);
     }

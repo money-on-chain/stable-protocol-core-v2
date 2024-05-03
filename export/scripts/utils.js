@@ -390,6 +390,7 @@ var deployCARC20 = function (hre, mocCARC20Variant, ctVariant, extraInitParams) 
                                         maxAbsoluteOpProviderAddress: maxAbsoluteOpProviderAddress,
                                         maxOpDiffProviderAddress: maxOpDiffProviderAddress,
                                         decayBlockSpan: coreParams.decayBlockSpan,
+                                        allowDifferentRecipient: coreParams.allowDifferentRecipient,
                                     },
                                     governorAddress: governorAddress,
                                     pauserAddress: pauserAddress,

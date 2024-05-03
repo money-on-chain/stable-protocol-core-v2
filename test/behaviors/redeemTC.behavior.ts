@@ -98,6 +98,10 @@ const redeemTCBehavior = function () {
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.redeemTC({ from: alice, qTC: 300 });
         });
+        it("THEN nACcb and nTCcb matches with AC balance and total supply", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec(await mocImpl.nTCcb(), await mocContracts.mocCollateralToken.totalSupply());
+        });
         it("THEN alice has 0 TC", async function () {
           assertPrec(0, await mocFunctions.tcBalanceOf(alice));
         });

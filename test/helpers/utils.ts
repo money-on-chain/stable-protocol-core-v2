@@ -17,6 +17,7 @@ import {
   DataProviderMock,
   MocQueue,
   MocQueue__factory,
+  CommissionSplitter__factory,
 } from "../../typechain";
 import { IGovernor } from "../../typechain/contracts/interfaces/IGovernor";
 import { IGovernor__factory } from "../../typechain/factories/contracts/interfaces/IGovernor__factory";
@@ -96,6 +97,49 @@ export const deployMocQueue = async (contractName: "MocQueueMock" | "MocQueue"):
     queueParams.execFeeParams,
   );
   return mocQueueProxy;
+};
+
+export const deployCommissionSplitter = async ({
+  governorAddress,
+  acToken,
+  feeToken,
+  acTokenAddressRecipient1,
+  acTokenAddressRecipient2,
+  acTokenPctToRecipient1,
+  feeTokenAddressRecipient1,
+  feeTokenAddressRecipient2,
+  feeTokenPctToRecipient1,
+}: {
+  governorAddress: Address;
+  acToken: Address;
+  feeToken: Address;
+  acTokenAddressRecipient1: Address;
+  acTokenAddressRecipient2: Address;
+  acTokenPctToRecipient1: BigNumber;
+  feeTokenAddressRecipient1: Address;
+  feeTokenAddressRecipient2: Address;
+  feeTokenPctToRecipient1: BigNumber;
+}) => {
+  const commissionSplitterFactory = await ethers.getContractFactory("CommissionSplitter");
+  const commissionSplitterImpl = await commissionSplitterFactory.deploy();
+  const erc1967ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+  const erc1967Proxy = await erc1967ProxyFactory.deploy(commissionSplitterImpl.address, "0x");
+  const commissionSplitterProxy = CommissionSplitter__factory.connect(
+    erc1967Proxy.address,
+    ethers.provider.getSigner(),
+  );
+  await commissionSplitterProxy.initialize(
+    governorAddress,
+    acToken,
+    feeToken,
+    acTokenAddressRecipient1,
+    acTokenAddressRecipient2,
+    acTokenPctToRecipient1,
+    feeTokenAddressRecipient1,
+    feeTokenAddressRecipient2,
+    feeTokenPctToRecipient1,
+  );
+  return commissionSplitterProxy;
 };
 
 export const tpParamsDefault = {
@@ -256,6 +300,7 @@ export const ERRORS = {
   QTP_TP_MINT_MUST_BE_GREATER_ZERO: "QTPtoMintMustBeGreaterThanZero",
   QTP_BELOW_MINIMUM: "QtpBelowMinimumRequired",
   QTC_BELOW_MINIMUM: "QtcBelowMinimumRequired",
+  RECIPIENT_MUST_BE_SENDER: "RecipientMustBeSender",
   REENTRACYGUARD: "ReentrancyGuard: reentrant call",
   TRANSFER_FAIL: "TransferFailed",
   UNSTOPPABLE: "Unstoppable",

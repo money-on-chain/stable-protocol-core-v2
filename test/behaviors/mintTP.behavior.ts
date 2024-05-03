@@ -133,6 +133,10 @@ const mintTPBehavior = function () {
           mocFeeFlowPrevACBalance = await mocFunctions.acBalanceOf(mocFeeFlowAddress);
           tx = await mocFunctions.mintTP({ from: alice, qTP: 23500, qACmax: 105 });
         });
+        it("THEN nACcb and nTP matches with AC balance and total supply", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+          assertPrec((await mocImpl.pegContainer(TP_0))[0], await mocContracts.mocPeggedTokens[TP_0].totalSupply());
+        });
         it("THEN alice receives 23500 TP", async function () {
           assertPrec(23500, await mocFunctions.tpBalanceOf(TP_0, alice));
         });

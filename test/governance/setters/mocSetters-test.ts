@@ -194,6 +194,13 @@ describe("Feature: Verify all MocCore config settings are protected by governanc
         expect(await mocProxy.mocQueue()).to.be.equal(mockAddress);
       });
     });
+    describe(`WHEN setAllowDifferentRecipient is invoked`, () => {
+      it("THEN the new value is assigned", async function () {
+        const currentValue = await mocProxy.allowDifferentRecipient();
+        await mocProxy.setAllowDifferentRecipient(!currentValue);
+        expect(await mocProxy.allowDifferentRecipient()).to.be.equal(!currentValue);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -364,6 +371,11 @@ describe("Feature: Verify all MocCore config settings are protected by governanc
     describe("WHEN setMocQueue is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocProxy.setMocQueue(mockAddress));
+      });
+    });
+    describe("WHEN setAllowDifferentRecipient is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocProxy.setAllowDifferentRecipient(false));
       });
     });
   });

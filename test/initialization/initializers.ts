@@ -45,6 +45,7 @@ export function mocInitialize(
     maxAbsoluteOpProviderAddress = mocAddresses.maxAbsoluteOpProviderAddress,
     maxOpDiffProviderAddress = mocAddresses.maxOpDiffProviderAddress,
     decayBlockSpan = coreParams.decayBlockSpan,
+    allowDifferentRecipient = coreParams.allowDifferentRecipient,
   }: {
     mocGovernorAddress?: Address;
     mocPauserAddress?: Address;
@@ -77,6 +78,7 @@ export function mocInitialize(
     maxAbsoluteOpProviderAddress?: Address;
     maxOpDiffProviderAddress?: Address;
     decayBlockSpan?: BigNumberish;
+    allowDifferentRecipient?: boolean;
   } = {}) => {
     return mocCARC20.initialize({
       initializeCoreParams: {
@@ -107,6 +109,7 @@ export function mocInitialize(
           maxAbsoluteOpProviderAddress,
           maxOpDiffProviderAddress,
           decayBlockSpan,
+          allowDifferentRecipient,
         },
         governorAddress: mocGovernorAddress,
         pauserAddress: mocPauserAddress,
