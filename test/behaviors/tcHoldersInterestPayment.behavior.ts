@@ -59,6 +59,9 @@ const tcHoldersInterestPaymentBehavior = function () {
           const diff = tcInterestCollectorActualACBalance.sub(tcInterestCollectorPrevACBalance);
           assertPrec(diff, 5.25);
         });
+        it("THEN nACcb matches with AC balance", async function () {
+          assertPrec(await mocImpl.nACcb(), await mocFunctions.acBalanceOf(mocImpl.address));
+        });
         it("THEN a TCInterestPayment event is emitted", async function () {
           // interestAmount: 5.25 AC
           await expect(tx).to.emit(mocImpl, "TCInterestPayment").withArgs(pEth(5.25));
@@ -81,7 +84,7 @@ const tcHoldersInterestPaymentBehavior = function () {
           before(async function () {
             await mocFunctions.pokePrice(0, 2.35);
             // assert coverage
-            assertPrec(await mocImpl.getCglb(), 0.21);
+            assertPrec(await mocImpl.getCglb(), "0.209989500000000000");
           });
           describe("WHEN TC holders interest payment is executed", function () {
             before(async function () {
@@ -89,8 +92,8 @@ const tcHoldersInterestPaymentBehavior = function () {
               tx = await mocImpl.tcHoldersInterestPayment();
             });
             it("THEN a TCInterestPayment event is emitted", async function () {
-              // interestAmount: 5.25 AC
-              await expect(tx).to.emit(mocImpl, "TCInterestPayment").withArgs(pEth(5.25));
+              // interestAmount: 0.005%(105000 - 5.25 AC) = 5.249 AC
+              await expect(tx).to.emit(mocImpl, "TCInterestPayment").withArgs(pEth("5.249737500000000000"));
             });
           });
         });
