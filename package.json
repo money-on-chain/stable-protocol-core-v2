@@ -51,7 +51,10 @@
     "standard-version": "9.5.0",
     "ts-node": "10.9.1",
     "typechain": "8.2.0",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "es5-ext": "0.10.64",
+    "undici": "5.28.4",
+    "ejs": "3.1.10"
   },
   "overrides": {
     "eth-gas-reporter": {
