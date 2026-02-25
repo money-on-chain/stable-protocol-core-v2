@@ -199,24 +199,24 @@ var getGovernorAddresses = function (hre) { return __awaiter(void 0, void 0, voi
 }); };
 exports.getGovernorAddresses = getGovernorAddresses;
 var deployVendors = function (artifactBaseName) { return function (hre) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, pauserAddress, vendorsGuardianAddress, _b, _c;
-    var _d;
-    return __generator(this, function (_e) {
-        switch (_e.label) {
+    var _a, _b, pauserAddress, vendorsGuardianAddress, maxMarkup, _c, _d;
+    var _e;
+    return __generator(this, function (_f) {
+        switch (_f.label) {
             case 0:
-                _a = (0, exports.getNetworkDeployParams)(hre).mocAddresses, pauserAddress = _a.pauserAddress, vendorsGuardianAddress = _a.vendorsGuardianAddress;
-                _b = exports.deployUUPSArtifact;
-                _d = {
+                _a = (0, exports.getNetworkDeployParams)(hre), _b = _a.mocAddresses, pauserAddress = _b.pauserAddress, vendorsGuardianAddress = _b.vendorsGuardianAddress, maxMarkup = _a.vendorsParams.maxMarkup;
+                _c = exports.deployUUPSArtifact;
+                _e = {
                     hre: hre,
                     artifactBaseName: artifactBaseName,
                     contract: "MocVendors"
                 };
-                _c = [vendorsGuardianAddress];
+                _d = [vendorsGuardianAddress];
                 return [4 /*yield*/, (0, exports.getGovernorAddresses)(hre)];
-            case 1: return [4 /*yield*/, _b.apply(void 0, [(_d.initializeArgs = _c.concat([_e.sent(), pauserAddress]),
-                        _d)])];
+            case 1: return [4 /*yield*/, _c.apply(void 0, [(_e.initializeArgs = _d.concat([_f.sent(), pauserAddress, maxMarkup]),
+                        _e)])];
             case 2:
-                _e.sent();
+                _f.sent();
                 return [2 /*return*/, hre.network.live]; // prevents re execution on live networks
         }
     });

@@ -47,6 +47,10 @@ export type DeployParameters = {
     // number of blocks between settlements
     bes: number;
   };
+  vendorsParams: {
+    // max markup percentage allowed on vendors [PREC]
+    maxMarkup: BigNumber;
+  };
   feeParams: {
     // pct retain on fees to be re-injected as Collateral, while paying fees with AC [PREC]
     feeRetainer: BigNumber;

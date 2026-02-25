@@ -46,6 +46,13 @@ describe("Feature: Verify all MocVendors config settings are protected by govern
         expect(await mocVendors.vendorsGuardianAddress()).to.be.equal(mockAddress);
       });
     });
+    describe("WHEN setMaxMarkup is invoked", () => {
+      it("THEN the new value is assigned", async function () {
+        const newMaxMarkup = 123;
+        await mocVendors.setMaxMarkup(newMaxMarkup);
+        expect(await mocVendors.maxMarkup()).to.be.equal(newMaxMarkup);
+      });
+    });
   });
   describe("GIVEN the Governor has not authorized the change", () => {
     let expectRevertNotAuthorized: (it: any) => any;
@@ -57,6 +64,11 @@ describe("Feature: Verify all MocVendors config settings are protected by govern
     describe("WHEN setVendorsGuardianAddress is invoked", () => {
       it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
         await expectRevertNotAuthorized(mocVendors.setVendorsGuardianAddress(mockAddress));
+      });
+    });
+    describe("WHEN setMaxMarkup is invoked", () => {
+      it("THEN it fails, as it's protected by onlyAuthorizedChanger", async function () {
+        await expectRevertNotAuthorized(mocVendors.setMaxMarkup(123));
       });
     });
   });

@@ -26,6 +26,9 @@ export type DeployParameters = {
     settlementParams: {
         bes: number;
     };
+    vendorsParams: {
+        maxMarkup: BigNumber;
+    };
     feeParams: {
         feeRetainer: BigNumber;
         mintFee: BigNumber;

@@ -494,9 +494,9 @@
           "parameterSlots": 3,
           "returnSlots": 0
         },
-        "fun_transfer_22467": {
+        "fun_transfer_22473": {
           "entryPoint": 3001,
-          "id": 22467,
+          "id": 22473,
           "parameterSlots": 2,
           "returnSlots": 1
         }
@@ -599,7 +599,7 @@
         "type": "t_string_storage"
       },
       {
-        "astId": 22381,
+        "astId": 22387,
         "contract": "contracts/mocks/ERC20Mock.sol:ERC20Mock",
         "label": "customDecimals",
         "offset": 0,
@@ -607,12 +607,12 @@
         "type": "t_uint8"
       },
       {
-        "astId": 22388,
+        "astId": 22394,
         "contract": "contracts/mocks/ERC20Mock.sol:ERC20Mock",
         "label": "failType",
         "offset": 1,
         "slot": "5",
-        "type": "t_enum(FailType)22385"
+        "type": "t_enum(FailType)22391"
       }
     ],
     "types": {
@@ -621,7 +621,7 @@
         "label": "address",
         "numberOfBytes": "20"
       },
-      "t_enum(FailType)22385": {
+      "t_enum(FailType)22391": {
         "encoding": "inplace",
         "label": "enum ERC20Mock.FailType",
         "numberOfBytes": "1"
