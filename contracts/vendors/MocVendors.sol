@@ -38,6 +38,8 @@ contract MocVendors is MocUpgradable {
 
     // address authorized to change a vendor's markup
     address public vendorsGuardianAddress;
+    // DEPRECATED STORAGE SLOT
+    mapping(address => uint256) private vendorMarkupDeprecated;
     // addition markup pct applied on each operation when operating through a vendor
     mapping(address vendor => MarkupData markupData) public vendorMarkupData;
     // true if the vendor has revoked the delegate for the vendors guardian to set the markup
@@ -91,8 +93,10 @@ contract MocVendors is MocUpgradable {
      * @notice sets a vendor markup
      * @param vendorAddress_ vendor address to change markup
      * @param newMarkup_ new markup applied to vendor [PREC]
+     * @param applyInstantly_ if true, the new markup will be applied instantly; 
+        if false, the new markup will be applied after the cooldown
      */
-    function _setMarkup(address vendorAddress_, uint64 newMarkup_) internal {
+    function _setMarkup(address vendorAddress_, uint64 newMarkup_, bool applyInstantly_) internal {
         if (newMarkup_ > maxMarkup) revert MarkupTooHigh();
         // reverts if the new markup is >= 100%
         _checkLessThanOne(newMarkup_);
@@ -101,7 +105,7 @@ contract MocVendors is MocUpgradable {
 
         _markupData.previous = _getVendorMarkup(vendorAddress_);
         _markupData.next = newMarkup_;
-        _markupData.cooldownEndTime = uint128(block.timestamp) + COOLDOWN;
+        _markupData.cooldownEndTime = applyInstantly_ ? uint128(block.timestamp) : uint128(block.timestamp) + COOLDOWN;
 
         // write to storage
         vendorMarkupData[vendorAddress_] = _markupData;
@@ -127,21 +131,24 @@ contract MocVendors is MocUpgradable {
      */
     function setMarkup(uint64 newMarkup_) external {
         if (!delegateRevoked[msg.sender]) delegateRevoked[msg.sender] = true;
-        _setMarkup(msg.sender, newMarkup_);
+        _setMarkup(msg.sender, newMarkup_, false);
     }
 
     /**
      * @notice governor or vendors guardian set a vendor markup.
-     * @dev governor or vendors guardian can set a vendor markup
-     *  If the vendor has already revoked the delegate for the vendors guardian, it will not be able to set a new markup
+     * @dev governor or vendors guardian can set a vendor markup.
+     *  Changer updates are applied instantly, while vendors guardian updates use cooldown.
+     *  If the vendor has already revoked the delegate for the vendors guardian, it won't be able to set a new markup.
      * @param vendorAddress_ vendor address to change markup
      * @param newMarkup_ new markup applied to vendor [PREC]
      */
     function setVendorMarkup(address vendorAddress_, uint64 newMarkup_) external {
         bool isVendorsGuardian = msg.sender == vendorsGuardianAddress;
-        if (!isVendorsGuardian && !governor.isAuthorizedChanger(msg.sender)) revert NotVendorsGuardian(msg.sender);
+        bool isAuthorizedChanger = governor.isAuthorizedChanger(msg.sender);
+        if (!isVendorsGuardian && !isAuthorizedChanger) revert NotVendorsGuardian(msg.sender);
         if (isVendorsGuardian && delegateRevoked[vendorAddress_]) revert DelegateRevoked();
-        _setMarkup(vendorAddress_, newMarkup_);
+        // if called by vendors guardian, apply cooldown; if called by an authorized changer, apply instantly
+        _setMarkup(vendorAddress_, newMarkup_, isAuthorizedChanger);
     }
 
     // ------- Only Authorized Changer Functions -------

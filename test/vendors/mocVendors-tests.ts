@@ -88,11 +88,7 @@ describe("Feature: MocCARC20 vendors", function () {
       it("THEN VendorMarkupChanged event is emitted", async function () {
         await expect(tx).to.emit(mocVendors, "VendorMarkupChanged").withArgs(vendor, pEth(0.03));
       });
-      it("THEN markup is not set immediately", async function () {
-        assertPrec(await mocVendors.vendorMarkup(vendor), pEth(0.04));
-      });
-      it("THEN markup is set after the cooldown has elapsed", async function () {
-        await time.increase(await mocVendors.COOLDOWN());
+      it("THEN markup is set immediately", async function () {
         assertPrec(await mocVendors.vendorMarkup(vendor), pEth(0.03));
       });
     });
