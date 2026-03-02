@@ -66,7 +66,12 @@ contract EchidnaMocCoreTester {
         mocCoreExpansion = address(new MocCoreExpansion());
         mocVendors = MocVendors(_deployProxy(address(new MocVendors())));
         // initialize Vendors
-        mocVendors.initialize(/*vendorGuardian */ msg.sender, address(governor), /*pauserAddress*/ msg.sender);
+        mocVendors.initialize(
+            /*vendorGuardian */ msg.sender,
+            address(governor),
+            /*pauserAddress*/ msg.sender,
+            /*maxMarkup*/ PRECISION / 10
+        ); // 10%
         // initialize Collateral Token
         tcToken.initialize("TCToken", "TC", address(this), governor);
         // initialize mocCore

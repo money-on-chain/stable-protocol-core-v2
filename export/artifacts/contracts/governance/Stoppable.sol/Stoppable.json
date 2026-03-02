@@ -252,7 +252,7 @@
         },
         "fun_checkIfAuthorizedChanger": {
           "entryPoint": 1053,
-          "id": 21468,
+          "id": 21474,
           "parameterSlots": 0,
           "returnSlots": 0
         }
@@ -319,7 +319,7 @@
         "type": "t_bool"
       },
       {
-        "astId": 28031,
+        "astId": 28037,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "__gap",
         "offset": 0,
@@ -327,15 +327,15 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 21402,
+        "astId": 21408,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "governor",
         "offset": 0,
         "slot": "51",
-        "type": "t_contract(IGovernor)22264"
+        "type": "t_contract(IGovernor)22270"
       },
       {
-        "astId": 21473,
+        "astId": 21479,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "__gap",
         "offset": 0,
@@ -343,7 +343,7 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 21542,
+        "astId": 21548,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "stoppable",
         "offset": 0,
@@ -351,7 +351,7 @@
         "type": "t_bool"
       },
       {
-        "astId": 21544,
+        "astId": 21550,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "_paused",
         "offset": 1,
@@ -359,7 +359,7 @@
         "type": "t_bool"
       },
       {
-        "astId": 21546,
+        "astId": 21552,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "pauser",
         "offset": 2,
@@ -367,7 +367,7 @@
         "type": "t_address"
       },
       {
-        "astId": 21718,
+        "astId": 21724,
         "contract": "contracts/governance/Stoppable.sol:Stoppable",
         "label": "__gap",
         "offset": 0,
@@ -392,7 +392,7 @@
         "label": "bool",
         "numberOfBytes": "1"
       },
-      "t_contract(IGovernor)22264": {
+      "t_contract(IGovernor)22270": {
         "encoding": "inplace",
         "label": "contract IGovernor",
         "numberOfBytes": "20"

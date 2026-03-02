@@ -586,13 +586,13 @@
         },
         "fun_checkIfAuthorizedChanger": {
           "entryPoint": 4648,
-          "id": 21468,
+          "id": 21474,
           "parameterSlots": 0,
           "returnSlots": 0
         },
         "fun_mulPrec": {
           "entryPoint": 4791,
-          "id": 28012,
+          "id": 28018,
           "parameterSlots": 2,
           "returnSlots": 1
         },
@@ -741,7 +741,7 @@
         "type": "t_bool"
       },
       {
-        "astId": 28031,
+        "astId": 28037,
         "contract": "contracts/auxiliary/CommissionSplitter.sol:CommissionSplitter",
         "label": "__gap",
         "offset": 0,
@@ -749,15 +749,15 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 21402,
+        "astId": 21408,
         "contract": "contracts/auxiliary/CommissionSplitter.sol:CommissionSplitter",
         "label": "governor",
         "offset": 0,
         "slot": "51",
-        "type": "t_contract(IGovernor)22264"
+        "type": "t_contract(IGovernor)22270"
       },
       {
-        "astId": 21473,
+        "astId": 21479,
         "contract": "contracts/auxiliary/CommissionSplitter.sol:CommissionSplitter",
         "label": "__gap",
         "offset": 0,
@@ -875,7 +875,7 @@
         "label": "contract IERC20",
         "numberOfBytes": "20"
       },
-      "t_contract(IGovernor)22264": {
+      "t_contract(IGovernor)22270": {
         "encoding": "inplace",
         "label": "contract IGovernor",
         "numberOfBytes": "20"

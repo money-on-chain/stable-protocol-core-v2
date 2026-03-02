@@ -57,6 +57,7 @@
     "ejs": "3.1.10"
   },
   "overrides": {
+    "@nomicfoundation/hardhat-network-helpers": "1.0.0",
     "eth-gas-reporter": {
       "axios": "1.6.0"
     },

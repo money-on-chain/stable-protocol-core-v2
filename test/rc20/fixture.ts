@@ -1,5 +1,6 @@
 import { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import {
   ERC20Mock,
   ERC20Mock__factory,
@@ -72,7 +73,8 @@ export const fixtureDeployedMocRC20 = memoizee(
       await Promise.all([alice, bob, charlie].map(address => collateralAsset.mint(address, pEth(1000000000000))));
 
       // initialize vendor with 10% markup
-      await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
+      await mocVendors.setVendorMarkup(vendor, pEth(0.1));
+      await time.increase(await mocVendors.COOLDOWN());
 
       const { mocPeggedTokens, priceProviders } = await deployAndAddPeggedTokens(mocImpl, amountPegTokens, tpParams);
 

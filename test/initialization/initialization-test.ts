@@ -23,7 +23,7 @@ describe("Feature: Moc initializations", function () {
   let mocCoreExpansion: MocCoreExpansion;
   let mocVendors: MocVendors;
   let mocQueue: MocQueue;
-  const { queueParams, mocAddresses } = getNetworkDeployParams(hre);
+  const { queueParams, vendorsParams, mocAddresses } = getNetworkDeployParams(hre);
   before(async () => {
     ({
       mocImpl: mocProxy,
@@ -71,7 +71,12 @@ describe("Feature: Moc initializations", function () {
     describe("WHEN initialize mocVendorsProxy again", async () => {
       it("THEN tx fails because contract is already initialized", async () => {
         await expect(
-          mocVendors.initialize(mocProxy.address, mocAddresses.governorAddress, mocAddresses.pauserAddress),
+          mocVendors.initialize(
+            mocAddresses.vendorsGuardianAddress,
+            mocAddresses.governorAddress,
+            mocAddresses.pauserAddress,
+            vendorsParams.maxMarkup,
+          ),
         ).to.be.revertedWith(ERRORS.CONTRACT_INITIALIZED);
       });
     });
