@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.14.2]
+        node-version: [22.14.0]
 
     steps:
       - uses: actions/checkout@v3
@@ -28,7 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.14.2]
+        node-version: [22.14.0]
 
     steps:
       - uses: actions/checkout@v3
@@ -45,7 +45,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.14.2]
+        node-version: [22.14.0]
 
     steps:
       - uses: actions/checkout@v3
@@ -62,7 +62,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.14.2]
+        node-version: [22.14.0]
 
     steps:
       - uses: actions/checkout@v3
@@ -79,7 +79,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.14.2]
+        node-version: [22.14.0]
 
     steps:
       - uses: actions/checkout@v3
@@ -96,7 +96,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18.14.2]
+        node-version: [22.14.0]
 
     steps:
       - uses: actions/checkout@v3

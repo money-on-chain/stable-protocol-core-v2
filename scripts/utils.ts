@@ -135,13 +135,14 @@ export const getGovernorAddresses = async (hre: HardhatRuntimeEnvironment) => {
 export const deployVendors = (artifactBaseName: string) => async (hre: HardhatRuntimeEnvironment) => {
   let {
     mocAddresses: { pauserAddress, vendorsGuardianAddress },
+    vendorsParams: { maxMarkup },
   } = getNetworkDeployParams(hre);
 
   await deployUUPSArtifact({
     hre,
     artifactBaseName,
     contract: "MocVendors",
-    initializeArgs: [vendorsGuardianAddress, await getGovernorAddresses(hre), pauserAddress],
+    initializeArgs: [vendorsGuardianAddress, await getGovernorAddresses(hre), pauserAddress, maxMarkup],
   });
 
   return hre.network.live; // prevents re execution on live networks

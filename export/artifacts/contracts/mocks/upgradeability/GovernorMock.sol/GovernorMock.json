@@ -118,7 +118,7 @@
   "storageLayout": {
     "storage": [
       {
-        "astId": 24127,
+        "astId": 24133,
         "contract": "contracts/mocks/upgradeability/GovernorMock.sol:GovernorMock",
         "label": "isAuthorized",
         "offset": 0,

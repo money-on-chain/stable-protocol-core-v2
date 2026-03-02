@@ -1,5 +1,6 @@
 import { deployments, getNamedAccounts } from "hardhat";
 import memoizee from "memoizee";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import {
   ERC20Mock,
   ERC20Mock__factory,
@@ -69,7 +70,9 @@ export const fixtureDeployedMocCoinbase = memoizee(
         mocQueue = MocQueue__factory.connect(await mocImpl.mocQueue(), signer);
       }
 
-      await mocVendors.connect(await ethers.getSigner(vendor)).setMarkup(pEth(0.1));
+      // initialize vendor with 10% markup
+      await mocVendors.setVendorMarkup(vendor, pEth(0.1));
+      await time.increase(await mocVendors.COOLDOWN());
 
       return {
         mocImpl,

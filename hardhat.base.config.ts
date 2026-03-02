@@ -114,6 +114,9 @@ const config: HardhatUserConfig = {
         settlementParams: {
           bes: MONTH_BLOCK_SPAN,
         },
+        vendorsParams: {
+          maxMarkup: PCT_BASE.mul(10).div(100), // 10%
+        },
         feeParams: {
           feeRetainer: PCT_BASE.mul(0), // 0%
           mintFee: PCT_BASE.mul(5).div(100), // 5%

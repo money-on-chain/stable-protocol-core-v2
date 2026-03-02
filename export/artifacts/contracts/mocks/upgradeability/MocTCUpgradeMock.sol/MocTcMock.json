@@ -1037,7 +1037,7 @@
         },
         "fun_checkIfAuthorizedChanger": {
           "entryPoint": 8979,
-          "id": 21468,
+          "id": 21474,
           "parameterSlots": 0,
           "returnSlots": 0
         },
@@ -1357,7 +1357,7 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 28031,
+        "astId": 28037,
         "contract": "contracts/mocks/upgradeability/MocTCUpgradeMock.sol:MocTcMock",
         "label": "__gap",
         "offset": 0,
@@ -1365,15 +1365,15 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 21402,
+        "astId": 21408,
         "contract": "contracts/mocks/upgradeability/MocTCUpgradeMock.sol:MocTcMock",
         "label": "governor",
         "offset": 0,
         "slot": "401",
-        "type": "t_contract(IGovernor)22264"
+        "type": "t_contract(IGovernor)22270"
       },
       {
-        "astId": 21473,
+        "astId": 21479,
         "contract": "contracts/mocks/upgradeability/MocTCUpgradeMock.sol:MocTcMock",
         "label": "__gap",
         "offset": 0,
@@ -1405,7 +1405,7 @@
         "type": "t_array(t_uint256)50_storage"
       },
       {
-        "astId": 24402,
+        "astId": 24408,
         "contract": "contracts/mocks/upgradeability/MocTCUpgradeMock.sol:MocTcMock",
         "label": "newVariable",
         "offset": 0,
@@ -1453,7 +1453,7 @@
         "label": "bytes32",
         "numberOfBytes": "32"
       },
-      "t_contract(IGovernor)22264": {
+      "t_contract(IGovernor)22270": {
         "encoding": "inplace",
         "label": "contract IGovernor",
         "numberOfBytes": "20"
